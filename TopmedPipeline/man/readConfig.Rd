@@ -1,0 +1,50 @@
+\name{readConfig}
+\alias{readConfig}
+\alias{writeConfig}
+\alias{setConfigDefaults}
+\title{Read a configuration file}
+\description{Read a configuration file}
+\usage{
+readConfig(file, ...)
+
+writeConfig(config, file, ...)
+
+setConfigDefaults(config, required, optional)
+}
+\arguments{
+  \item{file}{file where column 1 is parameter name
+    and column 2 is value.}
+  \item{...}{additional arguments to \code{read.table}}
+  \item{config}{named character vector}
+  \item{required}{character vector of required parameter names}
+  \item{optional}{named vector of optional parameter values}
+}
+%\details{}
+\value{
+  \code{readConfig} returns a named character vector of parameter
+  values.
+
+  \code{writeConfig} writes a named character vector to a file.
+
+  \code{setConfigDefaults} takes a named character vector returned by
+  \code{readConfig} and adds additional parameters in
+  \code{optional} with default values.
+  An error will result if a parameter in \code{required} is
+  missing from \code{config}.
+}
+\author{Stephanie Gogarten}
+%\seealso{}
+\examples{
+file <- tempfile()
+write.table(cbind(letters[1:10], 1:10), file=file, quote=FALSE,
+            row.names=FALSE, col.names=FALSE)
+config <- readConfig(file)
+
+required <- letters[1:5]
+optional <- setNames(11:15, letters[11:15])
+config <- setConfigDefaults(config, required, optional)
+
+writeConfig(config, file)
+
+unlink(file)
+}
