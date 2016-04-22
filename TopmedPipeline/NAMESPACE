@@ -1,1 +1,4 @@
-export(readConfig, writeConfig, setConfigDefaults)
+export(readConfig,
+       writeConfig,
+       setConfigDefaults,
+       getobj)
