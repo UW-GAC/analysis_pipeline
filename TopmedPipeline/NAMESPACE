@@ -1,4 +1,5 @@
 export(readConfig,
        writeConfig,
        setConfigDefaults,
-       getobj)
+       getobj,
+       countThreads)
