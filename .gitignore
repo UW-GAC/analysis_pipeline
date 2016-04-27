@@ -1,4 +1,5 @@
 ._*
+*.html
 .Rhistory
 TopmedPipeline.Rcheck
 TopmedPipeline_*.*.*.tar.gz
