@@ -1,0 +1,63 @@
+library(TopmedPipeline)
+library(Biobase)
+library(GENESIS)
+library(gdsfmt)
+sessionInfo()
+
+args <- commandArgs(trailingOnly=TRUE)
+config <- readConfig(args[1])
+
+required <- c("outcome",              
+              "pcrelate_file",
+              "pca_file",
+              "phenotype_file")
+optional <- c("binary"="FALSE",
+              "covars"=NA,
+              "n_pcs"=3,
+              "out_file"="null_model.RData",
+              "sample_include_file"=NA)
+config <- setConfigDefaults(config, required, optional)
+print(config)
+
+if (!is.na(config["sample_include_file"])) {
+    sample.id <- getobj(config["sample_include_file"])
+} else {
+    sample.id <- NULL
+}
+
+# load GRM for selected samples only
+pcr <- openfn.gds(config["pcrelate_file"])
+grm <- pcrelateMakeGRM(pcr, scan.include=sample.id)
+closefn.gds(pcr)
+
+# get PCs
+pca <- getobj(config["pca_file"])
+n_pcs <- as.integer(config["n_pcs"])
+pcs <- pca$vectors[,1:n_pcs]
+colnames(pcs) <- paste0("PC", 1:n_pcs)
+
+# get phenotypes
+annot <- getobj(config["phenotype_file"])
+dat <- cbind(pData(annot), pcs[as.character(annot$sample.id),])
+pData(annot) <- dat
+
+# outcome and covariates
+outcome <- config["outcome"]
+if (!is.na(config["covars"])) {
+    covars <- strsplit(config["covars"], " ", fixed=TRUE)[[1]]
+} else {
+    covars <- NULL
+}
+
+if (as.logical(config["binary"])) {
+    stopifnot(all(dat[[outcome]] %in% c(0,1)))
+    family <- binomial
+} else {
+    family <- gaussian
+}
+
+nullmod <- fitNullMM(annot, outcome=outcome, covars=covars,
+                     covMatList=grm, scan.include=sample.id,
+                     family=family)
+
+save(nullmod, file=config["out_file"])
