@@ -16,7 +16,20 @@ optional <- c("ld_r_threshold"=0.32,
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
-gds <- seqOpen(config["gds_file"])
+## is this an array job by chromosome?
+chr <- if (length(args) > 1) args[2] else NULL
+
+## gds file can have two parts split by chromosome identifier
+gdsfile <- config["gds_file"]
+outfile <- config["out_file"]
+if (!is.null(chr)) {
+    if (chr == 23) chr <- "X"
+    if (chr == 24) chr <- "Y"
+    gdsfile <- insertChromString(gdsfile, chr, "gds_file")
+    outfile <- insertChromString(outfile, chr, "out_file")
+}
+    
+gds <- seqOpen(gdsfile)
 
 if (!is.na(config["sample_include_file"])) {
     sample.id <- getobj(config["sample_include_file"])
@@ -41,6 +54,6 @@ snpset <- snpgdsLDpruning(gds, sample.id=sample.id, snp.id=variant.id, maf=maf,
                           num.thread=countThreads())
 
 pruned <- unlist(snpset, use.names=FALSE)
-save(pruned, file=config["out_file"])
+save(pruned, file=outfile)
 
 seqClose(gds)

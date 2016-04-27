@@ -1,5 +1,9 @@
+import(SeqArray)
+
 export(readConfig,
        writeConfig,
        setConfigDefaults,
        getobj,
+       insertChromString,
+       sequentialVariantIds,
        countThreads)

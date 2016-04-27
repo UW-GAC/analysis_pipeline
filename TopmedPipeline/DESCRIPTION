@@ -6,7 +6,7 @@ Description: Utilities for the TOPMed pipeline.
 Author: Stephanie Gogarten
 Maintainer: Stephanie Gogarten <sdmorris@uw.edu>
 Depends: 
-Imports: 
+Imports: SeqArray
 Suggests: 
 License: Artistic-2.0
 LazyLoad: yes
