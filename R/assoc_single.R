@@ -8,8 +8,10 @@ args <- commandArgs(trailingOnly=TRUE)
 config <- readConfig(args[1])
 
 required <- c("gds_file",
-              "null_model_file")
-optional <- c("maf_threshold"=0.01,
+              "null_model_file",
+              "phenotype_file")
+optional <- c("mac_threshold"=30, # takes precedence
+              "maf_threshold"=0.01,
               "out_file"="assoc_single.RData",
               "pass_only"=TRUE,
               "variant_include_file"=NA)
@@ -51,12 +53,21 @@ if (as.logical(config["pass_only"])) {
     seqResetFilter(gds, verbose=FALSE)
 }
 
+mac.min <- as.numeric(config["mac_threshold"])
 maf.min <- as.numeric(config["maf_threshold"])
-if (maf.min > 0) {
+if ((!is.na(mac.min) & mac.min > 1) |
+    (!is.na(maf.min) & maf.min > 0)) {
     seqSetFilter(gds, variant.id=variant.id, sample.id=sample.id, verbose=FALSE)
     ref.freq <- seqAlleleFreq(gds)
     maf <- pmin(ref.freq, 1-ref.freq)
-    variant.id <- variant.id[maf >= maf.min]
+    if (!is.na(mac.min)) {
+        maf.filt <- 2 * maf * (1-maf) * length(sample.id) >= mac.min
+        message(paste("Running on", sum(maf.filt), "variants with MAC >=", mac.min))
+    } else {
+        maf.filt <- maf >= maf.min
+        message(paste("Running on", sum(maf.filt), "variants with MAF >=", maf.min))
+    }
+    variant.id <- variant.id[maf.filt]
     seqResetFilter(gds, verbose=FALSE)
 }
 
