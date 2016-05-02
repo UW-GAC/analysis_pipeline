@@ -10,7 +10,8 @@ config <- readConfig(args[1])
 required <- c("gds_file",
               "ibd_file",
               "variant_include_file")
-optional <- c("n_pcs"=20,
+optional <- c("kinship_threshold"=0.04419417, # 2^(-9/2), 3rd degree
+              "n_pcs"=20,
               "out_file"="pca.RData",
               "sample_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
@@ -30,7 +31,8 @@ if (!is.na(config["sample_include_file"])) {
 variant.id <- getobj(config["variant_include_file"])
 
 # divide into related and unrelated set
-part <- pcairPartition(kinMat=kinship, divMat=kinship)
+kin_thresh <- as.numeric(config["kinship_threshold"])
+part <- pcairPartition(kinMat=kinship, divMat=kinship, kin.thresh=kin_thresh)
 
 # number of PCs to return
 n_pcs <- min(as.integer(config["n_pcs"]), length(part$unrels))

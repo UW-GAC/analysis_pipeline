@@ -9,7 +9,8 @@ config <- readConfig(args[1])
 required <- c("gds_file",
               "ibd_file",
               "variant_include_file")
-optional <- c("n_pcs"=20,
+optional <- c("kinship_threshold"=0.04419417, # 2^(-9/2), 3rd degree
+              "n_pcs"=20,
               "out_file"="pcair.RData",
               "sample_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
@@ -30,9 +31,11 @@ ibd <- getobj(config["ibd_file"])
 kinship <- ibd$kinship
 colnames(kinship) <- rownames(kinship) <- ibd$sample.id
 
+kin_thresh <- as.numeric(config["kinship_threshold"])
 n_pcs <- min(as.integer(config["n_pcs"]), length(ibd$sample.id))
 
-pca <- pcair(seqData, v=n_pcs, kinMat=kinship, divMat=kinship,
+pca <- pcair(seqData, v=n_pcs, kin.thresh=kin_thresh,
+             kinMat=kinship, divMat=kinship,
              scan.include=sample.id, snp.include=variant.id)
 
 save(pca, file=config["out_file"])
