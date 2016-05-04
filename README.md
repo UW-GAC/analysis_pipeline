@@ -44,3 +44,8 @@ Nearly all scripts require a GDS file in SeqArray format. Phenotype files should
 
 1. null_model.R
 2. assoc_single.R
+
+### Aggregate
+
+1. null_model.R
+2. assoc_window.R
