@@ -10,9 +10,9 @@ getobj <- function(Rdata) {
 }
 
 
-insertChromString <- function(x, chr, name) {
-    if (!(grepl(" ", x, fixed=TRUE))) {
-        stop(paste(name, "must have a blank space to insert chromosome number"))
+insertChromString <- function(x, chr, err=NULL) {
+    if (!is.null(err) & !(grepl(" ", x, fixed=TRUE))) {
+        stop(paste(err, "must have a blank space to insert chromosome number"))
     }
     sub(" ", chr, x, fixed=TRUE)
 }

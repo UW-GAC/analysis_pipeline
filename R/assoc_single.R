@@ -27,11 +27,11 @@ outfile <- config["out_file"]
 if (!is.null(chr)) {
     if (chr == 23) chr <- "X"
     if (chr == 24) chr <- "Y"
-    gdsfile <- insertChromString(gdsfile, chr, "gds_file")
-    outfile <- insertChromString(outfile, chr, "out_file")
+    gdsfile <- insertChromString(gdsfile, chr)
+    outfile <- insertChromString(outfile, chr, err="out_file")
 }
     
-gds <- seqOpen(config["gds_file"])
+gds <- seqOpen(gdsfile)
 
 # get null model
 nullModel <- getobj(config["null_model_file"])
@@ -43,6 +43,14 @@ if (!is.na(config["variant_include_file"])) {
     variant.id <- getobj(config["variant_include_file"])
     } else {
     variant.id <- seqGetData(gds, "variant.id")
+}
+
+if (!is.null(chr)) {
+    chrom <- seqGetData(gds, "chromosome")
+    seqSetFilter(gds, variant.sel=(chrom == chr), verbose=FALSE)
+    var.chr <- seqGetData(gds, "variant.id")
+    variant.id <- intersect(variant.id, var.chr)
+    seqResetFilter(gds, verbose=FALSE)
 }
 
 if (as.logical(config["pass_only"])) {
@@ -80,8 +88,9 @@ seqData <- SeqVarData(gds, sampleData=annot)
 
 test <- if (nullModel$family$family == "gaussian") "Wald" else "Score"
 
-assoc <- assocTestMM(seqData, nullModel, test=test, snp.include=variant.id)
+assoc <- assocTestMM(seqData, nullModel, test=test,
+                     snp.include=variant.id)
 
-save(assoc, file=config["out_file"])
+save(assoc, file=outfile)
 
 seqClose(seqData)

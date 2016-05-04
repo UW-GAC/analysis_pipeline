@@ -25,8 +25,8 @@ outfile <- config["out_file"]
 if (!is.null(chr)) {
     if (chr == 23) chr <- "X"
     if (chr == 24) chr <- "Y"
-    gdsfile <- insertChromString(gdsfile, chr, "gds_file")
-    outfile <- insertChromString(outfile, chr, "out_file")
+    gdsfile <- insertChromString(gdsfile, chr)
+    outfile <- insertChromString(outfile, chr, err="out_file")
 }
     
 gds <- seqOpen(gdsfile)
@@ -43,6 +43,14 @@ if (!is.na(config["variant_include_file"])) {
     filt <- seqGetData(gds, "annotation/filter") == "PASS"
     snv <- isSNV(gds, biallelic=TRUE)
     variant.id <- seqGetData(gds, "variant.id")[filt & snv]
+}
+
+if (!is.null(chr)) {
+    chrom <- seqGetData(gds, "chromosome")
+    seqSetFilter(gds, variant.sel=(chrom == chr), verbose=FALSE)
+    var.chr <- seqGetData(gds, "variant.id")
+    variant.id <- intersect(variant.id, var.chr)
+    seqResetFilter(gds, verbose=FALSE)
 }
 
 maf <- as.numeric(config["maf_threshold"])
