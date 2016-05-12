@@ -51,7 +51,7 @@ samp.load <- snpgdsPCASampLoading(loadobj=snp.load, gdsobj=gds, sample.id=part$r
 # combine unrelated and related PCs and order as in GDS file
 eigenvect <- rbind(pca.unrel$eigenvect, samp.load$eigenvect)
 rownames(eigenvect) <- c(pca.unrel$sample.id, samp.load$sample.id)
-seqSetFilter(seqData, sample.id=rownames(eigenvect))
+seqSetFilter(gds, sample.id=rownames(eigenvect))
 sample.id <- seqGetData(gds, "sample.id")
 samp.ord <- match(sample.id, rownames(eigenvect))
 eigenvect <- eigenvect[samp.ord,]
