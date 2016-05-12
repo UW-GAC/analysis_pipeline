@@ -7,13 +7,11 @@
 source("https://bioconductor.org/biocLite.R")
 biocLite(c("SeqVarTools", "SNPRelate", "GENESIS"))
 ```
-   
 2. Install updated GENESIS from github
 ```{r}
 library(devtools)
 install_github("smgogarten/GENESIS")
 ```
-
 3. Install TopmedPipeline R package
 ```
 R CMD INSTALL TopmedPipeline
