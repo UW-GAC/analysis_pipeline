@@ -34,8 +34,9 @@ colnames(kinship) <- rownames(kinship) <- ibd$sample.id
 kin_thresh <- as.numeric(config["kinship_threshold"])
 n_pcs <- min(as.integer(config["n_pcs"]), length(ibd$sample.id))
 
-pca <- pcair(seqData, v=n_pcs, kin.thresh=kin_thresh,
-             kinMat=kinship, divMat=kinship,
+pca <- pcair(seqData, v=n_pcs,
+             kinMat=kinship, kin.thresh=kin_thresh,
+             divMat=kinship, div.thresh=-kin_thresh,
              scan.include=sample.id, snp.include=variant.id)
 
 save(pca, file=config["out_file"])
