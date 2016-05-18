@@ -29,6 +29,21 @@ gds_file "1KG_phase1_release_v3_chr .gds"
 
 Nearly all scripts require a GDS file in SeqArray format. Phenotype files should be an AnnotatedDataFrame saved in an RData file. See `?AnnotatedDataFrame` or the SeqVarTools documentation for details. Example files are provided in `testdata`.
 
+## Conversion to GDS
+
+1. vcf2gds.R
+2. merge_gds.R
+3. unique_variant_ids.R
+
+Step 1 converts VCF files (one per chromosome) into GDS files,
+discarding non-genotype FORMAT fields. Step 2 combines these files
+into a single GDS file, which is needed for whole-genome analyses such
+as relatedness and population structure. The single-chromosome files
+are still preferred for analyses run in parallel by chromosome. Step 3
+ensures that each variant has a unique integer ID across the genome,
+so the variant.id field in the per-chromosome files and the combined
+file are consistent.
+
 ## Relatedness and Population structure
 
 1. ld_pruning.R
