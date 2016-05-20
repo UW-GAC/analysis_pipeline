@@ -22,11 +22,13 @@ chr <- if (length(args) > 1) args[2] else NULL
 ## gds file can have two parts split by chromosome identifier
 gdsfile <- config["gds_file"]
 outfile <- config["out_file"]
+varfile <- config["variant_include_file"]
 if (!is.null(chr)) {
     if (chr == 23) chr <- "X"
     if (chr == 24) chr <- "Y"
     gdsfile <- insertChromString(gdsfile, chr)
     outfile <- insertChromString(outfile, chr, err="out_file")
+    varfile <- insertChromString(varfile, chr)
 }
     
 gds <- seqOpen(gdsfile)
@@ -37,8 +39,8 @@ if (!is.na(config["sample_include_file"])) {
     sample.id <- NULL
 }
 
-if (!is.na(config["variant_include_file"])) {
-    variant.id <- getobj(config["variant_include_file"])
+if (!is.na(varfile)) {
+    variant.id <- getobj(varfile)
 } else {
     filt <- seqGetData(gds, "annotation/filter") == "PASS"
     snv <- isSNV(gds, biallelic=TRUE)
