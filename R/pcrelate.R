@@ -12,6 +12,7 @@ required <- c("gds_file",
               "variant_include_file")
 optional <- c("n_pcs"=3,
               "out_prefix"="pcrelate",
+              "sample_block_size"=10000,
               "sample_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -35,6 +36,7 @@ pcrelate(seqData,
          pcMat=pca$vectors[,1:n_pcs],
          training.set=pca$unrels,
          scan.include=sample.id, snp.include=variant.id,
-         write.to.gds=TRUE, gds.prefix=config["out_prefix"])
+         write.to.gds=TRUE, gds.prefix=config["out_prefix"],
+         scan.block.size=as.integer(config["sample_block_size"]))
 
 seqClose(seqData)
