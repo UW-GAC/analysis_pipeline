@@ -48,7 +48,7 @@ file are consistent.
 
 1. ld_pruning.R
 2. ibd_king.R
-3. pcair.R (or pca_snprelate.R)
+3. pcair.R
 4. pcrelate.R
 
 ## Association testing
