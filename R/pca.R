@@ -1,10 +1,13 @@
+library(argparser)
 library(TopmedPipeline)
 library(SeqVarTools)
 library(SNPRelate)
 sessionInfo()
 
-args <- commandArgs(trailingOnly=TRUE)
-config <- readConfig(args[1])
+argp <- arg_parser("PCA (assumes unrelated samples)")
+argp <- add_argument(argp, "config", help="path to config file")
+argv <- parse_args(argp)
+config <- readConfig(argv$config)
 
 required <- c("gds_file",
               "variant_include_file")
@@ -24,7 +27,6 @@ if (!is.na(config["sample_include_file"])) {
 
 variant.id <- getobj(config["variant_include_file"])
 
-# run PCA on unrelated set
 n_pcs <- min(as.integer(config["n_pcs"]), length(sample.id))
 nt <- countThreads()
 pca <- snpgdsPCA(gds, sample.id=sample.id, snp.id=variant.id,

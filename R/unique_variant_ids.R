@@ -1,9 +1,12 @@
+library(argparser)
 library(TopmedPipeline)
 library(SeqArray)
 sessionInfo()
 
-args <- commandArgs(trailingOnly=TRUE)
-config <- readConfig(args[1])
+argp <- arg_parser("Assign unique variant ids to per-chromosome GDS files")
+argp <- add_argument(argp, "config", help="path to config file")
+argv <- parse_args(argp)
+config <- readConfig(argv$config)
 
 required <- c("in_gds_file", "out_gds_file")
 optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X")

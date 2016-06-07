@@ -1,11 +1,14 @@
+library(argparser)
 library(TopmedPipeline)
 library(Biobase)
 library(GENESIS)
 library(gdsfmt)
 sessionInfo()
 
-args <- commandArgs(trailingOnly=TRUE)
-config <- readConfig(args[1])
+argp <- arg_parser("Null model for association tests")
+argp <- add_argument(argp, "config", help="path to config file")
+argv <- parse_args(argp)
+config <- readConfig(argv$config)
 
 required <- c("outcome",              
               "pcrelate_file",

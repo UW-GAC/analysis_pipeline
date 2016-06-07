@@ -1,11 +1,16 @@
+library(argparser)
 library(TopmedPipeline)
 library(SeqVarTools)
 library(Biobase)
 library(GENESIS)
 sessionInfo()
 
-args <- commandArgs(trailingOnly=TRUE)
-config <- readConfig(args[1])
+argp <- arg_parser("Association test - single variant")
+argp <- add_argument(argp, "config", help="path to config file")
+argp <- add_argument(argp, "--chromosome", help="chromosome number (1-24)", type="integer")
+argv <- parse_args(argp)
+config <- readConfig(argv$config)
+chr <- argv$chromosome
 
 required <- c("gds_file",
               "null_model_file",
@@ -18,13 +23,10 @@ optional <- c("mac_threshold"=30, # takes precedence
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
-## is this an array job by chromosome?
-chr <- if (length(args) > 1) args[2] else NULL
-
 ## gds file can have two parts split by chromosome identifier
 gdsfile <- config["gds_file"]
 outfile <- config["out_file"]
-if (!is.null(chr)) {
+if (!is.na(chr)) {
     if (chr == 23) chr <- "X"
     if (chr == 24) chr <- "Y"
     gdsfile <- insertChromString(gdsfile, chr)
@@ -45,7 +47,7 @@ if (!is.na(config["variant_include_file"])) {
     variant.id <- seqGetData(gds, "variant.id")
 }
 
-if (!is.null(chr)) {
+if (!is.na(chr)) {
     chrom <- seqGetData(gds, "chromosome")
     seqSetFilter(gds, variant.sel=(chrom == chr), verbose=FALSE)
     var.chr <- seqGetData(gds, "variant.id")

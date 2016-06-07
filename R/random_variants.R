@@ -1,10 +1,14 @@
+library(argparser)
 library(TopmedPipeline)
 library(SeqVarTools)
 library(SNPRelate)
 sessionInfo()
 
-args <- commandArgs(trailingOnly=TRUE)
-config <- readConfig(args[1])
+argp <- arg_parser("Select random set of variants above a MAF threshold")
+argp <- add_argument(argp, "config", help="path to config file")
+argv <- parse_args(argp)
+config <- readConfig(argv$config)
+chr <- argv$chromosome
 
 required <- c("gds_file")
 optional <- c("maf_threshold"=0.05,
@@ -12,9 +16,6 @@ optional <- c("maf_threshold"=0.05,
               "out_file"="random_variants.RData")
 config <- setConfigDefaults(config, required, optional)
 print(config)
-
-## is this an array job by chromosome?
-chr <- if (length(args) > 1) args[2] else NULL
 
 ## gds file can have two parts split by chromosome identifier
 gdsfile <- config["gds_file"]

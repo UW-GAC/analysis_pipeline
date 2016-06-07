@@ -1,10 +1,13 @@
+library(argparser)
 library(TopmedPipeline)
 library(SeqVarTools)
 library(SNPRelate)
 sessionInfo()
 
-args <- commandArgs(trailingOnly=TRUE)
-config <- readConfig(args[1])
+argp <- arg_parser("IBD with KING-robust")
+argp <- add_argument(argp, "config", help="path to config file")
+argv <- parse_args(argp)
+config <- readConfig(argv$config)
 
 required <- c("gds_file",
               "variant_include_file")
