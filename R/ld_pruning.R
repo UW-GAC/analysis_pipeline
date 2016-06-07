@@ -1,10 +1,15 @@
+library(argparser)
 library(TopmedPipeline)
 library(SeqVarTools)
 library(SNPRelate)
 sessionInfo()
 
-args <- commandArgs(trailingOnly=TRUE)
-config <- readConfig(args[1])
+argp <- arg_parser("LD pruning")
+argp <- add_argument(argp, "config", help="path to config file")
+argp <- add_argument(argp, "--chromosome", help="chromosome number (1-24)", type="integer")
+argv <- parse_args(argp)
+config <- readConfig(argv$config)
+chr <- argv$chromosome
 
 required <- c("gds_file")
 optional <- c("ld_r_threshold"=0.32,
@@ -16,16 +21,15 @@ optional <- c("ld_r_threshold"=0.32,
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
-## is this an array job by chromosome?
-chr <- if (length(args) > 1) args[2] else NULL
-
 ## gds file can have two parts split by chromosome identifier
 gdsfile <- config["gds_file"]
 outfile <- config["out_file"]
 varfile <- config["variant_include_file"]
-if (!is.null(chr)) {
+if (!is.na(chr)) {
     if (chr == 23) chr <- "X"
     if (chr == 24) chr <- "Y"
+    message("Running on chromosome ", chr)
+    bychrfile <- grepl(" ", gdsfile) # do we have one file per chromosome?
     gdsfile <- insertChromString(gdsfile, chr)
     outfile <- insertChromString(outfile, chr, err="out_file")
     varfile <- insertChromString(varfile, chr)
@@ -35,8 +39,10 @@ gds <- seqOpen(gdsfile)
 
 if (!is.na(config["sample_include_file"])) {
     sample.id <- getobj(config["sample_include_file"])
+    message("Using ", length(sample.id), " samples")
 } else {
     sample.id <- NULL
+    message("Using all samples")
 }
 
 if (!is.na(varfile)) {
@@ -47,13 +53,15 @@ if (!is.na(varfile)) {
     variant.id <- seqGetData(gds, "variant.id")[filt & snv]
 }
 
-if (!is.null(chr)) {
+## if we have a chromosome indicator but only one gds file, select chromosome
+if (!is.na(chr) & !bychrfile) {
     chrom <- seqGetData(gds, "chromosome")
     seqSetFilter(gds, variant.sel=(chrom == chr), verbose=FALSE)
     var.chr <- seqGetData(gds, "variant.id")
     variant.id <- intersect(variant.id, var.chr)
     seqResetFilter(gds, verbose=FALSE)
 }
+message("Using ", length(variant.id), " variants")
 
 maf <- as.numeric(config["maf_threshold"])
 r <- as.numeric(config["ld_r_threshold"])
