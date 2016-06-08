@@ -10,9 +10,10 @@ from copy import deepcopy
 
 usage = """%prog [options] config
 
-Identity by Descent with the following steps:
-1) Select SNPs with LD pruning
-2) IBD calculations with KING-robust
+PCA with the following steps:
+1) Find unrelated sample set
+2) Select SNPs with LD pruning using unrelated samples
+3) PCA (using unrelated set, then project relatives)
 """
 
 parser = OptionParser(usage=usage)
@@ -51,16 +52,32 @@ jobid = dict()
 configdict = TopmedPipeline.readConfig(configfile)
 
 
+job = "find_unrelated"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+config = deepcopy(configdict)
+config["out_related_file"] = configdict["out_prefix"] + "_related.RData"
+config["out_unrelated_file"] = configdict["out_prefix"] + "_unrelated.RData"
+configfile = configdict["out_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
+
+jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], queue=qname, email=email, printOnly=printOnly)
+
+
 job = "ld_pruning"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
+config["sample_include_file"] = configdict["out_prefix"] + "_unrelated.RData"
 config["out_file"] = configdict["out_prefix"] + "_pruned_variants_chr .RData"
 configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], arrayRange=chromosomes, queue=qname, email=email, printOnly=printOnly)
+holdid = [jobid["find_unrelated"]]
+
+jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=qname, email=email, printOnly=printOnly)
 
 
 job = "combine_variants"
@@ -82,13 +99,15 @@ holdid = [jobid["ld_pruning"].split(".")[0]]
 jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=qname, email=email, printOnly=printOnly)
 
 
-job = "ibd_king"
+job = "pca_byrel"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
+config["related_file"] = configdict["out_prefix"] + "_related.RData"
+config["unrelated_file"] = configdict["out_prefix"] + "_unrelated.RData"
 config["variant_include_file"] = configdict["out_prefix"] + "_pruned_variants.RData"
-config["out_file"] = configdict["out_prefix"] + "_ibd_king.RData"
+config["out_file"] = configdict["out_prefix"] + "_pcair.RData"
 configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
