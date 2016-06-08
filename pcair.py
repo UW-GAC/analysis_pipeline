@@ -81,10 +81,7 @@ job = "combine_variants"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = dict()
-chromRange = [int(x) for x in chromosomes.split("-")]
-start = chromRange[0]
-end = start if len(chromRange) == 1 else chromRange[1]
-config["chromosomes"] = " ".join([str(x) for x in range(start, end + 1)])
+config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
 config["in_file"] = configdict["out_prefix"] + "_pruned_variants_chr .RData"
 config["out_file"] = configdict["out_prefix"] + "_pruned_variants.RData"
 configfile = configdict["out_prefix"] + "_" + job + ".config"

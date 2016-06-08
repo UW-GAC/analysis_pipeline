@@ -53,6 +53,17 @@ def writeConfig(config, file):
 
 
 
+def parseChromosomes(chromosomes):
+    chromRange = [int(x) for x in chromosomes.split("-")]
+    start = chromRange[0]
+    end = start if len(chromRange) == 1 else chromRange[1]
+    chromString = " ".join([str(x) for x in range(start, end + 1)])
+    chromString = chromString.replace("23", "X")
+    chromString = chromString.replace("24", "Y")
+    return chromString
+
+
+
 def submitJob(job, cmd, args, queue, holdid=None, arrayRange=None, requestCores=None,
               email=None, qsubOptions="", verbose=True, printOnly=False):
     """Sumbit a pipeline job.
