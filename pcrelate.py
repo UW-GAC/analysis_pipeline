@@ -5,34 +5,30 @@
 import sys
 import os
 import subprocess
-from optparse import OptionParser
+from argparse import ArgumentParser
 from copy import deepcopy
 
-usage = """%prog [options] config
-
+description = """
 PC-Relate
 """
+parser = ArgumentParser(description=description)
+parser.add_argument("configfile", help="configuration file")
+parser.add_argument("-p", "--pipeline", 
+                    default="/projects/geneva/gcc-fs2/GCC_Code/analysis_pipeline",
+                    help="pipeline source directory")
+parser.add_argument("-q", "--queue", default="olga.q", 
+                    help="cluster queue name [default %(default)s]")
+parser.add_argument("-e", "--email", default=None,
+                    help="email address for job reporting")
+parser.add_argument("--printOnly", action="store_true", default=False,
+                    help="print qsub commands without submitting")
+args = parser.parse_args()
 
-parser = OptionParser(usage=usage)
-parser.add_option("-p", "--pipeline", dest="pipeline",
-                  default="/projects/geneva/gcc-fs2/GCC_Code/analysis_pipeline",
-                  help="pipeline source directory")
-parser.add_option("-q", "--queue", dest="qname", default="olga.q", 
-                  help="cluster queue name [default %default]")
-parser.add_option("-e", "--email", dest="email", default=None,
-                  help="email address for job reporting")
-parser.add_option("--printOnly", dest="printOnly", action="store_true", default=False,
-                  help="print qsub commands without submitting")
-(options, args) = parser.parse_args()
-
-if len(args) != 1:
-    parser.error("incorrect number of arguments")
-
-configfile = args[0]
-pipeline = options.pipeline
-qname = options.qname
-email = options.email
-printOnly = options.printOnly
+configfile = args.configfile
+pipeline = args.pipeline
+queue = args.queue
+email = args.email
+printOnly = args.printOnly
 
 sys.path.append(pipeline)
 import TopmedPipeline
@@ -47,4 +43,4 @@ job = "pcrelate"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], queue=qname, email=email, printOnly=printOnly)
+jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], queue=queue, email=email, printOnly=printOnly)
