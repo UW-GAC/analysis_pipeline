@@ -29,19 +29,22 @@ if (!is.na(config["sample_include_file"])) {
     rels <- intersect(rels, sample.id)
     unrels <- intersect(unrels, sample.id)
 }
+message("Using ", length(unrels), " unrelated and ", length(rels), " related samples")
 
 variant.id <- getobj(config["variant_include_file"])
-length(variant.id)
+message("Using ", length(variant.id), " variants")
 
 # number of PCs to return
 n_pcs <- min(as.integer(config["n_pcs"]), length(unrels))
 
 # run PCA on unrelated set
+message("PCA on unrelated set")
 nt <- countThreads()
 pca.unrel <- snpgdsPCA(gds, sample.id=unrels, snp.id=variant.id,
                        eigen.cnt=n_pcs, num.thread=nt)
 
 # project values for relatives
+message("PCA projection for related set")
 snp.load <- snpgdsPCASNPLoading(pcaobj=pca.unrel, gdsobj=gds, num.thread=nt)
 samp.load <- snpgdsPCASampLoading(loadobj=snp.load, gdsobj=gds, sample.id=rels,
                                   num.thread=nt)
@@ -49,7 +52,7 @@ samp.load <- snpgdsPCASampLoading(loadobj=snp.load, gdsobj=gds, sample.id=rels,
 # combine unrelated and related PCs and order as in GDS file
 eigenvect <- rbind(pca.unrel$eigenvect, samp.load$eigenvect)
 rownames(eigenvect) <- c(pca.unrel$sample.id, samp.load$sample.id)
-seqSetFilter(gds, sample.id=rownames(eigenvect))
+seqSetFilter(gds, sample.id=rownames(eigenvect), verbose=FALSE)
 sample.id <- seqGetData(gds, "sample.id")
 samp.ord <- match(sample.id, rownames(eigenvect))
 eigenvect <- eigenvect[samp.ord,]

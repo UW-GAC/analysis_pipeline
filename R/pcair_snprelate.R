@@ -11,7 +11,7 @@ argv <- parse_args(argp)
 config <- readConfig(argv$config)
 
 required <- c("gds_file",
-              "ibd_file",
+              "king_file",
               "variant_include_file")
 optional <- c("kinship_threshold"=0.04419417, # 2^(-9/2), 3rd degree
               "n_pcs"=20,
@@ -22,9 +22,9 @@ print(config)
 
 gds <- seqOpen(config["gds_file"])
 
-ibd <- getobj(config["ibd_file"])
-kinship <- ibd$kinship
-colnames(kinship) <- rownames(kinship) <- ibd$sample.id
+king <- getobj(config["king_file"])
+kinship <- king$kinship
+colnames(kinship) <- rownames(kinship) <- king$sample.id
 
 if (!is.na(config["sample_include_file"])) {
     sample.id <- as.character(getobj(config["sample_include_file"]))

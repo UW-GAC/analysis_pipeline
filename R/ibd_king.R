@@ -20,11 +20,14 @@ gds <- seqOpen(config["gds_file"])
 
 if (!is.na(config["sample_include_file"])) {
     sample.id <- getobj(config["sample_include_file"])
+    message("Using ", length(sample.id), " samples")
 } else {
     sample.id <- NULL
+    message("Using all samples")
 }
 
 variant.id <- getobj(config["variant_include_file"])
+message("Using ", length(variant.id), " variants")
 
 ibd <- snpgdsIBDKING(gds, sample.id=sample.id, snp.id=variant.id,
                      num.thread=countThreads())

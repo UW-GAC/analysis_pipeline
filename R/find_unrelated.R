@@ -9,7 +9,7 @@ argp <- add_argument(argp, "config", help="path to config file")
 argv <- parse_args(argp)
 config <- readConfig(argv$config)
 
-required <- c("ibd_file")
+required <- c("king_file")
 optional <- c("kinship_method"="king",
               "kinship_threshold"=0.04419417, # 2^(-9/2), 3rd degree
               "n_pcs"=20,
@@ -20,15 +20,18 @@ optional <- c("kinship_method"="king",
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
-ibd <- getobj(config["ibd_file"])
-divMat <- ibd$kinship
-colnames(divMat) <- rownames(divMat) <- ibd$sample.id
+## always use king estimates for ancestry divergence
+king <- getobj(config["king_file"])
+divMat <- king$kinship
+colnames(divMat) <- rownames(divMat) <- king$sample.id
 
 if (!is.na(config["sample_include_file"])) {
     sample.id <- as.character(getobj(config["sample_include_file"]))
     divMat <- divMat[sample.id, sample.id]
 }
+message("Using ", nrow(divMat), " samples")
 
+## select type of kinship estimates to use (king or pcrelate)
 kin.type <- tolower(config["kinship_method"])
 if (kin.type == "king") {
     kinMat <- divMat
@@ -39,6 +42,7 @@ if (kin.type == "king") {
 } else {
     stop("kinship method should be 'king' or 'pcrelate'")
 }
+message("Using ", kin.type, " kinship estimates")
 
 # divide into related and unrelated set
 kin_thresh <- as.numeric(config["kinship_threshold"])
@@ -49,4 +53,4 @@ rels <- part$rels
 unrels <- part$unrels
 save(rels, file=config["out_related_file"])
 save(unrels, file=config["out_unrelated_file"])
-
+message("Found ", length(unrels), " unrelated and ", length(rels), " related samples")

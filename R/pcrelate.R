@@ -25,11 +25,14 @@ seqData <- SeqVarData(gds)
 
 if (!is.na(config["sample_include_file"])) {
     sample.id <- getobj(config["sample_include_file"])
+    message("Using ", length(sample.id), " samples")
 } else {
     sample.id <- NULL
+    message("Using all samples")
 }
 
 variant.id <- getobj(config["variant_include_file"])
+message("Using ", length(variant.id), " variants")
 
 pca <- getobj(config["pca_file"])
 

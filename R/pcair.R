@@ -11,7 +11,7 @@ argv <- parse_args(argp)
 config <- readConfig(argv$config)
 
 required <- c("gds_file",
-              "ibd_file",
+              "king_file",
               "variant_include_file")
 optional <- c("kinship_method"="king",
               "kinship_threshold"=0.04419417, # 2^(-9/2), 3rd degree
@@ -27,15 +27,18 @@ seqData <- SeqVarData(gds)
 
 if (!is.na(config["sample_include_file"])) {
     sample.id <- getobj(config["sample_include_file"])
+    message("Using ", length(sample.id), " samples")
 } else {
     sample.id <- NULL
+    message("Using all samples")
 }
 
 variant.id <- getobj(config["variant_include_file"])
+message("Using ", length(variant.id), " variants")
 
-ibd <- getobj(config["ibd_file"])
-divMat <- ibd$kinship
-colnames(divMat) <- rownames(divMat) <- ibd$sample.id
+king <- getobj(config["king_file"])
+divMat <- king$kinship
+colnames(divMat) <- rownames(divMat) <- king$sample.id
 
 kin.type <- tolower(config["kinship_method"])
 if (kin.type == "king") {
@@ -47,9 +50,10 @@ if (kin.type == "king") {
 } else {
     stop("kinship method should be 'king' or 'pcrelate'")
 }
+message("Using ", kin.type, " kinship estimates")
 
 kin_thresh <- as.numeric(config["kinship_threshold"])
-n_pcs <- min(as.integer(config["n_pcs"]), length(ibd$sample.id))
+n_pcs <- min(as.integer(config["n_pcs"]), length(king$sample.id))
 
 pca <- pcair(seqData, v=n_pcs,
              kinMat=kinMat, kin.thresh=kin_thresh,
