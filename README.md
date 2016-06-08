@@ -29,11 +29,22 @@ gds_file "1KG_phase1_release_v3_chr .gds"
 
 Nearly all scripts require a GDS file in SeqArray format. Phenotype files should be an AnnotatedDataFrame saved in an RData file. See `?AnnotatedDataFrame` or the SeqVarTools documentation for details. Example files are provided in `testdata`.
 
+Python scripts are provided to run multi-step analyses on a compute
+cluster or cloud environment. The `submitJob` function in `TopmedPipeline.py` is written
+for a Sun Grid Engine (SGE) cluster, but may be modified for other
+environments. These scripts require a config argument `out_prefix` in
+addition to the arguments for each R script called. Some input and output
+file name parameters are overridden by the scripts in order to link
+jobs together.
+
+
 ## Conversion to GDS
 
-1. vcf2gds.R
-2. merge_gds.R
-3. unique_variant_ids.R
+`vcf2gds.py`
+
+1. `vcf2gds.R`
+2. `merge_gds.R`
+3. `unique_variant_ids.R`
 
 Step 1 converts VCF files (one per chromosome) into GDS files,
 discarding non-genotype FORMAT fields. Step 2 combines these files
@@ -44,21 +55,39 @@ ensures that each variant has a unique integer ID across the genome,
 so the variant.id field in the per-chromosome files and the combined
 file are consistent.
 
+
 ## Relatedness and Population structure
 
-1. ld_pruning.R
-2. ibd_king.R
-3. pcair.R
-4. pcrelate.R
+1. [KING-robust](http://www.ncbi.nlm.nih.gov/pubmed/20926424) to get
+initial kinship estimates  
+    `king.py`
+    1. `ld_pruning.R`
+    2. `combine_variants.R`
+    3. `ibd_king.R`
+2. [PC-AiR](http://www.ncbi.nlm.nih.gov/pubmed/25810074) to select an
+informative set of unrelated samples, do PCA on unrelated, project
+into relatives  
+    `pcair.py`
+    1. `find_unrelated.R`
+    2. `ld_pruning.R`
+    3. `combine_variants.R`
+    4. `pca_byrel.R`
+3. [PC-Relate](http://www.ncbi.nlm.nih.gov/pubmed/26748516) to
+estimate kinship coefficients adjusted for population structure and
+admixture using PCs  
+    `pcrelate.py`
+    1. `pcrelate.R`
+4. Repeat steps 2-3, using new kinship estimates for PC-AiR
+
 
 ## Association testing
 
 ### Single-variant
 
-1. null_model.R
-2. assoc_single.R
+1. `null_model.R`
+2. `assoc_single.R`
 
 ### Aggregate
 
-1. null_model.R
-2. assoc_window.R
+1. `null_model.R`
+2. `assoc_window.R`
