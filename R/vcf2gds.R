@@ -11,7 +11,7 @@ config <- readConfig(argv$config)
 chr <- argv$chromosome
 
 required <- c("vcf_file", "gds_file")
-optional <- c()
+optional <- c(format="GT")
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -25,12 +25,14 @@ if (!is.na(chr)) {
     gdsfile <- insertChromString(gdsfile, chr, "gds_file")
 }
 
+## pick format fields to import
+fmt.import <- strsplit(config["format"], " ", fixed=TRUE)[[1]]
+
 ## write to the scratch disk of each node
 gdsfile.tmp <- tempfile()
 message("gds temporarily located at ", gdsfile.tmp)
 
-## import genotype only
-seqVCF2GDS(vcffile, gdsfile.tmp, fmt.import="GT", parallel=countThreads())
+seqVCF2GDS(vcffile, gdsfile.tmp, fmt.import=fmt.import, parallel=countThreads())
 
 ## copy it
 file.copy(gdsfile.tmp, gdsfile)
