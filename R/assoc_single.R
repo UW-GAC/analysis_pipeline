@@ -29,7 +29,7 @@ outfile <- config["out_file"]
 if (!is.na(chr)) {
     if (chr == 23) chr <- "X"
     if (chr == 24) chr <- "Y"
-    gdsfile <- insertChromString(gdsfile, chr)
+    gdsfile <- insertChromString(gdsfile, chr, err="gds_file")
     outfile <- insertChromString(outfile, chr, err="out_file")
 }
     
@@ -45,14 +45,6 @@ if (!is.na(config["variant_include_file"])) {
     variant.id <- getobj(config["variant_include_file"])
     } else {
     variant.id <- seqGetData(gds, "variant.id")
-}
-
-if (!is.na(chr)) {
-    chrom <- seqGetData(gds, "chromosome")
-    seqSetFilter(gds, variant.sel=(chrom == chr), verbose=FALSE)
-    var.chr <- seqGetData(gds, "variant.id")
-    variant.id <- intersect(variant.id, var.chr)
-    seqResetFilter(gds, verbose=FALSE)
 }
 
 if (as.logical(config["pass_only"])) {
