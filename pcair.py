@@ -1,6 +1,6 @@
 #! /usr/local/bin/python2.7
 
-"""Identity By Descent"""
+"""PC-AiR"""
 
 import sys
 import os
