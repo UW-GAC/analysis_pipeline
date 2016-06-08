@@ -64,7 +64,7 @@ chromRange = [int(x) for x in chromosomes.split("-")]
 start = chromRange[0]
 end = start if len(chromRange) == 1 else chromRange[1]
 configdict["chromosomes"] = " ".join([str(x) for x in range(start, end + 1)])
-configfile = job + ".config"
+configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(configdict, configfile)
 
 holdid = [jobid["vcf2gds"].split(".")[0]]
