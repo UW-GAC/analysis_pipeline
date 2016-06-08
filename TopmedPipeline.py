@@ -1,7 +1,6 @@
 """Utility functions for TOPMed pipeline"""
 
 import csv
-import sys
 import subprocess
 
 
