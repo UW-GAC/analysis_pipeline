@@ -84,10 +84,14 @@ admixture using PCs
 
 ### Single-variant
 
+`assoc.py single` 
+
 1. `null_model.R`
 2. `assoc_single.R`
 
 ### Aggregate
+
+`assoc.py window` 
 
 1. `null_model.R`
 2. `assoc_window.R`
