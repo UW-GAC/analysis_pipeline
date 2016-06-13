@@ -50,17 +50,19 @@ sample.id <- nullModel$scanID
 
 if (!is.na(config["variant_include_file"])) {
     variant.id <- getobj(config["variant_include_file"])
+    seqSetFilter(gds, variant.id=variant.id)
     } else {
     variant.id <- seqGetData(gds, "variant.id")
 }
 
 if (as.logical(config["pass_only"])) {
     filt <- seqGetData(gds, "annotation/filter")
-    seqSetFilter(gds, variant.sel=(filt == "PASS"), verbose=FALSE)
-    var.filt <- seqGetData(gds, "variant.id")
-    variant.id <- intersect(variant.id, var.filt)
-    seqResetFilter(gds, verbose=FALSE)
+    variant.id <- variant.id[filt == "PASS"]
+    #seqSetFilter(gds, variant.id=variant.id)
 }
+
+message("Using ", length(variant.id), " variants")
+seqResetFilter(gds, verbose=FALSE)
 
 
 # get phenotypes

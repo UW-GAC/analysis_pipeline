@@ -43,23 +43,22 @@ sample.id <- nullModel$scanID
 
 if (!is.na(config["variant_include_file"])) {
     variant.id <- getobj(config["variant_include_file"])
+    seqSetFilter(gds, variant.id=variant.id)
     } else {
     variant.id <- seqGetData(gds, "variant.id")
 }
 
 if (as.logical(config["pass_only"])) {
     filt <- seqGetData(gds, "annotation/filter")
-    seqSetFilter(gds, variant.sel=(filt == "PASS"), verbose=FALSE)
-    var.filt <- seqGetData(gds, "variant.id")
-    variant.id <- intersect(variant.id, var.filt)
-    seqResetFilter(gds, verbose=FALSE)
+    variant.id <- variant.id[filt == "PASS"]
+    seqSetFilter(gds, variant.id=variant.id)
 }
 
 mac.min <- as.numeric(config["mac_threshold"])
 maf.min <- as.numeric(config["maf_threshold"])
 if ((!is.na(mac.min) & mac.min > 1) |
     (!is.na(maf.min) & maf.min > 0)) {
-    seqSetFilter(gds, variant.id=variant.id, sample.id=sample.id, verbose=FALSE)
+    seqSetFilter(gds, sample.id=sample.id, verbose=FALSE)
     ref.freq <- seqAlleleFreq(gds)
     maf <- pmin(ref.freq, 1-ref.freq)
     if (!is.na(mac.min)) {
@@ -70,9 +69,9 @@ if ((!is.na(mac.min) & mac.min > 1) |
         message(paste("Running on", sum(maf.filt), "variants with MAF >=", maf.min))
     }
     variant.id <- variant.id[maf.filt]
-    seqResetFilter(gds, verbose=FALSE)
+    #seqSetFilter(gds, variant.id=variant.id)
 }
-
+seqResetFilter(gds, verbose=FALSE)
 
 # get phenotypes
 annot <- getobj(config["phenotype_file"])
