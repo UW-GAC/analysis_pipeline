@@ -19,12 +19,13 @@ insertChromString <- function(x, chr, err=NULL) {
 
 
 sequentialVariantIds <- function(gds.list, id.list) {
+    requireNamespace("SeqArray")
     stopifnot(length(gds.list) == length(id.list))
     n <- 0
     new.id <- list()
     for (i in seq_along(gds.list)) { 
         new.id[[i]] <- id.list[[i]] + n
-        ni <- seqSummary(gds.list[[i]], "variant.id")
+        ni <- SeqArray::seqSummary(gds.list[[i]], "variant.id")
         n <- n + ni
     }
     stopifnot(all(id.list[[1]] == new.id[[1]]))

@@ -1,4 +1,5 @@
-import(SeqArray)
+#import(SeqArray)
+import(utils)
 
 export(readConfig,
        writeConfig,
