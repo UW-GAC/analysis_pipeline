@@ -14,7 +14,6 @@ chr <- argv$chromosome
 
 # add parameters for:
 # window size and step
-# type of test for burden
 # user-specified weights
 
 required <- c("gds_file",
@@ -23,10 +22,12 @@ required <- c("gds_file",
 optional <- c("alt_freq_range"="0 1",
               "out_file"="assoc_window.RData",
               "pass_only"=TRUE,
+              "pval_skat"="kuonen",
               "rho"="0",
               "test"="burden",
+              "test_type"="score",
               "variant_include_file"=NA,
-              "weights"="0.5 0.5")
+              "weight_beta"="0.5 0.5")
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -75,13 +76,23 @@ test <- switch(tolower(config["test"]),
                burden="Burden",
                skat="SKAT")
 
-af.range <- as.numeric(strsplit(config["alt_freq_range"], " ", fixed=TRUE)[[1]])
-weights <- as.numeric(strsplit(config["weights"], " ", fixed=TRUE)[[1]])
-rho <- as.numeric(strsplit(config["rho"], " ", fixed=TRUE)[[1]])
+test.type <- switch(tolower(config["test_type"]),
+                    firth="Firth",
+                    score="Score",
+                    wald="Wald")
 
-assoc <- assocTestSeqWindow(seqData, nullModel, test=test,
+af.range <- as.numeric(strsplit(config["alt_freq_range"], " ", fixed=TRUE)[[1]])
+weights <- as.numeric(strsplit(config["weight_beta"], " ", fixed=TRUE)[[1]])
+rho <- as.numeric(strsplit(config["rho"], " ", fixed=TRUE)[[1]])
+pval <- tolower(config["pval_skat"])
+
+assoc <- assocTestSeqWindow(seqData, nullModel,
+                            test=test,
+                            burden.test=test.type,
                             AF.range=af.range,
-                            weight.beta=weights, rho=rho,
+                            weight.beta=weights,
+                            rho=rho,
+                            pval.method=pval,
                             variant.include=variant.id)
 
 save(assoc, file=outfile)

@@ -19,6 +19,7 @@ optional <- c("mac_threshold"=30, # takes precedence
               "maf_threshold"=0.01,
               "out_file"="assoc_single.RData",
               "pass_only"=TRUE,
+              "test_type"="score",
               "variant_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -79,7 +80,9 @@ annot <- getobj(config["phenotype_file"])
 # createSeqVarData object
 seqData <- SeqVarData(gds, sampleData=annot)
 
-test <- if (nullModel$family$family == "gaussian") "Wald" else "Score"
+test <- switch(tolower(config["test_type"]),
+               score="Score",
+               wald="Wald")
 
 assoc <- assocTestMM(seqData, nullModel, test=test,
                      snp.include=variant.id)
