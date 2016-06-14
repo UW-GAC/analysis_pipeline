@@ -34,11 +34,13 @@ print(config)
 ## gds file can have two parts split by chromosome identifier
 gdsfile <- config["gds_file"]
 outfile <- config["out_file"]
+varfile <- config["variant_include_file"]
 if (!is.na(chr)) {
     if (chr == 23) chr <- "X"
     if (chr == 24) chr <- "Y"
     gdsfile <- insertChromString(gdsfile, chr, err="gds_file")
     outfile <- insertChromString(outfile, chr, err="out_file")
+    varfile <- insertChromString(varfile, chr, err="variant_include_file")
 }
     
 gds <- seqOpen(gdsfile)
@@ -49,8 +51,8 @@ nullModel <- getobj(config["null_model_file"])
 # get samples included in null model
 sample.id <- nullModel$scanID
 
-if (!is.na(config["variant_include_file"])) {
-    variant.id <- getobj(config["variant_include_file"])
+if (!is.na(varfile)) {
+    variant.id <- getobj(varfile)
     seqSetFilter(gds, variant.id=variant.id)
     } else {
     variant.id <- seqGetData(gds, "variant.id")
