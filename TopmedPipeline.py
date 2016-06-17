@@ -1,5 +1,6 @@
 """Utility functions for TOPMed pipeline"""
 
+import sys
 import csv
 import subprocess
 
@@ -24,10 +25,15 @@ def readConfig(file):
     for line in reader:
         if line[0][0] == "#":
             continue
-
-        if len(line) == 2:
-            (key, value) = line
-            config[key] = value
+        
+        if len(line) > 2:
+            if line[2] == '':
+                line = line[0:2]
+            else:
+                sys.exit("Error reading config file " + file + ":\nToo many parameters in line " + str(reader.line_num))
+            
+        (key, value) = line
+        config[key] = value
             
     f.close()
     return config
