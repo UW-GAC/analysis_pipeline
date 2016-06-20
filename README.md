@@ -5,7 +5,7 @@
 1. Install R packages and dependencies from Bioconductor
 ```{r}
 source("https://bioconductor.org/biocLite.R")
-biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "argparser"))
+biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "argparser", "dplyr", "tidyr"))
 ```
 2. Install updated GENESIS from github
 ```{r}

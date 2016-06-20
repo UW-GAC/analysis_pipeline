@@ -1,5 +1,12 @@
-#import(SeqArray)
 import(utils)
+importFrom(stats, setNames)
+import(SeqArray)
+importFrom(SeqVarTools, refChar, altChar)
+importFrom(S4Vectors, subjectHits, queryHits)
+importFrom(IRanges, IRanges)
+importFrom(GenomicRanges, GRanges, findOverlaps)
+importFrom(dplyr, arrange_, distinct_, filter_, mutate_, select_, inner_join, left_join, "%>%")
+importFrom(tidyr, gather_, separate_)
 
 export(readConfig,
        writeConfig,
@@ -7,4 +14,6 @@ export(readConfig,
        getobj,
        insertChromString,
        sequentialVariantIds,
-       countThreads)
+       countThreads,
+       aggregateListByAllele,
+       aggregateListByPosition)
