@@ -10,9 +10,9 @@ argp <- add_argument(argp, "config", help="path to config file")
 argv <- parse_args(argp)
 config <- readConfig(argv$config)
 
-required <- c("outcome",              
-              "pcrelate_file",
+required <- c("outcome",
               "pca_file",
+              "pcrelate_file",
               "phenotype_file")
 optional <- c("binary"="FALSE",
               "covars"=NA,

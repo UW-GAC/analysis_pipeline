@@ -12,7 +12,6 @@ config <- readConfig(argv$config)
 required <- c("king_file")
 optional <- c("kinship_method"="king",
               "kinship_threshold"=0.04419417, # 2^(-9/2), 3rd degree
-              "n_pcs"=20,
               "out_related_file"="related.RData",
               "out_unrelated_file"="unrelated.RData",
               "pcrelate_file"=NA,
