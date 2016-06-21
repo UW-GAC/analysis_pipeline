@@ -1,6 +1,6 @@
 #! /usr/local/bin/python2.7
 
-"""Association tests (single-variant)"""
+"""Association tests"""
 
 import sys
 import os
@@ -8,12 +8,12 @@ from argparse import ArgumentParser
 from copy import deepcopy
 
 description = """
-Association tests (single-variant)
+Association tests
 """
 
 parser = ArgumentParser(description=description)
 parser.add_argument("configfile", help="configuration file")
-parser.add_argument("assoctype", choices=["single", "window"],
+parser.add_argument("assoctype", choices=["single", "window", "aggregate"],
                     help="type of association test")
 parser.add_argument("-c", "--chromosomes", default="1-23",
                     help="range of chromosomes [default %(default)s]")
@@ -56,6 +56,24 @@ TopmedPipeline.writeConfig(config, configfile)
 
 jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], queue=queue, email=email, printOnly=printOnly)
 
+holdid = [jobid["null_model"]]
+
+
+# for aggregate tests, generate variant list
+if assoctype == "aggregate":
+    job = "aggregate_list"
+   
+    rscript = os.path.join(pipeline, "R", job + ".R")
+
+    config = deepcopy(configdict)
+    config["out_file"] = configdict["out_prefix"] + "_" + job + "_chr .RData"
+    configfile = configdict["out_prefix"] + "_" + job + ".config"
+    TopmedPipeline.writeConfig(config, configfile)
+
+    jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
+
+    holdid.append(jobid["aggregate_list"].split(".")[0])
+
 
 job = "assoc_" + assoctype
 
@@ -63,10 +81,10 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
 config["null_model_file"] = configdict["out_prefix"] + "_null_model.RData"
+if assoctype == "aggregate":
+    config["aggregate_variant_file"] = configdict["out_prefix"] + "_aggregate_list_chr .RData"
 config["out_file"] = configdict["out_prefix"] + "_" + job + "_chr .RData"
 configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
-
-holdid = [jobid["null_model"]]
 
 jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
