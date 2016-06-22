@@ -26,7 +26,8 @@ colnames(divMat) <- rownames(divMat) <- king$sample.id
 
 if (!is.na(config["sample_include_file"])) {
     sample.id <- as.character(getobj(config["sample_include_file"]))
-    divMat <- divMat[sample.id, sample.id]
+    ind <- colnames(divMat) %in% sample.id
+    divMat <- divMat[ind, ind]
 }
 message("Using ", nrow(divMat), " samples")
 
@@ -44,9 +45,9 @@ if (kin.type == "king") {
 message("Using ", kin.type, " kinship estimates")
 
 # divide into related and unrelated set
-kin_thresh <- as.numeric(config["kinship_threshold"])
-part <- pcairPartition(kinMat=kinMat, kin.thresh=kin_thresh,
-                       divMat=divMat, div.thresh=-kin_thresh)
+kin.thresh <- as.numeric(config["kinship_threshold"])
+part <- pcairPartition(kinMat=kinMat, kin.thresh=kin.thresh,
+                       divMat=divMat, div.thresh=-kin.thresh)
 
 rels <- part$rels
 unrels <- part$unrels
