@@ -89,3 +89,21 @@ holdid = [jobid["combine_variants"]]
 
 jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, requestCores=ncores, printOnly=printOnly)
 
+
+job = "kinship_plots"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+config = deepcopy(configdict)
+config["kinship_file"] = configdict["out_prefix"] + "_ibd_king.RData"
+config["kinship_method"] = "king"
+config["out_file_all"] = configdict["out_prefix"] + "_kinship_all.pdf"
+config["out_file_cross"] = configdict["out_prefix"] + "_kinship_cross.pdf"
+config["out_file_study"] = configdict["out_prefix"] + "_kinship_study.pdf"
+configfile = configdict["out_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
+
+holdid = [jobid["ibd_king"]]
+
+jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, printOnly=printOnly)
+
