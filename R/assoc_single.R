@@ -33,7 +33,7 @@ if (!is.na(chr)) {
     if (chr == 24) chr <- "Y"
     gdsfile <- insertChromString(gdsfile, chr, err="gds_file")
     outfile <- insertChromString(outfile, chr, err="out_file")
-    varfile <- insertChromString(varfile, chr, err="variant_include_file")
+    varfile <- insertChromString(varfile, chr)
 }
     
 gds <- seqOpen(gdsfile)
