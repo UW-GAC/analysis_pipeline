@@ -59,8 +59,8 @@ eigenvect <- eigenvect[samp.ord,]
 
 # output object
 pca <- list(vectors=eigenvect,
-            values=pca.unrel$eigenval,
-            varprop=pca.unrel$varprop,
+            values=pca.unrel$eigenval[1:n_pcs],
+            varprop=pca.unrel$varprop[1:n_pcs],
             rels=rels,
             unrels=unrels)
 

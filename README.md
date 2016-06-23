@@ -5,7 +5,7 @@
 1. Install R packages and dependencies from Bioconductor  
 ```{r}
 source("https://bioconductor.org/biocLite.R")
-biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "argparser", "dplyr", "tidyr"))
+biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "argparser", "dplyr", "tidyr", "ggplot2", "GGally"))
 ```
 2. Install updated GENESIS from github  
 ```{r}
@@ -47,8 +47,7 @@ config parameter | default value | description
 `merged_gds_file` | | Merged genotype-only GDS file containing all chromosomes.
 `format` | `GT` | FORMAT fields from the VCF to convert to GDS. Default is genotypes only.
 
-Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-genotype FORMAT fields. Step 2 combines these files into a single GDS file, which is needed for whole-genome analyses such as relatedness and population structure. The single-chromosome files
-are still preferred for analyses run in parallel by chromosome. Step 3 ensures that each variant has a unique integer ID across the genome, so the variant.id field in the per-chromosome files and the combined file are consistent.
+Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-genotype FORMAT fields. Step 2 combines these files into a single GDS file, which is needed for whole-genome analyses such as relatedness and population structure. The single-chromosome files are still preferred for analyses run in parallel by chromosome. Step 3 ensures that each variant has a unique integer ID across the genome, so the variant.id field in the per-chromosome files and the combined file are consistent.
 
 
 ## Relatedness and Population structure
@@ -59,6 +58,7 @@ are still preferred for analyses run in parallel by chromosome. Step 3 ensures t
     1. `ld_pruning.R`
     2. `combine_variants.R`
     3. `ibd_king.R`
+	4. `kinship_plots.R`
 
     config parameter | default value | description
     --- | --- | ---
@@ -68,7 +68,9 @@ are still preferred for analyses run in parallel by chromosome. Step 3 ensures t
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning.
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
-	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
+	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning. 
+	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
+	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
 
 2. [PC-AiR](http://www.ncbi.nlm.nih.gov/pubmed/25810074) to select an informative set of unrelated samples, do PCA on unrelated, project into relatives
 
@@ -77,6 +79,7 @@ are still preferred for analyses run in parallel by chromosome. Step 3 ensures t
     2. `ld_pruning.R`
     3. `combine_variants.R`
     4. `pca_byrel.R`
+	5. `pca_plots.R`
 	
     config parameter | default value | description
     --- | --- | ---
@@ -91,12 +94,15 @@ are still preferred for analyses run in parallel by chromosome. Step 3 ensures t
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning. 
-	`n_pcs` | `20` | Number of PCs to return.
+	`n_pcs` | `20` | Number of PCs to return. 
+	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for color-coding PCA plots by group.
+	`group` | `NA` | Name of column in `phenotype_file` containing group variable.
 
 3. [PC-Relate](http://www.ncbi.nlm.nih.gov/pubmed/26748516) to estimate kinship coefficients adjusted for population structure and admixture using PCs
 
     `pcrelate.py`
     1. `pcrelate.R`
+	2. `kinship_plots.R`
 	
     config parameter | default value | description
     --- | --- | ---
@@ -106,7 +112,9 @@ are still preferred for analyses run in parallel by chromosome. Step 3 ensures t
 	`variant_include_file` | | RData file with LD pruned variant.id created by `pcair.py`.
 	`n_pcs` | `3` | Number of PCs to use in adjusting for ancestry.
 	`sample_block_size` | `10000` | Maximum number of samples to read in a single block. Adjust depending on computer memory and number of samples in the analysis. 
-	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
+	`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
+	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
+	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
 	
 4. Repeat steps 2-3, using new kinship estimates for PC-AiR
 

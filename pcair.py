@@ -108,3 +108,20 @@ holdid = [jobid["combine_variants"]]
 
 jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, requestCores=ncores, printOnly=printOnly)
 
+
+job = "pca_plots"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+config = deepcopy(configdict)
+config["pca_file"] = configdict["out_prefix"] + "_pcair.RData"
+config["out_file_scree"] = configdict["out_prefix"] + "_pca_scree.pdf"
+config["out_file_pc12"] = configdict["out_prefix"] + "_pca_pc12.pdf"
+config["out_file_parcoord"] = configdict["out_prefix"] + "_pca_parcoord.pdf"
+configfile = configdict["out_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
+
+holdid = [jobid["pca_byrel"]]
+
+jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, printOnly=printOnly)
+
