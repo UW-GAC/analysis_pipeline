@@ -127,6 +127,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 
 1. `null_model.R`
 2. `assoc_single.R`
+3. `assoc_plots.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -153,6 +154,7 @@ config parameter | default value | description
 1. `null_model.R`
 2. `aggregate_list.R`
 3. `assoc_aggregate.R`
+4. `assoc_plots.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -181,6 +183,7 @@ config parameter | default value | description
 
 1. `null_model.R`
 2. `assoc_window.R`
+3. `assoc_plots.R`
 
 config parameter | default value | description
 --- | --- | ---
