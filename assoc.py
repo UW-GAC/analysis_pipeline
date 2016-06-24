@@ -88,3 +88,23 @@ configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
+
+
+prevjob = job
+job = "assoc_plots"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+config = deepcopy(configdict)
+config["assoc_file"] = configdict["out_prefix"] + "_" + prevjob + "_chr .RData"
+config["assoc_type"] = assoctype
+config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
+config["out_file_manh"] = configdict["out_prefix"] + "_manh.png"
+config["out_file_qq"] = configdict["out_prefix"] + "_qq.png"
+configfile = configdict["out_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
+
+holdid = [jobid["assoc_" + assoctype].split(".")[0]]
+
+jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, printOnly=printOnly)
+
