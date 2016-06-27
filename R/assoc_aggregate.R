@@ -25,6 +25,7 @@ optional <- c("alt_freq_range"="0 1",
               "rho"="0",
               "test"="burden",
               "test_type"="score",
+              "variant_include_file"=NA,
               "weight_beta"="0.5 0.5")
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -32,13 +33,15 @@ print(config)
 ## gds file can have two parts split by chromosome identifier
 gdsfile <- config["gds_file"]
 outfile <- config["out_file"]
-varfile <- config["aggregate_variant_file"]
+aggfile <- config["aggregate_variant_file"]
+varfile <- config["variant_include_file"]
 if (!is.na(chr)) {
     if (chr == 23) chr <- "X"
     if (chr == 24) chr <- "Y"
     gdsfile <- insertChromString(gdsfile, chr, err="gds_file")
     outfile <- insertChromString(outfile, chr, err="out_file")
-    varfile <- insertChromString(varfile, chr, err="aggregate_variant_file")
+    aggfile <- insertChromString(aggfile, chr, err="aggregate_variant_file")
+    varfile <- insertChromString(varfile, chr)
 }
     
 gds <- seqOpen(gdsfile)
@@ -50,7 +53,13 @@ nullModel <- getobj(config["null_model_file"])
 sample.id <- nullModel$scanID
 
 # get aggregate list
-aggVarList <- getobj(varfile)
+aggVarList <- getobj(aggfile)
+
+# subset to included variants
+if (!is.na(varfile)) {
+    variant.id <- getobj(varfile)
+    aggVarList <- lapply(aggVarList, function(x) x[x$variant.id %in% variant.id,])
+}
 
 # get phenotypes
 annot <- getobj(config["phenotype_file"])

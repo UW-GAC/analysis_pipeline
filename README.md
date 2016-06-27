@@ -169,7 +169,8 @@ config parameter | default value | description
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
 `n_pcs` | `3` | Number of PCs to include as covariates.
-`sample_include_file` | `NA` | RData file with vector of sample.id to include.
+`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
+`variant_include_file` | `NA` | RData file with vector of variant.id to include. Variants used will be the intersection of this set and variants defined by `variant_group_file`.
 `alt_freq_range` | `"0 1"` | Range of alternate allele frequencies to consider, quoted and separated by spaces.
 `test` | `burden` | Test to perform. Options are `burden` or`skat`.
 `test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` and `firth` if `binary` is `TRUE`. 
