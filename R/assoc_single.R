@@ -15,8 +15,8 @@ chr <- argv$chromosome
 required <- c("gds_file",
               "null_model_file",
               "phenotype_file")
-optional <- c("mac_threshold"=30, # takes precedence
-              "maf_threshold"=0.01,
+optional <- c("mac_threshold"=5, # takes precedence
+              "maf_threshold"=0.001,
               "out_file"="assoc_single.RData",
               "pass_only"=TRUE,
               "test_type"="score",

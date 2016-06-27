@@ -141,8 +141,8 @@ config parameter | default value | description
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include.
-`mac_threshold` | `30` | Minimum minor allele count for variants to include in test. 
-`maf_threshold` | `0.01` | Minimum minor allele frequency for variants to include in test. Only used if `mac_threshold` is `NA`.
+`mac_threshold` | `5` | Minimum minor allele count for variants to include in test. Use a higher threshold when outcome is binary.
+`maf_threshold` | `0.001` | Minimum minor allele frequency for variants to include in test. Only used if `mac_threshold` is `NA`.
 `pass_only` | `TRUE` | `TRUE` to select only variants with FILTER=PASS.
 `test_type` | `score` | Type of test to perform. Options are `score` and `wald` if `binary` is `FALSE`, `score` only if `binary` is `TRUE`.
 `variant_include_file` | `NA` | RData file with vector of variant.id to include.
