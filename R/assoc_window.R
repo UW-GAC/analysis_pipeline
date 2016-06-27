@@ -13,7 +13,6 @@ config <- readConfig(argv$config)
 chr <- argv$chromosome
 
 # add parameters for:
-# window size and step
 # user-specified weights
 
 required <- c("gds_file",
@@ -27,7 +26,9 @@ optional <- c("alt_freq_range"="0 1",
               "test"="burden",
               "test_type"="score",
               "variant_include_file"=NA,
-              "weight_beta"="0.5 0.5")
+              "weight_beta"="0.5 0.5",
+              "window_size"=50,
+              "window_step"=20)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -87,6 +88,8 @@ af.range <- as.numeric(strsplit(config["alt_freq_range"], " ", fixed=TRUE)[[1]])
 weights <- as.numeric(strsplit(config["weight_beta"], " ", fixed=TRUE)[[1]])
 rho <- as.numeric(strsplit(config["rho"], " ", fixed=TRUE)[[1]])
 pval <- tolower(config["pval_skat"])
+size <- as.numeric(config["window_size"])
+step <- as.numeric(config["window_step"])
 
 assoc <- assocTestSeqWindow(seqData, nullModel,
                             test=test,
@@ -95,7 +98,9 @@ assoc <- assocTestSeqWindow(seqData, nullModel,
                             weight.beta=weights,
                             rho=rho,
                             pval.method=pval,
-                            variant.include=variant.id)
+                            variant.include=variant.id,
+                            window.size=size,
+                            window.shift=step)
 
 save(assoc, file=outfile)
 
