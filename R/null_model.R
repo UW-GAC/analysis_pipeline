@@ -14,8 +14,9 @@ required <- c("outcome",
               "pca_file",
               "pcrelate_file",
               "phenotype_file")
-optional <- c("binary"="FALSE",
+optional <- c("binary"=FALSE,
               "covars"=NA,
+              "inverse_normal"=FALSE,
               "n_pcs"=3,
               "out_file"="null_model.RData",
               "sample_include_file"=NA)
@@ -56,6 +57,7 @@ if (!is.na(config["covars"])) {
 } else {
     covars <- NULL
 }
+covars <- c(covars, colnames(pcs))
 
 if (as.logical(config["binary"])) {
     stopifnot(all(dat[[outcome]] %in% c(0,1)))
@@ -64,8 +66,21 @@ if (as.logical(config["binary"])) {
     family <- gaussian
 }
 
+message("Model: ", outcome, " ~ ", paste(c(covars, "(1|kinship)"), collapse=" + "))
 nullmod <- fitNullMM(annot, outcome=outcome, covars=covars,
                      covMatList=grm, scan.include=sample.id,
                      family=family)
+
+# if we need an inverse normal transform, take residuals and refit null model
+# for second model fit, use PCs and kinship but not other covariates
+if (as.logical(config["inverse_normal"])) {
+    resid.norm <- rankNorm(nullmod$resid.marginal)
+    annot$resid.norm <- resid.norm[match(annot$sample.id, nullmod$scanID)]
+    message(paste0("resid.norm = rankNorm(resid.marginal(", outcome, " ~ ", paste(c(covars, "(1|kinship)"), collapse=" + "), "))"))
+    message("Model: resid.norm ~ ", paste(c(colnames(pcs), "(1|kinship)"), collapse=" + "))
+    nullmod <- fitNullMM(annot, outcome="resid.norm", covars=colnames(pcs),
+                         covMatList=grm, scan.include=sample.id,
+                         family=family)
+}
 
 save(nullmod, file=config["out_file"])

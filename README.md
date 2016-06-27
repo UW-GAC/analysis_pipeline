@@ -121,6 +121,8 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 
 ## Association testing
 
+An inverse-normal transform may be requested with `inverse_normal TRUE` in the config file. This is done by fitting the null model and rank-normalizing the marginal residuals. The normalized residuals are then used as the outcome in a null model with only PCs and kinship as covariates.
+
 ### Single-variant
 
 `assoc.py single` 
@@ -139,6 +141,7 @@ config parameter | default value | description
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
+`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include.
 `mac_threshold` | `5` | Minimum minor allele count for variants to include in test. Use a higher threshold when outcome is binary.
@@ -167,7 +170,8 @@ config parameter | default value | description
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes. 
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
-`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
+`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces. 
+`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. Variants used will be the intersection of this set and variants defined by `variant_group_file`.
@@ -195,7 +199,8 @@ config parameter | default value | description
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes. 
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
-`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
+`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces. 
+`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. 

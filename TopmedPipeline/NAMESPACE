@@ -15,6 +15,7 @@ export(readConfig,
        insertChromString,
        sequentialVariantIds,
        calculateLambda,
+       rankNorm,
        countThreads,
        aggregateListByAllele,
        aggregateListByPosition)

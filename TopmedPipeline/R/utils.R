@@ -39,3 +39,5 @@ calculateLambda <- function(stat, df) {
         stop("no negative values allowed in stat (does beta/se need to be squared?)")
     median(stat, na.rm=TRUE) / qchisq(0.5, df=df)
 }
+
+rankNorm <- function(x) qnorm((rank(x) - 0.5)/length(x))
