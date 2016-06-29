@@ -3,6 +3,7 @@ library(TopmedPipeline)
 library(Biobase)
 library(GENESIS)
 library(gdsfmt)
+library(dplyr)
 sessionInfo()
 
 argp <- arg_parser("Null model for association tests")
@@ -23,27 +24,30 @@ optional <- c("binary"=FALSE,
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
-# get PCs
-pca <- getobj(config["pca_file"])
-n_pcs <- as.integer(config["n_pcs"])
-pcs <- pca$vectors[,1:n_pcs]
-colnames(pcs) <- paste0("PC", 1:n_pcs)
+# get phenotypes
+annot <- getobj(config["phenotype_file"])
 
 # select samples
 if (!is.na(config["sample_include_file"])) {
     sample.id <- getobj(config["sample_include_file"])
+    annot <- annot[annot$sample.id %in% sample.id,]
 } else {
-    sample.id <- rownames(pcs)
+    sample.id <- annot$sample.id
 }
 
-# get phenotypes
-annot <- getobj(config["phenotype_file"])
-annot <- annot[annot$sample.id %in% sample.id,]
-
-# use ordering of phenotype file (should match GDS)
-sample.id <- annot$sample.id
-dat <- cbind(pData(annot), pcs[as.character(sample.id),])
-pData(annot) <- dat
+# get PCs
+n_pcs <- as.integer(config["n_pcs"])
+if (n_pcs > 0) {
+    pca <- getobj(config["pca_file"])
+    pcs <- pca$vectors[,1:n_pcs]
+    pccols <- paste0("PC", 1:n_pcs)
+    colnames(pcs) <- pccols
+    pcs <- data.frame(pcs, sample.id=rownames(pcs), stringsAsFactors=FALSE)
+    pData(annot) <- inner_join(pData(annot), pcs, by="sample.id")
+    sample.id <- annot$sample.id
+} else {
+    pccols <- NULL
+}
 
 # load GRM for selected samples only
 pcr <- openfn.gds(config["pcrelate_file"])
@@ -57,7 +61,7 @@ if (!is.na(config["covars"])) {
 } else {
     covars <- NULL
 }
-covars <- c(covars, colnames(pcs))
+covars <- c(covars, pccols)
 
 if (as.logical(config["binary"])) {
     stopifnot(all(dat[[outcome]] %in% c(0,1)))
@@ -77,8 +81,8 @@ if (as.logical(config["inverse_normal"])) {
     resid.norm <- rankNorm(nullmod$resid.marginal)
     annot$resid.norm <- resid.norm[match(annot$sample.id, nullmod$scanID)]
     message(paste0("resid.norm = rankNorm(resid.marginal(", outcome, " ~ ", paste(c(covars, "(1|kinship)"), collapse=" + "), "))"))
-    message("Model: resid.norm ~ ", paste(c(colnames(pcs), "(1|kinship)"), collapse=" + "))
-    nullmod <- fitNullMM(annot, outcome="resid.norm", covars=colnames(pcs),
+    message("Model: resid.norm ~ ", paste(c(pccols, "(1|kinship)"), collapse=" + "))
+    nullmod <- fitNullMM(annot, outcome="resid.norm", covars=pccols,
                          covMatList=grm, scan.include=sample.id,
                          family=family)
 }
