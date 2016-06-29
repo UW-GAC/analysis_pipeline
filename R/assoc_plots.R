@@ -50,11 +50,11 @@ if (config["assoc_type"] == "single") {
 assoc <- select(assoc, chr, pos, ends_with("stat"), ends_with("pval"))
 names(assoc)[3:4] <- c("stat", "pval")
 assoc <- filter(assoc, !is.na(pval)) %>%
-    mutate(chr=as.character(chr))
+    mutate(chr=factor(chr, levels=c(1:22, "X")))
 
 
 ## manhattan plot
-chr <- unique(assoc$chr)
+chr <- levels(assoc$chr)
 cmap <- setNames(rep_len(brewer.pal(8, "Dark2"), length(chr)), chr)
 
 p <- ggplot(assoc, aes(chr, -log10(pval), group=interaction(chr, pos), color=chr)) +
