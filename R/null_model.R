@@ -3,7 +3,6 @@ library(TopmedPipeline)
 library(Biobase)
 library(GENESIS)
 library(gdsfmt)
-library(dplyr)
 sessionInfo()
 
 argp <- arg_parser("Null model for association tests")
@@ -42,9 +41,9 @@ if (n_pcs > 0) {
     pcs <- pca$vectors[,1:n_pcs]
     pccols <- paste0("PC", 1:n_pcs)
     colnames(pcs) <- pccols
-    pcs <- data.frame(pcs, sample.id=rownames(pcs), stringsAsFactors=FALSE)
-    pData(annot) <- inner_join(pData(annot), pcs, by="sample.id")
-    sample.id <- annot$sample.id
+    sample.id <- intersect(sample.id, rownames(pcs))
+    annot <- annot[annot$sample.id %in% sample.id,]
+    pData(annot) <- cbind(pData(annot), pcs[as.character(sample.id),])
 } else {
     pccols <- NULL
 }
@@ -64,7 +63,7 @@ if (!is.na(config["covars"])) {
 covars <- c(covars, pccols)
 
 if (as.logical(config["binary"])) {
-    stopifnot(all(dat[[outcome]] %in% c(0,1)))
+    stopifnot(all(annot[[outcome]] %in% c(0,1)))
     family <- binomial
 } else {
     family <- gaussian
