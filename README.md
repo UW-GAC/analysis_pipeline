@@ -23,7 +23,7 @@ Each script in the `R` directory takes a config file with parameters. Look at th
 
 Some scripts can be run in parallel by chromosome. For these scripts, the chromosome number is the second argument. If running in parallel, include a space in file names in the config file where chromosome should be inserted, e.g.,
 ```
-gds_file "1KG_phase1_release_v3_chr .gds"
+gds_file "1KG_phase3_subset_chr .gds"
 ```
 
 Nearly all scripts require a GDS file in SeqArray format. Phenotype files should be an AnnotatedDataFrame saved in an RData file. See `?AnnotatedDataFrame` or the SeqVarTools documentation for details. Example files are provided in `testdata`.
