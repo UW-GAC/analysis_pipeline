@@ -52,7 +52,7 @@ if ("pval_0" %in% names(assoc)) {
     pval.col <- if ("pval_SKATO" %in% names(assoc)) "pval_SKATO" else "pval_0"
     assoc <- select_(assoc, "chr", "pos", pval.col) %>%
         rename_(pval=pval.col)
-    lambda <- calculateLambda(-2*log(assoc$pval), df=2)
+    lambda <- calculateLambda(qchisq(assoc$pval, df=1, lower=FALSE), df=1)
 } else {
     ## burden or single
     assoc <- select(assoc, chr, pos, ends_with("stat"), ends_with("pval"))
