@@ -12,9 +12,9 @@ Association tests
 """
 
 parser = ArgumentParser(description=description)
-parser.add_argument("configfile", help="configuration file")
 parser.add_argument("assoctype", choices=["single", "window", "aggregate"],
                     help="type of association test")
+parser.add_argument("configfile", help="configuration file")
 parser.add_argument("-c", "--chromosomes", default="1-23",
                     help="range of chromosomes [default %(default)s]")
 parser.add_argument("-p", "--pipeline", 
@@ -28,8 +28,8 @@ parser.add_argument("--printOnly", action="store_true", default=False,
                     help="print qsub commands without submitting")
 args = parser.parse_args()
 
-configfile = args.configfile
 assoctype = args.assoctype
+configfile = args.configfile
 chromosomes = args.chromosomes
 pipeline = args.pipeline
 queue = args.queue
