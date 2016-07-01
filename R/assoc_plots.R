@@ -67,10 +67,19 @@ assoc <- filter(assoc, !is.na(pval)) %>%
 chr <- levels(assoc$chr)
 cmap <- setNames(rep_len(brewer.pal(8, "Dark2"), length(chr)), chr)
 
+# significance level
+if (config["assoc_type"] == "single") {
+    ## genome-wide significance
+    signif <- 5e-8
+} else {
+    ## bonferroni 
+    signif <- 0.05/nrow(assoc)
+}
+
 p <- ggplot(assoc, aes(chr, -log10(pval), group=interaction(chr, pos), color=chr)) +
     geom_point(position=position_dodge(0.8)) +
     scale_color_manual(values=cmap, breaks=names(cmap)) +
-    geom_hline(yintercept=-log10(5e-8), linetype='dashed') +
+    geom_hline(yintercept=-log10(signif), linetype='dashed') +
     theme_bw() +
     theme(legend.position="none") +
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
