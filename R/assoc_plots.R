@@ -47,8 +47,18 @@ if (config["assoc_type"] == "single") {
     stop("assoc_type should be 'single', 'aggregate' or 'window'")
 }
 
-assoc <- select(assoc, chr, pos, ends_with("stat"), ends_with("pval"))
-names(assoc)[3:4] <- c("stat", "pval")
+if ("pval_0" %in% names(assoc)) {
+    ## SKAT
+    pval.col <- if ("pval_SKATO" %in% names(assoc)) "pval_SKATO" else "pval_0"
+    assoc <- select_(assoc, "chr", "pos", pval.col) %>%
+        rename_(pval=pval.col)
+    lambda <- calculateLambda(-2*log(assoc$pval), df=2)
+} else {
+    ## burden or single
+    assoc <- select(assoc, chr, pos, ends_with("stat"), ends_with("pval"))
+    names(assoc)[3:4] <- c("stat", "pval")
+    lambda <- calculateLambda(assoc$stat, df=1)
+}
 assoc <- filter(assoc, !is.na(pval)) %>%
     mutate(chr=factor(chr, levels=c(1:22, "X")))
 
@@ -69,7 +79,6 @@ ggsave(config["out_file_manh"], plot=p, width=10, height=5)
 
 
 ## qq plot
-lambda <- calculateLambda(assoc$stat, df=1)
 n <- nrow(assoc)
 x <- 1:n
 dat <- data.frame(obs=sort(assoc$pval),
