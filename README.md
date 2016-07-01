@@ -176,8 +176,8 @@ config parameter | default value | description
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. Variants used will be the intersection of this set and variants defined by `variant_group_file`.
 `alt_freq_range` | `"0 1"` | Range of alternate allele frequencies to consider, quoted and separated by spaces.
-`test` | `burden` | Test to perform. Options are `burden` or`skat`.
-`test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` and `firth` if `binary` is `TRUE`. 
+`test` | `burden` | Test to perform. Options are `burden` or `skat`.
+`test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` only if `binary` is `TRUE`. 
 `pval_skat` | `kuonen` | Method used to calculate p-values if `test` is `skat`. Options are `kuonen` (uses saddlepoint method), `davies` (uses numerical integration), and `liu` (uses a moment matching approximation). 
 `rho` | `0` | A numeric value (or quoted, space-delimited list of numeric values) in [0,1] specifying the rho parameter when `test` is `skat`. `0` is a standard SKAT test, `1` is a score burden test, and multiple values is a SKAT-O test.
 `weight_beta` | `"0.5 0.5"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"0.5 0.5"` is proportional to the Madsen-Browning weights and `"1 25"` gives the Wu weights.
@@ -205,8 +205,8 @@ config parameter | default value | description
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. 
 `alt_freq_range` | `"0 1"` | Range of alternate allele frequencies to consider, quoted and separated by spaces.
-`test` | `burden` | Test to perform. Options are `burden` or`skat`.
-`test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` and `firth` if `binary` is `TRUE`. 
+`test` | `burden` | Test to perform. Options are `burden` or `skat`. 
+`test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` only if `binary` is `TRUE`. 
 `pval_skat` | `kuonen` | Method used to calculate p-values if `test` is `skat`. Options are `kuonen` (uses saddlepoint method), `davies` (uses numerical integration), and `liu` (uses a moment matching approximation). 
 `rho` | `0` | A numeric value (or quoted, space-delimited list of numeric values) in [0,1] specifying the rho parameter when `test` is `skat`. `0` is a standard SKAT test, `1` is a score burden test, and multiple values is a SKAT-O test.
 `weight_beta` | `"0.5 0.5"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"0.5 0.5"` is proportional to the Madsen-Browning weights and `"1 25"` gives the Wu weights.
