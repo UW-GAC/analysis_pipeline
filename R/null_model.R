@@ -50,7 +50,7 @@ if (n_pcs > 0) {
 
 # load GRM for selected samples only
 pcr <- openfn.gds(config["pcrelate_file"])
-grm <- pcrelateMakeGRM(pcr, scan.include=sample.id)
+grm <- pcrelateMakeGRM(pcr, scan.include=sample.id, scaleKin=1)
 closefn.gds(pcr)
 
 # outcome and covariates
