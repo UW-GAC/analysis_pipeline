@@ -56,7 +56,7 @@ ggsave(config["out_file_pc12"], plot=p, width=7, height=6)
 pc2 <- pcs
 names(pc2)[1:ncol(pc2)] <- sub("PC", "", names(pc2)[1:ncol(pc2)])
 
-p <- ggparcoord(pc2, columns=1:n, groupColumn=group, alphaLines=0.5, scale="globalminmax") +
+p <- ggparcoord(pc2, columns=1:n, groupColumn=group, alphaLines=0.5, scale="uniminmax") +
     guides(colour=guide_legend(override.aes=list(alpha=1, size=2))) +
     xlab("PC") + ylab("")
 ggsave(config["out_file_parcoord"], plot=p, width=10, height=5)
