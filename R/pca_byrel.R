@@ -15,6 +15,7 @@ required <- c("gds_file",
               "variant_include_file")
 optional <- c("n_pcs"=20,
               "out_file"="pca.RData",
+              "out_file_unrel"="pca_unrel.RData",
               "sample_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -42,12 +43,12 @@ message("PCA on unrelated set")
 nt <- countThreads()
 pca.unrel <- snpgdsPCA(gds, sample.id=unrels, snp.id=variant.id,
                        eigen.cnt=n_pcs, num.thread=nt)
+save(pca.unrel, file=config["out_file_unrel"])
 
 # project values for relatives
 message("PCA projection for related set")
-snp.load <- snpgdsPCASNPLoading(pcaobj=pca.unrel, gdsobj=gds, num.thread=nt)
-samp.load <- snpgdsPCASampLoading(loadobj=snp.load, gdsobj=gds, sample.id=rels,
-                                  num.thread=nt)
+snp.load <- snpgdsPCASNPLoading(pca.unrel, gdsobj=gds, num.thread=nt)
+samp.load <- snpgdsPCASampLoading(snp.load, gdsobj=gds, sample.id=rels, num.thread=nt)
 
 # combine unrelated and related PCs and order as in GDS file
 eigenvect <- rbind(pca.unrel$eigenvect, samp.load$eigenvect)
