@@ -12,9 +12,11 @@ argv <- parse_args(argp)
 config <- readConfig(argv$config)
 
 required <- c("pca_file")
-optional <- c("out_file_scree"="pca_scree.pdf",
+optional <- c("n_pairs"=6,
+              "out_file_scree"="pca_scree.pdf",
               "out_file_pc12"="pca_pc12.pdf",
               "out_file_parcoord"="pca_parcoord.pdf",
+              "out_file_pairs"="pca_pairs.png",
               "phenotype_file"=NA,
               "group"=NA)
 config <- setConfigDefaults(config, required, optional)
@@ -52,6 +54,17 @@ if (!is.na(config["phenotype_file"]) & !is.na(config["group"])) {
 p <- ggplot(pcs, aes_string("PC1", "PC2", color=group)) + geom_point(alpha=0.5) +
     guides(colour=guide_legend(override.aes=list(alpha=1)))
 ggsave(config["out_file_pc12"], plot=p, width=7, height=6)
+
+
+npr <- min(as.integer(config["n_pairs"]), n)
+p <- ggpairs(pcs, mapping=aes_string(color=group), columns=1:npr,
+             lower=list(continuous=wrap("points", alpha=0.5)),
+             diag=list(continuous="densityDiag"),
+             upper=list(continuous="blank"))
+png(config["out_file_pairs"], width=8, height=8, units="in", res=150)
+print(p)
+dev.off()
+
 
 pc2 <- pcs
 names(pc2)[1:ncol(pc2)] <- sub("PC", "", names(pc2)[1:ncol(pc2)])

@@ -96,8 +96,10 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning. 
-	`n_pcs` | `20` | Number of PCs to return.
-	`n_perpage` | `4` | Number of PC-variant correlation plots to stack in a single page. The number of png files generated will be `ceiling(n_pcs/n_perpage)`.
+	`n_pcs` | `20` | Number of PCs to return. 
+	`n_pair` | `6` | Number of PCs in include in the pairs plot.
+	`n_perpage` | `4` | Number of PC-variant correlation plots to stack in a single page. The number of png files generated will be `ceiling(n_pcs/n_perpage)`. 
+	`n_pair` | `6` | Number of PCs in include in the pairs plot.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for color-coding PCA plots by group.
 	`group` | `NA` | Name of column in `phenotype_file` containing group variable.
 
