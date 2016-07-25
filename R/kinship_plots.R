@@ -84,11 +84,13 @@ p <- ggsave(config["out_file_study"], plot=p, width=7, height=7)
 kinship.cross <- kinship %>%
     filter(study1 != study2)
 
-p <- ggplot(kinship.cross, aes_string(xvar, "kinship", color="study2")) +
+# only make the plot if there are some cross-study kinship pairs
+if (nrow(kinship.cross) > 0){
+  p <- ggplot(kinship.cross, aes_string(xvar, "kinship", color="study2")) +
     geom_hline(yintercept=2^(-seq(3,9,2)/2), linetype='dashed', color="grey") +
     geom_point() +
     facet_wrap(~study1, drop=FALSE) +
     ylab("kinship estimate") +
     theme_bw()
-ggsave(config["out_file_cross"], plot=p, width=8, height=7)
-
+  ggsave(config["out_file_cross"], plot=p, width=8, height=7)
+}
