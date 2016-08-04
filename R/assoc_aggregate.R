@@ -38,7 +38,7 @@ varfile <- config["variant_include_file"]
 if (!is.na(chr)) {
     if (chr == 23) chr <- "X"
     if (chr == 24) chr <- "Y"
-    gdsfile <- insertChromString(gdsfile, chr, err="gds_file")
+    gdsfile <- insertChromString(gdsfile, chr)
     outfile <- insertChromString(outfile, chr, err="out_file")
     aggfile <- insertChromString(aggfile, chr, err="aggregate_variant_file")
     varfile <- insertChromString(varfile, chr)

@@ -39,7 +39,8 @@ varfile <- config["variant_include_file"]
 if (!is.na(chr)) {
     if (chr == 23) chr <- "X"
     if (chr == 24) chr <- "Y"
-    gdsfile <- insertChromString(gdsfile, chr, err="gds_file")
+    bychrfile <- grepl(" ", gdsfile) # do we have one file per chromosome?
+    gdsfile <- insertChromString(gdsfile, chr)
     outfile <- insertChromString(outfile, chr, err="out_file")
     varfile <- insertChromString(varfile, chr)
 }
@@ -57,6 +58,13 @@ if (!is.na(varfile)) {
     seqSetFilter(gds, variant.id=variant.id)
     } else {
     variant.id <- seqGetData(gds, "variant.id")
+}
+
+## if we have a chromosome indicator but only one gds file, select chromosome
+if (!is.na(chr) & !bychrfile) {
+    chrom <- seqGetData(gds, "chromosome")
+    variant.id <- variant.id[chrom == chr]
+    seqSetFilter(gds, variant.id=variant.id)
 }
 
 if (as.logical(config["pass_only"])) {

@@ -24,14 +24,18 @@ varfile <- config["variant_group_file"]
 if (!is.na(chr)) {
     if (chr == 23) chr <- "X"
     if (chr == 24) chr <- "Y"
-    gdsfile <- insertChromString(gdsfile, chr, err="gds_file")
+    bychrfile <- grepl(" ", gdsfile) # do we have one file per chromosome?
+    gdsfile <- insertChromString(gdsfile, chr)
     outfile <- insertChromString(outfile, chr, err="out_file")
-    varfile <- insertChromString(varfile, chr, err="variant_group_file")
+    varfile <- insertChromString(varfile, chr)
 }
     
 gds <- seqOpen(gdsfile)
 
 groups <- getobj(varfile)
+
+## subset groups by chromosome
+groups <- groups[groups$chromosome == chr,]
 
 if (config["aggregate_type"] == "allele") {
     message("Sorting ", nrow(groups), " variant alleles")
