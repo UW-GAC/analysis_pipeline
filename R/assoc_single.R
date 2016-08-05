@@ -53,7 +53,7 @@ if (!is.na(varfile)) {
 }
 
 ## if we have a chromosome indicator but only one gds file, select chromosome
-if (!is.na(chr) & !bychrfile) {
+if (!is.na(chr) && !bychrfile) {
     chrom <- seqGetData(gds, "chromosome")
     variant.id <- variant.id[chrom == chr]
     seqSetFilter(gds, variant.id=variant.id)
