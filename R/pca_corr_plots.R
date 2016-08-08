@@ -32,10 +32,7 @@ corr <- do.call(rbind, lapply(unname(files), function(f) {
 }))
 n_pcs <- ncol(corr) - 2
 
-corr <- gather(corr, PC, value, -chr, -pos) %>%
-    filter(!is.na(value)) %>%
-    mutate(chr=factor(chr, levels=c(1:22, "X")),
-           value=abs(value))
+corr <- mutate(corr, chr=factor(chr, levels=c(1:22, "X")))
 
 chr <- levels(corr$chr)
 cmap <- setNames(rep_len(brewer.pal(8, "Dark2"), length(chr)), chr)
@@ -45,9 +42,12 @@ n_plots <- ceiling(n_pcs/as.integer(config["n_perpage"]))
 bins <- as.integer(cut(1:n_pcs, n_plots))
 for (i in 1:n_plots) {
     bin <- which(bins == i)
-    p <- filter(corr, PC %in% bin) %>%
-        mutate(PC=factor(paste0("PC", PC), levels=paste0("PC", 1:n_pcs))) %>%
-        ggplot(aes(chr, value, group=interaction(chr, pos), color=chr)) +
+    dat <- select(corr, one_of(as.character(bin)), chr, pos) %>%
+        gather(PC, value, -chr, -pos) %>%
+        filter(!is.na(value)) %>%
+        mutate(value=abs(value)) %>%
+        mutate(PC=factor(paste0("PC", PC), levels=paste0("PC", 1:n_pcs)))
+    p <- ggplot(dat, aes(chr, value, group=interaction(chr, pos), color=chr)) +
         geom_point(position=position_dodge(0.8)) +
         facet_wrap(~PC, scales="free", ncol=1) +
         scale_color_manual(values=cmap, breaks=names(cmap)) +
