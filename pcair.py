@@ -119,7 +119,7 @@ config["pca_file"] = configdict["out_prefix"] + "_pcair.RData"
 config["out_file_scree"] = configdict["out_prefix"] + "_pca_scree.pdf"
 config["out_file_pc12"] = configdict["out_prefix"] + "_pca_pc12.pdf"
 config["out_file_parcoord"] = configdict["out_prefix"] + "_pca_parcoord.pdf"
-config["out_file_pairs"] = configdict["out_prefix"] + "_pca_pairs.pdf"
+config["out_file_pairs"] = configdict["out_prefix"] + "_pca_pairs.png"
 configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
