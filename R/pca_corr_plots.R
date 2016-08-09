@@ -15,7 +15,8 @@ required <- c("corr_file")
 optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22",
               "n_pcs"=20,
               "n_perpage"=4,
-              "out_prefix"="pca_corr")
+              "out_prefix"="pca_corr",
+              "thin"=TRUE)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -47,6 +48,15 @@ for (i in 1:n_plots) {
         filter(!is.na(value)) %>%
         mutate(value=abs(value)) %>%
         mutate(PC=factor(paste0("PC", PC), levels=paste0("PC", 1:n_pcs)))
+    if (as.logical(config["thin"])) {
+        ## thin points below mean of each PC
+        dat <- dat %>%
+            group_by(PC) %>% 
+            mutate(sel=as.logical(rbinom(n(), 1, 0.1)),
+                   flag=ifelse(value > mean(value), TRUE, sel)) %>%
+            filter(flag) %>%
+            select(-sel, -flag)
+    }
     p <- ggplot(dat, aes(chr, value, group=interaction(chr, pos), color=chr)) +
         geom_point(position=position_dodge(0.8)) +
         facet_wrap(~PC, scales="free", ncol=1) +

@@ -99,7 +99,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`n_pcs` | `20` | Number of PCs to return. 
 	`n_pair` | `6` | Number of PCs in include in the pairs plot.
 	`n_perpage` | `4` | Number of PC-variant correlation plots to stack in a single page. The number of png files generated will be `ceiling(n_pcs/n_perpage)`. 
-	`n_pair` | `6` | Number of PCs in include in the pairs plot.
+	`thin` | `TRUE` | Logical for whether to thin points in the PC-variant correlation plots.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for color-coding PCA plots by group.
 	`group` | `NA` | Name of column in `phenotype_file` containing group variable.
 
