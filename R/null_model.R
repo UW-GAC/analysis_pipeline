@@ -75,13 +75,14 @@ nullmod <- fitNullMM(annot, outcome=outcome, covars=covars,
                      family=family)
 
 # if we need an inverse normal transform, take residuals and refit null model
-# for second model fit, use PCs and kinship but not other covariates
+# for second model fit, use kinship but not other covariates
 if (as.logical(config["inverse_normal"])) {
     resid.norm <- rankNorm(nullmod$resid.marginal)
     annot$resid.norm <- resid.norm[match(annot$sample.id, nullmod$scanID)]
     message(paste0("resid.norm = rankNorm(resid.marginal(", outcome, " ~ ", paste(c(covars, "(1|kinship)"), collapse=" + "), "))"))
-    message("Model: resid.norm ~ ", paste(c(pccols, "(1|kinship)"), collapse=" + "))
-    nullmod <- fitNullMM(annot, outcome="resid.norm", covars=pccols,
+    #message("Model: resid.norm ~ ", paste(c(pccols, "(1|kinship)"), collapse=" + "))
+    message("Model: resid.norm ~ (1|kinship)")
+    nullmod <- fitNullMM(annot, outcome="resid.norm", covars=NULL,
                          covMatList=grm, scan.include=sample.id,
                          family=family)
 }
