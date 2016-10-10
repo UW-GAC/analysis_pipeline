@@ -128,32 +128,32 @@ holdid = [jobid["pca_byrel"]]
 jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, printOnly=printOnly)
 
 
-job = "pca_corr"
+# job = "pca_corr"
 
-rscript = os.path.join(pipeline, "R", job + ".R")
+# rscript = os.path.join(pipeline, "R", job + ".R")
 
-config = deepcopy(configdict)
-config["pca_file"] = configdict["out_prefix"] + "_pcair_unrel.RData"
-config["out_file"] = configdict["out_prefix"] + "_pcair_corr_chr .RData"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
-TopmedPipeline.writeConfig(config, configfile)
+# config = deepcopy(configdict)
+# config["pca_file"] = configdict["out_prefix"] + "_pcair_unrel.RData"
+# config["out_file"] = configdict["out_prefix"] + "_pcair_corr_chr .RData"
+# configfile = configdict["out_prefix"] + "_" + job + ".config"
+# TopmedPipeline.writeConfig(config, configfile)
 
-holdid = [jobid["pca_byrel"]]
+# holdid = [jobid["pca_byrel"]]
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, requestCores=ncores, printOnly=printOnly)
+# jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, requestCores=ncores, printOnly=printOnly)
 
 
-job = "pca_corr_plots"
+# job = "pca_corr_plots"
 
-rscript = os.path.join(pipeline, "R", job + ".R")
+# rscript = os.path.join(pipeline, "R", job + ".R")
 
-config = deepcopy(configdict)
-config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
-config["corr_file"] = configdict["out_prefix"] + "_pcair_corr_chr .RData"
-config["out_prefix"] = configdict["out_prefix"] + "_pcair_corr"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
-TopmedPipeline.writeConfig(config, configfile)
+# config = deepcopy(configdict)
+# config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
+# config["corr_file"] = configdict["out_prefix"] + "_pcair_corr_chr .RData"
+# config["out_prefix"] = configdict["out_prefix"] + "_pcair_corr"
+# configfile = configdict["out_prefix"] + "_" + job + ".config"
+# TopmedPipeline.writeConfig(config, configfile)
 
-holdid = [jobid["pca_corr"].split(".")[0]]
+# holdid = [jobid["pca_corr"].split(".")[0]]
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, printOnly=printOnly)
+# jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, printOnly=printOnly)
