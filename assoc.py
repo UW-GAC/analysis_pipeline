@@ -18,7 +18,7 @@ parser.add_argument("configfile", help="configuration file")
 parser.add_argument("-c", "--chromosomes", default="1-23",
                     help="range of chromosomes [default %(default)s]")
 parser.add_argument("-p", "--pipeline", 
-                    default="/projects/geneva/gcc-fs2/GCC_Code/analysis_pipeline",
+                    default="/projects/topmed/working_code/analysis_pipeline",
                     help="pipeline source directory")
 parser.add_argument("-q", "--queue", default="olga.q", 
                     help="cluster queue name [default %(default)s]")
