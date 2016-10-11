@@ -38,12 +38,12 @@ if (!is.na(config["sample_include_file"])) {
 n_pcs <- as.integer(config["n_pcs"])
 if (n_pcs > 0) {
     pca <- getobj(config["pca_file"])
-    pcs <- pca$vectors[,1:n_pcs]
+    pcs <- pca$vectors[,1:n_pcs,drop=FALSE]
     pccols <- paste0("PC", 1:n_pcs)
     colnames(pcs) <- pccols
     sample.id <- intersect(sample.id, rownames(pcs))
     annot <- annot[annot$sample.id %in% sample.id,]
-    pData(annot) <- cbind(pData(annot), pcs[as.character(sample.id),])
+    pData(annot) <- cbind(pData(annot), pcs[as.character(sample.id),,drop=FALSE])
 } else {
     pccols <- NULL
 }
