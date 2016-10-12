@@ -18,4 +18,5 @@ export(readConfig,
        rankNorm,
        countThreads,
        aggregateListByAllele,
-       aggregateListByPosition)
+       aggregateListByPosition,
+       getPhenotypes)
