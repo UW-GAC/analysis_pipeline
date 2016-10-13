@@ -28,7 +28,7 @@ phen <- getPhenotypes(config)
 annot <- phen[["annot"]]
 outcome <- phen[["outcome"]]
 covars <- phen[["covars"]]
-sample.id <- annot$sample.id
+sample.id <- phen[["sample.id"]]
 
 if (as.logical(config["binary"])) {
     stopifnot(all(annot[[outcome]] %in% c(0,1)))
@@ -51,11 +51,7 @@ if (!is.na(config["pcrelate_file"])) {
     ## if we need an inverse normal transform, take residuals and refit null model
     ## for second model fit, use kinship but not other covariates
     if (as.logical(config["inverse_normal"])) {
-        resid.norm <- rankNorm(nullmod$resid.marginal)
-        annot$resid.norm <- resid.norm[match(annot$sample.id, nullmod$scanID)]
-        message(paste0("resid.norm = rankNorm(resid.marginal(", outcome, " ~ ", paste(c(covars, "(1|kinship)"), collapse=" + "), "))"))
-        ##message("Model: resid.norm ~ ", paste(c(pccols, "(1|kinship)"), collapse=" + "))
-        message("Model: resid.norm ~ (1|kinship)")
+        annot <- addInvNorm(annot, nullmod, outcome, covars)
         nullmod <- fitNullMM(annot, outcome="resid.norm", covars=NULL,
                              covMatList=grm, scan.include=sample.id,
                              family=family)
@@ -67,13 +63,8 @@ if (!is.na(config["pcrelate_file"])) {
     nullmod <- fitNullReg(annot, outcome=outcome, covars=covars,
                          scan.include=sample.id, family=family)
 
-    ## if we need an inverse normal transform, take residuals and refit null model
-    ## for second model fit, use kinship but not other covariates
     if (as.logical(config["inverse_normal"])) {
-        resid.norm <- rankNorm(nullmod$resid.response)
-        annot$resid.norm <- resid.norm[match(annot$sample.id, nullmod$scanID)]
-        message(paste0("resid.norm = rankNorm(resid.marginal(", outcome, " ~ ", paste(covars, collapse=" + "), "))"))
-        message("Model: resid.norm")
+        annot <- addInvNorm(annot, nullmod, outcome, covars)
         nullmod <- fitNullReg(annot, outcome="resid.norm", covars=NULL,
                               scan.include=sample.id, family=family)
     }
