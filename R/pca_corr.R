@@ -55,7 +55,8 @@ message("Using ", length(variant.id), " variants")
 
 pca <- getobj(config["pca_file"])
 n_pcs <- min(as.integer(config["n_pcs"]), length(pca$sample.id))
-nt <- countThreads()
+#nt <- countThreads()
+nt <- 1 # temporary fix
 pca.corr <- snpgdsPCACorr(pca, gdsobj=gds, snp.id=variant.id, eig.which=1:n_pcs, num.thread=nt)
 
 ## add chromosome and position to output
