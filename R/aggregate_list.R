@@ -8,7 +8,7 @@ argp <- add_argument(argp, "config", help="path to config file")
 argp <- add_argument(argp, "--chromosome", help="chromosome number (1-24)", type="integer")
 argv <- parse_args(argp)
 config <- readConfig(argv$config)
-chr <- argv$chromosome
+chr <- intToChr(argv$chromosome)
 
 required <- c("gds_file",
               "variant_group_file")
@@ -22,8 +22,6 @@ gdsfile <- config["gds_file"]
 outfile <- config["out_file"]
 varfile <- config["variant_group_file"]
 if (!is.na(chr)) {
-    if (chr == 23) chr <- "X"
-    if (chr == 24) chr <- "Y"
     bychrfile <- grepl(" ", gdsfile) # do we have one file per chromosome?
     gdsfile <- insertChromString(gdsfile, chr)
     outfile <- insertChromString(outfile, chr, err="out_file")

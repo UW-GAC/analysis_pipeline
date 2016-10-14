@@ -23,4 +23,5 @@ export(readConfig,
        addInvNorm,
        filterByChrom,
        filterByPass,
-       filterByMAF)
+       filterByMAF,
+       intToChr)

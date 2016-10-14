@@ -8,7 +8,7 @@ argp <- add_argument(argp, "config", help="path to config file")
 argp <- add_argument(argp, "--chromosome", help="chromosome number (1-24)", type="integer")
 argv <- parse_args(argp)
 config <- readConfig(argv$config)
-chr <- argv$chromosome
+chr <- intToChr(argv$chromosome)
 
 required <- c("vcf_file", "gds_file")
 optional <- c(format="GT")
@@ -19,8 +19,6 @@ print(config)
 vcffile <- config["vcf_file"]
 gdsfile <- config["gds_file"]
 if (!is.na(chr)) {
-    if (chr == 23) chr <- "X"
-    if (chr == 24) chr <- "Y"
     vcffile <- insertChromString(vcffile, chr, "vcf_file")
     gdsfile <- insertChromString(gdsfile, chr, "gds_file")
 }

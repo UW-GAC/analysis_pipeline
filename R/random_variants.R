@@ -8,7 +8,7 @@ argp <- arg_parser("Select random set of variants above a MAF threshold")
 argp <- add_argument(argp, "config", help="path to config file")
 argv <- parse_args(argp)
 config <- readConfig(argv$config)
-chr <- argv$chromosome
+chr <- intToChr(argv$chromosome)
 
 required <- c("gds_file")
 optional <- c("maf_threshold"=0.05,
@@ -21,8 +21,6 @@ print(config)
 gdsfile <- config["gds_file"]
 outfile <- config["out_file"]
 if (!is.null(chr)) {
-    if (chr == 23) chr <- "X"
-    if (chr == 24) chr <- "Y"
     gdsfile <- insertChromString(gdsfile, chr)
     outfile <- insertChromString(outfile, chr, err="out_file")
 }

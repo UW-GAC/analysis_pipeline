@@ -41,3 +41,10 @@ calculateLambda <- function(stat, df) {
 }
 
 rankNorm <- function(x) qnorm((rank(x) - 0.5)/length(x))
+
+intToChr <- function(chr) {
+    if (is.na(chr)) return(NA)
+    if (chr == 23) return("X")
+    if (chr == 24) return("Y")
+    as.character(chr)
+}
