@@ -20,4 +20,7 @@ export(readConfig,
        aggregateListByAllele,
        aggregateListByPosition,
        getPhenotypes,
-       addInvNorm)
+       addInvNorm,
+       filterByChrom,
+       filterByPass,
+       filterByMAF)

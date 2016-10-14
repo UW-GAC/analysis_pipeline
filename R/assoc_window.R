@@ -56,23 +56,18 @@ sample.id <- nullModel$scanID
 if (!is.na(varfile)) {
     variant.id <- getobj(varfile)
     seqSetFilter(gds, variant.id=variant.id)
-    } else {
-    variant.id <- seqGetData(gds, "variant.id")
 }
 
 ## if we have a chromosome indicator but only one gds file, select chromosome
 if (!is.na(chr) && !bychrfile) {
-    chrom <- seqGetData(gds, "chromosome")
-    variant.id <- variant.id[chrom == chr]
-    seqSetFilter(gds, variant.id=variant.id)
+    gds <- filterByChrom(gds, chr)
 }
 
 if (as.logical(config["pass_only"])) {
-    filt <- seqGetData(gds, "annotation/filter")
-    variant.id <- variant.id[filt == "PASS"]
-    #seqSetFilter(gds, variant.id=variant.id)
+    gds <- filterByPass(gds)
 }
 
+variant.id <- seqGetData(gds, "variant.id")
 message("Using ", length(variant.id), " variants")
 seqResetFilter(gds, verbose=FALSE)
 
