@@ -126,7 +126,11 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 
 ## Association testing
 
+Association tests are done with a mixed model if a kinship matrix (`pcrelate_file`) is given in the config file. If `pcrelate_file` is `NA` or missing, testing is done with a fixed effects model.
+
 An inverse-normal transform may be requested with `inverse_normal TRUE` in the config file. This is done by fitting the null model and rank-normalizing the marginal residuals. The normalized residuals are then used as the outcome in a null model with only PCs and kinship as covariates.
+
+For single-variant tests, the effect estimate is for the reference allele. For aggregate and sliding window tests, the effect estimate is for the alternate alelle, and multiple alternate alelles for a single variant are treated separately.
 
 ### Single-variant
 
@@ -141,7 +145,7 @@ config parameter | default value | description
 `out_prefix` | | Prefix for files created by this script. 
 `gds_file` | | GDS file. Include a space to insert chromosome.
 `pca_file` | | RData file with PCA results created by `pcair.py`. 
-`pcrelate_file` | | GDS file created by `pcrelate.py`.
+`pcrelate_file` | `NA` | GDS file created by `pcrelate.py`.
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes. 
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
@@ -152,7 +156,7 @@ config parameter | default value | description
 `mac_threshold` | `5` | Minimum minor allele count for variants to include in test. Use a higher threshold when outcome is binary.
 `maf_threshold` | `0.001` | Minimum minor allele frequency for variants to include in test. Only used if `mac_threshold` is `NA`.
 `pass_only` | `TRUE` | `TRUE` to select only variants with FILTER=PASS.
-`test_type` | `score` | Type of test to perform. Options are `score` and `wald` if `binary` is `FALSE`, `score` only if `binary` is `TRUE`.
+`test_type` | `score` | Type of test to perform. If samples are related (mixed model), options are `score` and `wald` if `binary` is `FALSE`, `score` only if `binary` is `TRUE`.  For unrelated samples (`pcrelate_file` is `NA`), options are `linear` (Wald test) if `binary` is `FALSE`, `logistic` (Wald test) or `firth` if `binary` is `TRUE`.
 `variant_include_file` | `NA` | RData file with vector of variant.id to include.
 
 ### Aggregate
@@ -171,7 +175,7 @@ config parameter | default value | description
 `aggregate_type` | `allele` | Type of aggregate grouping. Options are to select variants by `allele` (unique variants) or `position` (regions of interest).
 `variant_group_file` | | RData file with data frame defining aggregate groups. If `aggregate_type` is `allele`, columns should be `group_id`, `chromosome`, `position`, `ref`, `alt`. If `aggregate_type` is `position`, columns should be `group_id`, `chromosome`, `start`, `end`.
 `pca_file` | | RData file with PCA results created by `pcair.py`. 
-`pcrelate_file` | | GDS file created by `pcrelate.py`.
+`pcrelate_file` | `NA` | GDS file created by `pcrelate.py`.
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes. 
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
@@ -181,8 +185,8 @@ config parameter | default value | description
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. Variants used will be the intersection of this set and variants defined by `variant_group_file`.
 `alt_freq_range` | `"0 1"` | Range of alternate allele frequencies to consider, quoted and separated by spaces.
-`test` | `burden` | Test to perform. Options are `burden` or `skat`.
-`test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` only if `binary` is `TRUE`. 
+`test` | `burden` | Test to perform. Options are `burden` or `skat`. 
+`test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` and `firth` if `binary` is `TRUE`. `firth` is only valid if samples are unrelated (`pcrelate_file` is `NA`).
 `pval_skat` | `kuonen` | Method used to calculate p-values if `test` is `skat`. Options are `kuonen` (uses saddlepoint method), `davies` (uses numerical integration), and `liu` (uses a moment matching approximation). 
 `rho` | `0` | A numeric value (or quoted, space-delimited list of numeric values) in [0,1] specifying the rho parameter when `test` is `skat`. `0` is a standard SKAT test, `1` is a score burden test, and multiple values is a SKAT-O test.
 `weight_beta` | `"0.5 0.5"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"0.5 0.5"` is proportional to the Madsen-Browning weights and `"1 25"` gives the Wu weights.
@@ -200,7 +204,7 @@ config parameter | default value | description
 `out_prefix` | | Prefix for files created by this script. 
 `gds_file` | | GDS file. Include a space to insert chromosome.
 `pca_file` | | RData file with PCA results created by `pcair.py`. 
-`pcrelate_file` | | GDS file created by `pcrelate.py`.
+`pcrelate_file` | `NA` | GDS file created by `pcrelate.py`.
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes. 
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
@@ -211,7 +215,7 @@ config parameter | default value | description
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. 
 `alt_freq_range` | `"0 1"` | Range of alternate allele frequencies to consider, quoted and separated by spaces.
 `test` | `burden` | Test to perform. Options are `burden` or `skat`. 
-`test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` only if `binary` is `TRUE`. 
+`test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` and `firth` if `binary` is `TRUE`. `firth` is only valid if samples are unrelated (`pcrelate_file` is `NA`).
 `pval_skat` | `kuonen` | Method used to calculate p-values if `test` is `skat`. Options are `kuonen` (uses saddlepoint method), `davies` (uses numerical integration), and `liu` (uses a moment matching approximation). 
 `rho` | `0` | A numeric value (or quoted, space-delimited list of numeric values) in [0,1] specifying the rho parameter when `test` is `skat`. `0` is a standard SKAT test, `1` is a score burden test, and multiple values is a SKAT-O test.
 `weight_beta` | `"0.5 0.5"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"0.5 0.5"` is proportional to the Madsen-Browning weights and `"1 25"` gives the Wu weights.

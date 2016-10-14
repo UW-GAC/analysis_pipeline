@@ -44,19 +44,26 @@ jobid = dict()
     
 configdict = TopmedPipeline.readConfig(configfile)
 
+# check type of association test - single-variant unrelated is handled differently
+single_unrel = assoctype == "single" and configdict["pcrelate_file"] == "NA"
 
-job = "null_model"
+if not single_unrel:
+    job = "null_model"
 
-rscript = os.path.join(pipeline, "R", job + ".R")
+    rscript = os.path.join(pipeline, "R", job + ".R")
 
-config = deepcopy(configdict)
-config["out_file"] = configdict["out_prefix"] + "_null_model.RData"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
-TopmedPipeline.writeConfig(config, configfile)
+    config = deepcopy(configdict)
+    config["out_file"] = configdict["out_prefix"] + "_null_model.RData"
+    configfile = configdict["out_prefix"] + "_" + job + ".config"
+    TopmedPipeline.writeConfig(config, configfile)
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], queue=queue, email=email, printOnly=printOnly)
+    jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], queue=queue, email=email, printOnly=printOnly)
 
-holdid = [jobid["null_model"]]
+    holdid = [jobid["null_model"]]
+
+else:
+    assoctype = "single_unrel"
+    holdid = []
 
 
 # for aggregate tests, generate variant list
@@ -97,7 +104,7 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
 config["assoc_file"] = configdict["out_prefix"] + "_" + prevjob + "_chr .RData"
-config["assoc_type"] = assoctype
+config["assoc_type"] = assoctype if not single_unrel else "single"
 config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
 config["out_file_manh"] = configdict["out_prefix"] + "_manh.png"
 config["out_file_qq"] = configdict["out_prefix"] + "_qq.png"
