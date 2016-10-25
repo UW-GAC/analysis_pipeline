@@ -28,35 +28,48 @@ corr <- do.call(rbind, lapply(unname(files), function(f) {
     dat <- data.frame(t(c$snpcorr))
     n_pcs <- min(as.integer(config["n_pcs"]), ncol(dat))
     dat <- dat[,1:n_pcs]
-    names(dat) <- 1:n_pcs
+    names(dat) <- paste0("PC", 1:n_pcs)
+    missing <- rowSums(is.na(dat)) == n_pcs # monomorphic variants
     dat <- cbind(dat, chr=c$chromosome, pos=c$position, stringsAsFactors=FALSE)
+    dat <- dat[!missing,]
+
+    ## transform to data frame with PC as column
+    dat <- dat %>%
+        gather(PC, value, -chr, -pos) %>%
+        filter(!is.na(value)) %>%
+        mutate(value=abs(value)) %>%
+        mutate(PC=factor(PC, levels=paste0("PC", 1:n_pcs)))
+
+    ## thin points
+    ## take up to 10,000 points from each of 10 evenly spaced bins
+    if (as.logical(config["thin"])) {
+        ## http://stackoverflow.com/questions/30950016/dplyr-sample-n-where-n-is-the-value-of-a-grouped-variable
+        dat <- dat %>%
+            group_by(PC) %>%
+            mutate(bin=cut(value, breaks=10, labels=FALSE)) %>%
+            group_by(PC, bin) %>%
+            sample_frac(1) %>%
+            filter(row_number() <= min(10000, n())) %>%
+            ungroup() %>%
+            select(-bin)
+    }
+
+    dat
 }))
-n_pcs <- ncol(corr) - 2
 
+## make chromosome a factor so they are plotted in order
 corr <- mutate(corr, chr=factor(chr, levels=c(1:22, "X")))
-
 chr <- levels(corr$chr)
 cmap <- setNames(rep_len(brewer.pal(8, "Dark2"), length(chr)), chr)
 
 # plot over multiple pages
+n_pcs <- length(unique(corr$PC))
 n_plots <- ceiling(n_pcs/as.integer(config["n_perpage"]))
 bins <- as.integer(cut(1:n_pcs, n_plots))
 for (i in 1:n_plots) {
-    bin <- which(bins == i)
-    dat <- select(corr, one_of(as.character(bin)), chr, pos) %>%
-        gather(PC, value, -chr, -pos) %>%
-        filter(!is.na(value)) %>%
-        mutate(value=abs(value)) %>%
-        mutate(PC=factor(paste0("PC", PC), levels=paste0("PC", 1:n_pcs)))
-    if (as.logical(config["thin"])) {
-        ## thin points below mean of each PC
-        dat <- dat %>%
-            group_by(PC) %>% 
-            mutate(sel=as.logical(rbinom(n(), 1, 0.1)),
-                   flag=ifelse(value > mean(value), TRUE, sel)) %>%
-            filter(flag) %>%
-            select(-sel, -flag)
-    }
+    bin <- paste0("PC", which(bins == i))
+    dat <- filter(corr, PC %in% bin)
+    
     p <- ggplot(dat, aes(chr, value, group=interaction(chr, pos), color=chr)) +
         geom_point(position=position_dodge(0.8)) +
         facet_wrap(~PC, scales="free", ncol=1) +
