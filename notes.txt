@@ -1,0 +1,17 @@
+1) single-variant. break each chromosome into equally-sized segments.
+2) aggregate tests. select subsets of aggregate blocks.
+3) sliding window. break chromosome into chunks, with some overlap.
+
+combine at end: for sliding window, need to remove overlaps.
+
+can we combine all these into a single system with slight variation?
+blocks for sliding window could also be used for single-variant, with removal of overlap.
+use same blocks for aggregate test - a unit is assigned to the block if its first variant lies in that block.
+
+terminology: block, chunk, or segment?
+
+define segment by position, not individual variants - so it can be reused for later freezes.
+get start and end position of chromosomes in hg19.
+mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -e "select chrom, size from hg19.chromInfo order by chrom"
+
+use dplyr with database?
