@@ -1,5 +1,7 @@
 import(utils)
 import(stats)
+import(methods)
+import(Biobase)
 import(SeqArray)
 importFrom(SeqVarTools, refChar, altChar)
 importFrom(S4Vectors, subjectHits, queryHits)
