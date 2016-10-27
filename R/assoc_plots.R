@@ -21,31 +21,7 @@ print(config)
 chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 files <- sapply(chr, function(c) insertChromString(config["assoc_file"], c, "assoc_file"))
 
-assoc <- lapply(files, getobj)
-names(assoc) <- NULL
-
-if (config["assoc_type"] == "single") {
-    assoc <- do.call(rbind, assoc)
-} else if (config["assoc_type"] == "aggregate") {
-    assoc <- do.call(rbind, lapply(assoc, function(x) {
-        tmp <- x$results %>%
-            add_rownames("group_id") %>%
-            filter(n.site > 0)
-        group.info <- do.call(rbind, lapply(tmp$group_id, function(g) {
-            grp <- x$variantInfo[[g]][1, c("chr", "pos")]
-            grp$group_id <- g
-            grp
-        }))
-        left_join(tmp, group.info, by="group_id")
-    }))
-} else if (config["assoc_type"] == "window") {
-    assoc <- do.call(rbind, lapply(assoc, function(x) {
-        filter(x$results, n.site > 0, dup == 0) %>%
-            mutate(pos=floor((window.start + window.stop)/2))
-    }))
-} else {
-    stop("assoc_type should be 'single', 'aggregate' or 'window'")
-}
+assoc <- getAssoc(files, config["assoc_type"])
 
 if ("pval_0" %in% names(assoc)) {
     ## SKAT

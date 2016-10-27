@@ -7,6 +7,7 @@ importFrom(IRanges, IRanges)
 importFrom(GenomicRanges, GRanges, findOverlaps)
 importFrom(dplyr, arrange_, distinct_, filter_, mutate_, select_, inner_join, left_join, one_of, "%>%")
 importFrom(tidyr, gather_, separate_)
+importFrom(tibble, rownames_to_column)
 
 export(readConfig,
        writeConfig,
@@ -24,4 +25,5 @@ export(readConfig,
        filterByChrom,
        filterByPass,
        filterByMAF,
-       intToChr)
+       intToChr,
+       getAssoc)
