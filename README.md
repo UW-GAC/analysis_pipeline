@@ -149,7 +149,8 @@ config parameter | default value | description
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes. 
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
-`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
+`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces. 
+`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
 `inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include.
@@ -179,7 +180,8 @@ config parameter | default value | description
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes. 
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
-`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces. 
+`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
+`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
 `inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
@@ -209,6 +211,7 @@ config parameter | default value | description
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces. 
+`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
 `inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 

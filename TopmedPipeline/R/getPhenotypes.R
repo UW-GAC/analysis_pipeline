@@ -10,14 +10,15 @@ getPhenotypes <- function(config) {
         pcs <- pca$vectors[,1:n_pcs,drop=FALSE]
         pccols <- paste0("PC", 1:n_pcs)
         colnames(pcs) <- pccols
-        pcs <- data.frame(sample.id=rownames(pcs), pcs, stringsAsFactors=FALSE)
-        pData(annot) <- left_join(pData(annot), pcs, by="sample.id")
+        pcs <- pcs[match(annot$sample.id, rownames(pcs)),]
+        rownames(pcs) <- NULL
+        pData(annot) <- cbind(pData(annot), pcs)
     } else {
         pccols <- NULL
     }
 
     ## outcome and covariates
-    outcome <- config["outcome"]
+    outcome <- unname(config["outcome"])
     if (!is.na(config["covars"])) {
         covars <- strsplit(config["covars"], " ", fixed=TRUE)[[1]]
     } else {
