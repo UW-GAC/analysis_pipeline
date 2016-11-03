@@ -78,12 +78,7 @@ test <- switch(tolower(config["test_type"]),
 assoc <- assocTestMM(seqData, nullModel, test=test, snp.include=variant.id)
 
 ## make output consistent with aggregate tests
-names(assoc)[names(assoc) == "snpID"] <- "variantID"
-names(assoc) <- sub(".Stat", ".stat", names(assoc), fixed=TRUE)
-seqSetFilter(seqData, variant.id=assoc$variantID, verbose=FALSE)
-assoc$pos <- seqGetData(seqData, "position")
-cols <- setdiff(names(assoc), c("variantID", "chr", "pos"))
-assoc <- assoc[,c("variantID", "chr", "pos", cols)]
+assoc <- formatAssocSingle(seqData, assoc)
 
 save(assoc, file=outfile)
 

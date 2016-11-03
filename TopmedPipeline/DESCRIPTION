@@ -6,7 +6,7 @@ Description: Utilities for the TOPMed pipeline.
 Author: Stephanie Gogarten
 Maintainer: Stephanie Gogarten <sdmorris@uw.edu>
 Depends: 
-Imports: methods, stats, utils, Biobase, SeqArray, SeqVarTools, GenomicRanges, IRanges, S4Vectors, dplyr, tidyr, tibble
+Imports: methods, stats, utils, Biobase, SeqArray, SeqVarTools, GenomicRanges, IRanges, S4Vectors, dplyr, tidyr
 Suggests: testthat, GENESIS, gdsfmt
 License: Artistic-2.0
 LazyLoad: yes

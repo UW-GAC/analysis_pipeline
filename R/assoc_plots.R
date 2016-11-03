@@ -23,21 +23,13 @@ files <- sapply(chr, function(c) insertChromString(config["assoc_file"], c, "ass
 
 assoc <- getAssoc(files, config["assoc_type"])
 
-if ("pval_0" %in% names(assoc)) {
-    ## SKAT
-    pval.col <- if ("pval_SKATO" %in% names(assoc)) "pval_SKATO" else "pval_0"
-    assoc <- select_(assoc, "chr", "pos", pval.col) %>%
-        rename_(pval=pval.col)
-    lambda <- calculateLambda(qchisq(assoc$pval, df=1, lower=FALSE), df=1)
-} else {
+if ("stat" %in% names(assoc)) {
     ## burden or single
-    assoc <- select(assoc, chr, pos, ends_with("stat"), ends_with("pval"))
-    names(assoc)[3:4] <- c("stat", "pval")
     lambda <- calculateLambda(assoc$stat, df=1)
+} else {
+    ## SKAT
+    lambda <- calculateLambda(qchisq(assoc$pval, df=1, lower=FALSE), df=1)
 }
-assoc <- filter(assoc, !is.na(pval)) %>%
-    mutate(chr=factor(chr, levels=c(1:22, "X")))
-
 
 ## manhattan plot
 chr <- levels(assoc$chr)
