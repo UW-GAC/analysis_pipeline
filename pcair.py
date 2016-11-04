@@ -140,7 +140,9 @@ TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["pca_byrel"]]
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, requestCores=ncores, printOnly=printOnly)
+#jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, requestCores=ncores, printOnly=printOnly)
+# single core only
+jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
 
 
 job = "pca_corr_plots"

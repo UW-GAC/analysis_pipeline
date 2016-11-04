@@ -1,6 +1,11 @@
 context("aggregateList tests")
 library(dplyr)
 
+.opengds <- function() {
+    gdsfmt::showfile.gds(closeall=TRUE, verbose=FALSE)
+    seqOpen(seqExampleFileName())
+}
+
 .testVariants <- function(gds) {
     # triallelic snps are on chroms 21-22
     seqResetFilter(gds, verbose=FALSE)
@@ -36,7 +41,7 @@ library(dplyr)
 
 
 test_that("expandAlleles", {
-    gds <- seqOpen(seqExampleFileName())
+    gds <- .opengds()
     var <- .expandAlleles(gds)
     nAlt <- seqNumAllele(gds) - 1
     expect_equal(nrow(var), sum(nAlt))
@@ -45,7 +50,7 @@ test_that("expandAlleles", {
 })
 
 test_that("aggregateListByAllele", {
-    gds <- seqOpen(seqExampleFileName())
+    gds <- .opengds()
     variants <- .testVariants(gds)
     
     aggList <- aggregateListByAllele(gds, variants)
@@ -62,7 +67,7 @@ test_that("aggregateListByAllele", {
 })
 
 test_that("aggregateListByAllele returns correct columns", {
-    gds <- seqOpen(seqExampleFileName())
+    gds <- .opengds()
     variants <- .testVariants(gds)
     
     aggList <- aggregateListByAllele(gds, variants)
@@ -75,19 +80,19 @@ test_that("aggregateListByAllele returns correct columns", {
 })
 
 test_that("aggregateListByAllele can handle multiple groups per variant", {
-    gds <- seqOpen(seqExampleFileName())
+    gds <- .opengds()
     variants <- .testVariants(gds)
     groups <- unique(variants$group_id)
-    variants <- filter(variants, group_id == groups[1]) %>%
-        mutate(group_id = groups[2]) %>%
+    variants <- filter_(variants, ~(group_id == groups[1])) %>%
+        mutate_(group_id=~(groups[2])) %>%
         rbind(variants)
     
     aggList <- aggregateListByAllele(gds, variants)
     for (group in groups[1:2]) {
-        g1 <- filter(variants, group_id == group) %>%
+        g1 <- filter_(variants, ~(group_id == group)) %>%
             mutate(id=paste(chromosome, position, ref))
         g2 <- aggList[[group]] %>%
-            mutate(id=paste(chromosome, position, ref))
+            mutate_(id=~(paste(chromosome, position, ref)))
         expect_true(setequal(g1$id, g2$id))
     }
 
@@ -95,17 +100,17 @@ test_that("aggregateListByAllele can handle multiple groups per variant", {
 })
 
 test_that("aggregateListByPosition", {
-    gds <- seqOpen(seqExampleFileName())
+    gds <- .opengds()
     groups <- .testGroups(gds)
     aggList <- aggregateListByPosition(gds, groups)
     expect_true(setequal(groups$group_id, names(aggList)))
     
     variants <- .variantDF(gds)   
     var.exp <- lapply(1:nrow(groups), function(i) {
-        filter(variants,
-               chromosome == groups$chromosome[i],
-               position >= groups$start[i],
-               position <= groups$end[i])
+        filter_(variants,
+               ~(chromosome == groups$chromosome[i]),
+               ~(position >= groups$start[i]),
+               ~(position <= groups$end[i]))
     })
     names(var.exp) <- groups$group_id
     for (i in names(aggList)) {
@@ -116,14 +121,14 @@ test_that("aggregateListByPosition", {
 })
 
 test_that("aggregateListByPosition gets all alternate alleles", {
-    gds <- seqOpen(seqExampleFileName())
+    gds <- .opengds()
     groups <- .testGroups(gds)
     aggList <- aggregateListByPosition(gds, groups)
 
     lapply(aggList, function(x) {
-        tmp <- filter(x, nAlleles == 3) %>%
+        tmp <- filter_(x, ~(nAlleles == 3)) %>%
             group_by(variant.id) %>%
-            summarise(n=n())
+            summarise_(n=~(n()))
         expect_true(all(tmp$n == 2))
     })
     

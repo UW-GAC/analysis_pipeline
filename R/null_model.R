@@ -16,6 +16,7 @@ required <- c("outcome",
 optional <- c("pcrelate_file"=NA,
               "binary"=FALSE,
               "covars"=NA,
+              "group_var"=NA,
               "inverse_normal"=FALSE,
               "n_pcs"=3,
               "out_file"="null_model.RData",
@@ -37,6 +38,13 @@ if (as.logical(config["binary"])) {
     family <- gaussian
 }
 
+# heterogeneous residual variance
+if (!is.na(config["group_var"])) {
+    group.var <- config["group_var"]
+} else {
+    group.var <- NULL
+}
+
 if (!is.na(config["pcrelate_file"])) {
     ## load GRM for selected samples only
     pcr <- openfn.gds(config["pcrelate_file"])
@@ -46,7 +54,7 @@ if (!is.na(config["pcrelate_file"])) {
     message("Model: ", outcome, " ~ ", paste(c(covars, "(1|kinship)"), collapse=" + "))
     nullmod <- fitNullMM(annot, outcome=outcome, covars=covars,
                          covMatList=grm, scan.include=sample.id,
-                         family=family)
+                         family=family, group.var=group.var)
 
     ## if we need an inverse normal transform, take residuals and refit null model
     ## for second model fit, use kinship but not other covariates

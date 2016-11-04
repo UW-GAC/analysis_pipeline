@@ -149,7 +149,8 @@ config parameter | default value | description
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes. 
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
-`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
+`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces. 
+`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
 `inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include.
@@ -157,7 +158,8 @@ config parameter | default value | description
 `maf_threshold` | `0.001` | Minimum minor allele frequency for variants to include in test. Only used if `mac_threshold` is `NA`.
 `pass_only` | `TRUE` | `TRUE` to select only variants with FILTER=PASS.
 `test_type` | `score` | Type of test to perform. If samples are related (mixed model), options are `score` and `wald` if `binary` is `FALSE`, `score` only if `binary` is `TRUE`.  For unrelated samples (`pcrelate_file` is `NA`), options are `linear` (Wald test) if `binary` is `FALSE`, `logistic` (Wald test) or `firth` if `binary` is `TRUE`.
-`variant_include_file` | `NA` | RData file with vector of variant.id to include.
+`variant_include_file` | `NA` | RData file with vector of variant.id to include. 
+`thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 
 ### Aggregate
 
@@ -179,7 +181,8 @@ config parameter | default value | description
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes. 
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
-`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces. 
+`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
+`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
 `inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
@@ -189,7 +192,8 @@ config parameter | default value | description
 `test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` and `firth` if `binary` is `TRUE`. `firth` is only valid if samples are unrelated (`pcrelate_file` is `NA`).
 `pval_skat` | `kuonen` | Method used to calculate p-values if `test` is `skat`. Options are `kuonen` (uses saddlepoint method), `davies` (uses numerical integration), and `liu` (uses a moment matching approximation). 
 `rho` | `0` | A numeric value (or quoted, space-delimited list of numeric values) in [0,1] specifying the rho parameter when `test` is `skat`. `0` is a standard SKAT test, `1` is a score burden test, and multiple values is a SKAT-O test.
-`weight_beta` | `"0.5 0.5"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"0.5 0.5"` is proportional to the Madsen-Browning weights and `"1 25"` gives the Wu weights.
+`weight_beta` | `"0.5 0.5"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"0.5 0.5"` is proportional to the Madsen-Browning weights and `"1 25"` gives the Wu weights. 
+`thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 
 ### Sliding window
 
@@ -209,6 +213,7 @@ config parameter | default value | description
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces. 
+`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
 `inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
@@ -220,4 +225,5 @@ config parameter | default value | description
 `rho` | `0` | A numeric value (or quoted, space-delimited list of numeric values) in [0,1] specifying the rho parameter when `test` is `skat`. `0` is a standard SKAT test, `1` is a score burden test, and multiple values is a SKAT-O test.
 `weight_beta` | `"0.5 0.5"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"0.5 0.5"` is proportional to the Madsen-Browning weights and `"1 25"` gives the Wu weights.
 `window_size` | `50` | Size of sliding window in kb. 
-`window_step` | `20` | Step size of sliding window in kb.
+`window_step` | `20` | Step size of sliding window in kb. 
+`thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.

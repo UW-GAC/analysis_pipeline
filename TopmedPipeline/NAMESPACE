@@ -1,27 +1,33 @@
 import(utils)
 import(stats)
+import(methods)
+import(Biobase)
 import(SeqArray)
 importFrom(SeqVarTools, refChar, altChar)
 importFrom(S4Vectors, subjectHits, queryHits)
 importFrom(IRanges, IRanges)
 importFrom(GenomicRanges, GRanges, findOverlaps)
-importFrom(dplyr, arrange_, distinct_, filter_, mutate_, select_, inner_join, left_join, "%>%")
+importFrom(dplyr, arrange_, distinct_, filter_, group_by_, mutate_, rename_,  select_, inner_join, left_join, n, one_of, sample_frac, row_number, ungroup, "%>%")
 importFrom(tidyr, gather_, separate_)
+importFrom(lazyeval, interp)
 
-export(readConfig,
-       writeConfig,
+export(getobj,
+       readConfig,
        setConfigDefaults,
-       getobj,
-       insertChromString,
-       sequentialVariantIds,
-       calculateLambda,
-       rankNorm,
-       countThreads,
+       writeConfig,
+       addInvNorm,
        aggregateListByAllele,
        aggregateListByPosition,
-       getPhenotypes,
-       addInvNorm,
+       calculateLambda,
+       countThreads,
        filterByChrom,
-       filterByPass,
        filterByMAF,
-       intToChr)
+       filterByPass,
+       formatAssocSingle,
+       getAssoc,
+       getPhenotypes,
+       insertChromString,
+       intToChr,
+       rankNorm,
+       sequentialVariantIds,
+       thinPoints)

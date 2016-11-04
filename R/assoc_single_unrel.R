@@ -96,17 +96,7 @@ seqData <- SeqVarData(gds, sampleData=annot)
 assoc <- regression(seqData, outcome=outcome, covar=covars, model.type=test)
 
 ## make output consistent with mixed model
-names(assoc)[names(assoc) == "variant.id"] <- "variantID"
-names(assoc) <- sub(".Stat", ".stat", names(assoc), fixed=TRUE)
-names(assoc) <- sub(".Pval", ".pval", names(assoc), fixed=TRUE)
-seqSetFilter(seqData, variant.id=assoc$variantID, verbose=FALSE)
-assoc$chr <- seqGetData(seqData, "chromosome")
-assoc$pos <- seqGetData(seqData, "position")
-assoc$MAF <- pmin(assoc$freq, 1 - assoc$freq)
-assoc$minor.allele <- ifelse(assoc$freq > 0.5, "ref", "alt")
-init.cols <- c("variantID", "chr", "pos", "n", "MAF", "minor.allele")
-cols <- setdiff(names(assoc), c(init.cols, "freq"))
-assoc <- assoc[,c(init.cols, cols)]
+assoc <- formatAssocSingle(seqData, assoc)
 
 save(assoc, file=outfile)
 
