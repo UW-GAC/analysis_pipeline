@@ -66,6 +66,7 @@ for (i in 1:n_plots) {
         geom_point(position=position_dodge(0.8)) +
         facet_wrap(~PC, scales="free", ncol=1) +
         scale_color_manual(values=cmap, breaks=names(cmap)) +
+        ylim(0,1) + 
         theme_bw() +
         theme(legend.position="none") +
         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
