@@ -41,7 +41,8 @@ dat <- data.frame(obs=sort(assoc$pval),
                   lower=qbeta(0.975, x, rev(x)))
 
 if (as.logical(config["thin"])) {
-    dat <- thinPoints(dat, "obs", n=10000, nbins=10)
+    dat <- mutate(dat, logp=-log10(obs)) %>%
+        thinPoints("logp", n=10000, nbins=10)
 }
 
 p <- ggplot(dat, aes(-log10(exp), -log10(obs))) +
@@ -72,7 +73,8 @@ if (config["assoc_type"] == "single") {
 }
 
 if (as.logical(config["thin"])) {
-    assoc <- thinPoints(assoc, "pval", n=10000, nbins=10)
+    assoc <- mutate(assoc, logp=-log10(pval)) %>%
+        thinPoints("logp", n=10000, nbins=10, groupBy="chr")
 }
 
 p <- ggplot(assoc, aes(chr, -log10(pval), group=interaction(chr, pos), color=chr)) +

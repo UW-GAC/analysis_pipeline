@@ -10,7 +10,7 @@ thinPoints <- function(dat, value, n=10000, nbins=10, groupBy=NULL){
         mutate_(bin=interp(~cut(value, breaks=nbins, labels=FALSE), value=as.name(value), nbins=nbins)) %>%
         group_by_(~bin, add=TRUE) %>%
         sample_frac(1) %>%
-        filter_(~(row_number() <= min(n)), ~n()) %>%
+        filter_(~(row_number() <= n)) %>%
         ungroup() %>%
         select_(~(-bin))
 }

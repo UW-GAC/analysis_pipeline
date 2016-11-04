@@ -14,3 +14,9 @@ test_that("with grouping", {
     expect_true(all(table(cut(thin$x[thin$y == "a"], breaks=seq(0,100,10), labels=FALSE)) == 2))
     expect_true(all(table(cut(thin$x[thin$y == "b"], breaks=seq(0,100,10), labels=FALSE)) == 2))
 })
+
+test_that("bins with small n are kept", {
+    dat <- data.frame(x=c(1:50, 99:100))
+    thin <- thinPoints(dat, "x", n=10, nbins=2)
+    expect_true(all(99:100 %in% thin$x))
+})
