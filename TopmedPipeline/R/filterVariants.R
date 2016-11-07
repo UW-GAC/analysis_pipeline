@@ -1,17 +1,11 @@
 filterByChrom <- function(gds, chr) {
-    variant.id <- seqGetData(gds, "variant.id")
     chrom <- seqGetData(gds, "chromosome")
-    variant.id <- variant.id[chrom == chr]
-    seqSetFilter(gds, variant.id=variant.id)
-    gds
+    seqSetFilter(gds, variant.sel=(chrom == chr), action="intersect")
 }
 
 filterByPass <- function(gds) {
-    variant.id <- seqGetData(gds, "variant.id")
     filt <- seqGetData(gds, "annotation/filter")
-    variant.id <- variant.id[filt == "PASS"]
-    seqSetFilter(gds, variant.id=variant.id)
-    gds
+    seqSetFilter(gds, variant.sel=(filt == "PASS"), action="intersect")
 }
 
 filterByMAF <- function(gds, sample.id, mac.min, maf.min) {
@@ -27,9 +21,6 @@ filterByMAF <- function(gds, sample.id, mac.min, maf.min) {
             maf.filt <- maf >= maf.min
             message(paste("Running on", sum(maf.filt), "variants with MAF >=", maf.min))
         }
-        variant.id <- seqGetData(gds, "variant.id")
-        variant.id <- variant.id[maf.filt]
-        seqSetFilter(gds, variant.id=variant.id)
+        seqSetFilter(gds, variant.sel=maf.filt, action="intersect")
     }
-    gds
 }

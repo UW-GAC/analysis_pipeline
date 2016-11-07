@@ -58,11 +58,11 @@ if (!is.na(varfile)) {
 
 ## if we have a chromosome indicator but only one gds file, select chromosome
 if (!is.na(chr) && !bychrfile) {
-    gds <- filterByChrom(gds, chr)
+    filterByChrom(gds, chr)
 }
 
 if (as.logical(config["pass_only"])) {
-    gds <- filterByPass(gds)
+    filterByPass(gds)
 }
 
 variant.id <- seqGetData(gds, "variant.id")
