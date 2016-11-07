@@ -8,10 +8,13 @@ can we combine all these into a single system with slight variation?
 blocks for sliding window could also be used for single-variant, with removal of overlap.
 use same blocks for aggregate test - a unit is assigned to the block if its first variant lies in that block.
 
-terminology: block, chunk, or segment?
+terminology: segment
 
-define segment by position, not individual variants - so it can be reused for later freezes.
-get start and end position of chromosomes in hg19.
-mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -e "select chrom, size from hg19.chromInfo order by chrom"
+at start of assoc job:
+find overlaps between requested variants and segments
+(filter variants here or later separately for each segment?
+pro: might avoid empty segments, consolidate filter code
+con: filtering is different for different types of analyses
+     segment file contains only start and stop, would have to save
+     variant list somehow
 
-use dplyr with database?
