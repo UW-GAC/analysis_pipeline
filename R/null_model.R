@@ -62,14 +62,14 @@ if (!is.na(config["pcrelate_file"])) {
         annot <- addInvNorm(annot, nullmod, outcome, covars)
         nullmod <- fitNullMM(annot, outcome="resid.norm", covars=NULL,
                              covMatList=grm, scan.include=sample.id,
-                             family=family)
+                             family=family, group.var=group.var)
     }
 } else {
     message("No kinship file specified, assuming samples are unrelated.")
 
     message("Model: ", outcome, " ~ ", paste(covars, collapse=" + "))
     nullmod <- fitNullReg(annot, outcome=outcome, covars=covars,
-                         scan.include=sample.id, family=family)
+                          scan.include=sample.id, family=family)
 
     if (as.logical(config["inverse_normal"])) {
         annot <- addInvNorm(annot, nullmod, outcome, covars)
