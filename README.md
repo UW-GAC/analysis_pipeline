@@ -2,6 +2,8 @@
 
 ## Setup
 
+We recommend building R with [Intel MKL](https://software.intel.com/en-us/intel-mkl) for improved performance in association tests.
+
 1. Install R packages and dependencies from Bioconductor  
 ```{r}
 source("https://bioconductor.org/biocLite.R")
