@@ -52,7 +52,7 @@ job = "vcf2gds"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], arrayRange=chromosomes, queue=queue, email=email, requestCores=ncores, printOnly=printOnly)
+jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], arrayRange=chromosomes, queue=queue, email=email, requestCores=ncores, printOnly=printOnly)
 
 
 job = "merge_gds"

@@ -77,7 +77,7 @@ if assoctype == "aggregate":
     configfile = configdict["out_prefix"] + "_" + job + ".config"
     TopmedPipeline.writeConfig(config, configfile)
 
-    jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
+    jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
 
     holdid.append(jobid["aggregate_list"].split(".")[0])
 
@@ -94,7 +94,7 @@ config["out_file"] = configdict["out_prefix"] + "_" + job + "_chr .RData"
 configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
+jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
 
 
 prevjob = job

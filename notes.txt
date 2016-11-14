@@ -18,3 +18,11 @@ con: filtering is different for different types of analyses
      segment file contains only start and stop, would have to save
      variant list somehow
 
+currently send sge_task_id to job as "chromosome", need to switch to
+"index". sometimes it's chromosome (LD pruning, PCA correlation),
+sometimes's it's segment.
+Or: runRscript is told whether the task_id is chromosome or segment.
+Then we don't have to change arguments in assoc scripts. Chromosome is
+still needed for things like reading the right files.
+
+OLGApipeline does array jobs by segment within chromosome.
