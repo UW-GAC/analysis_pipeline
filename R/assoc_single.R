@@ -65,11 +65,8 @@ mac.min <- as.numeric(config["mac_threshold"])
 maf.min <- as.numeric(config["maf_threshold"])
 filterByMAF(gds, sample.id, mac.min, maf.min)
 
+checkSelectedVariants(gds)
 variant.id <- seqGetData(gds, "variant.id")
-if (length(variant.id) == 0) {
-  message("No variants in this segment. Exiting gracefully.")
-  q(save="no", status=0)
-}
 seqResetFilter(gds, verbose=FALSE)
 
 

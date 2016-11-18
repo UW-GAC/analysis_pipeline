@@ -92,6 +92,8 @@ mac.min <- as.numeric(config["mac_threshold"])
 maf.min <- as.numeric(config["maf_threshold"])
 filterByMAF(gds, sample.id, mac.min, maf.min)
 
+checkSelectedVariants(gds)
+
 seqSetFilter(gds, sample.id=sample.id)
 
 # createSeqVarData object

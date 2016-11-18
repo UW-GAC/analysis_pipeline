@@ -34,11 +34,21 @@ filterByMAF <- function(gds, sample.id=NULL, mac.min=NA, maf.min=NA, verbose=TRU
         maf <- pmin(ref.freq, 1-ref.freq)
         if (!is.na(mac.min)) {
             maf.filt <- 2 * maf * (1-maf) * length(sample.id) >= mac.min
-            message(paste("Running on", sum(maf.filt), "variants with MAC >=", mac.min))
+            if (verbose) message(paste("Running on", sum(maf.filt), "variants with MAC >=", mac.min))
         } else {
             maf.filt <- maf >= maf.min
-            message(paste("Running on", sum(maf.filt), "variants with MAF >=", maf.min))
+            if (verbose) message(paste("Running on", sum(maf.filt), "variants with MAF >=", maf.min))
         }
         seqSetFilter(gds, variant.sel=maf.filt, action="intersect", verbose=verbose)
+    }
+}
+
+checkSelectedVariants <- function(gds) {
+    nvar <- sum(seqGetFilter(gds)$variant.sel)
+    if (nvar == 0) {
+        message("No variants selected. Exiting gracefully.")
+        q(save="no", status=0)
+    } else {
+        message("Selected ", nvar, " variants.")
     }
 }
