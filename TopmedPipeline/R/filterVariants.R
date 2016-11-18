@@ -1,6 +1,12 @@
-# always set this one first (no intersect option)
-filterBySegment <- function(gds, segment, verbose=TRUE) {
-    data(segments)
+getSegments <- function(file) {
+    dat <- read.table(file, header=TRUE, sep="\t", stringsAsFactors=FALSE)
+    GRanges(seqnames=dat$chromosome,
+            ranges=IRanges(start=dat$start, end=dat$end))
+}
+
+## always set this one first (no intersect option)
+filterBySegment <- function(gds, segment, segment.file, verbose=TRUE) {
+    segments <- getSegments(segment.file)
     seqSetFilter(gds, variant.sel=segments[segment], verbose=verbose)
 }
 

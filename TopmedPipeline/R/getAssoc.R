@@ -1,3 +1,22 @@
+combineAssoc <- function(files, assoc_type) {
+    stopifnot(assoc_type %in% c("single", "aggregate", "window"))
+    x <- lapply(unname(files), getobj)
+    if (assoc_type == "single") {
+        assoc <- do.call(rbind, x)
+    } else if (assoc_type  == "aggregate") {
+        assoc <- x[[1]][c("param", "nsample")]
+        assoc$results <- do.call(rbind, lapply(x, function(y) y$results))
+        assoc$variantInfo <- do.call(c, lapply(x, function(y) y$variantInfo))
+    } else if (assoc_type == "window") {
+        assoc <- x[[1]][c("param", "window", "nsample")]
+        for (v in c("results", "variantInfo")) {
+            assoc[[v]] <- do.call(rbind, lapply(x, function(y) y[[v]])) %>%
+                distinct_()
+        }
+    }
+    assoc
+}
+
 getAssoc <- function(files, assoc_type) {
     stopifnot(assoc_type %in% c("single", "aggregate", "window"))
     assoc <- do.call(rbind, lapply(unname(files), function(f) {
@@ -41,7 +60,7 @@ formatAssocSingle <- function(seqData, assoc) {
     names(assoc) <- sub(".Stat", ".stat", names(assoc), fixed=TRUE)
     names(assoc) <- sub(".Pval", ".pval", names(assoc), fixed=TRUE)
     
-    seqSetFilter(seqData, variant.id=assoc$variantID, verbose=FALSE)
+    seqSetFilter(seqData, variant.id=assoc$variantID, action="push+set", verbose=FALSE)
     assoc$pos <- seqGetData(seqData, "position")
     if (!("chr" %in% names(assoc))) {
         assoc$chr <- seqGetData(seqData, "chromosome")
@@ -50,6 +69,7 @@ formatAssocSingle <- function(seqData, assoc) {
         assoc$MAF <- pmin(assoc$freq, 1 - assoc$freq)
         assoc$minor.allele <- ifelse(assoc$freq > 0.5, "ref", "alt")
     }
+    seqSetFilter(seqData, action="pop", verbose=FALSE)
     
     init.cols <- c("variantID", "chr", "pos", "n", "MAF", "minor.allele")
     cols <- setdiff(names(assoc), c(init.cols, "freq"))

@@ -1,4 +1,5 @@
 context("filterVariants tests")
+library(dplyr)
 library(gdsfmt)
 library(GenomicRanges)
 
@@ -8,16 +9,34 @@ library(GenomicRanges)
     gds <- seqOpen(gdsfile)
 }
 
+.testSegFile <- function() {
+    data(segments)
+    seg.df <- as.data.frame(segments) %>%
+        dplyr::rename(chromosome=seqnames) %>%
+        dplyr::select(chromosome, start, end)
+    segfile <- tempfile()
+    write.table(seg.df, file=segfile, quote=FALSE, sep="\t", row.names=FALSE)
+    segfile
+}
+
+test_that("getSegments", {
+    segfile <- .testSegFile()
+    seg2 <- getSegments(segfile)
+    expect_equal(seg2, segments)
+    unlink(segfile)
+})
 
 test_that("filterBySegment", {
     gds <- .testData()
-    data(segments)
+    segfile <- .testSegFile()
+    segments <- getSegments(segfile)
     gr <- granges(gds)
     ol <- findOverlaps(gr, segments[1])
-    filterBySegment(gds, 1, verbose=FALSE)
+    filterBySegment(gds, 1, segfile, verbose=FALSE)
     expect_equal(sum(seqGetFilter(gds)$variant.sel), length(queryHits(ol)))
 
     seqClose(gds)
+    unlink(segfile)
 })
 
 

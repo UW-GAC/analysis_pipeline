@@ -1,5 +1,4 @@
 library(dplyr)
-library(GenomicRanges)
 
 db <- src_mysql(dbname="hg19", host="genome-mysql.cse.ucsc.edu", user="genome")
 chromInfo <- tbl(db, "chromInfo")
@@ -11,6 +10,7 @@ dat <- select(chromInfo, chrom, size) %>%
     arrange(chrom) %>%
     mutate(chrom=as.character(chrom))
 
+library(GenomicRanges)
 gr <- GRanges(seqnames=dat$chrom,
               ranges=IRanges(start=1, end=dat$size))
 
@@ -21,4 +21,12 @@ segments <- do.call(c, lapply(gr, function(x) {
     GRanges(seqnames=seqnames(x), IRanges(window.start, window.end))
 }))
 
+# this one will be used for testing
 save(segments, file="data/segments.RData")
+
+seg.df <- as.data.frame(segments) %>%
+    dplyr::rename(chromosome=seqnames) %>%
+    select(chromosome, start, end)
+
+# this one is the master copy for the pipeline (read by R and python)
+write.table(seg.df, file="../segments.txt", quote=FALSE, sep="\t", row.names=FALSE)
