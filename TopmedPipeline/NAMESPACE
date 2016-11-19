@@ -34,5 +34,6 @@ export(getobj,
        insertChromString,
        intToChr,
        rankNorm,
+       subsetBySegment,
        sequentialVariantIds,
        thinPoints)

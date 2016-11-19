@@ -19,10 +19,42 @@ library(GenomicRanges)
     segfile
 }
 
+.testVarList <- function(gds) {
+    var.id <- seqGetData(gds, "variant.id")
+    chr <- seqGetData(gds, "chromosome")
+    pos <- seqGetData(gds, "position")
+    ind1 <- which(chr == 1)[1:10]
+    ind2 <- which(chr == 1)[11:20]
+    ind3 <- which(chr == 2)[1:10]
+    lapply(list(ind1, ind2, ind3), function(x) {
+        data.frame(variant.id=var.id[x], chromosome=chr[x], position=pos[x], allele.index=1, stringsAsFactors=FALSE)
+    })
+}
+
 test_that("getSegments", {
     segfile <- .testSegFile()
     seg2 <- getSegments(segfile)
     expect_equal(seg2, segments)
+    unlink(segfile)
+})
+
+test_that("subsetBySegment", {
+    gds <- .testData()
+    varList <- .testVarList(gds)
+    segfile <- .testSegFile()
+    segments <- getSegments(segfile)
+    exp <- sapply(varList, function(x) {
+        chr <- x$chromosome[1]
+        pos <- x$position[1]
+        seg.chr <- as.character(seqnames(segments[1]))
+        seg.start <- as.integer(BiocGenerics::start(segments[1]))
+        seg.end <- as.integer(BiocGenerics::end(segments[1]))
+        chr == seg.chr & pos >= seg.start & pos <= seg.end
+    })
+    ss <- subsetBySegment(varList, 1, segfile)
+    expect_equal(varList[exp], ss)
+    
+    seqClose(gds)
     unlink(segfile)
 })
 
