@@ -16,8 +16,8 @@ gr <- GRanges(seqnames=dat$chrom,
 
 seg.length <- 1e7
 segments <- do.call(c, lapply(gr, function(x) {
-    window.start <- seq(start(x), end(x) - seg.length, seg.length)
-    window.end <- seq(start(x) + seg.length - 1, end(x), by=seg.length)
+    window.start <- seq(start(x), end(x), seg.length)
+    window.end <- seq(start(x) + seg.length - 1, end(x) + seg.length, by=seg.length)
     GRanges(seqnames=seqnames(x), IRanges(window.start, window.end))
 }))
 
