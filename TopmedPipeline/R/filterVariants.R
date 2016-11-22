@@ -14,13 +14,16 @@ subsetBySegment <- function(varList, segment, segment.file) {
     segments <- getSegments(segment.file)
     ind <- queryHits(findOverlaps(gr, segments[segment]))
     varList[ind]
-    #ind
 }
 
 ## always set this one first (no intersect option)
-filterBySegment <- function(gds, segment, segment.file, verbose=TRUE) {
+filterBySegment <- function(gds, segment, segment.file, pad.right=0, verbose=TRUE) {
     segments <- getSegments(segment.file)
-    seqSetFilter(gds, variant.sel=segments[segment], verbose=verbose)
+    seg <- segments[segment]
+    if (pad.right > 0) {
+        seg <- resize(seg, width(seg) + pad.right, fix="start")
+    }
+    seqSetFilter(gds, variant.sel=seg, verbose=verbose)
 }
 
 filterByFile <- function(gds, idfile, verbose=TRUE) {

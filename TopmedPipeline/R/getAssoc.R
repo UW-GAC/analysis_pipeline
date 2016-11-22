@@ -13,6 +13,10 @@ combineAssoc <- function(files, assoc_type) {
             assoc[[v]] <- do.call(rbind, lapply(x, function(y) y[[v]])) %>%
                 distinct_()
         }
+        assoc$results <- assoc$results %>%
+            group_by_("chr", "window.start", "window.stop") %>%
+            filter_(~(n.site == max(n.site)), ~(!duplicated(n.site))) %>%
+            as.data.frame()
     }
     assoc
 }
