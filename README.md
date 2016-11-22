@@ -23,7 +23,7 @@ R CMD INSTALL TopmedPipeline
 
 Each script in the `R` directory takes a config file with parameters. Look at the beginning of each script for parameter lists. Some parameters are required; others are optional with default values.
 
-Some scripts can be run in parallel by chromosome. For these scripts, the chromosome number is the second argument. If running in parallel, include a space in file names in the config file where chromosome should be inserted, e.g.,
+Some scripts can be run in parallel by chromosome. For these scripts, the chromosome number is given as an argument: `-c 22`. If running in parallel, include a space in file names in the config file where chromosome should be inserted, e.g.,
 ```
 gds_file "1KG_phase3_subset_chr .gds"
 ```
@@ -134,13 +134,16 @@ An inverse-normal transform may be requested with `inverse_normal TRUE` in the c
 
 For single-variant tests, the effect estimate is for the reference allele. For aggregate and sliding window tests, the effect estimate is for the alternate alelle, and multiple alternate alelles for a single variant are treated separately.
 
+Association tests have an additional level of parallelization: by segment within chromosome. Segments are defined in the file `segments.txt`. The R scripts take an optional `--segment` (or `-s`) argument. The python script `assoc.py` uses the environment variable `SGE_TASK_ID` to submit jobs by segment for each chromosome.
+
 ### Single-variant
 
 `assoc.py single` 
 
 1. `null_model.R`
 2. `assoc_single.R`
-3. `assoc_plots.R`
+3. `asoc_combine.R`
+4. `assoc_plots.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -170,7 +173,8 @@ config parameter | default value | description
 1. `null_model.R`
 2. `aggregate_list.R`
 3. `assoc_aggregate.R`
-4. `assoc_plots.R`
+4. `asoc_combine.R`
+5. `assoc_plots.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -203,7 +207,8 @@ config parameter | default value | description
 
 1. `null_model.R`
 2. `assoc_window.R`
-3. `assoc_plots.R`
+3. `asoc_combine.R`
+4. `assoc_plots.R`
 
 config parameter | default value | description
 --- | --- | ---
