@@ -56,7 +56,7 @@ config["out_file"] = configdict["out_prefix"] + "_pruned_variants_chr .RData"
 configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
+jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
 
 
 job = "combine_variants"

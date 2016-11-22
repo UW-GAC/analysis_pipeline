@@ -136,3 +136,64 @@ test_that("aggregate, skat", {
     seqClose(seqData)
     unlink(files)
 })
+
+
+test_that("combine single", {
+    seqData <- .testData()
+    nullmod <- .testNullModel(seqData, MM=TRUE)
+    a1 <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, chromosome=1, verbose=FALSE))
+    a2 <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, chromosome=2, verbose=FALSE))
+    files <- c(tempfile(), tempfile())
+    save(a1, file=files[1])
+    save(a2, file=files[2])
+
+    assoc <- combineAssoc(files, "single")
+    
+    a <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, chromosome=1:2, verbose=FALSE))
+    expect_equal(a, assoc)
+
+    seqClose(seqData)
+    unlink(files)
+})
+
+test_that("combine window", {
+    seqData <- .testData()
+    nullmod <- .testNullModel(seqData)
+    a1 <- assocTestSeqWindow(seqData, nullmod, chromosome=1, verbose=FALSE)
+    a2 <- assocTestSeqWindow(seqData, nullmod, chromosome=2, verbose=FALSE)
+    files <- c(tempfile(), tempfile())
+    save(a1, file=files[1])
+    save(a2, file=files[2])
+
+    assoc <- combineAssoc(files, "window")
+    
+    a <- assocTestSeqWindow(seqData, nullmod, chromosome=1:2, verbose=FALSE)
+    expect_equal(a, assoc)
+
+    seqClose(seqData)
+    unlink(files)
+})
+
+test_that("combine aggregate", {
+    seqData <- .testData()
+    nullmod <- .testNullModel(seqData)
+    agg1 <- list(data.frame(variant.id=1:100, allele.index=1),
+                 data.frame(variant.id=101:200, allele.index=1),
+                 data.frame(variant.id=201:300, allele.index=1))
+    a1 <- assocTestSeq(seqData, nullmod, agg1, test="SKAT", verbose=FALSE)
+    agg2 <- list(data.frame(variant.id=301:400, allele.index=1),
+                 data.frame(variant.id=401:500, allele.index=1),
+                 data.frame(variant.id=501:600, allele.index=1))
+    a2 <- assocTestSeq(seqData, nullmod, agg2, test="SKAT", verbose=FALSE)
+    files <- c(tempfile(), tempfile())
+    save(a1, file=files[1])
+    save(a2, file=files[2])
+
+    assoc <- combineAssoc(files, "aggregate")
+
+    a <- assocTestSeq(seqData, nullmod, c(agg1, agg2), test="SKAT", verbose=FALSE)
+    expect_equal(a, assoc)
+
+    seqClose(seqData)
+    unlink(files)
+})

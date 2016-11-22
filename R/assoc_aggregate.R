@@ -8,9 +8,11 @@ sessionInfo()
 argp <- arg_parser("Association test - aggregate")
 argp <- add_argument(argp, "config", help="path to config file")
 argp <- add_argument(argp, "--chromosome", help="chromosome number (1-24)", type="integer")
+argp <- add_argument(argp, "--segment", help="segment number", type="integer")
 argv <- parse_args(argp)
 config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)
+segment <- argv$segment
 
 # add parameters for:
 # user-specified weights
@@ -20,9 +22,10 @@ required <- c("gds_file",
               "phenotype_file",
               "aggregate_variant_file")
 optional <- c("alt_freq_range"="0 1",
-              "out_file"="assoc_aggregate.RData",
+              "out_prefix"="assoc_aggregate",
               "pval_skat"="kuonen",
               "rho"="0",
+              "segment_file"=NA,
               "test"="burden",
               "test_type"="score",
               "variant_include_file"=NA,
@@ -32,12 +35,10 @@ print(config)
 
 ## gds file can have two parts split by chromosome identifier
 gdsfile <- config["gds_file"]
-outfile <- config["out_file"]
 aggfile <- config["aggregate_variant_file"]
 varfile <- config["variant_include_file"]
 if (!is.na(chr)) {
     gdsfile <- insertChromString(gdsfile, chr)
-    outfile <- insertChromString(outfile, chr, err="out_file")
     aggfile <- insertChromString(aggfile, chr, err="aggregate_variant_file")
     varfile <- insertChromString(varfile, chr)
 }
@@ -52,6 +53,15 @@ sample.id <- nullModel$scanID
 
 # get aggregate list
 aggVarList <- getobj(aggfile)
+
+# keep units that start in the requested segment
+if (!is.na(segment)) {
+    aggVarList <- subsetBySegment(aggVarList, segment, config["segment_file"])
+}
+if (length(aggVarList) == 0) {
+    message("No aggregate units selected. Exiting gracefully.")
+    q(save="no", status=0)
+}
 
 # subset to included variants
 if (!is.na(varfile)) {
@@ -87,6 +97,6 @@ assoc <- assocTestSeq(seqData, nullModel, aggVarList,
                       rho=rho,
                       pval.method=pval)
 
-save(assoc, file=outfile)
+save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 
 seqClose(seqData)
