@@ -2,6 +2,7 @@
 
 """PC-Relate"""
 
+import TopmedPipeline
 import sys
 import os
 from argparse import ArgumentParser
@@ -29,8 +30,7 @@ queue = args.queue
 email = args.email
 printOnly = args.printOnly
 
-sys.path.append(pipeline)
-import TopmedPipeline
+pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
 driver = os.path.join(pipeline, "runRscript.sh")
 
 jobid = dict()

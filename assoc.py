@@ -2,6 +2,7 @@
 
 """Association tests"""
 
+import TopmedPipeline
 import sys
 import os
 from argparse import ArgumentParser
@@ -17,9 +18,6 @@ parser.add_argument("assocType", choices=["single", "window", "aggregate"],
 parser.add_argument("configfile", help="configuration file")
 parser.add_argument("-c", "--chromosomes", default="1-23",
                     help="range of chromosomes [default %(default)s]")
-parser.add_argument("-p", "--pipeline", 
-                    default="/projects/topmed/working_code/analysis_pipeline",
-                    help="pipeline source directory")
 parser.add_argument("-q", "--queue", default="olga.q", 
                     help="cluster queue name [default %(default)s]")
 parser.add_argument("-e", "--email", default=None,
@@ -31,13 +29,11 @@ args = parser.parse_args()
 assocType = args.assocType
 configfile = args.configfile
 chromosomes = args.chromosomes
-pipeline = args.pipeline
 queue = args.queue
 email = args.email
 printOnly = args.printOnly
 
-sys.path.append(pipeline)
-import TopmedPipeline
+pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
 driver = os.path.join(pipeline, "runRscript.sh")
 
 jobid = dict()
