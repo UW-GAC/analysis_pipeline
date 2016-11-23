@@ -23,7 +23,7 @@ R CMD INSTALL TopmedPipeline
 
 Each script in the `R` directory takes a config file with parameters. Look at the beginning of each script for parameter lists. Some parameters are required; others are optional with default values.
 
-Some scripts can be run in parallel by chromosome. For these scripts, the chromosome number is given as an argument: `-c 22`. If running in parallel, include a space in file names in the config file where chromosome should be inserted, e.g.,
+Some scripts can be run in parallel by chromosome. For these scripts, the chromosome number is given as an argument: `"--chromosome 22"` (or `"-c 22"`). If running in parallel, include a space in file names in the config file where chromosome should be inserted, e.g.,
 ```
 gds_file "1KG_phase3_subset_chr .gds"
 ```
@@ -134,7 +134,7 @@ An inverse-normal transform may be requested with `inverse_normal TRUE` in the c
 
 For single-variant tests, the effect estimate is for the reference allele. For aggregate and sliding window tests, the effect estimate is for the alternate alelle, and multiple alternate alelles for a single variant are treated separately.
 
-Association tests have an additional level of parallelization: by segment within chromosome. Segments are defined in the file `segments.txt`. The R scripts take an optional `--segment` (or `-s`) argument. The python script `assoc.py` uses the environment variable `SGE_TASK_ID` to submit jobs by segment for each chromosome.
+Association tests have an additional level of parallelization: by segment within chromosome. Segments are defined in the file `segments.txt`. The R scripts take an optional `"--segment"` (or `"-s"`) argument. The python script `assoc.py` uses the environment variable `SGE_TASK_ID` to submit jobs by segment for each chromosome.
 
 ### Single-variant
 
@@ -234,3 +234,15 @@ config parameter | default value | description
 `window_size` | `50` | Size of sliding window in kb. 
 `window_step` | `20` | Step size of sliding window in kb. 
 `thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
+
+### Parallelization details
+
+The file [`segments.txt`](segments.txt) contains the chromosome, start, and end position for each 10 Mb segment. Code for creation of this file is given in [`TopmedPipeline/demo/defineSegments.R`](TopmedPipeline/demo/defineSegments.R).
+
+R scripts for association testing each take chromosome and segment as arguments.
+
+* Single-variant: only variants within in the segment are selected.
+* Aggregate: aggregate units where the first variant is within the segment are selected. This ensures that each unit is tested exactly once.
+* Sliding window: the length of the segment is increased by `window.size` before selecting variants. This ensures that all possible windows are tested. When the segments are combined into a single file for each chromosome, duplicate windows are discarded. Since the `assocTestSeqWindow` function defines windows starting at position 1, the windows tested when parallelizing by segment are identical to the windows tested when running an entire chromosome in one job.
+
+The script [`assoc.py`](assoc.py) submits a SGE array job for each chromosome, where the SGE task id is the row number of the segment in `segments.txt`. If a segment has no requested variants, its job will exit without error. After all segments are complete, they are combined into a single file for each chromosome and the temporary per-segment output files are deleted.
