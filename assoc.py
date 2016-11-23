@@ -90,13 +90,12 @@ config["assoc_type"] = assocType
 config["null_model_file"] = configdict["out_prefix"] + "_null_model.RData"
 if assocType == "aggregate":
     config["aggregate_variant_file"] = configdict["out_prefix"] + "_aggregate_list_chr .RData"
-#config["out_file"] = configdict["out_prefix"] + "_" + assocScript + "_chr .RData"
 config["out_prefix"] = configdict["out_prefix"] + "_" + assocScript
 config["segment_file"] = segment_file
 configfile = configdict["out_prefix"] + "_" + assocScript + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-#jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
+#jobid[assocScript] = TopmedPipeline.submitJob(assocScript, driver, ["-c", rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
 
 # get segments for each chromosome
 chrom_list = TopmedPipeline.parseChromosomes(chromosomes).split(" ")

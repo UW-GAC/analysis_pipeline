@@ -7,7 +7,7 @@ sessionInfo()
 
 argp <- arg_parser("Association test - sliding window")
 argp <- add_argument(argp, "config", help="path to config file")
-argp <- add_argument(argp, "--chromosome", help="chromosome number (1-24)", type="integer")
+argp <- add_argument(argp, "--chromosome", help="chromosome (1-24 or X,Y)", type="character")
 argp <- add_argument(argp, "--segment", help="segment number", type="integer")
 argv <- parse_args(argp)
 config <- readConfig(argv$config)
