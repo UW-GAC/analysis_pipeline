@@ -5,7 +5,7 @@ sessionInfo()
 
 argp <- arg_parser("Parse table of variants of regions to a list")
 argp <- add_argument(argp, "config", help="path to config file")
-argp <- add_argument(argp, "--chromosome", help="chromosome number (1-24)", type="integer")
+argp <- add_argument(argp, "--chromosome", help="chromosome (1-24 or X,Y)", type="character")
 argv <- parse_args(argp)
 config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)

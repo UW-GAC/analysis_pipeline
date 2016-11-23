@@ -6,7 +6,7 @@ sessionInfo()
 
 argp <- arg_parser("Correlation of variants with PCs")
 argp <- add_argument(argp, "config", help="path to config file")
-argp <- add_argument(argp, "--chromosome", help="chromosome number (1-24)", type="integer")
+argp <- add_argument(argp, "--chromosome", help="chromosome (1-24 or X,Y)", type="character")
 argv <- parse_args(argp)
 config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)

@@ -109,11 +109,14 @@ def getChromSegments(map_file, chromosome):
 
 
 
-def parseChromosomes(chromosomes):
+def chromosomeRangeToList(chromosomes):
     chromRange = [int(x) for x in chromosomes.split("-")]
     start = chromRange[0]
     end = start if len(chromRange) == 1 else chromRange[1]
-    chromString = " ".join([str(x) for x in range(start, end + 1)])
+    return range(start, end + 1)
+    
+def parseChromosomes(chromosomes):
+    chromString = " ".join([str(x) for x in chromosomeRangeToList(chromosomes)])
     chromString = chromString.replace("23", "X")
     chromString = chromString.replace("24", "Y")
     return chromString
