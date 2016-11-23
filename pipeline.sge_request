@@ -1,0 +1,5 @@
+-cwd
+-j y
+-q olga.q
+-S /bin/bash
+-v R_LIBS=/projects/geneva/gcc-fs2/R_packages/library
