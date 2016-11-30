@@ -123,6 +123,26 @@ def parseChromosomes(chromosomes):
 
 
 
+def readQsubOptions(file):
+    """Read a file in .sge_request format and return a dictionary"""
+    opts = dict()
+    f = open(file, 'r')
+    for line in f:
+        vals = line.split()
+        if len(vals) == 1:
+            vals.append('')
+        (key, value) = vals
+        opts[key] = value
+    f.close()
+    return opts
+
+
+def setQsubOptions(opts, defaults):
+    """Return a qsub option string with values in opts overriding values in defaults"""
+    opts = defaults.update(opts)
+    
+
+
 def submitJob(job, cmd, args, queue, holdid=None, arrayRange=None, requestCores=None,
               email=None, qsubOptions="", verbose=True, printOnly=False):
     """Sumbit a pipeline job.
