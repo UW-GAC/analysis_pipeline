@@ -51,6 +51,8 @@ if (!is.na(config["pcrelate_file"])) {
     grm <- pcrelateMakeGRM(pcr, scan.include=sample.id, scaleKin=2)
     closefn.gds(pcr)
 
+    
+    ## fit null model allowing heterogeneous variances among studies
     message("Model: ", outcome, " ~ ", paste(c(covars, "(1|kinship)"), collapse=" + "))
     nullmod <- fitNullMM(annot, outcome=outcome, covars=covars,
                          covMatList=grm, scan.include=sample.id,
@@ -59,7 +61,23 @@ if (!is.na(config["pcrelate_file"])) {
     ## if we need an inverse normal transform, take residuals and refit null model
     ## for second model fit, use kinship but not other covariates
     if (as.logical(config["inverse_normal"])) {
-        annot <- addInvNorm(annot, nullmod, outcome, covars)
+        if (is.null(group.var)) {
+            annot <- addInvNorm(annot, nullmod, outcome, covars)
+        } else {
+            groups <- unique(annot[[group.var]])
+            ## inverse-normal transform residuals from each study separately (mean=0, var=1)
+            ## rescale the inverse-normal residuals to have study-specific variances = kinship variance component + study-specific residual
+            resid.group <- do.call(rbind, lapply(groups, function(g) {
+                samp.g <- intersect(nullmod$scanID, annot$sample.id[annot[[group.var]] == g])
+                resid.g <- nullmod$resid.marginal[nullmod$scanID %in% samp.g]
+                resid.scale <- nullmod$varComp["V_A"] + nullmod$varComp[paste0("V_", g)]
+                resid.norm <- rankNorm(resid.g) * sqrt(resid.scale)
+                data.frame(sample.id=samp.g, resid.norm, stringsAsFactors=FALSE)
+            }))
+            annot$resid.norm <- resid.group$resid.norm[match(annot$sample.id, resid.group$sample.id)]
+        }
+        
+        ## fit null model again with these residuals as outcome and allowing heterogeneous variances
         nullmod <- fitNullMM(annot, outcome="resid.norm", covars=NULL,
                              covMatList=grm, scan.include=sample.id,
                              family=family, group.var=group.var)
