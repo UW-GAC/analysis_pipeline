@@ -2,6 +2,8 @@
 
 ## Setup
 
+We recommend building R with [Intel MKL](https://software.intel.com/en-us/intel-mkl) for improved performance in association tests.
+
 1. Install R packages and dependencies from Bioconductor  
 ```{r}
 source("https://bioconductor.org/biocLite.R")
@@ -21,7 +23,7 @@ R CMD INSTALL TopmedPipeline
 
 Each script in the `R` directory takes a config file with parameters. Look at the beginning of each script for parameter lists. Some parameters are required; others are optional with default values.
 
-Some scripts can be run in parallel by chromosome. For these scripts, the chromosome number is the second argument. If running in parallel, include a space in file names in the config file where chromosome should be inserted, e.g.,
+Some scripts can be run in parallel by chromosome. For these scripts, the chromosome number is given as an argument: `"--chromosome 22"` (or `"-c 22"`). If running in parallel, include a space in file names in the config file where chromosome should be inserted, e.g.,
 ```
 gds_file "1KG_phase3_subset_chr .gds"
 ```
@@ -132,13 +134,16 @@ An inverse-normal transform may be requested with `inverse_normal TRUE` in the c
 
 For single-variant tests, the effect estimate is for the reference allele. For aggregate and sliding window tests, the effect estimate is for the alternate alelle, and multiple alternate alelles for a single variant are treated separately.
 
+Association tests have an additional level of parallelization: by segment within chromosome. Segments are defined in the file `segments.txt`. The R scripts take an optional `"--segment"` (or `"-s"`) argument. The python script `assoc.py` uses the environment variable `SGE_TASK_ID` to submit jobs by segment for each chromosome.
+
 ### Single-variant
 
 `assoc.py single` 
 
 1. `null_model.R`
 2. `assoc_single.R`
-3. `assoc_plots.R`
+3. `asoc_combine.R`
+4. `assoc_plots.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -151,14 +156,16 @@ config parameter | default value | description
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces. 
 `group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
-`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
+`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately. 
+`rescale_variance` | `FALSE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include.
 `mac_threshold` | `5` | Minimum minor allele count for variants to include in test. Use a higher threshold when outcome is binary.
 `maf_threshold` | `0.001` | Minimum minor allele frequency for variants to include in test. Only used if `mac_threshold` is `NA`.
 `pass_only` | `TRUE` | `TRUE` to select only variants with FILTER=PASS.
 `test_type` | `score` | Type of test to perform. If samples are related (mixed model), options are `score` and `wald` if `binary` is `FALSE`, `score` only if `binary` is `TRUE`.  For unrelated samples (`pcrelate_file` is `NA`), options are `linear` (Wald test) if `binary` is `FALSE`, `logistic` (Wald test) or `firth` if `binary` is `TRUE`.
-`variant_include_file` | `NA` | RData file with vector of variant.id to include.
+`variant_include_file` | `NA` | RData file with vector of variant.id to include. 
+`thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 
 ### Aggregate
 
@@ -167,7 +174,8 @@ config parameter | default value | description
 1. `null_model.R`
 2. `aggregate_list.R`
 3. `assoc_aggregate.R`
-4. `assoc_plots.R`
+4. `asoc_combine.R`
+5. `assoc_plots.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -181,8 +189,9 @@ config parameter | default value | description
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
-`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
-`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
+`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model. 
+`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately. 
+`rescale_variance` | `FALSE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. Variants used will be the intersection of this set and variants defined by `variant_group_file`.
@@ -191,7 +200,8 @@ config parameter | default value | description
 `test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` and `firth` if `binary` is `TRUE`. `firth` is only valid if samples are unrelated (`pcrelate_file` is `NA`).
 `pval_skat` | `kuonen` | Method used to calculate p-values if `test` is `skat`. Options are `kuonen` (uses saddlepoint method), `davies` (uses numerical integration), and `liu` (uses a moment matching approximation). 
 `rho` | `0` | A numeric value (or quoted, space-delimited list of numeric values) in [0,1] specifying the rho parameter when `test` is `skat`. `0` is a standard SKAT test, `1` is a score burden test, and multiple values is a SKAT-O test.
-`weight_beta` | `"0.5 0.5"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"0.5 0.5"` is proportional to the Madsen-Browning weights and `"1 25"` gives the Wu weights.
+`weight_beta` | `"0.5 0.5"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"0.5 0.5"` is proportional to the Madsen-Browning weights and `"1 25"` gives the Wu weights. 
+`thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 
 ### Sliding window
 
@@ -199,7 +209,8 @@ config parameter | default value | description
 
 1. `null_model.R`
 2. `assoc_window.R`
-3. `assoc_plots.R`
+3. `asoc_combine.R`
+4. `assoc_plots.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -211,8 +222,9 @@ config parameter | default value | description
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces. 
-`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
-`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
+`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model. 
+`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately. 
+`rescale_variance` | `FALSE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. 
@@ -223,4 +235,17 @@ config parameter | default value | description
 `rho` | `0` | A numeric value (or quoted, space-delimited list of numeric values) in [0,1] specifying the rho parameter when `test` is `skat`. `0` is a standard SKAT test, `1` is a score burden test, and multiple values is a SKAT-O test.
 `weight_beta` | `"0.5 0.5"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"0.5 0.5"` is proportional to the Madsen-Browning weights and `"1 25"` gives the Wu weights.
 `window_size` | `50` | Size of sliding window in kb. 
-`window_step` | `20` | Step size of sliding window in kb.
+`window_step` | `20` | Step size of sliding window in kb. 
+`thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
+
+### Parallelization details
+
+The file [`segments.txt`](segments.txt) contains the chromosome, start, and end position for each 10 Mb segment. Code for creation of this file is given in [`TopmedPipeline/demo/defineSegments.R`](TopmedPipeline/demo/defineSegments.R).
+
+R scripts for association testing each take chromosome and segment as arguments.
+
+* Single-variant: only variants within in the segment are selected.
+* Aggregate: aggregate units where the first variant is within the segment are selected. This ensures that each unit is tested exactly once.
+* Sliding window: the length of the segment is increased by `window.size` before selecting variants. This ensures that all possible windows are tested. When the segments are combined into a single file for each chromosome, duplicate windows are discarded. Since the `assocTestSeqWindow` function defines windows starting at position 1, the windows tested when parallelizing by segment are identical to the windows tested when running an entire chromosome in one job.
+
+The script [`assoc.py`](assoc.py) submits a SGE array job for each chromosome, where the SGE task id is the row number of the segment in `segments.txt`. If a segment has no requested variants, its job will exit without error. After all segments are complete, they are combined into a single file for each chromosome and the temporary per-segment output files are deleted.

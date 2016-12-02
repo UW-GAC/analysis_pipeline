@@ -43,15 +43,7 @@ corr <- do.call(rbind, lapply(unname(files), function(f) {
     ## thin points
     ## take up to 10,000 points from each of 10 evenly spaced bins
     if (as.logical(config["thin"])) {
-        ## http://stackoverflow.com/questions/30950016/dplyr-sample-n-where-n-is-the-value-of-a-grouped-variable
-        dat <- dat %>%
-            group_by(PC) %>%
-            mutate(bin=cut(value, breaks=10, labels=FALSE)) %>%
-            group_by(PC, bin) %>%
-            sample_frac(1) %>%
-            filter(row_number() <= min(10000, n())) %>%
-            ungroup() %>%
-            select(-bin)
+        dat <- thinPoints(dat, "value", n=10000, nbins=10, groupBy="PC")
     }
 
     dat
@@ -74,6 +66,7 @@ for (i in 1:n_plots) {
         geom_point(position=position_dodge(0.8)) +
         facet_wrap(~PC, scales="free", ncol=1) +
         scale_color_manual(values=cmap, breaks=names(cmap)) +
+        ylim(0,1) + 
         theme_bw() +
         theme(legend.position="none") +
         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +

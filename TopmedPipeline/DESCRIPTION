@@ -1,12 +1,12 @@
 Package: TopmedPipeline
-Version: 0.2.4
+Version: 0.2.7
 Type: Package
 Title: Utilities for the TOPMed pipeline
 Description: Utilities for the TOPMed pipeline.
 Author: Stephanie Gogarten
 Maintainer: Stephanie Gogarten <sdmorris@uw.edu>
 Depends: 
-Imports: methods, stats, utils, Biobase, SeqArray, SeqVarTools, GenomicRanges, IRanges, S4Vectors, dplyr, tidyr
+Imports: methods, stats, utils, Biobase, SeqArray, SeqVarTools, GenomicRanges, IRanges, S4Vectors, dplyr, tidyr, lazyeval
 Suggests: testthat, GENESIS, gdsfmt
 License: Artistic-2.0
 LazyLoad: yes

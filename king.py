@@ -2,6 +2,7 @@
 
 """Identity By Descent"""
 
+import TopmedPipeline
 import sys
 import os
 from argparse import ArgumentParser
@@ -17,9 +18,6 @@ parser = ArgumentParser(description=description)
 parser.add_argument("configfile", help="configuration file")
 parser.add_argument("-c", "--chromosomes", default="1-22",
                     help="range of chromosomes [default %(default)s]")
-parser.add_argument("-p", "--pipeline", 
-                    default="/projects/topmed/working_code/analysis_pipeline",
-                    help="pipeline source directory")
 parser.add_argument("-q", "--queue", default="olga.q", 
                     help="cluster queue name [default %(default)s]")
 parser.add_argument("-n", "--ncores", default="1-8",
@@ -32,14 +30,12 @@ args = parser.parse_args()
 
 configfile = args.configfile
 chromosomes = args.chromosomes
-pipeline = args.pipeline
 queue = args.queue
 ncores = args.ncores
 email = args.email
 printOnly = args.printOnly
 
-sys.path.append(pipeline)
-import TopmedPipeline
+pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
 driver = os.path.join(pipeline, "runRscript.sh")
 
 jobid = dict()
@@ -56,7 +52,7 @@ config["out_file"] = configdict["out_prefix"] + "_pruned_variants_chr .RData"
 configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
+jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
 
 
 job = "combine_variants"

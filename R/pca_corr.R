@@ -6,7 +6,7 @@ sessionInfo()
 
 argp <- arg_parser("Correlation of variants with PCs")
 argp <- add_argument(argp, "config", help="path to config file")
-argp <- add_argument(argp, "--chromosome", help="chromosome number (1-24)", type="integer")
+argp <- add_argument(argp, "--chromosome", help="chromosome (1-24 or X,Y)", type="character")
 argv <- parse_args(argp)
 config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)
@@ -53,8 +53,7 @@ message("Using ", length(variant.id), " variants")
 
 pca <- getobj(config["pca_file"])
 n_pcs <- min(as.integer(config["n_pcs"]), length(pca$sample.id))
-#nt <- countThreads()
-nt <- 1 # temporary fix
+nt <- countThreads()
 pca.corr <- snpgdsPCACorr(pca, gdsobj=gds, snp.id=variant.id, eig.which=1:n_pcs, num.thread=nt)
 
 ## add chromosome and position to output

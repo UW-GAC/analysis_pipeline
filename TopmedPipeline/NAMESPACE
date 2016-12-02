@@ -6,25 +6,34 @@ import(SeqArray)
 importFrom(SeqVarTools, refChar, altChar)
 importFrom(S4Vectors, subjectHits, queryHits)
 importFrom(IRanges, IRanges)
-importFrom(GenomicRanges, GRanges, findOverlaps)
-importFrom(dplyr, arrange_, distinct_, filter_, mutate_, rename_, select_, inner_join, left_join, one_of, "%>%")
+importFrom(GenomicRanges, GRanges, findOverlaps, resize, width)
+importFrom(dplyr, arrange_, distinct_, filter_, group_by_, mutate_, rename_,  select_, inner_join, left_join, n, one_of, sample_frac, row_number, ungroup, "%>%")
 importFrom(tidyr, gather_, separate_)
+importFrom(lazyeval, interp)
 
-export(readConfig,
-       writeConfig,
+export(getobj,
+       readConfig,
        setConfigDefaults,
-       getobj,
-       insertChromString,
-       sequentialVariantIds,
-       calculateLambda,
-       rankNorm,
-       countThreads,
+       writeConfig,
+       addInvNorm,
        aggregateListByAllele,
        aggregateListByPosition,
-       getPhenotypes,
-       addInvNorm,
+       calculateLambda,
+       checkSelectedVariants,
+       combineAssoc,
+       constructFilename,
+       countThreads,
        filterByChrom,
-       filterByPass,
+       filterByFile,
        filterByMAF,
+       filterByPass,
+       filterBySegment,
+       formatAssocSingle,
+       getAssoc,
+       getPhenotypes,
+       insertChromString,
        intToChr,
-       getAssoc)
+       rankNorm,
+       subsetBySegment,
+       sequentialVariantIds,
+       thinPoints)

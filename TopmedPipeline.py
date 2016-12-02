@@ -58,12 +58,65 @@ def writeConfig(config, file):
     f.close()
 
 
+    
+def getFirstColumn(file, skipHeader=True):
+    """Read a file and return the first column
 
-def parseChromosomes(chromosomes):
+    Usage: 
+    x = getFirstColumn(file)
+
+    Arguments: 
+    file - name of file to read
+
+    Returns: 
+    list with values in the first column (minus the header)
+    """
+    f = open(file, 'r')
+    reader = csv.reader(f, delimiter="\t")
+    if skipHeader:
+        dummy = reader.next()
+    x = [line[0] for line in reader]
+    f.close()
+
+    return x
+
+
+def which(x, y):
+    """Returns indices of x that equal y (1-based)
+    """
+    return [ i+1 for i, j in enumerate(x) if j == y ]
+
+
+def getChromSegments(map_file, chromosome):
+    """Read a pipeline segments file.
+
+    Usage: 
+    segments = getChromSegments(map_file, chromosome)
+
+    Arguments: 
+    file - name of segments file to read (expect first column is chromosome)
+    chromosome - character value for chromosome
+
+    Returns: 
+    list with beginning and ending segment indices for each chromosome
+    """  
+    chrom_segments = getFirstColumn(map_file)
+
+    # get indices of segments matching this chromosome
+    segments = [ (min(x), max(x)) for x in [ which(chrom_segments, c) for c in chromosome ] ]
+    
+    return segments
+
+
+
+def chromosomeRangeToList(chromosomes):
     chromRange = [int(x) for x in chromosomes.split("-")]
     start = chromRange[0]
     end = start if len(chromRange) == 1 else chromRange[1]
-    chromString = " ".join([str(x) for x in range(start, end + 1)])
+    return range(start, end + 1)
+    
+def parseChromosomes(chromosomes):
+    chromString = " ".join([str(x) for x in chromosomeRangeToList(chromosomes)])
     chromString = chromString.replace("23", "X")
     chromString = chromString.replace("24", "Y")
     return chromString

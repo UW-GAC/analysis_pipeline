@@ -40,11 +40,20 @@ calculateLambda <- function(stat, df) {
     median(stat, na.rm=TRUE) / qchisq(0.5, df=df)
 }
 
+
 rankNorm <- function(x) qnorm((rank(x) - 0.5)/length(x))
+
 
 intToChr <- function(chr) {
     if (is.na(chr)) return(NA)
     if (chr == 23) return("X")
     if (chr == 24) return("Y")
     as.character(chr)
+}
+
+
+constructFilename <- function(prefix, chromosome=NA, segment=NA) {
+    chr <- if (is.na(chromosome)) "" else paste0("_chr", chromosome)
+    seg <- if (is.na(segment)) "" else paste0("_seg", segment)
+    paste0(prefix, chr, seg, ".RData")
 }
