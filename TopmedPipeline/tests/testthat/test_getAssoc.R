@@ -197,3 +197,16 @@ test_that("combine aggregate", {
     seqClose(seqData)
     unlink(files)
 })
+
+
+testthat("omitKnownHits", {
+    assoc <- data.frame(chr=c(rep(1,100), rep(2,100)),
+                        pos=c(sort(sample(1:10000, 100)), sort(sample(1:10000, 100))))
+    hits <- assoc[sample(1:nrow(assoc), 20),]
+    res <- omitKnownHits(assoc, hits, flank=0)
+    .pos <- function(x) paste0(x$chr, x$pos)
+    expect_equal(setdiff(.pos(assoc), .pos(hits)), .pos(res))
+    
+    res <- omitKnownHits(assoc, hits, flank=1)
+    expect_true(nrow(res) < nrow(assoc))
+})
