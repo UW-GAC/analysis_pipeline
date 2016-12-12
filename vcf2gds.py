@@ -48,6 +48,11 @@ job = "vcf2gds"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
 
+# parsing bcf files relies on streaming bcftools output, so can't run in parallel
+print os.path.splitext(configdict["vcf_file"])
+if os.path.splitext(configdict["vcf_file"])[1] == ".bcf":
+    ncores = None
+
 jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], arrayRange=chromosomes, queue=queue, email=email, requestCores=ncores, printOnly=printOnly)
 
 
