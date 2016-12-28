@@ -13,9 +13,6 @@ PC-Relate
 """
 parser = ArgumentParser(description=description)
 parser.add_argument("configfile", help="configuration file")
-parser.add_argument("-p", "--pipeline", 
-                    default="/projects/topmed/working_code/analysis_pipeline",
-                    help="pipeline source directory")
 parser.add_argument("-q", "--queue", default="olga.q", 
                     help="cluster queue name [default %(default)s]")
 parser.add_argument("-e", "--email", default=None,
@@ -25,7 +22,6 @@ parser.add_argument("--printOnly", action="store_true", default=False,
 args = parser.parse_args()
 
 configfile = args.configfile
-pipeline = args.pipeline
 queue = args.queue
 email = args.email
 printOnly = args.printOnly

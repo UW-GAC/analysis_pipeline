@@ -54,7 +54,8 @@ config["out_unrelated_file"] = configdict["out_prefix"] + "_unrelated.RData"
 configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], queue=queue, email=email, printOnly=printOnly)
+qsubOpts="-l h_vmem=4G"
+jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], queue=queue, email=email, qsubOptions=qsubOpts, printOnly=printOnly)
 
 
 job = "ld_pruning"
@@ -69,7 +70,8 @@ TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["find_unrelated"]]
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
+qsubOpts="-l h_vmem=12G"
+jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, qsubOptions=qsubOpts, printOnly=printOnly)
 
 
 job = "combine_variants"
@@ -85,7 +87,8 @@ TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["ld_pruning"].split(".")[0]]
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, printOnly=printOnly)
+qsubOpts="-l h_vmem=4G"
+jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, qsubOptions=qsubOpts, printOnly=printOnly)
 
 
 job = "pca_byrel"
@@ -103,7 +106,8 @@ TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["combine_variants"]]
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, requestCores=ncores, printOnly=printOnly)
+qsubOpts="-l h_vmem=4G"
+jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, requestCores=ncores, qsubOptions=qsubOpts, printOnly=printOnly)
 
 
 job = "pca_plots"
@@ -121,7 +125,8 @@ TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["pca_byrel"]]
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, printOnly=printOnly)
+qsubOpts="-l h_vmem=1G"
+jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, qsubOptions=qsubOpts, printOnly=printOnly)
 
 
 job = "pca_corr"
@@ -138,7 +143,8 @@ holdid = [jobid["pca_byrel"]]
 
 #jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, requestCores=ncores, printOnly=printOnly)
 # single core only
-jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
+qsubOpts="-l h_vmem=6G"
+jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, qsubOptions=qsubOpts, printOnly=printOnly)
 
 
 job = "pca_corr_plots"
@@ -154,4 +160,5 @@ TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["pca_corr"].split(".")[0]]
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, printOnly=printOnly)
+qsubOpts="-l h_vmem=132G"
+jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, qsubOptions=qsubOpts, printOnly=printOnly)
