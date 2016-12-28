@@ -81,3 +81,13 @@ formatAssocSingle <- function(seqData, assoc) {
 
     assoc
 }
+
+
+omitKnownHits <- function(assoc, hits, flank=500) {
+    stopifnot(all(c("chr", "pos") %in% names(hits)))
+    assoc.gr <- GRanges(seqnames=assoc$chr, ranges=IRanges(start=assoc$pos, end=assoc$pos))
+    hits.gr <- GRanges(seqnames=hits$chr, ranges=IRanges(start=hits$pos-(flank*1000),
+                                              end=hits$pos+(flank*1000)))
+    ol <- findOverlaps(assoc.gr, hits.gr)
+    assoc[-queryHits(ol),]
+}

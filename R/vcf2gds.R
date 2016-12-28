@@ -1,6 +1,7 @@
 library(argparser)
 library(TopmedPipeline)
 library(SeqArray)
+library(tools)
 sessionInfo()
 
 argp <- arg_parser("Convert VCF to GDS")
@@ -30,7 +31,17 @@ fmt.import <- strsplit(config["format"], " ", fixed=TRUE)[[1]]
 gdsfile.tmp <- tempfile()
 message("gds temporarily located at ", gdsfile.tmp)
 
-seqVCF2GDS(vcffile, gdsfile.tmp, fmt.import=fmt.import, parallel=countThreads())
+## is this a bcf file?
+isBCF <- file_ext(vcffile) == "bcf"
+if (isBCF) {
+    ## use bcftools to read text
+    vcffile <- pipe(paste("/projects/resources/software/apps/bin/bcftools view", vcffile), "rt")
+}
+
+seqVCF2GDS(vcffile, gdsfile.tmp, fmt.import=fmt.import, storage.option="LZMA_RA",
+           parallel=countThreads())
+
+if (isBCF) close(vcffile)
 
 ## copy it
 file.copy(gdsfile.tmp, gdsfile)

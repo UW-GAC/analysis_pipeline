@@ -13,6 +13,7 @@ config <- readConfig(argv$config)
 required <- c("assoc_file",
               "assoc_type")
 optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X",
+              "known_hits_file"=NA,
               "out_file_manh"="manhattan.png",
               "out_file_qq"="qq.png",
               "thin"=TRUE)
@@ -23,6 +24,12 @@ chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 files <- sapply(chr, function(c) insertChromString(config["assoc_file"], c, "assoc_file"))
 
 assoc <- getAssoc(files, config["assoc_type"])
+
+## omit known hits?
+if (!is.na(config["known_hits_file"]) & config["assoc_type"] == "single") {
+    hits <- getobj(config["known_hits_file"])
+    assoc <- omitKnownHits(assoc, hits, flank=500)
+}
 
 if ("stat" %in% names(assoc)) {
     ## burden or single

@@ -156,14 +156,17 @@ config parameter | default value | description
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces. 
 `group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
-`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
+`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately. 
+`rescale_variance` | `FALSE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include.
 `mac_threshold` | `5` | Minimum minor allele count for variants to include in test. Use a higher threshold when outcome is binary.
 `maf_threshold` | `0.001` | Minimum minor allele frequency for variants to include in test. Only used if `mac_threshold` is `NA`.
 `pass_only` | `TRUE` | `TRUE` to select only variants with FILTER=PASS.
 `test_type` | `score` | Type of test to perform. If samples are related (mixed model), options are `score` and `wald` if `binary` is `FALSE`, `score` only if `binary` is `TRUE`.  For unrelated samples (`pcrelate_file` is `NA`), options are `linear` (Wald test) if `binary` is `FALSE`, `logistic` (Wald test) or `firth` if `binary` is `TRUE`.
-`variant_include_file` | `NA` | RData file with vector of variant.id to include. 
+`variant_include_file` | `NA` | RData file with vector of variant.id
+to include.
+`known_hits_file` | NA | RData file with data.frame containing columns `chr` and `pos`. If provided, 1 Mb regions surrounding each variant listed will be omitted from the QQ and manhattan plots.
 `thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 
 ### Aggregate
@@ -188,8 +191,9 @@ config parameter | default value | description
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
-`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
-`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
+`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model. 
+`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately. 
+`rescale_variance` | `FALSE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. Variants used will be the intersection of this set and variants defined by `variant_group_file`.
@@ -220,8 +224,9 @@ config parameter | default value | description
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces. 
-`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
-`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
+`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model. 
+`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately. 
+`rescale_variance` | `FALSE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. 
