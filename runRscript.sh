@@ -27,7 +27,5 @@ args=("$@") # all arguments
 unset args[0] # remove first argument (R script name)
 
 export R_LIBS=/projects/resources/gactools/R_packages/library
-#temporary for testing
-#export R_LIBS=/projects/users/stephanie/Code/TOPMed/analysis_pipeline/R_library:/projects/geneva/gcc-fs2/R_packages/library
 
 R-3.3.2 -q --vanilla --args ${args[@]} $TASK < $1
