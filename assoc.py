@@ -40,6 +40,8 @@ jobid = dict()
     
 configdict = TopmedPipeline.readConfig(configfile)
 
+qsubOpts = ""
+
 # check type of association test - single-variant unrelated is handled differently
 single_unrel = assocType == "single" and configdict["pcrelate_file"] == "NA"
 
@@ -53,7 +55,7 @@ if not single_unrel:
     configfile = configdict["out_prefix"] + "_" + job + ".config"
     TopmedPipeline.writeConfig(config, configfile)
 
-    qsubOpts = "-l h_vmem=1.2G"
+    #qsubOpts = "-l h_vmem=1.2G"
     jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], queue=queue, email=email, qsubOptions=qsubOpts, printOnly=printOnly)
 
     holdid = [jobid["null_model"]]
@@ -75,7 +77,7 @@ if assocType == "aggregate":
     configfile = configdict["out_prefix"] + "_" + job + ".config"
     TopmedPipeline.writeConfig(config, configfile)
 
-    qsubOpts = "-l h_vmem=3G"
+    #qsubOpts = "-l h_vmem=3G"
     jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], arrayRange=chromosomes, queue=queue, email=email, qsubOptions=qsubOpts, printOnly=printOnly)
 
     holdid.append(jobid["aggregate_list"].split(".")[0])
@@ -107,7 +109,7 @@ for chromosome in chrom_list:
     rscript = os.path.join(pipeline, "R", assocScript + ".R")
     args = ["-s", rscript, configfile, "--chromosome " + chromosome]
     # no email for jobs by segment
-    qsubOpts = "-l h_vmem=3G"
+    #qsubOpts = "-l h_vmem=3G"
     jobid[job_assoc] = TopmedPipeline.submitJob(job_assoc, driver, args, holdid=holdid, arrayRange=segments[chromosome], queue=queue, qsubOptions=qsubOpts, printOnly=printOnly)
 
     combScript = "assoc_combine"
@@ -136,6 +138,6 @@ TopmedPipeline.writeConfig(config, configfile)
 #holdid = [jobid[assocScript].split(".")[0]]
 holdid = [c.split(".")[0] for c in jobid_chrom.values()]
 
-qsubOpts = "-l h_vmem=3.2G"
+#qsubOpts = "-l h_vmem=3.2G"
 jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, qsubOptions=qsubOpts, printOnly=printOnly)
 
