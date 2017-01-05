@@ -28,4 +28,4 @@ unset args[0] # remove first argument (R script name)
 
 export R_LIBS=/projects/resources/gactools/R_packages/library
 
-R-3.3.2 -q --vanilla --args ${args[@]} $TASK < $1
+R -q --vanilla --args ${args[@]} $TASK < $1
