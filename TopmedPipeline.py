@@ -193,7 +193,7 @@ class SGE_Cluster(Cluster):
                     "-j":"y",
                     "-q":"olga.q",
                     "-S":"/bin/bash",
-                    "-v":"R_LIBS=/projects/geneva/gcc-fs2/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"}
+                    "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"}
         
         defaults.update(options)
             
