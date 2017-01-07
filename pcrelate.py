@@ -13,18 +13,24 @@ PC-Relate
 """
 parser = ArgumentParser(description=description)
 parser.add_argument("configfile", help="configuration file")
-parser.add_argument("-q", "--queue", default="olga.q", 
-                    help="cluster queue name [default %(default)s]")
+parser.add_argument("--clustertype", default="sge", 
+                    help="type of compute cluster environment [default %(default)s]")
+parser.add_argument("--clusterfile", default=None, 
+                    help="file containing options to pass to the cluster (sge_request format)")
 parser.add_argument("-e", "--email", default=None,
                     help="email address for job reporting")
 parser.add_argument("--printOnly", action="store_true", default=False,
-                    help="print qsub commands without submitting")
+                    help="print cluster commands without submitting")
 args = parser.parse_args()
 
 configfile = args.configfile
-queue = args.queue
+clusterfile = args.clusterfile
+clustertype = args.clustertype
 email = args.email
 printOnly = args.printOnly
+
+opts = TopmedPipeline.getOptions(clusterfile)
+cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type=clustertype, options=opts)
 
 pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
 driver = os.path.join(pipeline, "runRscript.sh")
@@ -38,7 +44,7 @@ job = "pcrelate"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], queue=queue, email=email, printOnly=printOnly)
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], email=email, printOnly=printOnly)
 
 
 job = "kinship_plots"
@@ -56,5 +62,5 @@ TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["pcrelate"]]
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, printOnly=printOnly)
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, printOnly=printOnly)
 

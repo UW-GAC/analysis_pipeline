@@ -3,6 +3,7 @@
 import sys
 import csv
 import subprocess
+from copy import deepcopy
 
 
 
@@ -122,92 +123,187 @@ def parseChromosomes(chromosomes):
     return chromString
 
 
+def dictToString(d):
+    """Construct a string from a dictionary"""
+    s = ' '.join([k + ' ' + v for k, v in d.iteritems()])
+    return s
 
-def readQsubOptions(file):
+def stringToDict(s):
+    """Construct a dictionary from a string"""
+    ss = s.split()
+    d = dict(zip(ss[0::2], ss[1::2]))
+    return d
+
+
+def getOptions(file):
     """Read a file in .sge_request format and return a dictionary"""
     opts = dict()
-    f = open(file, 'r')
-    for line in f:
-        vals = line.split()
-        if len(vals) == 1:
-            vals.append('')
-        (key, value) = vals
-        opts[key] = value
-    f.close()
+    if file is not None:
+        f = open(file, 'r')
+        for line in f:
+            vals = line.split()
+            if len(vals) == 1:
+                vals.append('')
+            (key, value) = vals
+            opts[key] = value
+        f.close()
     return opts
 
 
-def setQsubOptions(opts, defaults):
-    """Return a qsub option string with values in opts overriding values in defaults"""
-    opts = defaults.update(opts)
-    
-
-
-def submitJob(job, cmd, args, queue, holdid=None, arrayRange=None, requestCores=None,
-              email=None, qsubOptions="", verbose=True, printOnly=False):
-    """Sumbit a pipeline job.
-
-    Usage: 
-    jobid = submitJob(job, cmd, args, queue, holdid=None, arrayRange=None, requestCores=None, email=None, qsubOptions="", verbose=True, printOnly=False)
-
-    Arguments:
-    job - name of job
-    cmd - command to execute
-    args - list of arguments to cmd
-    queue - compute cluster queue to submit job into
-    holdid - list of job ids that must be complete before this job is run
-    arrayRange - specified, range of array jobs to pass to qsub (ie 1-23)
-    requestCores - number of cores to request; either a number (e.g, 1) or a range of numbers (e.g., 1-4)
-    email - email address to notify when job is complete
-    qsubOptions - additional options to pass to qsub
-    verbose - Print out stdout from qsub?
-    printOnly - print qsub command without submitting
-
-    Returns:
-    id of the submitted job
-
-    """
-
-    nameStr = "-N " + job
-    
-    queueStr = "-q " + queue
-    
-    if holdid is not None and holdid != []:
-        if isinstance(holdid, str):
-            holdid = [holdid]
-        holdStr = "-hold_jid " + ",".join(holdid)
-    else:
-        holdStr = ""
-
-    if requestCores is not None:
-        coreStr = "-pe local " + requestCores
-    else:
-        coreStr = ""
+# parent class to represent a compute cluster environment
+class Cluster(object):
+    """ """
+    # constructor
+    def __init__(self, submit_cmd, options=dict()):
+        self.submit_cmd = submit_cmd
+        self.options = options
         
-    if arrayRange is not None:
-        arrayStr = "-t " + arrayRange
-    else:
-        arrayStr = ""
+                    
+    def submitJob(self, cmd, args=[], opts=dict(), verbose=True, printOnly=False):
+        """ Submit a job to the cluster and return job id"""
+
+        argStr = " ".join(args)
         
-    if email is not None:
-        emailStr = "-m e -M " + email
-    else:
-        emailStr = ""
+        # override any stored options with argument
+        options = deepcopy(self.options)
+        options.update(opts)
+        optStr = dictToString(options)
+                
+        sub_cmd = " ".join([self.submit_cmd, optStr, cmd, argStr])
 
-    argStr = " ".join(args)
+        if printOnly:
+            print sub_cmd
+            return "000000"
 
-    qsub = "qsub -S /bin/bash %s %s %s %s %s %s %s %s %s" % (qsubOptions, nameStr, arrayStr, holdStr, coreStr, queueStr, emailStr, cmd, argStr)
+        process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE)
+        pipe = process.stdout
+        sub_out = pipe.readline()
+        jobid = sub_out.split()[2]
+
+        if verbose:
+            print sub_out
+
+        return jobid
+
+           
+class SGE_Cluster(Cluster):
     
-    if printOnly:
-        print qsub
-        return "000000"
+    def __init__(self, options=dict()):
+        defaults = {"-cwd":"",
+                    "-j":"y",
+                    "-q":"olga.q",
+                    "-S":"/bin/bash",
+                    "-v":"R_LIBS=/projects/geneva/gcc-fs2/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"}
+        
+        defaults.update(options)
+            
+        super(SGE_Cluster, self).__init__(submit_cmd="qsub", options=defaults)
+
+        
+    def submitJob(self, job_name, holdid=None, array_range=None, request_cores=None, email=None, opts=dict(), **kwargs):
+
+        opts["-N"] = job_name
+        
+        if holdid is not None and holdid != []:
+            if isinstance(holdid, str):
+                holdid = [holdid]
+            opts["-hold_jid"] =  ",".join(holdid)
+
+        if array_range is not None:
+            opts["-t"] = array_range
+
+        if request_cores is not None:
+            opts["-pe local"] = request_cores
+
+        if email is not None:
+            opts["-m"] = "e"
+            opts["-M"] = email
+           
+        jobid = super(SGE_Cluster, self).submitJob(opts=opts, **kwargs)
+
+        if array_range is not None:
+            jobid = jobid.split(".")[0]
+
+        return jobid
+
+
+    def memoryOptions(self, job_name):
+        # requesting memory causes problems on the UW cluster
+        opts = dict()
+        return opts
+
+
+           
+class AWS_Cluster(Cluster):
     
-    process = subprocess.Popen(qsub, shell=True, stdout=subprocess.PIPE)
-    pipe = process.stdout
-    qsubout = pipe.readline()
-    jobid = qsubout.split()[2]
+    def __init__(self, options=dict()):
+        defaults = {"-cwd":"",
+                    "-j":"y",
+                    "-S":"/bin/bash"}
+        
+        defaults.update(options)
+            
+        super(AWS_Cluster, self).__init__(submit_cmd="qsub", options=defaults)
+
+        
+    def submitJob(self, job_name, holdid=None, array_range=None, request_cores=None, email=None, opts=dict(), **kwargs):
+
+        opts["-N"] = job_name
+        
+        if holdid is not None and holdid != []:
+            if isinstance(holdid, str):
+                holdid = [holdid]
+            opts["-hold_jid"] =  ",".join(holdid)
+
+        if array_range is not None:
+            opts["-t"] = array_range
+
+        if request_cores is not None:
+            opts["-pe smp"] = request_cores
+
+        if email is not None:
+            opts["-m"] = "e"
+            opts["-M"] = email
+
+        jobid = super(AWS_Cluster, self).submitJob(opts=opts, **kwargs)
+
+        if array_range is not None:
+            jobid = jobid.split(".")[0]
+
+        return jobid
+
+
+    def memoryOptions(self, job_name):
+        vmem = {"find_unrelated":4,
+                "ld_pruning":12,
+                "combine_variants":4,
+                "pca_byrel":4,
+                "pca_plots":1,
+                "pca_corr":6,
+                "pca_corr_plots":132,
+                "null_model":1.2,
+                "aggregate_list":3,
+                "assoc":3,
+                "assoc_combine":3,
+                "assoc_plots":3.2}
+            
+        option = "-l"
+        resource = "h_vmem={0}G".format(vmem[job_name])
+        opts = dict()
+        opts[option] = resource
+        return opts
+
     
-    if verbose:
-        print qsubout
+
+class ClusterFactory(object):
+
+    @staticmethod
+    def createCluster(cluster_type, *args, **kwargs):
+        if cluster_type == "sge":
+            return SGE_Cluster(*args, **kwargs)
+        elif cluster_type == "aws":
+            return AWS_Cluster(*args, **kwargs)
+        else:
+            raise Exception("unknown cluster type: " + cluster_type + "!")
     
-    return jobid
+

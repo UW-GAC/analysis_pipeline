@@ -1,9 +1,5 @@
 #! /bin/bash
 
-#$ -cwd
-#$ -S /bin/bash
-#$ -j y
-
 while getopts ":cs" opt; do
   case $opt in
     c)
@@ -25,7 +21,5 @@ fi
 
 args=("$@") # all arguments
 unset args[0] # remove first argument (R script name)
-
-export R_LIBS=/projects/resources/gactools/R_packages/library
 
 R -q --vanilla --args ${args[@]} $TASK < $1

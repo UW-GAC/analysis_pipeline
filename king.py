@@ -18,8 +18,10 @@ parser = ArgumentParser(description=description)
 parser.add_argument("configfile", help="configuration file")
 parser.add_argument("-c", "--chromosomes", default="1-22",
                     help="range of chromosomes [default %(default)s]")
-parser.add_argument("-q", "--queue", default="olga.q", 
-                    help="cluster queue name [default %(default)s]")
+parser.add_argument("--clustertype", default="sge", 
+                    help="type of compute cluster environment [default %(default)s]")
+parser.add_argument("--clusterfile", default=None, 
+                    help="file containing options to pass to the cluster (sge_request format)")
 parser.add_argument("-n", "--ncores", default="1-8",
                     help="number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4) [default %(default)s]")
 parser.add_argument("-e", "--email", default=None,
@@ -30,10 +32,14 @@ args = parser.parse_args()
 
 configfile = args.configfile
 chromosomes = args.chromosomes
-queue = args.queue
+clusterfile = args.clusterfile
+clustertype = args.clustertype
 ncores = args.ncores
 email = args.email
 printOnly = args.printOnly
+
+opts = TopmedPipeline.getOptions(clusterfile)
+cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type=clustertype, options=opts)
 
 pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
 driver = os.path.join(pipeline, "runRscript.sh")
@@ -52,7 +58,7 @@ config["out_file"] = configdict["out_prefix"] + "_pruned_variants_chr .RData"
 configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], arrayRange=chromosomes, queue=queue, email=email, printOnly=printOnly)
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], array_range=chromosomes, email=email, printOnly=printOnly)
 
 
 job = "combine_variants"
@@ -66,9 +72,9 @@ config["out_file"] = configdict["out_prefix"] + "_pruned_variants.RData"
 configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-holdid = [jobid["ld_pruning"].split(".")[0]]
+holdid = [jobid["ld_pruning"]]
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, printOnly=printOnly)
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], holdid=holdid, email=email, printOnly=printOnly)
 
 
 job = "ibd_king"
@@ -83,7 +89,7 @@ TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["combine_variants"]]
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, requestCores=ncores, printOnly=printOnly)
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, request_cores=ncores, email=email, printOnly=printOnly)
 
 
 job = "kinship_plots"
@@ -101,5 +107,4 @@ TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["ibd_king"]]
 
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, printOnly=printOnly)
-
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, printOnly=printOnly)

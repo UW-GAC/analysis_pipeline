@@ -30,7 +30,9 @@ gds_file "1KG_phase3_subset_chr .gds"
 
 Nearly all scripts require a GDS file in SeqArray format. Phenotype files should be an AnnotatedDataFrame saved in an RData file. See `?AnnotatedDataFrame` or the SeqVarTools documentation for details. Example files are provided in `testdata`.
 
-Python scripts are provided to run multi-step analyses on a compute cluster or cloud environment. The `submitJob` function in `TopmedPipeline.py` is written for a Sun Grid Engine (SGE) cluster, but may be modified for other environments. These scripts require a config argument `out_prefix` in addition to the arguments for each R script called. Some input and output file name parameters are overridden by the scripts in order to link jobs together. Example config files are in `testdata`.
+Python scripts are provided to run multi-step analyses on a compute cluster or cloud environment. `TopmedPipeline.py` defines cluster environment classes, currently a Sun Grid Engine (SGE) cluster and Amazon's cfncluster. Additional classes may be added for other environments. Some default options (e.g., the R library path and queue name) are hard-coded in the class initialization method and should be changed to run on other systems. Default cluster options may be overridden at run time by specifying a file containing alternative options.
+
+These python scripts require a config argument `out_prefix` in addition to the arguments for each R script called. Some input and output file name parameters are overridden by the scripts in order to link jobs together. Example config files are in `testdata`.
 
 
 ## Conversion to GDS

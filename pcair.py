@@ -19,22 +19,30 @@ parser = ArgumentParser(description=description)
 parser.add_argument("configfile", help="configuration file")
 parser.add_argument("-c", "--chromosomes", default="1-22",
                     help="range of chromosomes [default %(default)s]")
-parser.add_argument("-q", "--queue", default="olga.q", 
-                    help="cluster queue name [default %(default)s]")
+parser.add_argument("--clustertype", default="sge", 
+                    help="type of compute cluster environment [default %(default)s]")
+parser.add_argument("--clusterfile", default=None, 
+                    help="file containing options to pass to the cluster (sge_request format)")
 parser.add_argument("-n", "--ncores", default="1-8",
                     help="number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4) [default %(default)s]")
 parser.add_argument("-e", "--email", default=None,
                     help="email address for job reporting")
+parser.add_argument("--mem", action="store_true", default=False,
+                    help="allocate memory for each job")
 parser.add_argument("--printOnly", action="store_true", default=False,
                     help="print qsub commands without submitting")
 args = parser.parse_args()
 
 configfile = args.configfile
 chromosomes = args.chromosomes
-queue = args.queue
+clusterfile = args.clusterfile
+clustertype = args.clustertype
 ncores = args.ncores
 email = args.email
 printOnly = args.printOnly
+
+opts = TopmedPipeline.getOptions(clusterfile)
+cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type=clustertype, options=opts)
 
 pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
 driver = os.path.join(pipeline, "runRscript.sh")
@@ -42,8 +50,6 @@ driver = os.path.join(pipeline, "runRscript.sh")
 jobid = dict()
     
 configdict = TopmedPipeline.readConfig(configfile)
-
-qsubOpts = ""
 
 
 job = "find_unrelated"
@@ -56,8 +62,9 @@ config["out_unrelated_file"] = configdict["out_prefix"] + "_unrelated.RData"
 configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-#qsubOpts = "-l h_vmem=4G"
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], queue=queue, email=email, qsubOptions=qsubOpts, printOnly=printOnly)
+opts = cluster.memoryOptions(job)
+
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], email=email, opts=opts, printOnly=printOnly)
 
 
 job = "ld_pruning"
@@ -72,8 +79,9 @@ TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["find_unrelated"]]
 
-#qsubOpts = "-l h_vmem=12G"
-jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, qsubOptions=qsubOpts, printOnly=printOnly)
+opts = cluster.memoryOptions(job)
+
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], holdid=holdid, array_range=chromosomes, email=email, opts=opts, printOnly=printOnly)
 
 
 job = "combine_variants"
@@ -87,10 +95,11 @@ config["out_file"] = configdict["out_prefix"] + "_pruned_variants.RData"
 configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-holdid = [jobid["ld_pruning"].split(".")[0]]
+holdid = [jobid["ld_pruning"]]
 
-#qsubOpts = "-l h_vmem=4G"
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, qsubOptions=qsubOpts, printOnly=printOnly)
+opts = cluster.memoryOptions(job)
+
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, opts=opts, printOnly=printOnly)
 
 
 job = "pca_byrel"
@@ -108,8 +117,9 @@ TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["combine_variants"]]
 
-#qsubOpts = "-l h_vmem=4G"
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, requestCores=ncores, qsubOptions=qsubOpts, printOnly=printOnly)
+opts = cluster.memoryOptions(job)
+
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, request_cores=ncores, email=email, opts=opts, printOnly=printOnly)
 
 
 job = "pca_plots"
@@ -127,8 +137,9 @@ TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["pca_byrel"]]
 
-#qsubOpts = "-l h_vmem=1G"
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, qsubOptions=qsubOpts, printOnly=printOnly)
+opts = cluster.memoryOptions(job)
+
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, opts=opts, printOnly=printOnly)
 
 
 job = "pca_corr"
@@ -143,10 +154,10 @@ TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["pca_byrel"]]
 
-#jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, requestCores=ncores, printOnly=printOnly)
+opts = cluster.memoryOptions(job)
+
 # single core only
-#qsubOpts = "-l h_vmem=6G"
-jobid[job] = TopmedPipeline.submitJob(job, driver, ["-c", rscript, configfile], holdid=holdid, arrayRange=chromosomes, queue=queue, email=email, qsubOptions=qsubOpts, printOnly=printOnly)
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], holdid=holdid, array_range=chromosomes, email=email, opts=opts, printOnly=printOnly)
 
 
 job = "pca_corr_plots"
@@ -160,7 +171,8 @@ config["out_prefix"] = configdict["out_prefix"] + "_pcair_corr"
 configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-holdid = [jobid["pca_corr"].split(".")[0]]
+holdid = [jobid["pca_corr"]]
 
-#qsubOpts = "-l h_vmem=132G"
-jobid[job] = TopmedPipeline.submitJob(job, driver, [rscript, configfile], holdid=holdid, queue=queue, email=email, qsubOptions=qsubOpts, printOnly=printOnly)
+opts = cluster.memoryOptions(job)
+
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, opts=opts, printOnly=printOnly)

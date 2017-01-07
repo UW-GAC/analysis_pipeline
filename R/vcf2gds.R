@@ -35,7 +35,7 @@ message("gds temporarily located at ", gdsfile.tmp)
 isBCF <- file_ext(vcffile) == "bcf"
 if (isBCF) {
     ## use bcftools to read text
-    vcffile <- pipe(paste("/projects/resources/software/apps/bin/bcftools view", vcffile), "rt")
+    vcffile <- pipe(paste("bcftools view", vcffile), "rt")
 }
 
 seqVCF2GDS(vcffile, gdsfile.tmp, fmt.import=fmt.import, storage.option="LZMA_RA",
