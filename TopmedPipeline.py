@@ -10,13 +10,13 @@ from copy import deepcopy
 def readConfig(file):
     """Read a pipeline config file.
 
-    Usage: 
+    Usage:
     config = readConfig(file)
 
-    Arguments: 
+    Arguments:
     file - name of config file to read
 
-    Returns: 
+    Returns:
     dictionary with config values
     """
 
@@ -26,16 +26,16 @@ def readConfig(file):
     for line in reader:
         if line[0][0] == "#":
             continue
-        
+
         if len(line) > 2:
             if line[2] == '':
                 line = line[0:2]
             else:
                 sys.exit("Error reading config file " + file + ":\nToo many parameters in line " + str(reader.line_num))
-            
+
         (key, value) = line
         config[key] = value
-            
+
     f.close()
     return config
 
@@ -44,7 +44,7 @@ def readConfig(file):
 def writeConfig(config, file):
     """Write a pipeline config file.
 
-    Usage: 
+    Usage:
     writeConfig(config, file)
 
     Arguments:
@@ -59,17 +59,17 @@ def writeConfig(config, file):
     f.close()
 
 
-    
+
 def getFirstColumn(file, skipHeader=True):
     """Read a file and return the first column
 
-    Usage: 
+    Usage:
     x = getFirstColumn(file)
 
-    Arguments: 
+    Arguments:
     file - name of file to read
 
-    Returns: 
+    Returns:
     list with values in the first column (minus the header)
     """
     f = open(file, 'r')
@@ -91,21 +91,21 @@ def which(x, y):
 def getChromSegments(map_file, chromosome):
     """Read a pipeline segments file.
 
-    Usage: 
+    Usage:
     segments = getChromSegments(map_file, chromosome)
 
-    Arguments: 
+    Arguments:
     file - name of segments file to read (expect first column is chromosome)
     chromosome - character value for chromosome
 
-    Returns: 
+    Returns:
     list with beginning and ending segment indices for each chromosome
-    """  
+    """
     chrom_segments = getFirstColumn(map_file)
 
     # get indices of segments matching this chromosome
     segments = [ (min(x), max(x)) for x in [ which(chrom_segments, c) for c in chromosome ] ]
-    
+
     return segments
 
 
@@ -115,7 +115,7 @@ def chromosomeRangeToList(chromosomes):
     start = chromRange[0]
     end = start if len(chromRange) == 1 else chromRange[1]
     return range(start, end + 1)
-    
+
 def parseChromosomes(chromosomes):
     chromString = " ".join([str(x) for x in chromosomeRangeToList(chromosomes)])
     chromString = chromString.replace("23", "X")
@@ -157,18 +157,18 @@ class Cluster(object):
     def __init__(self, submit_cmd, options=dict()):
         self.submit_cmd = submit_cmd
         self.options = options
-        
-                    
+
+
     def submitJob(self, cmd, args=[], opts=dict(), verbose=True, printOnly=False):
         """ Submit a job to the cluster and return job id"""
 
         argStr = " ".join(args)
-        
+
         # override any stored options with argument
         options = deepcopy(self.options)
         options.update(opts)
         optStr = dictToString(options)
-                
+
         sub_cmd = " ".join([self.submit_cmd, optStr, cmd, argStr])
 
         if printOnly:
@@ -185,25 +185,25 @@ class Cluster(object):
 
         return jobid
 
-           
+
 class SGE_Cluster(Cluster):
-    
+
     def __init__(self, options=dict()):
         defaults = {"-cwd":"",
                     "-j":"y",
                     "-q":"olga.q",
                     "-S":"/bin/bash",
                     "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"}
-        
+
         defaults.update(options)
-            
+
         super(SGE_Cluster, self).__init__(submit_cmd="qsub", options=defaults)
 
-        
+
     def submitJob(self, job_name, holdid=None, array_range=None, request_cores=None, email=None, opts=dict(), **kwargs):
 
         opts["-N"] = job_name
-        
+
         if holdid is not None and holdid != []:
             if isinstance(holdid, str):
                 holdid = [holdid]
@@ -218,7 +218,7 @@ class SGE_Cluster(Cluster):
         if email is not None:
             opts["-m"] = "e"
             opts["-M"] = email
-           
+
         jobid = super(SGE_Cluster, self).submitJob(opts=opts, **kwargs)
 
         if array_range is not None:
@@ -233,23 +233,25 @@ class SGE_Cluster(Cluster):
         return opts
 
 
-           
+
 class AWS_Cluster(Cluster):
-    
+
     def __init__(self, options=dict()):
         defaults = {"-cwd":"",
                     "-j":"y",
-                    "-S":"/bin/bash"}
-        
+                    "-q":"all.q",
+                    "-S":"/bin/bash",
+                    "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"}
+
         defaults.update(options)
-            
+
         super(AWS_Cluster, self).__init__(submit_cmd="qsub", options=defaults)
 
-        
+
     def submitJob(self, job_name, holdid=None, array_range=None, request_cores=None, email=None, opts=dict(), **kwargs):
 
         opts["-N"] = job_name
-        
+
         if holdid is not None and holdid != []:
             if isinstance(holdid, str):
                 holdid = [holdid]
@@ -259,11 +261,11 @@ class AWS_Cluster(Cluster):
             opts["-t"] = array_range
 
         if request_cores is not None:
-            opts["-pe smp"] = request_cores
-
-        if email is not None:
-            opts["-m"] = "e"
-            opts["-M"] = email
+            opts["-pe local"] = request_cores
+# currently, no email on aws
+#        if email is not None:
+#            opts["-m"] = "e"
+#            opts["-M"] = email
 
         jobid = super(AWS_Cluster, self).submitJob(opts=opts, **kwargs)
 
@@ -274,26 +276,26 @@ class AWS_Cluster(Cluster):
 
 
     def memoryOptions(self, job_name):
-        vmem = {"find_unrelated":4,
-                "ld_pruning":12,
-                "combine_variants":4,
+        vmem = {"find_unrelated":3.5,
+                "ld_pruning":11,
+                "combine_variants":1,
                 "pca_byrel":4,
                 "pca_plots":1,
-                "pca_corr":6,
+                "pca_corr":5.5,
                 "pca_corr_plots":132,
-                "null_model":1.2,
-                "aggregate_list":3,
-                "assoc":3,
+                "null_model":6,
+                "aggregate_list":6,
+                "assoc":4.5,
                 "assoc_combine":3,
-                "assoc_plots":3.2}
-            
+                "assoc_plots":1.5}
+
         option = "-l"
         resource = "h_vmem={0}G".format(vmem[job_name])
         opts = dict()
         opts[option] = resource
         return opts
 
-    
+
 
 class ClusterFactory(object):
 
@@ -305,5 +307,3 @@ class ClusterFactory(object):
             return AWS_Cluster(*args, **kwargs)
         else:
             raise Exception("unknown cluster type: " + cluster_type + "!")
-    
-
