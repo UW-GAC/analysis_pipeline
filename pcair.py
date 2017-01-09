@@ -27,8 +27,6 @@ parser.add_argument("-n", "--ncores", default="1-8",
                     help="number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4) [default %(default)s]")
 parser.add_argument("-e", "--email", default=None,
                     help="email address for job reporting")
-parser.add_argument("--mem", action="store_true", default=False,
-                    help="allocate memory for each job")
 parser.add_argument("--printOnly", action="store_true", default=False,
                     help="print qsub commands without submitting")
 args = parser.parse_args()
