@@ -30,7 +30,7 @@ gds_file "1KG_phase3_subset_chr .gds"
 
 Nearly all scripts require a GDS file in SeqArray format. Phenotype files should be an AnnotatedDataFrame saved in an RData file. See `?AnnotatedDataFrame` or the SeqVarTools documentation for details. Example files are provided in `testdata`.
 
-Python scripts are provided to run multi-step analyses on a compute cluster or cloud environment. `TopmedPipeline.py` defines cluster environment classes, currently a Sun Grid Engine (SGE) cluster and Amazon's cfncluster. Additional classes may be added for other environments. Some default options (e.g., the R library path and queue name) are hard-coded in the class initialization method and should be changed to run on other systems. Default cluster options may be overridden at run time by specifying a file containing alternative options.
+Python scripts are provided to run multi-step analyses on a compute cluster or cloud environment. `TopmedPipeline.py` defines cluster environment classes, currently a Sun Grid Engine (SGE) cluster and Amazon's cfncluster Son of Grid Engine (also SGE). Additional classes may be added for other environments. Some default options (e.g., the R library path and queue name) are hard-coded in the class initialization method and should be changed to run on other systems. Default cluster options may be overridden at run time by specifying a file containing alternative options.
 
 These python scripts require a config argument `out_prefix` in addition to the arguments for each R script called. Some input and output file name parameters are overridden by the scripts in order to link jobs together. Example config files are in `testdata`.
 
@@ -72,7 +72,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning.
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
-	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning. 
+	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
 
@@ -86,7 +86,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	5. `pca_plots.R`
 	6. `pca_corr.R`
 	7. `pca_corr_plots.R`
-	
+
     config parameter | default value | description
     --- | --- | ---
     `out_prefix` | | Prefix for files created by this script.
@@ -99,10 +99,10 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`ld_r_threshold` | `0.32` | `r` threshold for LD pruning. Default is `r^2 = 0.1`.
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning.
-	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning. 
-	`n_pcs` | `20` | Number of PCs to return. 
+	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
+	`n_pcs` | `20` | Number of PCs to return.
 	`n_pair` | `6` | Number of PCs in include in the pairs plot.
-	`n_perpage` | `4` | Number of PC-variant correlation plots to stack in a single page. The number of png files generated will be `ceiling(n_pcs/n_perpage)`. 
+	`n_perpage` | `4` | Number of PC-variant correlation plots to stack in a single page. The number of png files generated will be `ceiling(n_pcs/n_perpage)`.
 	`thin` | `TRUE` | Logical for whether to thin points in the PC-variant correlation plots.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for color-coding PCA plots by group.
 	`group` | `NA` | Name of column in `phenotype_file` containing group variable.
@@ -112,19 +112,19 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
     `pcrelate.py`
     1. `pcrelate.R`
 	2. `kinship_plots.R`
-	
+
     config parameter | default value | description
     --- | --- | ---
-    `out_prefix` | | Prefix for files created by this script. 
+    `out_prefix` | | Prefix for files created by this script.
     `gds_file` | | GDS file with all chromosomes.
-	`pca_file` | | RData file with PCA results created by `pcair.py`. 
+	`pca_file` | | RData file with PCA results created by `pcair.py`.
 	`variant_include_file` | | RData file with LD pruned variant.id created by `pcair.py`.
 	`n_pcs` | `3` | Number of PCs to use in adjusting for ancestry.
-	`sample_block_size` | `10000` | Maximum number of samples to read in a single block. Adjust depending on computer memory and number of samples in the analysis. 
-	`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
+	`sample_block_size` | `10000` | Maximum number of samples to read in a single block. Adjust depending on computer memory and number of samples in the analysis.
+	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
-	
+
 4. Repeat steps 2-3, using new kinship estimates for PC-AiR
 
 
@@ -140,7 +140,7 @@ Association tests have an additional level of parallelization: by segment within
 
 ### Single-variant
 
-`assoc.py single` 
+`assoc.py single`
 
 1. `null_model.R`
 2. `assoc_single.R`
@@ -149,16 +149,16 @@ Association tests have an additional level of parallelization: by segment within
 
 config parameter | default value | description
 --- | --- | ---
-`out_prefix` | | Prefix for files created by this script. 
+`out_prefix` | | Prefix for files created by this script.
 `gds_file` | | GDS file. Include a space to insert chromosome.
-`pca_file` | | RData file with PCA results created by `pcair.py`. 
+`pca_file` | | RData file with PCA results created by `pcair.py`.
 `pcrelate_file` | `NA` | GDS file created by `pcrelate.py`.
-`phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes. 
+`phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes.
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
-`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces. 
+`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
 `group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
-`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately. 
+`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately.
 `rescale_variance` | `FALSE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include.
@@ -172,7 +172,7 @@ config parameter | default value | description
 
 ### Aggregate
 
-`assoc.py aggregate` 
+`assoc.py aggregate`
 
 1. `null_model.R`
 2. `aggregate_list.R`
@@ -182,33 +182,33 @@ config parameter | default value | description
 
 config parameter | default value | description
 --- | --- | ---
-`out_prefix` | | Prefix for files created by this script. 
+`out_prefix` | | Prefix for files created by this script.
 `gds_file` | | GDS file. Include a space to insert chromosome.
 `aggregate_type` | `allele` | Type of aggregate grouping. Options are to select variants by `allele` (unique variants) or `position` (regions of interest).
 `variant_group_file` | | RData file with data frame defining aggregate groups. If `aggregate_type` is `allele`, columns should be `group_id`, `chromosome`, `position`, `ref`, `alt`. If `aggregate_type` is `position`, columns should be `group_id`, `chromosome`, `start`, `end`.
-`pca_file` | | RData file with PCA results created by `pcair.py`. 
+`pca_file` | | RData file with PCA results created by `pcair.py`.
 `pcrelate_file` | `NA` | GDS file created by `pcrelate.py`.
-`phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes. 
+`phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes.
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
-`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model. 
-`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately. 
+`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
+`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately.
 `rescale_variance` | `FALSE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
 `n_pcs` | `3` | Number of PCs to include as covariates.
-`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
+`sample_include_file` | `NA` | RData file with vector of sample.id to include.
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. Variants used will be the intersection of this set and variants defined by `variant_group_file`.
 `alt_freq_range` | `"0 1"` | Range of alternate allele frequencies to consider, quoted and separated by spaces.
-`test` | `burden` | Test to perform. Options are `burden` or `skat`. 
+`test` | `burden` | Test to perform. Options are `burden` or `skat`.
 `test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` and `firth` if `binary` is `TRUE`. `firth` is only valid if samples are unrelated (`pcrelate_file` is `NA`).
-`pval_skat` | `kuonen` | Method used to calculate p-values if `test` is `skat`. Options are `kuonen` (uses saddlepoint method), `davies` (uses numerical integration), and `liu` (uses a moment matching approximation). 
+`pval_skat` | `kuonen` | Method used to calculate p-values if `test` is `skat`. Options are `kuonen` (uses saddlepoint method), `davies` (uses numerical integration), and `liu` (uses a moment matching approximation).
 `rho` | `0` | A numeric value (or quoted, space-delimited list of numeric values) in [0,1] specifying the rho parameter when `test` is `skat`. `0` is a standard SKAT test, `1` is a score burden test, and multiple values is a SKAT-O test.
-`weight_beta` | `"0.5 0.5"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"0.5 0.5"` is proportional to the Madsen-Browning weights and `"1 25"` gives the Wu weights. 
+`weight_beta` | `"0.5 0.5"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"0.5 0.5"` is proportional to the Madsen-Browning weights and `"1 25"` gives the Wu weights.
 `thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 
 ### Sliding window
 
-`assoc.py window` 
+`assoc.py window`
 
 1. `null_model.R`
 2. `assoc_window.R`
@@ -217,28 +217,28 @@ config parameter | default value | description
 
 config parameter | default value | description
 --- | --- | ---
-`out_prefix` | | Prefix for files created by this script. 
+`out_prefix` | | Prefix for files created by this script.
 `gds_file` | | GDS file. Include a space to insert chromosome.
-`pca_file` | | RData file with PCA results created by `pcair.py`. 
+`pca_file` | | RData file with PCA results created by `pcair.py`.
 `pcrelate_file` | `NA` | GDS file created by `pcrelate.py`.
-`phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes. 
+`phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes.
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
-`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces. 
-`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model. 
-`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately. 
+`covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
+`group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
+`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately.
 `rescale_variance` | `FALSE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
 `n_pcs` | `3` | Number of PCs to include as covariates.
-`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
-`variant_include_file` | `NA` | RData file with vector of variant.id to include. 
+`sample_include_file` | `NA` | RData file with vector of sample.id to include.
+`variant_include_file` | `NA` | RData file with vector of variant.id to include.
 `alt_freq_range` | `"0 1"` | Range of alternate allele frequencies to consider, quoted and separated by spaces.
-`test` | `burden` | Test to perform. Options are `burden` or `skat`. 
+`test` | `burden` | Test to perform. Options are `burden` or `skat`.
 `test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` and `firth` if `binary` is `TRUE`. `firth` is only valid if samples are unrelated (`pcrelate_file` is `NA`).
-`pval_skat` | `kuonen` | Method used to calculate p-values if `test` is `skat`. Options are `kuonen` (uses saddlepoint method), `davies` (uses numerical integration), and `liu` (uses a moment matching approximation). 
+`pval_skat` | `kuonen` | Method used to calculate p-values if `test` is `skat`. Options are `kuonen` (uses saddlepoint method), `davies` (uses numerical integration), and `liu` (uses a moment matching approximation).
 `rho` | `0` | A numeric value (or quoted, space-delimited list of numeric values) in [0,1] specifying the rho parameter when `test` is `skat`. `0` is a standard SKAT test, `1` is a score burden test, and multiple values is a SKAT-O test.
 `weight_beta` | `"0.5 0.5"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"0.5 0.5"` is proportional to the Madsen-Browning weights and `"1 25"` gives the Wu weights.
-`window_size` | `50` | Size of sliding window in kb. 
-`window_step` | `20` | Step size of sliding window in kb. 
+`window_size` | `50` | Size of sliding window in kb.
+`window_step` | `20` | Step size of sliding window in kb.
 `thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 
 ### Parallelization details
