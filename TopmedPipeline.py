@@ -186,7 +186,7 @@ class Cluster(object):
         return jobid
 
 
-class SGE_Cluster(Cluster):
+class UW_Cluster(Cluster):
 
     def __init__(self, options=dict()):
         defaults = {"-cwd":"",
@@ -197,7 +197,7 @@ class SGE_Cluster(Cluster):
 
         defaults.update(options)
 
-        super(SGE_Cluster, self).__init__(submit_cmd="qsub", options=defaults)
+        super(UW_Cluster, self).__init__(submit_cmd="qsub", options=defaults)
 
 
     def submitJob(self, job_name, holdid=None, array_range=None, request_cores=None, email=None, opts=dict(), **kwargs):
@@ -219,7 +219,7 @@ class SGE_Cluster(Cluster):
             opts["-m"] = "e"
             opts["-M"] = email
 
-        jobid = super(SGE_Cluster, self).submitJob(opts=opts, **kwargs)
+        jobid = super(UW_Cluster, self).submitJob(opts=opts, **kwargs)
 
         if array_range is not None:
             jobid = jobid.split(".")[0]
@@ -301,8 +301,8 @@ class ClusterFactory(object):
 
     @staticmethod
     def createCluster(cluster_type, *args, **kwargs):
-        if cluster_type == "sge":
-            return SGE_Cluster(*args, **kwargs)
+        if cluster_type == "uw":
+            return UW_Cluster(*args, **kwargs)
         elif cluster_type == "aws":
             return AWS_Cluster(*args, **kwargs)
         else:

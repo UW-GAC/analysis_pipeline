@@ -13,7 +13,7 @@ PC-Relate
 """
 parser = ArgumentParser(description=description)
 parser.add_argument("configfile", help="configuration file")
-parser.add_argument("--clustertype", default="sge", 
+parser.add_argument("--clustertype", default="uw", 
                     help="type of compute cluster environment [default %(default)s]")
 parser.add_argument("--clusterfile", default=None, 
                     help="file containing options to pass to the cluster (sge_request format)")
