@@ -51,7 +51,7 @@ config parameter | default value | description
 `merged_gds_file` | | Merged genotype-only GDS file containing all chromosomes.
 `format` | `GT` | FORMAT fields from the VCF to convert to GDS. Default is genotypes only.
 
-Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-genotype FORMAT fields. Step 2 combines these files into a single GDS file, which is needed for whole-genome analyses such as relatedness and population structure. The single-chromosome files are still preferred for analyses run in parallel by chromosome. Step 3 ensures that each variant has a unique integer ID across the genome, so the variant.id field in the per-chromosome files and the combined file are consistent.
+Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-genotype FORMAT fields. (BCF files may be used instead of VCF if [bcftools](https://samtools.github.io/bcftools/bcftools.html) is installed.) Step 2 combines these files into a single GDS file, which is needed for whole-genome analyses such as relatedness and population structure. The single-chromosome files are still preferred for analyses run in parallel by chromosome. Step 3 ensures that each variant has a unique integer ID across the genome, so the variant.id field in the per-chromosome files and the combined file are consistent.
 
 
 ## Relatedness and Population structure
