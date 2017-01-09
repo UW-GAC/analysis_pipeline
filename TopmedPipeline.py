@@ -150,6 +150,7 @@ def getOptions(file):
     return opts
 
 
+
 # parent class to represent a compute cluster environment
 class Cluster(object):
     """ """
@@ -186,18 +187,12 @@ class Cluster(object):
         return jobid
 
 
-class UW_Cluster(Cluster):
+    
+class SGE_Cluster(Cluster):
 
-    def __init__(self, options=dict()):
-        defaults = {"-cwd":"",
-                    "-j":"y",
-                    "-q":"olga.q",
-                    "-S":"/bin/bash",
-                    "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"}
-
-        defaults.update(options)
-
-        super(UW_Cluster, self).__init__(submit_cmd="qsub", options=defaults)
+    def __init__(self, options=dict(), parallel_environment="local"):
+        super(SGE_Cluster, self).__init__(submit_cmd="qsub", options=options)
+        self.pe = parallel_environment
 
 
     def submitJob(self, job_name, holdid=None, array_range=None, request_cores=None, email=None, opts=dict(), **kwargs):
@@ -213,13 +208,13 @@ class UW_Cluster(Cluster):
             opts["-t"] = array_range
 
         if request_cores is not None:
-            opts["-pe local"] = request_cores
+            opts["-pe"] = self.pe + " " + request_cores
 
         if email is not None:
             opts["-m"] = "e"
             opts["-M"] = email
 
-        jobid = super(UW_Cluster, self).submitJob(opts=opts, **kwargs)
+        jobid = super(SGE_Cluster, self).submitJob(opts=opts, **kwargs)
 
         if array_range is not None:
             jobid = jobid.split(".")[0]
@@ -233,8 +228,29 @@ class UW_Cluster(Cluster):
         return opts
 
 
+    
+class UW_Cluster(SGE_Cluster):
 
-class AWS_Cluster(Cluster):
+    def __init__(self, options=dict()):
+        defaults = {"-cwd":"",
+                    "-j":"y",
+                    "-q":"olga.q",
+                    "-S":"/bin/bash",
+                    "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"}
+
+        defaults.update(options)
+
+        super(UW_Cluster, self).__init__(options=defaults, parallel_environment="local")
+
+
+    def memoryOptions(self, job_name):
+        # requesting memory causes problems on the UW cluster
+        opts = dict()
+        return opts
+
+
+
+class AWS_Cluster(SGE_Cluster):
 
     def __init__(self, options=dict()):
         defaults = {"-cwd":"",
@@ -245,33 +261,13 @@ class AWS_Cluster(Cluster):
 
         defaults.update(options)
 
-        super(AWS_Cluster, self).__init__(submit_cmd="qsub", options=defaults)
+        super(AWS_Cluster, self).__init__(options=defaults, parallel_environment="local")
 
 
-    def submitJob(self, job_name, holdid=None, array_range=None, request_cores=None, email=None, opts=dict(), **kwargs):
-
-        opts["-N"] = job_name
-
-        if holdid is not None and holdid != []:
-            if isinstance(holdid, str):
-                holdid = [holdid]
-            opts["-hold_jid"] =  ",".join(holdid)
-
-        if array_range is not None:
-            opts["-t"] = array_range
-
-        if request_cores is not None:
-            opts["-pe local"] = request_cores
-# currently, no email on aws
-#        if email is not None:
-#            opts["-m"] = "e"
-#            opts["-M"] = email
-
-        jobid = super(AWS_Cluster, self).submitJob(opts=opts, **kwargs)
-
-        if array_range is not None:
-            jobid = jobid.split(".")[0]
-
+    def submitJob(self, *args, **kwargs):
+        # currently, no email on aws
+        kwargs["email"] = None
+        jobid = super(AWS_Cluster, self).submitJob(*args, **kwargs)
         return jobid
 
 
