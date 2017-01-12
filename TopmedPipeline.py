@@ -20,7 +20,7 @@ def readConfig(file):
     dictionary with config values
     """
 
-    config = dict()
+    config = {}
     f = open(file, 'r')
     reader = csv.reader(f, delimiter=' ', quotechar='"', skipinitialspace=True)
     for line in reader:
@@ -137,7 +137,7 @@ def stringToDict(s):
 
 def getOptions(file):
     """Read a file in .sge_request format and return a dictionary"""
-    opts = dict()
+    opts = {}
     if file is not None:
         f = open(file, 'r')
         for line in f:
@@ -155,17 +155,24 @@ def getOptions(file):
 class Cluster(object):
     """ """
     # constructor
-    def __init__(self, submit_cmd, options=dict()):
+    def __init__(self, submit_cmd, options=None):
+        if options is None:
+            options = {}
+            
         self.submit_cmd = submit_cmd
         self.options = options
 
 
-    def submitJob(self, cmd, args=[], opts=dict(), verbose=True, printOnly=False):
+    def submitJob(self, cmd, args=None, opts=None, verbose=True, printOnly=False):
         """ Submit a job to the cluster and return job id"""
 
+        if args is None:
+            args = []
         argStr = " ".join(args)
 
         # override any stored options with argument
+        if opts is None:
+            opts = {}
         options = deepcopy(self.options)
         options.update(opts)
         optStr = dictToString(options)
@@ -190,13 +197,16 @@ class Cluster(object):
     
 class SGE_Cluster(Cluster):
 
-    def __init__(self, options=dict(), parallel_environment="local"):
+    def __init__(self, options=None, parallel_environment="local"):
         super(SGE_Cluster, self).__init__(submit_cmd="qsub", options=options)
         self.pe = parallel_environment
 
 
-    def submitJob(self, job_name, holdid=None, array_range=None, request_cores=None, email=None, opts=dict(), **kwargs):
+    def submitJob(self, job_name, holdid=None, array_range=None, request_cores=None, email=None, opts=None, **kwargs):
 
+        if opts is None:
+            opts = {}
+        
         opts["-N"] = job_name
 
         if holdid is not None and holdid != []:
@@ -224,20 +234,22 @@ class SGE_Cluster(Cluster):
 
     def memoryOptions(self, job_name):
         # requesting memory causes problems on the UW cluster
-        opts = dict()
+        opts = {}
         return opts
 
 
     
 class UW_Cluster(SGE_Cluster):
 
-    def __init__(self, options=dict()):
+    def __init__(self, options=None):
         defaults = {"-cwd":"",
                     "-j":"y",
                     "-q":"olga.q",
                     "-S":"/bin/bash",
                     "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"}
 
+        if options is None:
+            options = {}
         defaults.update(options)
 
         super(UW_Cluster, self).__init__(options=defaults, parallel_environment="local")
@@ -245,20 +257,22 @@ class UW_Cluster(SGE_Cluster):
 
     def memoryOptions(self, job_name):
         # requesting memory causes problems on the UW cluster
-        opts = dict()
+        opts = {}
         return opts
 
 
 
 class AWS_Cluster(SGE_Cluster):
 
-    def __init__(self, options=dict()):
+    def __init__(self, options=None):
         defaults = {"-cwd":"",
                     "-j":"y",
                     "-q":"all.q",
                     "-S":"/bin/bash",
                     "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"}
 
+        if options is None:
+            options = {}
         defaults.update(options)
 
         super(AWS_Cluster, self).__init__(options=defaults, parallel_environment="local")
@@ -287,7 +301,7 @@ class AWS_Cluster(SGE_Cluster):
 
         option = "-l"
         resource = "h_vmem={0}G".format(vmem[job_name])
-        opts = dict()
+        opts = {}
         opts[option] = resource
         return opts
 
