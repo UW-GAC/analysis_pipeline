@@ -12,10 +12,10 @@ config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)
 
 required <- c("gds_file",
-              "pca_file",
-              "variant_include_file")
+              "pca_file")
 optional <- c("n_pcs"=20,
-              "out_file"="pca_corr.RData")
+              "out_file"="pca_corr.RData",
+              "variant_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
