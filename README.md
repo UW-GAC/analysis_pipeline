@@ -2,7 +2,7 @@
 
 ## Setup
 
-We recommend building R with [Intel MKL](https://software.intel.com/en-us/intel-mkl) for improved performance in association tests.
+We recommend building R with [Intel MKL](https://software.intel.com/en-us/intel-mkl) for improved performance in PC-Relate and association tests.
 
 1. Install R packages and dependencies from Bioconductor  
 ```{r}
