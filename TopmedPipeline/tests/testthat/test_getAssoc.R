@@ -199,7 +199,7 @@ test_that("combine aggregate", {
 })
 
 
-testthat("omitKnownHits", {
+test_that("omitKnownHits", {
     assoc <- data.frame(chr=c(rep(1,100), rep(2,100)),
                         pos=c(sort(sample(1:10000, 100)), sort(sample(1:10000, 100))))
     hits <- assoc[sample(1:nrow(assoc), 20),]

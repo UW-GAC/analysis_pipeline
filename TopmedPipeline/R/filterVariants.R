@@ -41,6 +41,11 @@ filterByPass <- function(gds, verbose=TRUE) {
     seqSetFilter(gds, variant.sel=(filt == "PASS"), action="intersect", verbose=verbose)
 }
 
+filterBySNV <- function(gds, biallelic=TRUE, verbose=TRUE) {
+    snv <- isSNV(gds, biallelic=biallelic)
+    seqSetFilter(gds, variant.sel=snv, action="intersect", verbose=verbose)
+}
+
 filterByMAF <- function(gds, sample.id=NULL, mac.min=NA, maf.min=NA, verbose=TRUE) {
     if ((!is.na(mac.min) & mac.min > 1) |
         (!is.na(maf.min) & maf.min > 0)) {

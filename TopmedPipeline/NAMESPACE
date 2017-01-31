@@ -3,7 +3,7 @@ import(stats)
 import(methods)
 import(Biobase)
 import(SeqArray)
-importFrom(SeqVarTools, refChar, altChar)
+importFrom(SeqVarTools, refChar, altChar, isSNV)
 importFrom(S4Vectors, subjectHits, queryHits)
 importFrom(IRanges, IRanges)
 importFrom(GenomicRanges, GRanges, findOverlaps, resize, width)
@@ -28,6 +28,7 @@ export(getobj,
        filterByMAF,
        filterByPass,
        filterBySegment,
+       filterBySNV,
        formatAssocSingle,
        getAssoc,
        getPhenotypes,

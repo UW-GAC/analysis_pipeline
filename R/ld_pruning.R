@@ -44,21 +44,18 @@ if (!is.na(config["sample_include_file"])) {
 }
 
 if (!is.na(varfile)) {
-    variant.id <- getobj(varfile)
-} else {
-    filt <- seqGetData(gds, "annotation/filter") == "PASS"
-    snv <- isSNV(gds, biallelic=TRUE)
-    variant.id <- seqGetData(gds, "variant.id")[filt & snv]
+    filterByFile(gds, varfile)
 }
 
 ## if we have a chromosome indicator but only one gds file, select chromosome
 if (!is.na(chr) && !bychrfile) {
-    chrom <- seqGetData(gds, "chromosome")
-    seqSetFilter(gds, variant.sel=(chrom == chr), verbose=FALSE)
-    var.chr <- seqGetData(gds, "variant.id")
-    variant.id <- intersect(variant.id, var.chr)
-    seqResetFilter(gds, verbose=FALSE)
+    filterByChrom(gds, chr)
 }
+
+filterByPass(gds)
+filterBySNV(gds)
+
+variant.id <- seqGetData(gds, "variant.id")
 message("Using ", length(variant.id), " variants")
 
 maf <- as.numeric(config["maf_threshold"])

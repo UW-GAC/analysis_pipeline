@@ -120,6 +120,21 @@ test_that("filterByPass", {
 })
 
 
+test_that("filterBySNV", {
+    gds <- .testData()
+    snv <- isSNV(gds, biallelic=TRUE)
+    filterBySNV(gds, verbose=FALSE)
+    expect_equal(sum(seqGetFilter(gds)$variant.sel), sum(snv))
+
+    seqResetFilter(gds, verbose=FALSE)
+    seqSetFilter(gds, variant.sel=1:10, verbose=FALSE)
+    filterBySNV(gds, verbose=FALSE)
+    expect_equal(sum(seqGetFilter(gds)$variant.sel), 10)
+
+    seqClose(gds)
+})
+
+
 test_that("filterByMAF", {
     gds <- .testData()
     freq <- seqAlleleFreq(gds)
