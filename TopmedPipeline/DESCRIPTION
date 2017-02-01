@@ -7,6 +7,6 @@ Author: Stephanie Gogarten
 Maintainer: Stephanie Gogarten <sdmorris@uw.edu>
 Depends: 
 Imports: methods, stats, utils, Biobase, SeqArray, SeqVarTools, GenomicRanges, IRanges, S4Vectors, dplyr, tidyr, lazyeval
-Suggests: testthat, GENESIS, gdsfmt
+Suggests: testthat, GENESIS, gdsfmt, GWASTools
 License: Artistic-2.0
 LazyLoad: yes

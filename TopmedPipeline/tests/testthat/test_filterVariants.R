@@ -151,3 +151,15 @@ test_that("filterByMAF", {
 })
 
 
+
+test_that("filterByPCAcorr", {
+    gds <- .testData()
+    filt <- get(data(pcaSnpFilters.hg19, package="GWASTools"))
+    filt.gr <- GRanges(seqnames=filt$chrom, ranges=IRanges(start=filt$start.base, end=filt$end.base))
+    exp <- GenomicRanges::setdiff(granges(gds), filt.gr)
+
+    filterByPCAcorr(gds, build="hg19", verbose=FALSE)
+    expect_equal(length(GenomicRanges::setdiff(granges(gds), exp)), 0)
+    
+    seqClose(gds)
+})

@@ -64,6 +64,18 @@ filterByMAF <- function(gds, sample.id=NULL, mac.min=NA, maf.min=NA, verbose=TRU
     }
 }
 
+filterByPCAcorr <- function(gds, build="hg19", verbose=TRUE) {
+    filt <- get(data(list=paste("pcaSnpFilters", build, sep="."), package="GWASTools"))
+    chrom <- seqGetData(gds, "chromosome")
+    pos <- seqGetData(gds, "position")
+    pca.filt <- rep(TRUE, length(chrom))
+    for (f in 1:nrow(filt)) {
+        pca.filt[chrom == filt$chrom[f] & filt$start.base[f] < pos & pos < filt$end.base[f]] <- FALSE
+    }
+    seqSetFilter(gds, variant.sel=pca.filt, action="intersect", verbose=verbose)
+}
+
+
 checkSelectedVariants <- function(gds) {
     nvar <- sum(seqGetFilter(gds)$variant.sel)
     if (nvar == 0) {
