@@ -47,6 +47,7 @@ filterBySNV <- function(gds, biallelic=TRUE, verbose=TRUE) {
 }
 
 filterByMAF <- function(gds, sample.id=NULL, mac.min=NA, maf.min=NA, verbose=TRUE) {
+    if (sum(seqGetFilter(gds)$variant.sel) == 0) return(invisible())
     if ((!is.na(mac.min) & mac.min > 1) |
         (!is.na(maf.min) & maf.min > 0)) {
         if (is.null(sample.id)) sample.id <- seqGetData(gds, "sample.id")
