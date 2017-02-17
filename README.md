@@ -152,7 +152,8 @@ config parameter | default value | description
 `out_prefix` | | Prefix for files created by this script.
 `gds_file` | | GDS file. Include a space to insert chromosome.
 `pca_file` | | RData file with PCA results created by `pcair.py`.
-`pcrelate_file` | `NA` | GDS file created by `pcrelate.py`.
+`pcrelate_file` | `NA` | GDS file created by `pcrelate.py`. 
+`grm_file` | `NA` | RData file with GRM created by `SNPRelate::snpgdsGRM`.
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes.
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
@@ -187,7 +188,8 @@ config parameter | default value | description
 `aggregate_type` | `allele` | Type of aggregate grouping. Options are to select variants by `allele` (unique variants) or `position` (regions of interest).
 `variant_group_file` | | RData file with data frame defining aggregate groups. If `aggregate_type` is `allele`, columns should be `group_id`, `chromosome`, `position`, `ref`, `alt`. If `aggregate_type` is `position`, columns should be `group_id`, `chromosome`, `start`, `end`.
 `pca_file` | | RData file with PCA results created by `pcair.py`.
-`pcrelate_file` | `NA` | GDS file created by `pcrelate.py`.
+`pcrelate_file` | `NA` | GDS file created by `pcrelate.py`. 
+`grm_file` | `NA` | RData file with GRM created by `SNPRelate::snpgdsGRM`.
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes.
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
@@ -220,7 +222,8 @@ config parameter | default value | description
 `out_prefix` | | Prefix for files created by this script.
 `gds_file` | | GDS file. Include a space to insert chromosome.
 `pca_file` | | RData file with PCA results created by `pcair.py`.
-`pcrelate_file` | `NA` | GDS file created by `pcrelate.py`.
+`pcrelate_file` | `NA` | GDS file created by `pcrelate.py`. 
+`grm_file` | `NA` | RData file with GRM created by `SNPRelate::snpgdsGRM`.
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes.
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.

@@ -14,6 +14,7 @@ required <- c("outcome",
               "pca_file",
               "phenotype_file")
 optional <- c("pcrelate_file"=NA,
+              "grm_file"=NA,
               "binary"=FALSE,
               "covars"=NA,
               "group_var"=NA,
@@ -46,12 +47,10 @@ if (!is.na(config["group_var"])) {
     group.var <- NULL
 }
 
-if (!is.na(config["pcrelate_file"])) {
-    ## load GRM for selected samples only
-    pcr <- openfn.gds(config["pcrelate_file"])
-    grm <- pcrelateMakeGRM(pcr, scan.include=sample.id, scaleKin=2)
-    closefn.gds(pcr)
+# kinship matrix or GRM
+grm <- getGRM(config, sample.id)
 
+if (!is.null(grm)) {
     
     ## fit null model allowing heterogeneous variances among studies
     message("Model: ", outcome, " ~ ", paste(c(covars, "(1|kinship)"), collapse=" + "))
