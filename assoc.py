@@ -47,7 +47,9 @@ jobid = dict()
 configdict = TopmedPipeline.readConfig(configfile)
 
 # check type of association test - single-variant unrelated is handled differently
-single_unrel = assocType == "single" and configdict["pcrelate_file"] == "NA"
+no_pcrel = "pcrelate_file" not in configdict or configdict["pcrelate_file"] == "NA"
+no_grm = "grm_file" not in configdict or configdict["grm_file"] == "NA"
+single_unrel = assocType == "single" and no_pcrel and no_grm
 
 if not single_unrel:
     job = "null_model"
