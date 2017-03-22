@@ -25,13 +25,20 @@ library(GenomicRanges)
 }
 
 .testSegFile <- function(segments) {
-    seg.df <- as.data.frame(segments) %>%
-        dplyr::rename(chromosome=seqnames) %>%
-        dplyr::select(chromosome, start, end)
     segfile <- tempfile()
-    write.table(seg.df, file=segfile, quote=FALSE, sep="\t", row.names=FALSE)
+    writeSegmentFile(segments, segfile)
     segfile
 }
+
+test_that("read and write segment files", {
+    data(segments)
+    segfile <- tempfile()
+    writeSegmentFile(segments, segfile)
+    seg2 <- getSegments(segfile)
+    expect_equal(segments, seg2)
+    unlink(segfile)
+})
+
 
 test_that("single", {
     seqData <- .testData()

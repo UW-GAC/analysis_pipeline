@@ -13,20 +13,15 @@ dat <- select(chromInfo, chrom, size) %>%
 library(GenomicRanges)
 gr <- GRanges(seqnames=dat$chrom,
               ranges=IRanges(start=1, end=dat$size))
+chromosomes_hg19 <- gr
+save(chromosomes_hg19, file="data/chromosomes_hg19.RData")
 
+library(TopmedPipeline)
 seg.length <- 1e7
-segments <- do.call(c, lapply(gr, function(x) {
-    window.start <- seq(start(x), end(x), seg.length)
-    window.end <- seq(start(x) + seg.length - 1, end(x) + seg.length, by=seg.length)
-    GRanges(seqnames=seqnames(x), IRanges(window.start, window.end))
-}))
+segments <- defineSegments(seg.length, build="hg19")
 
 # this one will be used for testing
 save(segments, file="data/segments.RData")
 
-seg.df <- as.data.frame(segments) %>%
-    dplyr::rename(chromosome=seqnames) %>%
-    select(chromosome, start, end)
-
 # this one is the master copy for the pipeline (read by R and python)
-write.table(seg.df, file="../segments.txt", quote=FALSE, sep="\t", row.names=FALSE)
+writeSegmentFile(segments, "../segments.txt")
