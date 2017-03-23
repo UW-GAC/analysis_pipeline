@@ -2,8 +2,8 @@ defineSegments <- function(seg.length=1e7, build="hg19") {
     gr <- get(data(list=paste("chromosomes", build, sep="_"),
                    package="TopmedPipeline", envir=environment()))
     do.call(c, lapply(gr, function(x) {
-        window.start <- seq(start(x), end(x), seg.length)
-        window.end <- seq(start(x) + seg.length - 1, end(x) + seg.length, by=seg.length)
+        window.start <- seq(BiocGenerics::start(x), BiocGenerics::end(x), seg.length)
+        window.end <- seq(BiocGenerics::start(x) + seg.length - 1, BiocGenerics::end(x) + seg.length, by=seg.length)
         GRanges(seqnames=seqnames(x), IRanges(window.start, window.end))
     }))
 }
