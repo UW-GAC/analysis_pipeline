@@ -30,6 +30,14 @@ library(GenomicRanges)
     segfile
 }
 
+test_that("defineSegments", {
+    data(chromosomes_hg19)
+    seg1 <- defineSegments(1e6, "hg19")
+    expect_equal(reduce(seg1) > chromosomes_hg19, rep(TRUE, 23))
+    seg2 <- defineSegments(1e8, "hg19")
+    expect_equal(reduce(seg2) > chromosomes_hg19, rep(TRUE, 23))
+})
+
 test_that("read and write segment files", {
     data(segments)
     segfile <- tempfile()
