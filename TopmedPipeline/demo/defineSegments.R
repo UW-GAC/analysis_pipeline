@@ -22,6 +22,3 @@ segments <- defineSegments(seg.length, build="hg19")
 
 # this one will be used for testing
 save(segments, file="data/segments.RData")
-
-# this one is the master copy for the pipeline (read by R and python)
-writeSegmentFile(segments, "../segments.txt")

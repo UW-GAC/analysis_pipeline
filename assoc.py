@@ -5,6 +5,7 @@
 import TopmedPipeline
 import sys
 import os
+import subprocess
 from argparse import ArgumentParser
 from copy import deepcopy
 
@@ -51,6 +52,8 @@ no_pcrel = "pcrelate_file" not in configdict or configdict["pcrelate_file"] == "
 no_grm = "grm_file" not in configdict or configdict["grm_file"] == "NA"
 single_unrel = assocType == "single" and no_pcrel and no_grm
 
+
+# null model
 if not single_unrel:
     job = "null_model"
 
@@ -91,9 +94,27 @@ if assocType == "aggregate":
 
     holdid.append(jobid["aggregate_list"])
 
+    
+# define segments
+job = "define_segments"
 
-segment_file = os.path.join(pipeline, "segments.txt")
+rscript = os.path.join(pipeline, "R", job + ".R")
 
+config = deepcopy(configdict)
+config["out_file"] = configdict["out_prefix"] + "_segments.txt"
+configfile = configdict["out_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
+    
+segment_file = config["out_file"]
+
+# run and wait for results
+print "Defining segments..."
+log_file = open(job + ".log", 'w')
+subprocess.check_call([driver, rscript, configfile], stdout=log_file, stderr=log_file)
+log_file.close()
+
+
+# set up config for association test
 config = deepcopy(configdict)
 config["assoc_type"] = assocType
 config["null_model_file"] = configdict["out_prefix"] + "_null_model.RData"
@@ -111,6 +132,8 @@ segment_list = TopmedPipeline.getChromSegments(segment_file, chrom_list)
 segment_str = ["-".join([str(i) for i in s]) for s in segment_list]
 segments = dict(zip(chrom_list, segment_str))
 
+
+# run association tests
 jobid_chrom = dict()
 for chromosome in chrom_list:
     job_assoc = assocScript + "_chr" + chromosome
@@ -131,6 +154,7 @@ for chromosome in chrom_list:
 jobid.update(jobid_chrom)
 
 
+# plots
 job = "assoc_plots"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
