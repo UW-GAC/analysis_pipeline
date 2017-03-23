@@ -19,6 +19,8 @@ parser.add_argument("assocType", choices=["single", "window", "aggregate"],
 parser.add_argument("configfile", help="configuration file")
 parser.add_argument("-c", "--chromosomes", default="1-23",
                     help="range of chromosomes [default %(default)s]")
+parser.add_argument("--segment_length", default="10000",
+                    help="segment length in kb [default %(default)s]")
 parser.add_argument("--clustertype", default="uw", 
                     help="type of compute cluster environment [default %(default)s]")
 parser.add_argument("--clusterfile", default=None, 
@@ -32,6 +34,7 @@ args = parser.parse_args()
 assocType = args.assocType
 configfile = args.configfile
 chromosomes = args.chromosomes
+segment_length = args.segment_length
 clusterfile = args.clusterfile
 clustertype = args.clustertype
 email = args.email
@@ -110,7 +113,8 @@ segment_file = config["out_file"]
 # run and wait for results
 print "Defining segments..."
 log_file = open(job + ".log", 'w')
-subprocess.check_call([driver, rscript, configfile], stdout=log_file, stderr=log_file)
+args = [driver, rscript, configfile, "--segment_length " + segment_length]
+subprocess.check_call(args, stdout=log_file, stderr=log_file)
 log_file.close()
 
 
