@@ -32,10 +32,18 @@ library(GenomicRanges)
 
 test_that("defineSegments", {
     data(chromosomes_hg19)
-    seg1 <- defineSegments(1e6, "hg19")
-    expect_equal(reduce(seg1) > chromosomes_hg19, rep(TRUE, 23))
-    seg2 <- defineSegments(1e8, "hg19")
-    expect_equal(reduce(seg2) > chromosomes_hg19, rep(TRUE, 23))
+    sl <- sample(seq(1e6, 1e8, by=1000), 1)
+    seg <- defineSegments(sl, build="hg19")
+    expect_equal(reduce(seg) >= chromosomes_hg19, rep(TRUE, 23))
+    seg2 <- defineSegments(sl, n=10, build="hg19") # n is ignored
+    expect_equal(seg, seg2)
+
+    n <- sample(100:1000, 1)
+    seg <- defineSegments(n=n, build="hg19")
+    expect_true(n - length(seg) < 23)
+    expect_equal(reduce(seg) >= chromosomes_hg19, rep(TRUE, 23))
+
+    expect_error(defineSegments())
 })
 
 test_that("read and write segment files", {

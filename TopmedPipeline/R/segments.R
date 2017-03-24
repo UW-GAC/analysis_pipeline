@@ -1,10 +1,24 @@
-defineSegments <- function(seg.length=1e7, build="hg19") {
+defineSegments <- function(seg.length, n, build="hg19") {
+    # load GRanges object with chromosomes for this build
     gr <- get(data(list=paste("chromosomes", build, sep="_"),
                    package="TopmedPipeline", envir=environment()))
+
+    # define segment length
+    if (missing(seg.length)) {
+        if (missing(n)) stop("must supply either seg.length or n")
+        genome.length <- sum(as.numeric(width(gr)))
+        genome.frac <- as.numeric(width(gr)) / genome.length
+        n.chr <- round(genome.frac * n)
+        if (sum(n.chr) > n) n.chr <- floor(genome.frac * n)
+        gr$seg.length <- ceiling(width(gr)/n.chr)
+    } else {
+        gr$seg.length <- seg.length
+    }
+
+    # create segments
     do.call(c, lapply(gr, function(x) {
-        window.start <- seq(BiocGenerics::start(x), BiocGenerics::end(x), seg.length)
-        window.end <- seq(BiocGenerics::start(x) + seg.length - 1, BiocGenerics::end(x) + seg.length, by=seg.length)
-        GRanges(seqnames=seqnames(x), IRanges(window.start, window.end))
+        window.start <- seq(BiocGenerics::start(x), BiocGenerics::end(x), x$seg.length)
+        GRanges(seqnames=seqnames(x), IRanges(window.start, width=x$seg.length))
     }))
 }
 
