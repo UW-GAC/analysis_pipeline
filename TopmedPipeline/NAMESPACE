@@ -3,10 +3,11 @@ import(stats)
 import(methods)
 import(Biobase)
 import(SeqArray)
+importFrom(BiocGenerics, start, end)
 importFrom(SeqVarTools, refChar, altChar, isSNV)
 importFrom(S4Vectors, subjectHits, queryHits)
 importFrom(IRanges, IRanges)
-importFrom(GenomicRanges, GRanges, findOverlaps, resize, width)
+importFrom(GenomicRanges, GRanges, findOverlaps, resize, width, seqnames)
 importFrom(dplyr, arrange_, distinct_, filter_, group_by_, mutate_, rename_,  select_, inner_join, left_join, n, one_of, sample_frac, row_number, ungroup, "%>%")
 importFrom(tidyr, gather_, separate_)
 importFrom(lazyeval, interp)
@@ -23,6 +24,7 @@ export(getobj,
        combineAssoc,
        constructFilename,
        countThreads,
+       defineSegments,
        filterByChrom,
        filterByFile,
        filterByMAF,
@@ -40,4 +42,5 @@ export(getobj,
        rankNorm,
        subsetBySegment,
        sequentialVariantIds,
-       thinPoints)
+       thinPoints,
+       writeSegmentFile)

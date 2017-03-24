@@ -5,6 +5,8 @@
 import TopmedPipeline
 import sys
 import os
+import subprocess
+from time import localtime, strftime
 from argparse import ArgumentParser
 from copy import deepcopy
 
@@ -18,6 +20,10 @@ parser.add_argument("assocType", choices=["single", "window", "aggregate"],
 parser.add_argument("configfile", help="configuration file")
 parser.add_argument("-c", "--chromosomes", default="1-23",
                     help="range of chromosomes [default %(default)s]")
+parser.add_argument("--segment_length", default="10000",
+                    help="segment length in kb [default %(default)s]")
+parser.add_argument("--n_segments", default=None,
+                    help="number of segments for the entire genome (overrides segment_length)")
 parser.add_argument("--clustertype", default="uw", 
                     help="type of compute cluster environment [default %(default)s]")
 parser.add_argument("--clusterfile", default=None, 
@@ -31,6 +37,8 @@ args = parser.parse_args()
 assocType = args.assocType
 configfile = args.configfile
 chromosomes = args.chromosomes
+segment_length = args.segment_length
+n_segments = args.n_segments
 clusterfile = args.clusterfile
 clustertype = args.clustertype
 email = args.email
@@ -51,6 +59,8 @@ no_pcrel = "pcrelate_file" not in configdict or configdict["pcrelate_file"] == "
 no_grm = "grm_file" not in configdict or configdict["grm_file"] == "NA"
 single_unrel = assocType == "single" and no_pcrel and no_grm
 
+
+# null model
 if not single_unrel:
     job = "null_model"
 
@@ -91,9 +101,31 @@ if assocType == "aggregate":
 
     holdid.append(jobid["aggregate_list"])
 
+    
+# define segments
+job = "define_segments"
 
-segment_file = os.path.join(pipeline, "segments.txt")
+rscript = os.path.join(pipeline, "R", job + ".R")
 
+config = deepcopy(configdict)
+config["out_file"] = configdict["out_prefix"] + "_segments.txt"
+configfile = configdict["out_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
+    
+segment_file = config["out_file"]
+
+# run and wait for results
+print "Defining segments..."
+log_file = open(job + "_" + strftime("%Y-%m-%d-%H-%M-%S", localtime()) + ".log", 'w')
+if n_segments is not None:
+    args = [driver, rscript, configfile, "--n_segments " + n_segments]
+else:
+    args = [driver, rscript, configfile, "--segment_length " + segment_length]
+subprocess.check_call(args, stdout=log_file, stderr=log_file)
+log_file.close()
+
+
+# set up config for association test
 config = deepcopy(configdict)
 config["assoc_type"] = assocType
 config["null_model_file"] = configdict["out_prefix"] + "_null_model.RData"
@@ -111,6 +143,8 @@ segment_list = TopmedPipeline.getChromSegments(segment_file, chrom_list)
 segment_str = ["-".join([str(i) for i in s]) for s in segment_list]
 segments = dict(zip(chrom_list, segment_str))
 
+
+# run association tests
 jobid_chrom = dict()
 for chromosome in chrom_list:
     job_assoc = assocScript + "_chr" + chromosome
@@ -131,6 +165,7 @@ for chromosome in chrom_list:
 jobid.update(jobid_chrom)
 
 
+# plots
 job = "assoc_plots"
 
 rscript = os.path.join(pipeline, "R", job + ".R")

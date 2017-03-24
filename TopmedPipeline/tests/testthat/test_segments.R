@@ -25,13 +25,41 @@ library(GenomicRanges)
 }
 
 .testSegFile <- function(segments) {
-    seg.df <- as.data.frame(segments) %>%
-        dplyr::rename(chromosome=seqnames) %>%
-        dplyr::select(chromosome, start, end)
     segfile <- tempfile()
-    write.table(seg.df, file=segfile, quote=FALSE, sep="\t", row.names=FALSE)
+    writeSegmentFile(segments, segfile)
     segfile
 }
+
+test_that("defineSegments", {
+    data(chromosomes_hg19)
+    sl <- sample(seq(1e6, 1e8, by=1000), 1)
+    seg <- defineSegments(sl, build="hg19")
+    expect_equal(reduce(seg) >= chromosomes_hg19, rep(TRUE, 23))
+    seg2 <- defineSegments(sl, n=10, build="hg19") # n is ignored
+    expect_equal(seg, seg2)
+
+    n <- sample(100:1000, 1)
+    seg <- defineSegments(n=n, build="hg19")
+    expect_true(n - length(seg) < 23)
+    expect_equal(reduce(seg) >= chromosomes_hg19, rep(TRUE, 23))
+
+    n <- sample(1:23, 1)
+    seg <- defineSegments(n=n, build="hg19")
+    expect_true(length(seg) == 23)
+    expect_equal(seg, chromosomes_hg19)
+    
+    expect_error(defineSegments())
+})
+
+test_that("read and write segment files", {
+    data(segments)
+    segfile <- tempfile()
+    writeSegmentFile(segments, segfile)
+    seg2 <- getSegments(segfile)
+    expect_equal(segments, seg2)
+    unlink(segfile)
+})
+
 
 test_that("single", {
     seqData <- .testData()
