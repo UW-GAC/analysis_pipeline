@@ -163,7 +163,7 @@ class Cluster(object):
         self.options = options
 
 
-    def submitJob(self, cmd, args=None, opts=None, verbose=True, printOnly=False):
+    def submitJob(self, cmd, args=None, opts=None, verbose=True, print_only=False):
         """ Submit a job to the cluster and return job id"""
 
         if args is None:
@@ -179,7 +179,7 @@ class Cluster(object):
 
         sub_cmd = " ".join([self.submit_cmd, optStr, cmd, argStr])
 
-        if printOnly:
+        if print_only:
             print sub_cmd
             return "000000"
 

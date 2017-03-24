@@ -12,25 +12,25 @@ description = """
 PC-Relate
 """
 parser = ArgumentParser(description=description)
-parser.add_argument("configfile", help="configuration file")
-parser.add_argument("--clustertype", default="uw", 
+parser.add_argument("config_file", help="configuration file")
+parser.add_argument("--cluster_type", default="uw", 
                     help="type of compute cluster environment [default %(default)s]")
-parser.add_argument("--clusterfile", default=None, 
+parser.add_argument("--cluster_file", default=None, 
                     help="file containing options to pass to the cluster (sge_request format)")
 parser.add_argument("-e", "--email", default=None,
                     help="email address for job reporting")
-parser.add_argument("--printOnly", action="store_true", default=False,
+parser.add_argument("--print_only", action="store_true", default=False,
                     help="print cluster commands without submitting")
 args = parser.parse_args()
 
-configfile = args.configfile
-clusterfile = args.clusterfile
-clustertype = args.clustertype
+configfile = args.config_file
+cluster_file = args.cluster_file
+cluster_type = args.cluster_type
 email = args.email
-printOnly = args.printOnly
+print_only = args.print_only
 
-opts = TopmedPipeline.getOptions(clusterfile)
-cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type=clustertype, options=opts)
+opts = TopmedPipeline.getOptions(cluster_file)
+cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type=cluster_type, options=opts)
 
 pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
 driver = os.path.join(pipeline, "runRscript.sh")
@@ -44,7 +44,7 @@ job = "pcrelate"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
 
-jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], email=email, printOnly=printOnly)
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], email=email, print_only=print_only)
 
 
 job = "kinship_plots"
@@ -62,5 +62,5 @@ TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["pcrelate"]]
 
-jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, printOnly=printOnly)
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, print_only=print_only)
 
