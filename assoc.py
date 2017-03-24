@@ -6,6 +6,7 @@ import TopmedPipeline
 import sys
 import os
 import subprocess
+from time import localtime, strftime
 from argparse import ArgumentParser
 from copy import deepcopy
 
@@ -21,6 +22,8 @@ parser.add_argument("-c", "--chromosomes", default="1-23",
                     help="range of chromosomes [default %(default)s]")
 parser.add_argument("--segment_length", default="10000",
                     help="segment length in kb [default %(default)s]")
+parser.add_argument("--n_segments", default=None,
+                    help="number of segments (overrides segment_length)")
 parser.add_argument("--clustertype", default="uw", 
                     help="type of compute cluster environment [default %(default)s]")
 parser.add_argument("--clusterfile", default=None, 
@@ -35,6 +38,7 @@ assocType = args.assocType
 configfile = args.configfile
 chromosomes = args.chromosomes
 segment_length = args.segment_length
+n_segments = args.n_segments
 clusterfile = args.clusterfile
 clustertype = args.clustertype
 email = args.email
@@ -112,8 +116,11 @@ segment_file = config["out_file"]
 
 # run and wait for results
 print "Defining segments..."
-log_file = open(job + ".log", 'w')
-args = [driver, rscript, configfile, "--segment_length " + segment_length]
+log_file = open(job + "_" + strftime("%Y-%m-%d-%H-%M-%S", localtime()) + ".log", 'w')
+if n_segments is not None:
+    args = [driver, rscript, configfile, "--n_segments " + n_segments]
+else:
+    args = [driver, rscript, configfile, "--segment_length " + segment_length]
 subprocess.check_call(args, stdout=log_file, stderr=log_file)
 log_file.close()
 

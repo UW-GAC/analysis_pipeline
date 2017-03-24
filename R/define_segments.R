@@ -2,14 +2,14 @@ library(argparser)
 library(TopmedPipeline)
 sessionInfo()
 
-argp <- arg_parser("Association test - sliding window")
+argp <- arg_parser("Define genome segments for association test")
 argp <- add_argument(argp, "config", help="path to config file")
 argp <- add_argument(argp, "--segment_length", help="segment length in kb", type="integer", default=10000)
-#argp <- add_argument(argp, "--n_segments", help="number of segments", type="integer")
+argp <- add_argument(argp, "--n_segments", help="number of segments (overrides segment length)", type="integer", default=NA)
 argv <- parse_args(argp)
 config <- readConfig(argv$config)
 seg.length <- argv$segment_length * 1000
-#n <- argv$n_segments
+n <- argv$n_segments
 
 required <- c()
 optional <- c("genome_build"="hg19",
@@ -17,6 +17,10 @@ optional <- c("genome_build"="hg19",
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
-segments <- defineSegments(seg.length, build=config["genome_build"])
+if (!is.na(n)) {
+    segments <- defineSegments(n=n, build=config["genome_build"])
+} else {
+    segments <- defineSegments(seg.length=seg.length, build=config["genome_build"])
+}
 
 writeSegmentFile(segments, config["out_file"])
