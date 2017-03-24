@@ -43,6 +43,11 @@ test_that("defineSegments", {
     expect_true(n - length(seg) < 23)
     expect_equal(reduce(seg) >= chromosomes_hg19, rep(TRUE, 23))
 
+    n <- sample(1:23, 1)
+    seg <- defineSegments(n=n, build="hg19")
+    expect_true(length(seg) == 23)
+    expect_equal(seg, chromosomes_hg19)
+    
     expect_error(defineSegments())
 })
 

@@ -10,6 +10,7 @@ defineSegments <- function(seg.length, n, build="hg19") {
         genome.frac <- as.numeric(width(gr)) / genome.length
         n.chr <- round(genome.frac * n)
         if (sum(n.chr) > n) n.chr <- floor(genome.frac * n)
+        if (any(n.chr == 0)) n.chr <- rep(1, length(gr))
         gr$seg.length <- ceiling(width(gr)/n.chr)
     } else {
         gr$seg.length <- seg.length
