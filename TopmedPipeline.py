@@ -255,12 +255,6 @@ class UW_Cluster(SGE_Cluster):
         super(UW_Cluster, self).__init__(options=defaults, parallel_environment="local")
 
 
-    def memoryOptions(self, job_name):
-        # requesting memory causes problems on the UW cluster
-        opts = {}
-        return opts
-
-
 
 class AWS_Cluster(SGE_Cluster):
 
