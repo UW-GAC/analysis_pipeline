@@ -1,3 +1,25 @@
+#' Start and end positions of each chromosome for build hg19
+#'
+#' @format \code{\link[GenomicRanges]{GRanges}} object
+#' @source UCSC Genome Browser
+#' @examples
+#' library(dplyr)
+#' db <- src_mysql(dbname="hg19", host="genome-mysql.cse.ucsc.edu", user="genome")
+#' chromInfo <- tbl(db, "chromInfo")
+#' 
+#' dat <- select(chromInfo, chrom, size) %>%
+#'     collect() %>%
+#'     filter(chrom %in% paste0("chr", c(1:22, "X"))) %>%
+#'     mutate(chrom=factor(sub("chr", "", chrom), levels=c(1:22, "X"))) %>%
+#'     arrange(chrom) %>%
+#'     mutate(chrom=as.character(chrom))
+#' 
+#' library(GenomicRanges)
+#' chromosomes_hg19 <- GRanges(seqnames=dat$chrom,
+#'                             ranges=IRanges(start=1, end=dat$size))
+"chromosomes_hg19"
+
+
 #' Define segments for parallel processing of the genome
 #'
 #' @param seg.length Segment length in base pairs
