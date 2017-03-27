@@ -3,6 +3,10 @@
 #' @param config Config object (named vector) with params "phenotype_file", "n_pcs", "pca_file",
 #'   "outcome", "covars", "sample_include_file"
 #' @return list with annot, outcome, covars, sample.id
+#'
+#' @import Biobase
+#' @importFrom stats complete.cases
+#' @export
 getPhenotypes <- function(config) {
 
     ## get phenotypes
@@ -57,6 +61,9 @@ getPhenotypes <- function(config) {
 #' @param outcome Name of outcome (for printing message)
 #' @param covars Names of covariates (for printing message)
 #' @return \code{annot} with additional column "resid.norm"
+#'
+#' @importFrom methods is
+#' @export
 addInvNorm <- function(annot, nullmod, outcome, covars) {
     resid.str <- if (is(nullmod, "GENESIS.nullMixedModel")) "resid.marginal" else "resid.response"
     resid.norm <- rankNorm(nullmod[[resid.str]])

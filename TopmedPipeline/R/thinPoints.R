@@ -14,6 +14,10 @@
 #' dat <- data.frame(x=1:100, y=sample(letters[1:2], 100, replace=TRUE))
 #' thinPoints(dat, "x", n=2, nbins=5, groupBy="y")
 #' @references \url{http://stackoverflow.com/questions/30950016/dplyr-sample-n-where-n-is-the-value-of-a-grouped-variable}
+#'
+#' @importFrom dplyr "%>%" filter_ group_by_ mutate_ row_number sample_frac select_ ungroup
+#' @importFrom lazyeval interp
+#' @export
 thinPoints <- function(dat, value, n=10000, nbins=10, groupBy=NULL){
     if (!is.null(groupBy)) {
         dat <- group_by_(dat, groupBy)

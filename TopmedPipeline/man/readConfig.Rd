@@ -48,4 +48,5 @@ config <- setConfigDefaults(config, required, optional)
 writeConfig(config, file)
 
 unlink(file)
+
 }

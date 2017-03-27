@@ -25,4 +25,5 @@ file <- tempfile()
 save(x, file=file)
 y <- getobj(file)
 unlink(file)
+
 }

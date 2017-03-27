@@ -13,6 +13,8 @@
 #' save(x, file=file)
 #' y <- getobj(file)
 #' unlink(file)
+#'
+#' @export
 getobj <- function(Rdata) {
   objname <- load(Rdata)
   if (length(objname) > 1) {
@@ -29,6 +31,8 @@ getobj <- function(Rdata) {
 #' @param chr Chromosome number (or character) to instert
 #' @param err If not \code{NULL}, print this string with an error message about requiring a blank space
 #' @return String \code{x} with \code{chr} inserted into blank space
+#'
+#' @export
 insertChromString <- function(x, chr, err=NULL) {
     if (!is.null(err) & !(grepl(" ", x, fixed=TRUE))) {
         stop(paste(err, "must have a blank space to insert chromosome number"))
@@ -47,6 +51,9 @@ insertChromString <- function(x, chr, err=NULL) {
 #' @param gds.list List of \code{\link[SeqArray]{SeqVarGDSClass}} objects
 #' @param id.list List of vectors of variant ids corresponding to \code{gds.list}
 #' @return Vector of sequential variant ids
+#'
+#' @import SeqArray
+#' @export
 sequentialVariantIds <- function(gds.list, id.list) {
     stopifnot(length(gds.list) == length(id.list))
     n <- 0
@@ -68,6 +75,9 @@ sequentialVariantIds <- function(gds.list, id.list) {
 #' @param stat Vector of test statistics
 #' @param df Degrees of freedom
 #' @return lambda
+#'
+#' @importFrom stats median qchisq
+#' @export
 calculateLambda <- function(stat, df) {
     if (any(sum(stat < 0, na.rm=TRUE)))
         stop("no negative values allowed in stat (does beta/se need to be squared?)")
@@ -79,6 +89,9 @@ calculateLambda <- function(stat, df) {
 #'
 #' @param x Vector of values to transform
 #' @return Vector with transformed values of \code{x}
+#'
+#' @importFrom stats qnorm
+#' @export
 rankNorm <- function(x) qnorm((rank(x) - 0.5)/length(x))
 
 
@@ -86,6 +99,8 @@ rankNorm <- function(x) qnorm((rank(x) - 0.5)/length(x))
 #'
 #' @param chr Integer chromosome code
 #' @return Character chromosome (23 -> X, 24 -> Y)
+#'
+#' @export
 intToChr <- function(chr) {
     if (is.na(chr)) return(NA)
     if (chr == 23) return("X")
@@ -100,6 +115,8 @@ intToChr <- function(chr) {
 #' @param chromosome chromosome
 #' @param segment segment
 #' @return Character string of form "<prefix>_chr<chromosome>_seg<segment>.RData"
+#'
+#' @export
 constructFilename <- function(prefix, chromosome=NA, segment=NA) {
     chr <- if (is.na(chromosome)) "" else paste0("_chr", chromosome)
     seg <- if (is.na(segment)) "" else paste0("_seg", segment)

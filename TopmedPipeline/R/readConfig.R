@@ -25,6 +25,9 @@
 #' writeConfig(config, file)
 #' 
 #' unlink(file)
+#'
+#' @importFrom utils read.table
+#' @export
 readConfig <- function(file, ...) {
   config.table <- read.table(file, as.is=TRUE, ...)
   if (any(duplicated(config.table[, 1]))) stop("duplicated parameters in config file are not allowed!")
@@ -38,6 +41,9 @@ readConfig <- function(file, ...) {
 
 #' @param config named character vector
 #' @rdname readConfig
+#'
+#' @importFrom utils write.table
+#' @export
 writeConfig <- function(config, file, ...) {
   write.table(config, file=file, col.names=FALSE, ...)
 }
@@ -45,6 +51,8 @@ writeConfig <- function(config, file, ...) {
 #' @param required character vector of required parameter names
 #' @param optional named vector of optional parameter values
 #' @rdname readConfig
+#'
+#' @export
 setConfigDefaults <- function(config, required, optional) {
   # optional is a named list of default values
   default <- unname(optional)

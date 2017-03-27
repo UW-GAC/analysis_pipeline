@@ -12,6 +12,10 @@
 #' @param pad.right The number of bases to add to the right of the segment (useful for sliding windows)
 #' @param verbose Logical for whether to print number of variants selected, etc.
 #' @name filterVariants
+#'
+#' @import SeqArray
+#' @importFrom GenomicRanges resize width
+#' @export
 filterBySegment <- function(gds, segment, segment.file, pad.right=0, verbose=TRUE) {
     segments <- getSegments(segment.file)
     seg <- segments[segment]
@@ -23,6 +27,9 @@ filterBySegment <- function(gds, segment, segment.file, pad.right=0, verbose=TRU
 
 #' @param idfile RData file with vector of variant.id
 #' @rdname filterVariants
+#'
+#' @import SeqArray
+#' @export
 filterByFile <- function(gds, idfile, verbose=TRUE) {
     variant.id <- getobj(idfile)
     seqSetFilter(gds, variant.id=variant.id, action="intersect", verbose=verbose)
@@ -30,12 +37,18 @@ filterByFile <- function(gds, idfile, verbose=TRUE) {
 
 #' @param chr Chromosome to select
 #' @rdname filterVariants
+#'
+#' @import SeqArray
+#' @export
 filterByChrom <- function(gds, chr, verbose=TRUE) {
     chrom <- seqGetData(gds, "chromosome")
     seqSetFilter(gds, variant.sel=(chrom == chr), action="intersect", verbose=verbose)
 }
 
 #' @rdname filterVariants
+#'
+#' @import SeqArray
+#' @export
 filterByPass <- function(gds, verbose=TRUE) {
     filt <- seqGetData(gds, "annotation/filter")
     seqSetFilter(gds, variant.sel=(filt == "PASS"), action="intersect", verbose=verbose)
@@ -43,6 +56,10 @@ filterByPass <- function(gds, verbose=TRUE) {
 
 #' @param biallelic Logical for whether to select only biallelic SNVs
 #' @rdname filterVariants
+#'
+#' @import SeqArray
+#' @importFrom SeqVarTools isSNV
+#' @export
 filterBySNV <- function(gds, biallelic=TRUE, verbose=TRUE) {
     snv <- isSNV(gds, biallelic=biallelic)
     seqSetFilter(gds, variant.sel=snv, action="intersect", verbose=verbose)
@@ -52,6 +69,9 @@ filterBySNV <- function(gds, biallelic=TRUE, verbose=TRUE) {
 #' @param mac.min Minimum minor allele count (effective N) to include
 #' @param maf.min Minimum MAF to include
 #' @rdname filterVariants
+#'
+#' @import SeqArray
+#' @export
 filterByMAF <- function(gds, sample.id=NULL, mac.min=NA, maf.min=NA, verbose=TRUE) {
     if (sum(seqGetFilter(gds)$variant.sel) == 0) return(invisible())
     if ((!is.na(mac.min) & mac.min > 1) |
@@ -73,6 +93,10 @@ filterByMAF <- function(gds, sample.id=NULL, mac.min=NA, maf.min=NA, verbose=TRU
 
 #' @param build Genome build to use when identifying regions to exclude from PCA because of high correlation (HLA, LCT, inversions)
 #' @rdname filterVariants
+#'
+#' @import SeqArray
+#' @importFrom utils data
+#' @export
 filterByPCAcorr <- function(gds, build="hg19", verbose=TRUE) {
     filt <- get(data(list=paste("pcaSnpFilters", build, sep="."), package="GWASTools"))
     chrom <- seqGetData(gds, "chromosome")
@@ -86,6 +110,9 @@ filterByPCAcorr <- function(gds, build="hg19", verbose=TRUE) {
 
 
 #' @rdname filterVariants
+#'
+#' @import SeqArray
+#' @export
 checkSelectedVariants <- function(gds) {
     nvar <- sum(seqGetFilter(gds)$variant.sel)
     if (nvar == 0) {

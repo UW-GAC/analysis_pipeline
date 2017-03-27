@@ -6,6 +6,11 @@
 #' @param build Genome build
 #' @return \code{\link[GenomicRanges]{GRanges}} object with segments covering the genome
 #' @seealso \code{\link{writeSegmentFile}}, \code{\link{subsetBySegment}}
+#' 
+#' @importFrom GenomicRanges GRanges seqnames
+#' @importFrom IRanges IRanges
+#' @importFrom utils data
+#' @export
 defineSegments <- function(seg.length, n, build="hg19") {
     # load GRanges object with chromosomes for this build
     gr <- get(data(list=paste("chromosomes", build, sep="_"),
@@ -36,6 +41,11 @@ defineSegments <- function(seg.length, n, build="hg19") {
 #' @param segments \code{\link[GenomicRanges]{GRanges}} object with segments
 #' @param file Output file name
 #' @seealso \code{\link{defineSegments}}, \code{\link{getSegments}}, \code{\link{filterBySegment}}
+#'
+#' @importFrom dplyr "%>%" rename_ select_
+#' @importFrom stats setNames
+#' @importFrom utils write.table
+#' @export
 writeSegmentFile <- function(segments, file) {
     seg.df <- as.data.frame(segments) %>%
         rename_(.dots=setNames("seqnames", "chromosome")) %>%
@@ -48,6 +58,11 @@ writeSegmentFile <- function(segments, file) {
 #' @param file File with column names "chromosome", "start", "end " in the header
 #' @return \code{\link[GenomicRanges]{GRanges}} object with segments
 #' @seealso \code{\link{defineSegments}}, \code{\link{writeSegmentFile}}, \code{\link{subsetBySegment}}
+#' 
+#' @importFrom GenomicRanges GRanges
+#' @importFrom IRanges IRanges
+#' @importFrom utils read.table
+#' @export
 getSegments <- function(file) {
     dat <- read.table(file, header=TRUE, sep="\t", stringsAsFactors=FALSE)
     GRanges(seqnames=dat$chromosome,
@@ -64,6 +79,11 @@ getSegments <- function(file) {
 #' @param segment.file The name of the file describing segments
 #' @return Subset of \code{varList} where the first variant is in the segment \code{segment}
 #' @seealso \code{\link{defineSegments}}, \code{\link{writeSegmentFile}}, \code{\link{filterBySegment}}, \code{\link{aggregateList}}
+#' 
+#' @importFrom GenomicRanges GRanges findOverlaps
+#' @importFrom IRanges IRanges
+#' @importFrom S4Vectors queryHits
+#' @export
 subsetBySegment <- function(varList, segment, segment.file) {
     # create a GRanges object containing the first variant from each item in varList
     dat <- do.call(rbind, lapply(varList, function(x) x[1,]))

@@ -1,4 +1,5 @@
-
+#' @import SeqArray
+#' @importFrom SeqVarTools refChar altChar
 .variantDF <- function(gds) {
     data.frame(variant.id=seqGetData(gds, "variant.id"),
                chromosome=seqGetData(gds, "chromosome"),
@@ -10,6 +11,8 @@
 }
 
 
+#' @importFrom dplyr "%>%" arrange_ filter_ mutate_ select_
+#' @importFrom tidyr gather_ separate_ 
 .expandAlleles <- function(gds) {
     variants <- .variantDF(gds)
     
@@ -32,6 +35,8 @@
 }
 
 
+#' @importFrom dplyr "%>%" filter_ one_of select_
+#' @importFrom stats setNames
 .groupVariants <- function(variants, indexOnly) {
 
     ## columns to return
@@ -82,6 +87,12 @@
 #' 
 #' seqClose(gds)
 #' @name aggregateList
+#'
+#' @import SeqArray
+#' @importFrom GenomicRanges GRanges
+#' @importFrom IRanges IRanges
+#' @importFrom dplyr "%>%" inner_join
+#' @export
 aggregateListByAllele <- function(gds, variants, indexOnly=FALSE) {
     stopifnot(all(c("group_id", "chromosome", "position", "ref", "alt") %in% names(variants)))
 
@@ -103,6 +114,13 @@ aggregateListByAllele <- function(gds, variants, indexOnly=FALSE) {
 
 #' @param groups A data.frame of groups with column "group_id", "chromosome", "start", "end".
 #' @rdname aggregateList
+#'
+#' @import SeqArray
+#' @importFrom GenomicRanges GRanges findOverlaps
+#' @importFrom IRanges IRanges
+#' @importFrom S4Vectors queryHits subjectHits
+#' @importFrom dplyr "%>%" distinct_ left_join
+#' @export
 aggregateListByPosition <- function(gds, groups, indexOnly=FALSE) {
     stopifnot(all(c("group_id", "chromosome", "start", "end") %in% names(groups)))
 

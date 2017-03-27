@@ -6,8 +6,8 @@ Description: Utilities for the TOPMed pipeline.
 Author: Stephanie Gogarten
 Maintainer: Stephanie Gogarten <sdmorris@uw.edu>
 Depends: 
-Imports: methods, stats, utils, Biobase, SeqArray, SeqVarTools, GenomicRanges, IRanges, S4Vectors, dplyr, tidyr, lazyeval, BiocGenerics
-Suggests: testthat, roxygen2, GENESIS, gdsfmt, GWASTools
+Imports: methods, stats, utils, Biobase, SeqArray, SeqVarTools, GenomicRanges, IRanges, S4Vectors, dplyr, tidyr, lazyeval, BiocGenerics, GENESIS, gdsfmt
+Suggests: testthat, roxygen2, GWASTools
 License: Artistic-2.0
 LazyLoad: yes
 RoxygenNote: 6.0.1
