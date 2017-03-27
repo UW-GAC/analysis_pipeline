@@ -1,3 +1,30 @@
+#' Read a configuration file
+#'
+#' Functions for manipulating pipeline configuration files
+#'
+#' \code{readConfig} returns a named character vector of parameter values.
+#' 
+#' \code{writeConfig} writes a named character vector to a file.
+#' 
+#' \code{setConfigDefaults} takes a named character vector returned by
+#' \code{readConfig} and adds additional parameters in \code{optional} with default values.
+#' An error will result if a parameter in \code{required} is missing from \code{config}.
+#'
+#' @param file file where column 1 is parameter name and column 2 is value.
+#' @param ... additional arguments to \code{read.table}
+#' @examples
+#' file <- tempfile()
+#' write.table(cbind(letters[1:10], 1:10), file=file, quote=FALSE,
+#'             row.names=FALSE, col.names=FALSE)
+#' config <- readConfig(file)
+#' 
+#' required <- letters[1:5]
+#' optional <- setNames(11:15, letters[11:15])
+#' config <- setConfigDefaults(config, required, optional)
+#' 
+#' writeConfig(config, file)
+#' 
+#' unlink(file)
 readConfig <- function(file, ...) {
   config.table <- read.table(file, as.is=TRUE, ...)
   if (any(duplicated(config.table[, 1]))) stop("duplicated parameters in config file are not allowed!")
@@ -9,10 +36,15 @@ readConfig <- function(file, ...) {
   return(config)
 }
 
+#' @param config named character vector
+#' @rdname readConfig
 writeConfig <- function(config, file, ...) {
   write.table(config, file=file, col.names=FALSE, ...)
 }
 
+#' @param required character vector of required parameter names
+#' @param optional named vector of optional parameter values
+#' @rdname readConfig
 setConfigDefaults <- function(config, required, optional) {
   # optional is a named list of default values
   default <- unname(optional)
