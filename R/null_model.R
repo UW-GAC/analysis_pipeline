@@ -18,10 +18,10 @@ optional <- c("pcrelate_file"=NA,
               "binary"=FALSE,
               "covars"=NA,
               "group_var"=NA,
-              "inverse_normal"=FALSE,
+              "inverse_normal"=TRUE,
               "n_pcs"=3,
               "out_file"="null_model.RData",
-              "rescale_variance"=FALSE,
+              "rescale_variance"=TRUE,
               "sample_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)

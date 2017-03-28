@@ -152,11 +152,12 @@ config parameter | default value | description
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
 `group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
-`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately.
-`rescale_variance` | `FALSE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
+`inverse_normal` | `TRUE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately.
+`rescale_variance` | `TRUE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
-`variant_include_file` | `NA` | RData file with vector of variant.id to include. 
+`variant_include_file` | `NA` | RData file with vector of variant.id to include.
+`genome_build` | `hg19` | Genome build for the genotypes in the GDS file. Used to divide the genome into segments for parallel processing.
 `thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 
 
