@@ -132,7 +132,18 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 
 Association tests are done with a mixed model if a kinship matrix (`pcrelate_file`) is given in the config file. If `pcrelate_file` is `NA` or missing, testing is done with a fixed effects model.
 
-An inverse-normal transform may be requested with `inverse_normal TRUE` in the config file. This is done by fitting the null model and rank-normalizing the marginal residuals. The normalized residuals are then used as the outcome in a null model with only PCs and kinship as covariates.
+When combining samples from groups with different variances for a trait (e.g., study or ancestry group), it is recommended to allow the null model to fit heterogeneous variances by group using the parameter `group_var`. The default pipeline options will then result in the following procedure:
+
+1. For each group separately:
+    1. Fit null mixed model including covariates and PCs (as fixed effects) and kinship (as random effect)
+    2. Inverse normal transform marginal residuals (if `inverse_normal = TRUE`)
+    3. Rescale variance to match original (if `rescale_variance = TRUE`)
+   
+2. For all samples together:
+    1. Fit null mixed model using transformed residuals as outcome
+    2. Allow heterogeneous variance by `group_var`
+    3. Include covariates and PCs as fixed effects (if `resid_covars = TRUE`)
+    4. Include kinship as random effect
 
 For single-variant tests, the effect estimate is for the reference allele. For aggregate and sliding window tests, the effect estimate is for the alternate alelle, and multiple alternate alelles for a single variant are treated separately.
 
@@ -152,11 +163,13 @@ config parameter | default value | description
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
 `group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
-`inverse_normal` | `FALSE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately.
-`rescale_variance` | `FALSE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
+`inverse_normal` | `TRUE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately.
+`rescale_variance` | `TRUE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
+`resid_covars` | `TRUE` | Applies only if `inverse_normal` is `TRUE`. Logical for whether covariates should be included in the second null model using the residuals as the outcome variable.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
-`variant_include_file` | `NA` | RData file with vector of variant.id to include. 
+`variant_include_file` | `NA` | RData file with vector of variant.id to include.
+`genome_build` | `hg19` | Genome build for the genotypes in the GDS file. Used to divide the genome into segments for parallel processing.
 `thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 
 

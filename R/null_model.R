@@ -18,10 +18,11 @@ optional <- c("pcrelate_file"=NA,
               "binary"=FALSE,
               "covars"=NA,
               "group_var"=NA,
-              "inverse_normal"=FALSE,
+              "inverse_normal"=TRUE,
               "n_pcs"=3,
               "out_file"="null_model.RData",
-              "rescale_variance"=FALSE,
+              "rescale_variance"=TRUE,
+              "resid_covars"=TRUE,
               "sample_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -81,8 +82,8 @@ if (!is.null(grm)) {
         }
         
         ## fit null model again with these residuals as outcome and allowing heterogeneous variances
-        ## for second model fit, use kinship but not other covariates
-        nullmod <- fitNullMM(annot, outcome="resid.norm", covars=NULL,
+        resid.covars <- if (config["resid_covars"]) covars else NULL
+        nullmod <- fitNullMM(annot, outcome="resid.norm", covars=resid.covars,
                              covMatList=grm, scan.include=sample.id,
                              family=family, group.var=group.var)
     }
@@ -95,7 +96,8 @@ if (!is.null(grm)) {
 
     if (as.logical(config["inverse_normal"])) {
         annot <- addInvNorm(annot, nullmod, outcome, covars)
-        nullmod <- fitNullReg(annot, outcome="resid.norm", covars=NULL,
+        resid.covars <- if (config["resid_covars"]) covars else NULL
+        nullmod <- fitNullReg(annot, outcome="resid.norm", covars=resid.covars,
                               scan.include=sample.id, family=family)
     }
     
