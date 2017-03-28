@@ -1,3 +1,12 @@
+#' Load a GRM or kinship matrix
+#'
+#' @param config Config object (named vector) with params "pcrelate_file", "grm_file"
+#' @param sample.id Vector of samples to include
+#' @return GRM or kinship matrix. \code{NULL} if both pcrelate_file and grm_file are \code{NA}.
+#'
+#' @importFrom GENESIS pcrelateMakeGRM
+#' @importFrom gdsfmt openfn.gds closefn.gds
+#' @export
 getGRM <- function(config, sample.id) {
     if (!is.na(config["pcrelate_file"]) & !is.na(config["grm_file"])) {
         stop("Only one of pcrelate_file and grm_file may be specified")

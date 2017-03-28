@@ -1,3 +1,14 @@
+#' Combine association test results
+#'
+#' Combine association test results from multiple files into a single object.
+#' Useful for combining per-segment results into a single file per chromosome.
+#' 
+#' @param files Vector of file names with association test results
+#' @param assoc_type Type of association test ("single", "aggregate", "window")
+#' @return Association test object
+#'
+#' @importFrom dplyr "%>%" distinct_ filter_ group_by_
+#' @export
 combineAssoc <- function(files, assoc_type) {
     stopifnot(assoc_type %in% c("single", "aggregate", "window"))
     x <- lapply(unname(files), getobj)
@@ -21,6 +32,18 @@ combineAssoc <- function(files, assoc_type) {
     assoc
 }
 
+#' Get association test results
+#'
+#' Return association test results in a standard format
+#'
+#' Read association test results in multiple files and combine all into a single
+#' data frame with standard column names.
+#' 
+#' @inheritParams combineAssoc
+#' @return data.frame including standard columns ("chr", "pos", "stat", "pval")
+#'
+#' @importFrom dplyr "%>%" filter_ left_join mutate_ n rename_ select_
+#' @export
 getAssoc <- function(files, assoc_type) {
     stopifnot(assoc_type %in% c("single", "aggregate", "window"))
     assoc <- do.call(rbind, lapply(unname(files), function(f) {
@@ -57,7 +80,21 @@ getAssoc <- function(files, assoc_type) {
     assoc
 }
 
-
+#' Format single-variant assocation test results
+#'
+#' Return association test results for single-variant tests in a standard format
+#'
+#' Ensures that single-variant association test results from different sources
+#' (\code{\link[GENESIS]{assocTestMM}}, \code{\link[SeqVarTools]{regression}})
+#' will all have a standard format.
+#'
+#' @param seqData A \code{\link[SeqArray]{SeqVarGDSClass}} object
+#'   (needed to get chromosome and position if not present)
+#' @param assoc data.frame with assocation test results
+#' @return data.frame including standard columns ("variantID", "chr", "pos", "n", "MAF", "minor.allele")
+#' 
+#' @import SeqArray
+#' @export
 formatAssocSingle <- function(seqData, assoc) {
 
     names(assoc)[names(assoc) %in% c("snpID", "variant.id")] <- "variantID"
@@ -83,6 +120,17 @@ formatAssocSingle <- function(seqData, assoc) {
 }
 
 
+#' Omit known hits from an association test data frame
+#'
+#' @param assoc data.frame with assocation test results (including columns chr, pos)
+#' @param hits data.frame with known hits (including columns chr, pos)
+#' @param flank Number of kb on either side of each known hit to exclude
+#' @return data.frame with assocation test results not in regions around known hits
+#'
+#' @importFrom GenomicRanges GRanges findOverlaps
+#' @importFrom IRanges IRanges
+#' @importFrom S4Vectors queryHits
+#' @export
 omitKnownHits <- function(assoc, hits, flank=500) {
     stopifnot(all(c("chr", "pos") %in% names(hits)))
     assoc.gr <- GRanges(seqnames=assoc$chr, ranges=IRanges(start=assoc$pos, end=assoc$pos))
