@@ -23,3 +23,17 @@ args=("$@") # all arguments
 unset args[0] # remove first argument (R script name)
 
 R -q --vanilla --args ${args[@]} $TASK < $1
+
+
+export R_exit_code="$?"
+
+if [ $R_exit_code -ne "0" ]
+then
+  if [[ "$SGE_TASK_ID" -ne "" ]]; then
+    touch fail.${JOB_ID}.${SGE_TASK_ID}
+  else
+    touch fail.${JOB_ID}
+  fi
+fi
+
+exit $R_exit_code
