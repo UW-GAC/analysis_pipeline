@@ -4,6 +4,13 @@ import sys
 import csv
 import subprocess
 from copy import deepcopy
+import getpass
+import time
+
+try:
+    import boto3
+except ImportError:
+    print ("AWS batch not supported.")
 
 
 
@@ -158,7 +165,7 @@ class Cluster(object):
     def __init__(self, submit_cmd, options=None):
         if options is None:
             options = {}
-            
+
         self.submit_cmd = submit_cmd
         self.options = options
 
@@ -193,8 +200,160 @@ class Cluster(object):
 
         return jobid
 
+class AWS_Batch(Cluster):
 
-    
+    def __init__(self, options=None):
+        user = getpass.getuser()
+        wdkey = "wd"
+        if options is not None:
+            if wdkey in options:
+                defwd = options[wdkey]
+            else:
+                defwd = os.getcwd()
+        self.defParams = { wdkey: defwd,
+                           "dr": "/projects",
+                           "rd": "/usr/local/analysis_pipeline/runRscript.sh",
+                           "ra": "",
+                           "db": "1",
+                           "po": "0",
+                           "lf": "",
+                           "mt": "mount -t nfs4 -o vers=4.1 172.31.58.33:/ /projects"
+                         }
+        self.defQueue = "LowPriority"
+        self.defJobdef = "topmed_general"
+        self.defVcpus =  2
+        self.defMemory =  8000
+        self.defRegion = "us-east-1"
+        self.defDependsOn = []
+        self.defEnv = []
+        self.memkey = "-m"
+# create the batch client
+        self.batchC = boto3.client('batch',region_name=self.defRegion)
+
+    def memoryOptions(self, job_name):
+        vmem = {"find_unrelated":3.5,
+                "ld_pruning":11000,
+                "combine_variants":1000,
+                "pca_byrel":4000,
+                "pca_plots":1000,
+                "pca_corr":7000,
+                "pca_corr_plots":32000,
+                "pcrelate":8000,
+                "null_model":36000,
+                "aggregate_list":6000,
+                "assoc_single":24000,
+                "assoc_aggregate":24000,
+                "assoc_window":24000,
+                "assoc_combine":6000,
+                "assoc_plots":4000}
+        a =[ akey for akey in vmem.keys() if job_name.startswith( akey ) ]
+        if len(a):
+            opts = { self.memkey: vmem[a[0]] }
+        else:
+            opts = {}
+        return opts
+
+    def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None, opts=None, print_only=False, **kwargs):
+
+# job def/name
+        self.defJobName = job_name
+
+# process the args/kwargs to go the driver (rd); the driver arguments (e.g., -s rcode cfg --chr cn)
+        self.defParams['rd'] = cmd
+        if args is None:
+            args = []
+        self.defParams['ra'] = " ".join(args)
+
+# assign the log file
+        t = str(int(time.time()))
+        lfile = job_name + "_" + t + ".log"
+        self.defParams['lf'] = lfile
+
+# print_only
+        if print_only:
+            self.defParams['po'] = "1"
+
+# get memory option
+        if opts is None:
+            opts = {}
+        else:
+            if self.memkey in opts:
+                self.defMemory = opts[self.memkey]
+# holdid is a list of a list of jid dictionaries
+        if holdid is not None and holdid[0] != []:
+            self.defDependsOn = holdid[0]
+
+# process kwargs to get
+
+# if we're doing a job array equivalent submit multiple jobs; else just submit one job
+        idsonly = []
+        jids = []
+        if not print_only:
+            if array_range is not None:
+                lf = self.defParams['lf']
+                air = [ int(i) for i in array_range.split( '-' ) ]
+                for t in range( air[0], air[1]+1 ):
+                    # add an environmnent for equiv to taskid in sge
+                    self.defEnv = [ { "name": "SGE_TASK_ID",
+                                      "value": str(t) } ]
+                    self.defParams['lf'] = lf + '.' + str(t)
+
+                    subOut = self.batchC.submit_job(
+                       jobName = self.defJobName,
+                       jobQueue = self.defQueue,
+                       jobDefinition = self.defJobdef,
+                       parameters = self.defParams,
+                       dependsOn = self.defDependsOn,
+                       containerOverrides = {
+                          "vcpus": self.defVcpus,
+                          "memory": self.defMemory,
+                          "environment": self.defEnv
+                       }
+                    )
+                    # append the jid dictionary to list
+                    jids.append( { "jobId": subOut["jobId"] } )
+                    idsonly.append( subOut["jobId"] )
+            else:
+                subOut = self.batchC.submit_job(
+                   jobName = self.defJobName,
+                   jobQueue = self.defQueue,
+                   jobDefinition = self.defJobdef,
+                   parameters = self.defParams,
+                   dependsOn = self.defDependsOn,
+                   containerOverrides = {
+                      "vcpus": self.defVcpus,
+                      "memory": self.defMemory,
+                      "environment": self.defEnv
+                   }
+                )
+                # append the jid dictionary to list
+                jids.append( { "jobId": subOut["jobId"] } )
+                idsonly.append( subOut["jobId"] )
+            print( "Job Name: " + self.defJobName + " Job IDs: " + str(idsonly) )
+        else:
+            batchCmd = "\n\tjobName = " + self.defJobName
+            batchCmd = batchCmd + ", jobQueue = " + self.defQueue
+            batchCmd = batchCmd + ", jobDef = " + self.defJobdef
+            batchCmd = batchCmd + ", memory = " + str(self.defMemory)
+            batchCmd = batchCmd + ", vcpus = " + str(self.defVcpus)
+            batchCmd = batchCmd + "\n\tparams = " + str(self.defParams)
+            if array_range is not None:
+                ct = "array job " + array_range
+            else:
+                ct = "single job"
+            if holdid is None or holdid[0] == []:
+                ht = "no hold"
+            else:
+                ht = holdid[0]
+
+            print( "\njob name: " + self.defJobName + " job type: " + ct + "\tht: " + str(ht) + "\nbatch.submit_job : " + batchCmd)
+            jids = [ { 'jobId': 'print_only-1/' + self.defJobName },
+                     { 'jobId': 'print_only-2/' + self.defJobName } ]
+
+# return a list of jid dictionaries [ {'jobId': string_of_jobid}, ...]
+        return jids
+
+
 class SGE_Cluster(Cluster):
 
     def __init__(self, options=None, parallel_environment="local"):
@@ -206,7 +365,7 @@ class SGE_Cluster(Cluster):
 
         if opts is None:
             opts = {}
-        
+
         opts["-N"] = job_name
 
         if holdid is not None and holdid != []:
@@ -238,7 +397,7 @@ class SGE_Cluster(Cluster):
         return opts
 
 
-    
+
 class UW_Cluster(SGE_Cluster):
 
     def __init__(self, options=None):

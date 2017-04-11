@@ -24,9 +24,9 @@ parser.add_argument("--segment_length", default="10000",
                     help="segment length in kb [default %(default)s]")
 parser.add_argument("--n_segments", default=None,
                     help="number of segments for the entire genome (overrides segment_length)")
-parser.add_argument("--cluster_type", default="uw", 
+parser.add_argument("--cluster_type", default="uw",
                     help="type of compute cluster environment [default %(default)s]")
-parser.add_argument("--cluster_file", default=None, 
+parser.add_argument("--cluster_file", default=None,
                     help="file containing options to pass to the cluster (sge_request format)")
 parser.add_argument("-e", "--email", default=None,
                     help="email address for job reporting")
@@ -51,7 +51,7 @@ pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
 driver = os.path.join(pipeline, "runRscript.sh")
 
 jobid = dict()
-    
+
 configdict = TopmedPipeline.readConfig(configfile)
 
 # check type of association test - single-variant unrelated is handled differently
@@ -87,7 +87,7 @@ else:
 # for aggregate tests, generate variant list
 if assoc_type == "aggregate":
     job = "aggregate_list"
-   
+
     rscript = os.path.join(pipeline, "R", job + ".R")
 
     config = deepcopy(configdict)
@@ -101,7 +101,7 @@ if assoc_type == "aggregate":
 
     holdid.append(jobid["aggregate_list"])
 
-    
+
 # define segments
 job = "define_segments"
 
@@ -111,7 +111,7 @@ config = deepcopy(configdict)
 config["out_file"] = configdict["out_prefix"] + "_segments.txt"
 configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
-    
+
 segment_file = config["out_file"]
 
 # run and wait for results
@@ -150,7 +150,7 @@ for chromosome in chrom_list:
     job_assoc = assocScript + "_chr" + chromosome
     rscript = os.path.join(pipeline, "R", assocScript + ".R")
     args = ["-s", rscript, configfile, "--chromosome " + chromosome]
-    opts = cluster.memoryOptions("assoc")
+    opts = cluster.memoryOptions(assocScript)
     # no email for jobs by segment
     jobid[job_assoc] = cluster.submitJob(job_name=job_assoc, cmd=driver, args=args, holdid=holdid, array_range=segments[chromosome], opts=opts, print_only=print_only)
 
@@ -161,7 +161,7 @@ for chromosome in chrom_list:
     opts = cluster.memoryOptions("assoc_combine")
     holdid_comb = [jobid[job_assoc].split(".")[0]]
     jobid_chrom[job_comb] = cluster.submitJob(job_name=job_comb, cmd=driver, args=args, holdid=holdid_comb, email=email, opts=opts, print_only=print_only)
-    
+
 jobid.update(jobid_chrom)
 
 
@@ -184,4 +184,3 @@ holdid = jobid_chrom.values()
 opts = cluster.memoryOptions(job)
 
 jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, opts=opts, print_only=print_only)
-
