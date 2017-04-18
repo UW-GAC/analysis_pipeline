@@ -86,7 +86,8 @@ writeSegmentFile <- function(segments, file) {
 #' @importFrom utils read.table
 #' @export
 getSegments <- function(file) {
-    dat <- read.table(file, header=TRUE, sep="\t", stringsAsFactors=FALSE)
+    dat <- read.table(file, header=TRUE, stringsAsFactors=FALSE)
+    stopifnot(setequal(names(dat), c("chromosome", "start", "end")))
     GRanges(seqnames=dat$chromosome,
             ranges=IRanges(start=dat$start, end=dat$end))
 }
