@@ -1,12 +1,12 @@
 #!/usr/bin/python
-import 	time
-import 	csv
-import 	sys
+import     time
+import     csv
+import     sys
 import  os.path
 import  os
 import  subprocess
 from    argparse import ArgumentParser
-from 	datetime import datetime, timedelta
+from     datetime import datetime, timedelta
 
 # init globals
 msgErrPrefix='>>> Error: '
@@ -92,6 +92,9 @@ if po:
     pInfo( "Exiting without executing." )
     sys.exit()
 
+# check if the mount point (last arg in mount command) exists; if not create it
+if not os.path.isdir( mount.split()[-1] ):
+    os.mkdir(mount.split()[-1])
 # mount
 pDebug( "mounting: " + mount )
 sys.stdout.flush()

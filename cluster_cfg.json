@@ -1,0 +1,107 @@
+{
+    "name": "cluster_config",
+    "version": "1",
+    "cluster_types": {
+        "AWS_Batch": {
+            "aws_region": "us-east-1",
+            "pipeline_path": "/usr/local/analysis_pipeline",
+            "job_parameters": {
+                "wd": "",
+                "dr": "/projects",
+                "db": "1",
+                "lf": "",
+                "mt": "mount -t nfs4 -o vers=4.1 172.31.58.33:/ /projects"
+            },
+            "submit_opts": {
+                "queue": "LowPriority",
+                "jobdef": "topmed_general",
+                "vcpus":  2,
+                "memory": 8000,
+                "region": "us-east-1",
+                "dependsOn": [],
+                "env": []
+            },
+            "memory_limits": {
+                "find_unrelated":3.5,
+                "ld_pruning":11000,
+                "combine_variants":1000,
+                "pca_byrel":4000,
+                "pca_plots":1000,
+                "pca_corr":7000,
+                "pca_corr_plots":32000,
+                "pcrelate":8000,
+                "null_model":36000,
+                "aggregate_list":6000,
+                "assoc_single":24000,
+                "assoc_aggregate":24000,
+                "assoc_window":24000,
+                "assoc_combine":6000,
+                "assoc_plots":4000
+            },
+            "sync_job": {
+                "parameters": {
+                    "msg": "Dependent jobs completed\n",
+                    "hjn": ""
+                },
+                "submit_opts": {
+                    "queue": "LowPriority",
+                    "jobdef": "topmed_sync",
+                    "dependsOn": []
+                }
+            },
+            "run_cmd": {
+                "cmd": "docker run --privileged rollinroy/r-332-tm /usr/local/analysis_pipeline/runRscript.py",
+                "params": {
+                    "--rdriver": "",
+                    "--rargs": "",
+                    "--workdir": "",
+                    "--dataroot": "/projects",
+                    "--Debug": "1",
+                    "--mount": "\"mount -t nfs4 -o vers=4.1 172.255.44.97:/ /projects\""
+                }
+            }
+        },
+        "UW_Cluster": {
+            "submit_cmd": "qsub",
+            "submit_opts": {
+                "-cwd":"",
+                "-N":"",
+                "-j":"y",
+                "-q":"olga.q",
+                "-S":"/bin/bash",
+                "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"
+            },
+            "memory_limits": {
+
+            }
+        },
+        "AWS_Cluster": {
+            "submit_cmd": "qsub",
+            "submit_opts": {
+                "-cwd":"",
+                "-N":"",
+                "-j":"y",
+                "-q":"all.q",
+                "-S":"/bin/bash",
+                "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"
+            },
+            "memory_limits": {
+                "find_unrelated":3.5,
+                "ld_pruning":11000,
+                "combine_variants":1000,
+                "pca_byrel":4000,
+                "pca_plots":1000,
+                "pca_corr":7000,
+                "pca_corr_plots":32000,
+                "pcrelate":8000,
+                "null_model":36000,
+                "aggregate_list":6000,
+                "assoc_single":24000,
+                "assoc_aggregate":24000,
+                "assoc_window":24000,
+                "assoc_combine":6000,
+                "assoc_plots":4000
+            }
+        }
+    }
+}
