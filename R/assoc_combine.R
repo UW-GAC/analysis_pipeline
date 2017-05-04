@@ -14,6 +14,7 @@ required <- c("assoc_type",
 optional <- c()
 config <- setConfigDefaults(config, required, optional)
 print(config)
+writeConfig(config, paste0(argv$config, ".assoc_combine.params"))
 
 file.pattern <- paste0(basename(config["out_prefix"]), "_chr", chr, "_seg[[:digit:]]+.RData")
 files <- list.files(path=dirname(config["out_prefix"]), pattern=file.pattern, full.names=TRUE)

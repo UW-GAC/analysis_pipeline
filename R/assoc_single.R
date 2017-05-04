@@ -26,6 +26,7 @@ optional <- c("mac_threshold"=5, # takes precedence
               "variant_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
+writeConfig(config, paste0(argv$config, ".assoc_single.params"))
 
 ## gds file can have two parts split by chromosome identifier
 gdsfile <- config["gds_file"]

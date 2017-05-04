@@ -26,6 +26,7 @@ optional <- c("pcrelate_file"=NA,
               "sample_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
+writeConfig(config, paste0(argv$config, ".null_model.params"))
 
 # get phenotypes
 phen <- getPhenotypes(config)
