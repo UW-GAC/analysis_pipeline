@@ -185,3 +185,17 @@ opts = cluster.memoryOptions(job)
 
 jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, opts=opts, print_only=print_only)
 
+
+# analysis report
+job = "assoc_report"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+config = deepcopy(configdict)
+config["out_file"] = configdict["out_prefix"] + "_analysis_report"
+configfile = configdict["out_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
+
+holdid = [jobid["assoc_plots"]]
+
+jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, print_only=print_only)
