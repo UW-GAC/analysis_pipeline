@@ -36,6 +36,9 @@ groups <- getobj(varfile)
 ## subset groups by chromosome
 groups <- groups[groups$chromosome == chr,]
 
+## chromosome must be character to match with gds
+if (!is.character(groups$chromosome)) groups$chromosome <- as.character(groups$chromosome)
+
 if (config["aggregate_type"] == "allele") {
     message("Sorting ", nrow(groups), " variant alleles")
     aggVarList <- aggregateListByAllele(gds, groups)
