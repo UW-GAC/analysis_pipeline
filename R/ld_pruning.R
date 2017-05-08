@@ -55,7 +55,9 @@ if (!is.na(chr) && !bychrfile) {
 
 filterByPass(gds)
 filterBySNV(gds)
-if (as.logical(config["exclude_pca_corr"])) filterByPCAcorr(gds)
+if (as.logical(config["exclude_pca_corr"])) {
+    filterByPCAcorr(gds)
+}
 
 variant.id <- seqGetData(gds, "variant.id")
 message("Using ", length(variant.id), " variants")

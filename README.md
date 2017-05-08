@@ -71,7 +71,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`ld_r_threshold` | `0.32` | `r` threshold for LD pruning. Default is `r^2 = 0.1`.
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning.
-	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions)
+	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
@@ -100,7 +100,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`ld_r_threshold` | `0.32` | `r` threshold for LD pruning. Default is `r^2 = 0.1`.
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning. 
-	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions)
+	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
 	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
 	`n_pcs` | `20` | Number of PCs to return.
 	`n_pair` | `6` | Number of PCs in include in the pairs plot.
@@ -128,6 +128,24 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
 
 4. Repeat steps 2-3, using new kinship estimates for PC-AiR
+
+
+### GRM
+
+An as alternative to separating recent relatedness from ancestry, one can compute a Genetic Relatedness Matrix (GRM).
+
+`grm.py`
+1. `grm.R`
+
+config parameter | default value | description
+--- | --- | ---
+`out_prefix` | | Prefix for files created by this script.
+`gds_file` | | GDS file with all chromosomes.
+`method` | `gcta` | Method used to compute GRM. Options are `gcta`, `eigmix`, and `beta`.
+`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning.
+`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
+`sample_include_file` | `NA` | RData file with vector of sample.id to include.
+`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
 
 
 ## Association testing

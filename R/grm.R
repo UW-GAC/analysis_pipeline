@@ -9,12 +9,13 @@ argp <- add_argument(argp, "config", help="path to config file")
 argv <- parse_args(argp)
 config <- readConfig(argv$config)
 
-required <- c("gds_file",
-              "variant_include_file")
-optional <- c("maf_threshold"=0.01,
+required <- c("gds_file")
+optional <- c("exclude_pca_corr"=TRUE,
+              "maf_threshold"=0.01,
               "method"="gcta",
               "out_file"="grm.RData",
-              "sample_include_file"=NA)
+              "sample_include_file"=NA,
+              "variant_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -28,7 +29,18 @@ if (!is.na(config["sample_include_file"])) {
     message("Using all samples")
 }
 
-variant.id <- getobj(config["variant_include_file"])
+varfile <- config["variant_include_file"]
+if (!is.na(varfile)) {
+    filterByFile(gds, varfile)
+}
+
+filterByPass(gds)
+filterBySNV(gds)
+if (as.logical(config["exclude_pca_corr"])) {
+    filterByPCAcorr(gds)
+}
+
+variant.id <- seqGetData(gds, "variant.id")
 message("Using ", length(variant.id), " variants")
 
 maf.min <- as.numeric(config["maf_threshold"])
