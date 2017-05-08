@@ -132,7 +132,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 
 ### GRM
 
-An as alternative to separating recent relatedness from ancestry, one can compute a Genetic Relatedness Matrix (GRM).
+An as alternative to separating recent relatedness from ancestry, one can compute a Genetic Relationship Matrix (GRM).
 
 `grm.py`
 1. `grm.R`
@@ -141,8 +141,8 @@ config parameter | default value | description
 --- | --- | ---
 `out_prefix` | | Prefix for files created by this script.
 `gds_file` | | GDS file with all chromosomes.
-`method` | `gcta` | Method used to compute GRM. Options are `gcta`, `eigmix`, and `beta`.
-`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning.
+`method` | `gcta` | Method used to compute GRM. Options are `gcta` and `eigmix`.
+`maf_threshold` | `0.001` | Minimum MAF for variants used in LD pruning.
 `exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
 `sample_include_file` | `NA` | RData file with vector of sample.id to include.
 `variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.

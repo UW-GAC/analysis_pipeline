@@ -11,7 +11,7 @@ config <- readConfig(argv$config)
 
 required <- c("gds_file")
 optional <- c("exclude_pca_corr"=TRUE,
-              "maf_threshold"=0.01,
+              "maf_threshold"=0.001,
               "method"="gcta",
               "out_file"="grm.RData",
               "sample_include_file"=NA,
@@ -47,8 +47,7 @@ maf.min <- as.numeric(config["maf_threshold"])
 
 method <- switch(tolower(config["method"]),
                  gcta="GCTA",
-                 eigmix="EIGMIX",
-                 beta="W&Z15")
+                 eigmix="EIGMIX")
 
 grm <- snpgdsGRM(gds, sample.id=sample.id, snp.id=variant.id,
                  maf=maf.min, method=method,
