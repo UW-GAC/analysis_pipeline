@@ -1,6 +1,8 @@
 context("getPhenotype tests")
 library(splines)
 library(Biobase)
+library(SeqArray)
+library(gdsfmt)
 
 .testConfig <- function(covars, n_pcs) {
     n <- 100
@@ -106,4 +108,51 @@ test_that("fewer samples with pcs", {
     expect_true(all(is.na(phen$annot$PC1[!(phen$annot$sample.id %in% keep)])))
 
     .cleanupConfig(config)
+})
+
+test_that("parseParam", {
+    expect_null(.parseParam(NA))
+    expect_equal(.parseParam("a"), "a")
+    expect_equal(.parseParam("a b c"), c("a", "b", "c"))
+})
+
+test_that("genotypes", {
+    showfile.gds(closeall=TRUE, verbose=FALSE)
+    gdsfile <- seqExampleFileName("gds")
+    variant.id <- sample(1:100, 2)
+    geno <- .genotypes(gdsfile, variant.id)
+    expect_true(is(geno, "data.frame"))
+    expect_equal(names(geno), c("sample.id", paste0("var_", sort(variant.id))))
+})
+
+test_that("conditional variants", {
+    showfile.gds(closeall=TRUE, verbose=FALSE)
+    config <- c(gds_file=seqExampleFileName("gds"),
+                phenotype_file=system.file("data", "sample_annotation.RData", package="TopmedPipeline"),
+                conditional_variants="1 2",
+                n_pcs=0,
+                outcome="outcome",
+                covars="sex",
+                sample_include_file=NA)
+    phen <- getPhenotypes(config)
+    expect_true(all(c("var_1", "var_2") %in% varLabels(phen$annot)))
+    expect_true(all(c("var_1", "var_2") %in% phen$covars))
+})
+
+test_that("conditional chrom", {
+    showfile.gds(closeall=TRUE, verbose=FALSE)
+    gdsfile <- file.path(tempdir(), "tmp1.gds")
+    invisible(file.copy(seqExampleFileName("gds"), gdsfile))
+    config <- c(gds_file=file.path(tempdir(), "tmp .gds"),
+                phenotype_file=system.file("data", "sample_annotation.RData", package="TopmedPipeline"),
+                conditional_variants="1 2",
+                conditional_chrom="1",
+                n_pcs=0,
+                outcome="outcome",
+                covars="sex",
+                sample_include_file=NA)
+    phen <- getPhenotypes(config)
+    expect_true(all(c("var_1", "var_2") %in% varLabels(phen$annot)))
+    expect_true(all(c("var_1", "var_2") %in% phen$covars))
+    unlink(gdsfile)
 })

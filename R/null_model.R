@@ -13,9 +13,12 @@ config <- readConfig(argv$config)
 required <- c("outcome",
               "pca_file",
               "phenotype_file")
-optional <- c("pcrelate_file"=NA,
+optional <- c("gds_file"=NA, # required for conditional variants
+              "pcrelate_file"=NA,
               "grm_file"=NA,
               "binary"=FALSE,
+              "conditional_chrom"=NA,
+              "conditional_variants"=NA,
               "covars"=NA,
               "group_var"=NA,
               "inverse_normal"=TRUE,

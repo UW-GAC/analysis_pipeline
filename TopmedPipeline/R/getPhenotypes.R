@@ -1,11 +1,12 @@
 #' Get phenotypes
 #'
 #' @param config Config object (named vector) with params "phenotype_file", "n_pcs", "pca_file",
-#'   "outcome", "covars", "sample_include_file"
+#'   "outcome", "covars", "sample_include_file", "gds_file", "conditional_variants"
 #' @return list with annot, outcome, covars, sample.id
 #'
 #' @import Biobase
 #' @importFrom stats complete.cases
+#' @importFrom dplyr left_join
 #' @export
 getPhenotypes <- function(config) {
 
@@ -28,11 +29,7 @@ getPhenotypes <- function(config) {
 
     ## outcome and covariates
     outcome <- unname(config["outcome"])
-    if (!is.na(config["covars"])) {
-        covars <- strsplit(config["covars"], " ", fixed=TRUE)[[1]]
-    } else {
-        covars <- NULL
-    }
+    covars <- .parseParam(config["covars"])
     covars <- c(covars, pccols)
 
     annot <- annot[,c("sample.id", outcome, covars)]
@@ -42,6 +39,16 @@ getPhenotypes <- function(config) {
         sample.id <- getobj(config["sample_include_file"])
     } else {
         sample.id <- annot$sample.id
+    }
+
+    ## conditional variants
+    vars <- .parseParam(config["conditional_variants"])
+    if (!is.null(vars)) {
+        gdsfile <- insertChromString(config["gds_file"], config["conditional_chrom"])
+        pData(annot) <- left_join(pData(annot),
+                                  .genotypes(gdsfile, variant.id=vars, sample.id=sample.id),
+                                  by="sample.id")
+        covars <- c(covars, paste0("var_", vars))
     }
 
     cc <- annot$sample.id[complete.cases(pData(annot))]
@@ -77,4 +84,40 @@ addInvNorm <- function(annot, nullmod, outcome, covars) {
     }
     
     annot
+}
+
+
+#' Parse space-separated parameter list
+#'
+#' @param param Parameter to parse
+#' @return \code{NULL} if \code{param} is \code{NA}, vector otherwise
+#'
+#' @keywords internal
+.parseParam <- function(param) {
+    if (!is.na(param)) {
+        strsplit(param, " ", fixed=TRUE)[[1]]
+    } else {
+        NULL
+    }
+}
+
+
+#' Return genotypes (alt dosage) for variants
+#'
+#' @param gdsfile Filename for GDS file
+#' @param variant.id Vector of variant IDs
+#' @param sample.id Vector of sample IDs
+#' @return data.frame with genotypes for selected variants
+#'
+#' @import SeqArray
+#' @importFrom SeqVarTools altDosage
+#'
+#' @keywords internal
+.genotypes <- function(gdsfile, variant.id, sample.id=NULL) {
+    gds <- seqOpen(gdsfile)
+    seqSetFilter(gds, variant.id=variant.id, sample.id=sample.id, verbose=FALSE)
+    geno <- altDosage(gds)
+    seqClose(gds)
+    colnames(geno) <- paste0("var_", colnames(geno))
+    data.frame(sample.id=rownames(geno), geno, row.names=1:nrow(geno), stringsAsFactors=FALSE)
 }
