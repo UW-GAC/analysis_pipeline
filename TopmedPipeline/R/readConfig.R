@@ -84,5 +84,6 @@ setConfigDefaults <- function(config, required, optional) {
   }
   
   # return config with default values set
+  config <- config[c(required, optional)]
   return(config)
 }

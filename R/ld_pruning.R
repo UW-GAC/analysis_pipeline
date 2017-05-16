@@ -12,7 +12,8 @@ config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)
 
 required <- c("gds_file")
-optional <- c("ld_r_threshold"=0.32,
+optional <- c("exclude_pca_corr"=TRUE,
+              "ld_r_threshold"=0.32,
               "ld_win_size"=10,
               "maf_threshold"=0.01,
               "out_file"="pruned_variants.RData",
@@ -54,7 +55,9 @@ if (!is.na(chr) && !bychrfile) {
 
 filterByPass(gds)
 filterBySNV(gds)
-filterByPCAcorr(gds)
+if (as.logical(config["exclude_pca_corr"])) {
+    filterByPCAcorr(gds)
+}
 
 variant.id <- seqGetData(gds, "variant.id")
 message("Using ", length(variant.id), " variants")

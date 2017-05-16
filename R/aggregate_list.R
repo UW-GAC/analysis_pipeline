@@ -16,6 +16,7 @@ optional <- c("aggregate_type"="allele",
               "out_file"="aggregate_list.RData")
 config <- setConfigDefaults(config, required, optional)
 print(config)
+writeConfig(config, paste0(argv$config, ".aggregate_list.params"))
 
 ## gds file can have two parts split by chromosome identifier
 gdsfile <- config["gds_file"]
@@ -34,6 +35,9 @@ groups <- getobj(varfile)
 
 ## subset groups by chromosome
 groups <- groups[groups$chromosome == chr,]
+
+## chromosome must be character to match with gds
+if (!is.character(groups$chromosome)) groups$chromosome <- as.character(groups$chromosome)
 
 if (config["aggregate_type"] == "allele") {
     message("Sorting ", nrow(groups), " variant alleles")
