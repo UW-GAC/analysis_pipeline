@@ -41,7 +41,7 @@
             "sync_job": {
                 "parameters": {
                     "msg": "Dependent jobs completed\n",
-                    "hjn": ""
+                    "jids": ""
                 },
                 "submit_opts": {
                     "queue": "LowPriority",

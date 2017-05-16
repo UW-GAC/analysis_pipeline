@@ -8,6 +8,7 @@ import getpass
 import time
 import os
 import json
+import math
 
 try:
     import boto3
@@ -147,15 +148,20 @@ def stringToDict(s):
 class Cluster(object):
     """ """
     # constructor
-    def __init__(self, submit_cmd, cluster_file=None):
+    def __init__(self, cluster_file=None, verbose=False):
+        self.verbose = verbose
         self.class_name = self.__class__.__name__
         # get the standard cluster cfg
         pipePath = os.path.dirname(os.path.abspath(sys.argv[0]))
         self.clusterfile =  os.path.join(pipePath, "./cluster_cfg.json")
+        self.printVerbose("ClusterCtor", "Reading internal cfg file: " + self.clusterfile)
+
         with open(self.clusterfile) as cfgFileHandle:
             clusterCfg= json.load(cfgFileHandle)
         self.clusterCfg = clusterCfg["cluster_types"][self.class_name]
         if cluster_file != None:
+            self.printVerbose("ClusterCtor", "Reading user cfg file: " + self.clusterfile)
+
             with open(cluster_file) as cfgFileHandle:
                 clusterCfg = json.load(cfgFileHandle)
             optCfg = clusterCfg["cluster_types"][self.class_name]
@@ -173,12 +179,18 @@ class Cluster(object):
             memlim = memLimits[a[0]]
         return memlim
 
+    def printVerbose(self, prefix, message):
+        if self.verbose:
+            dPrefix = ">>> debug"
+            if prefix != "":
+                dPrefix = dPrefix + "/" + prefix
+            print(dPrefix + ": " + message)
+
 class AWS_Batch(Cluster):
 
-    def __init__(self, cluster_file=None):
+    def __init__(self, cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
-        super(AWS_Batch, self).__init__(cluster_file)
-        self.clusterCfg = super(AWS_Batch, self).getClusterCfg()
+        super(AWS_Batch, self).__init__(cluster_file, verbose)
 
         # get the job parameters
         self.jobParams = self.clusterCfg["job_parameters"]
@@ -204,40 +216,65 @@ class AWS_Batch(Cluster):
         # create the batch client
         self.batchC = boto3.client('batch',region_name=self.clusterCfg["aws_region"])
 
-    def getSyncJobs(self, fullJobIDs, jName):
+    def createDependsList(self, holdid):
+        # holdid is either a single job id or a list of job ids (1 or more)
+        if  isinstance(holdid, str):
+            holdid = [ holdid ]
+        # create a list of jobids that the job depends on
+        depends_list = [ {'jobId': id} for id in holdid ]
+
+        self.printVerbose("createDependsList", "depends_list= " + str(depends_list))
+
+        return depends_list
+
+    def getSyncJobs(self, depends_list, jName):
         # submit sync jobs for each each set of 20 jobIDs and return jobids for
         # each sync job
-        holdJobNames = [fullJobIDs[i]['jobName'] for i in range(len(fullJobIDs))]
-        holdJobIDs = [fullJobIDs[i]['jobID'] for i in range(len(fullJobIDs))]
-        syncIDs = []
+        subIDs = []
+        self.printVerbose("getSyncJobs", "Job/depends_list: " + jName + "/" + str(depends_list))
         # set the synjobparams
-        self.syncOpts["parameters"]["hjn"] = holdJobNames
+        self.syncOpts["parameters"]["hjn"] = [ d['jobId'] for d in depends_list ]
         # submit sync job in batches of 20
-        maxHolds = 20
-        noHolds = len(fullJobIDs)
-        noSyncJobs = math.ceil(noHolds/maxHolds)
-        noHoldsLast = noHolds % maxHolds
-        if noHoldsLast == 0:
-            noHoldsLast = maxHolds
-        if noSyncJobs > maxHolds:
-            sys.exit("Error: Too many sync jobs (" + str(numberSyncJobs) + ")")
-        for sj in range(noSyncJobs):
-            if sj == noSyncJobs - 1:
-                noHolds = noHoldsLast
-            else:
-                noHolds = maxHolds
-            holdIndices = range(sj*maxHolds,sj*maxHolds+noholds)
+        maxDepends = 20
+        noDepends = len(depends_list)
+        noSyncJobs = int(math.ceil(noDepends/maxDepends)) + 1
+        noDependsLast = noDepends % maxDepends
+        if noDependsLast == 0:
+            noDependsLast = maxDepends
+        if noSyncJobs > maxDepends:
+            sys.exit("Error: Too many depend jobs (" + str(noDepends) + ").  Max number is " + str(maxDepends))
+        self.printVerbose("getSyncJobs", "no. holds/sync jobs: " + str(noDepends) + "/" + str(noSyncJobs))
 
-            noHoldJobs = len(sj)
-            syncID = self.batchC.submit_job(
+        for sj in range(noSyncJobs):
+            sIndex = sj*maxDepends
+            lIndex = sIndex+maxDepends
+            if sj == noSyncJobs - 1:
+                lIndex = noDependsLast
+
+            subid = self.batchC.submit_job(
                jobName = 'sync_' + jName + '_' + str(sj),
                jobQueue = self.syncOpts["submit_opts"]["queue"],
                jobDefinition = self.syncOpts["submit_opts"]["jobdef"],
-               parameters = syncJobParams,
-               dependsOn = [holdJobNames[n] for n in holdIndices ])
-            syncIDs.append(syncID)
+               parameters = self.syncOpts["parameters"],
+               dependsOn = depends_list[sIndex:lIndex])
+            subIDs.append(subid)
+        # get the job ids for the above sync jobs
+        syncDepends_list = [{'jobId': d['jobId']} for d in subIDs]
+        self.printVerbose("getSyncJobs", "Sync depends list: " + str(syncDepends_list))
 
-        return syncIDs
+        # now sumbit a master sync job that waits for the other sync jobs
+        # to complete;  just return one jobid that the caller can use
+        masterParams = {'msg': 'master job completed', 'jids': jName}
+        subid = self.batchC.submit_job(
+           jobName = 'sync_' + jName + '_Master',
+           jobQueue = self.syncOpts["submit_opts"]["queue"],
+           jobDefinition = self.syncOpts["submit_opts"]["jobdef"],
+           parameters = masterParameters,
+           dependsOn = syncDepends_list)
+        masterDepend_list = [ {'jobId': jobid['jobId']} ]
+        self.printVerbose("getSyncJobs", "Master sync depend list (back to caller): " + str(masterDepend_list))
+
+        return masterDependList
 
     def runCmd(self, job_name, cmd, logfile=None):
         # set rdriver
@@ -319,19 +356,23 @@ class AWS_Batch(Cluster):
             if memlim != None:
                 self.submitOpts["memory"] = memlim
 
-        # holdid is a list of a list of jid dictionaries
-        if holdid is not None and holdid[0] != []:
-            self.submitOpts["dependsOn"] = holdid[0]
+        # holdid is a list of a list of jid dictionaries ([{'jobId': 'jobid string'}, ... ])
+        if holdid is not None:
+            self.submitOpts["dependsOn"] = self.createDependsList(holdid)
 
         # if we're doing a job array equivalent submit multiple jobs; else just submit one job
-        idsonly = []
-        jids = []
+        submitJobs = []
         if not print_only:
-            if len(self.submitOpts["dependsOn"]):
-                syncJobIDs = self.getSyncJobs(self.submitOpts["dependsOn"], job_name)
+            # with the current limit of jobs that a submitted job can depend upon (20),
+            # we'll use of sync jobs to sync if we have more than 20 hold jobs
+            if len(self.submitOpts["dependsOn"]) > 0:
+                depends_list = self.getSyncJobs(self.submitOpts["dependsOn"], job_name)
             else:
-                syncJobIDs = []
+                depends_list = self.submitOpts["dependsOn"]
+
             if array_range is not None:
+                self.printVerbose("submitJob", "array job - no. tasks: " + str(len(array_range)))
+
                 lf = self.defParams['lf']
                 air = [ int(i) for i in array_range.split( '-' ) ]
                 for t in range( air[0], air[1]+1 ):
@@ -339,39 +380,46 @@ class AWS_Batch(Cluster):
                     self.defEnv = [ { "name": "SGE_TASK_ID",
                                       "value": str(t) } ]
                     self.defParams['lf'] = lf + '.' + str(t)
-
+                    # create a jobname based on the job_name submitted and the task id
                     subOut = self.batchC.submit_job(
-                       jobName = job_name,
+                       jobName = job_name + "_" + str(t),
                        jobQueue = self.submitOpts["queue"],
                        jobDefinition = self.submitOpts["jobdef"],
                        parameters = self.jobParams,
-                       dependsOn = syncJobIDs,
+                       dependsOn = depends_list,
                        containerOverrides = {
                           "vcpus": self.submitOpts["vcpus"],
                           "memory": self.submitOpts["memory"],
                           "environment": self.submitOpts["env"]
                        }
                     )
-                    # append the jid dictionary to list
-                    jids.append( subOut )
-                    idsonly.append( subOut["jobId"] )
+                    # return from batch submit_job is a dict of the form: { 'jobId': 'xxx-yyy', 'jobName': 'myjobName' },
+                    # which we'll return as a list of submit jobs dict
+                    submitJobs.append( subOut )
+                # conver to depend list
+                arrayDepends_list = [ {'jobId': d['jobId']} for d in submitJobs]
+                # sumbit a sync job for the array
+                self.printVerbose("submitJob", "array job depends list: " + str(arrayDepends_list))
+
+                depends_list = self.getSyncJobs(arrayDepends_list, job_name+'_tasks'+array_range)
+                jobid = depends_list['jobId']
             else:
+                self.printVerbose("submitJob", "single job " + job_name)
+
                 subOut = self.batchC.submit_job(
                    jobName = job_name,
                    jobQueue = self.submitOpts["queue"],
                    jobDefinition = self.submitOpts["jobdef"],
                    parameters = self.jobParams,
-                   dependsOn = syncJobIDs,
+                   dependsOn = depends_list,
                    containerOverrides = {
                       "vcpus": self.submitOpts["vcpus"],
                       "memory": self.submitOpts["memory"],
                       "environment": self.submitOpts["env"]
                    }
                 )
-                # append the jid dictionary to list
-                jids.append( subOut )
-                idsonly.append( subOut["jobId"] )
-            print( "Job Name: " + job_name + " Job IDs: " + str(idsonly) )
+                # return from batch submit_job jus the jobId
+                jobid = subOut['jobId']
         else:
             batchCmd = "\n\tjobName = " + job_name
             batchCmd = batchCmd + ", jobQueue = " + self.submitOpts["queue"]
@@ -383,24 +431,23 @@ class AWS_Batch(Cluster):
                 ct = "array job " + array_range
             else:
                 ct = "single job"
-            if holdid is None or holdid[0] == []:
-                ht = "no hold"
-            else:
-                ht = holdid[0]
+            ht = str(self.submitOpts["dependsOn"])
+            jobid = "111-222-333-print_only-" +  job_name
 
-            print( "\njob name: " + job_name + " job type: " + ct + "\tht: " + str(ht) + "\nbatch.submit_job : " + batchCmd)
-            jids = [ { 'jobId': 'print_only-1/' + job_name },
-                     { 'jobId': 'print_only-2/' + job_name } ]
+            print( "\njob name: " + job_name + " job type: " + ct + "\tdepends: " + ht + "\tjobid:" + jobid +
+                   "\nbatch.submit_job : " + batchCmd )
+            # jids from batch is a dict of the form: { 'jobId': 'xxx-yyy', 'jobName': 'myjobName' }
 
-            # return a list of jid dictionaries [ {'jobId': string_of_jobid}, ...]
-        return jids
+        # return the job id (either from the single job or array job)
+        self.printVerbose("submitJob", "name: " + job_name + " returned jobid: " + jobid)
+
+        return jobid
 
 class SGE_Cluster(Cluster):
 
-    def __init__(self, cluster_file=None):
+    def __init__(self, cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
-        super(SGE_Cluster, self).__init__(cluster_file)
-        self.clusterCfg = super(UW_Cluster, self).getClusterCfg()
+        super(SGE_Cluster, self).__init__(cluster_file, verbose)
 
     def runCmd(self, job_name, cmd, logfile=None):
         # get and set the env
@@ -489,31 +536,22 @@ class SGE_Cluster(Cluster):
         process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE)
         pipe = process.stdout
         sub_out = pipe.readline()
-        jobid = sub_out.split()[2]
-
-        if verbose:
-            print sub_out
-
-        key = "array_range"
-        if key in kwargs:
-            jobid = jobid.split(".")[0]
+        jobid = sub_out.split()[2].split('.')[0]
+        self.printVerbose("executeJobCmd", "Popen command: " + sub_out)
 
         return jobid
 
 class UW_Cluster(SGE_Cluster):
 
-    def __init__(self, cluster_file=None):
+    def __init__(self, cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
-        super(UW_Cluster, self).__init__(cluster_file)
-        self.clusterCfg = super(UW_Cluster, self).getClusterCfg()
-
+        super(UW_Cluster, self).__init__(cluster_file, verbose)
 
 class AWS_Cluster(SGE_Cluster):
 
-    def __init__(self, cluster_file=None):
+    def __init__(self, cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
-        super(AWS_Cluster, self).__init__(cluster_file)
-        self.clusterCfg = super(AWS_Cluster, self).getClusterCfg()
+        super(AWS_Cluster, self).__init__(cluster_file, verbose)
 
     def submitJob(self, **kwargs):
         # currently, no email on aws
@@ -524,11 +562,11 @@ class AWS_Cluster(SGE_Cluster):
 class ClusterFactory(object):
 
     @staticmethod
-    def createCluster(cluster_type, cluster_file):
+    def createCluster(cluster_type, cluster_file, verbose):
         allSubClasses = getAllSubclasses(Cluster)
         for subclass in allSubClasses:
             if subclass.__name__ == cluster_type:
-                return subclass(cluster_file)
+                return subclass(cluster_file, verbose)
         raise Exception("unknown cluster type: " + cluster_type + "!")
 
 def getAllSubclasses(base):
