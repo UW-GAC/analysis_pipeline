@@ -42,13 +42,10 @@ getPhenotypes <- function(config) {
     }
 
     ## conditional variants
-    vars <- .parseParam(config["conditional_variants"])
-    if (!is.null(vars)) {
-        gdsfile <- insertChromString(config["gds_file"], config["conditional_chrom"])
-        pData(annot) <- left_join(pData(annot),
-                                  .genotypes(gdsfile, variant.id=vars, sample.id=sample.id),
-                                  by="sample.id")
-        covars <- c(covars, paste0("var_", vars))
+    if (!is.na(config["conditional_variant_file"])) {
+        vars <- .conditionalVariants(config, sample.id=sample.id)
+        pData(annot) <- left_join(pData(annot), vars, by="sample.id")
+        covars <- c(covars, names(vars)[-1])
     }
 
     cc <- annot$sample.id[complete.cases(pData(annot))]
@@ -102,6 +99,19 @@ addInvNorm <- function(annot, nullmod, outcome, covars) {
 }
 
 
+.conditionalVariants <- function(config, sample.id) {
+    dat <- getobj(config["conditional_variant_file"])
+    stopifnot(all(c("chromosome", "variant.id") %in% names(dat)))
+    geno <- do.call(cbind, lapply(unique(dat$chromosome), function(c) {
+        vars <- dat$variant.id[dat$chromosome == c]
+        gdsfile <- insertChromString(config["gds_file"], c)
+        .genotypes(gdsfile, variant.id=vars, sample.id=sample.id)
+    }))
+    colnames(geno) <- paste0("var_", colnames(geno))
+    data.frame(sample.id=rownames(geno), geno, row.names=1:nrow(geno), stringsAsFactors=FALSE)    
+}
+
+
 #' Return genotypes (alt dosage) for variants
 #'
 #' @param gdsfile Filename for GDS file
@@ -118,6 +128,5 @@ addInvNorm <- function(annot, nullmod, outcome, covars) {
     seqSetFilter(gds, variant.id=variant.id, sample.id=sample.id, verbose=FALSE)
     geno <- altDosage(gds)
     seqClose(gds)
-    colnames(geno) <- paste0("var_", colnames(geno))
-    data.frame(sample.id=rownames(geno), geno, row.names=1:nrow(geno), stringsAsFactors=FALSE)
+    geno
 }
