@@ -13,9 +13,11 @@ config <- readConfig(argv$config)
 required <- c("outcome",
               "pca_file",
               "phenotype_file")
-optional <- c("pcrelate_file"=NA,
+optional <- c("gds_file"=NA, # required for conditional variants
+              "pcrelate_file"=NA,
               "grm_file"=NA,
               "binary"=FALSE,
+              "conditional_variant_file"=NA,
               "covars"=NA,
               "group_var"=NA,
               "inverse_normal"=TRUE,
@@ -52,10 +54,14 @@ if (!is.na(config["group_var"])) {
 # kinship matrix or GRM
 grm <- getGRM(config, sample.id)
 
+# print model
+random <- if (!is.na(config["pcrelate_file"])) "kinship" else if (!is.na(config["grm_file"])) "GRM" else NULL
+model.string <- modelString(outcome, covars, random, group.var)
+message("Model: ", model.string)
+
 if (!is.null(grm)) {
     
     ## fit null model allowing heterogeneous variances among studies
-    message("Model: ", outcome, " ~ ", paste(c(covars, "(1|kinship)"), collapse=" + "))
     nullmod <- fitNullMM(annot, outcome=outcome, covars=covars,
                          covMatList=grm, scan.include=sample.id,
                          family=family, group.var=group.var)
@@ -91,7 +97,6 @@ if (!is.null(grm)) {
 } else {
     message("No kinship file specified, assuming samples are unrelated.")
 
-    message("Model: ", outcome, " ~ ", paste(covars, collapse=" + "))
     nullmod <- fitNullReg(annot, outcome=outcome, covars=covars,
                           scan.include=sample.id, family=family)
 
