@@ -29,7 +29,7 @@ optional <- c("alt_freq_range"="0 1",
               "test"="burden",
               "test_type"="score",
               "variant_include_file"=NA,
-              "weight_beta"="0.5 0.5",
+              "weight_beta"="1 1",
               "window_size"=50,
               "window_step"=20)
 config <- setConfigDefaults(config, required, optional)
