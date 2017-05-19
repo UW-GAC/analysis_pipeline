@@ -154,13 +154,13 @@ class Cluster(object):
         # get the standard cluster cfg
         pipePath = os.path.dirname(os.path.abspath(sys.argv[0]))
         self.clusterfile =  os.path.join(pipePath, "./cluster_cfg.json")
-        self.printVerbose("ClusterCtor", "Reading internal cfg file: " + self.clusterfile)
+        self.printVerbose("0>> ClusterCtor: Reading internal cfg file: " + self.clusterfile)
 
         with open(self.clusterfile) as cfgFileHandle:
             clusterCfg= json.load(cfgFileHandle)
         self.clusterCfg = clusterCfg["cluster_types"][self.class_name]
         if cluster_file != None:
-            self.printVerbose("ClusterCtor", "Reading user cfg file: " + self.clusterfile)
+            self.printVerbose("0>> ClusterCtor: Reading user cfg file: " + self.clusterfile)
 
             with open(cluster_file) as cfgFileHandle:
                 clusterCfg = json.load(cfgFileHandle)
@@ -179,12 +179,9 @@ class Cluster(object):
             memlim = memLimits[a[0]]
         return memlim
 
-    def printVerbose(self, prefix, message):
+    def printVerbose(self, message):
         if self.verbose:
-            dPrefix = ">>> debug"
-            if prefix != "":
-                dPrefix = dPrefix + "/" + prefix
-            print(dPrefix + ": " + message)
+            print(message)
 
 class AWS_Batch(Cluster):
 
@@ -218,41 +215,42 @@ class AWS_Batch(Cluster):
 
     def createDependsList(self, holdid):
         # holdid is either a single job id or a list of job ids (1 or more)
-        if  isinstance(holdid, str):
+        if  not isinstance(holdid, list):
             holdid = [ holdid ]
         # create a list of jobids that the job depends on
         depends_list = [ {'jobId': id} for id in holdid ]
 
-        self.printVerbose("createDependsList", "depends_list= " + str(depends_list))
-
         return depends_list
 
-    def getSyncJobs(self, depends_list, jName):
+    def submitSyncJobs(self, depends_list, jName):
         # submit sync jobs for each each set of 20 jobIDs and return jobids for
         # each sync job
         subIDs = []
-        self.printVerbose("getSyncJobs", "Job/depends_list: " + jName + "/" + str(depends_list))
+        self.printVerbose("2>> submitSyncJobs: job/depends_list: " + jName + "/" + str(depends_list))
         # set the synjobparams
-        self.syncOpts["parameters"]["hjn"] = [ d['jobId'] for d in depends_list ]
+        self.syncOpts["parameters"]["jids"] = str([ d['jobId'] for d in depends_list ])
         # submit sync job in batches of 20
         maxDepends = 20
         noDepends = len(depends_list)
-        noSyncJobs = int(math.ceil(noDepends/maxDepends)) + 1
+        noSyncJobs = int(math.ceil(noDepends/(maxDepends+1))) + 1
         noDependsLast = noDepends % maxDepends
         if noDependsLast == 0:
             noDependsLast = maxDepends
         if noSyncJobs > maxDepends:
             sys.exit("Error: Too many depend jobs (" + str(noDepends) + ").  Max number is " + str(maxDepends))
-        self.printVerbose("getSyncJobs", "no. holds/sync jobs: " + str(noDepends) + "/" + str(noSyncJobs))
+        self.printVerbose("2>>>> submitSyncJobs: No. holds/sync jobs/noLast: " + str(noDepends) + "/" + str(noSyncJobs) +
+                          "/" + str(noDependsLast))
 
         for sj in range(noSyncJobs):
             sIndex = sj*maxDepends
             lIndex = sIndex+maxDepends
             if sj == noSyncJobs - 1:
-                lIndex = noDependsLast
-
+                lIndex = sIndex+noDependsLast
+            jobName = 'sync_' + jName + '_' + str(sj)
+            self.printVerbose("2>>>> submitSyncJobs: Sumbitting sync job: " + jobName +
+                              " depend list[    " + str(sIndex) + "," + str(lIndex) + "] \n\t\t" + str(depends_list[sIndex:lIndex]))
             subid = self.batchC.submit_job(
-               jobName = 'sync_' + jName + '_' + str(sj),
+               jobName = jobName,
                jobQueue = self.syncOpts["submit_opts"]["queue"],
                jobDefinition = self.syncOpts["submit_opts"]["jobdef"],
                parameters = self.syncOpts["parameters"],
@@ -260,21 +258,22 @@ class AWS_Batch(Cluster):
             subIDs.append(subid)
         # get the job ids for the above sync jobs
         syncDepends_list = [{'jobId': d['jobId']} for d in subIDs]
-        self.printVerbose("getSyncJobs", "Sync depends list: " + str(syncDepends_list))
-
         # now sumbit a master sync job that waits for the other sync jobs
         # to complete;  just return one jobid that the caller can use
         masterParams = {'msg': 'master job completed', 'jids': jName}
+        jobName = 'Mastersync_' + jName
+        self.printVerbose("2>> submitSyncJobs: Sumbitting Mastersync job: " + jobName)
+
         subid = self.batchC.submit_job(
-           jobName = 'sync_' + jName + '_Master',
+           jobName = jobName,
            jobQueue = self.syncOpts["submit_opts"]["queue"],
            jobDefinition = self.syncOpts["submit_opts"]["jobdef"],
-           parameters = masterParameters,
+           parameters = masterParams,
            dependsOn = syncDepends_list)
-        masterDepend_list = [ {'jobId': jobid['jobId']} ]
-        self.printVerbose("getSyncJobs", "Master sync depend list (back to caller): " + str(masterDepend_list))
+        masterDepend_list = [ {'jobId': subid['jobId']} ]
+        self.printVerbose("2>> submitSyncJobs: returning Mastersync return job id list: " + str())
 
-        return masterDependList
+        return masterDepend_list
 
     def runCmd(self, job_name, cmd, logfile=None):
         # set rdriver
@@ -312,6 +311,7 @@ class AWS_Batch(Cluster):
             flog = open ( logfile, 'w' )
             sys.stderr = sys.stdout = flog
         # spawn
+        print("runCmd: executing " + sCmd)
         process = subprocess.Popen(sCmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
         status = process.wait()
 
@@ -326,6 +326,7 @@ class AWS_Batch(Cluster):
 
 
     def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None, print_only=False, **kwargs):
+        self.printVerbose("1>> submitJob: " + job_name + " beginning ...")
 
         # set the R driver and arguments (e.g., -s rcode cfg --chr cn)
         key = "rd"
@@ -343,7 +344,7 @@ class AWS_Batch(Cluster):
 
         # assign the log file
         key = "lf"
-        if key not in self.jobParams or self.jobParams[key] == "":
+        if key not in self.jobParams:
             t = str(int(time.time()))
             lfile = job_name + "_" + t + ".log"
             self.jobParams[key] = lfile
@@ -366,20 +367,22 @@ class AWS_Batch(Cluster):
             # with the current limit of jobs that a submitted job can depend upon (20),
             # we'll use of sync jobs to sync if we have more than 20 hold jobs
             if len(self.submitOpts["dependsOn"]) > 0:
-                depends_list = self.getSyncJobs(self.submitOpts["dependsOn"], job_name)
+                depends_list = self.submitSyncJobs(self.submitOpts["dependsOn"], job_name)
             else:
                 depends_list = self.submitOpts["dependsOn"]
 
             if array_range is not None:
-                self.printVerbose("submitJob", "array job - no. tasks: " + str(len(array_range)))
-
-                lf = self.defParams['lf']
+                lf = self.jobParams['lf']
                 air = [ int(i) for i in array_range.split( '-' ) ]
-                for t in range( air[0], air[1]+1 ):
+                taskList = range( air[0], air[1]+1 )
+                self.printVerbose("1>>>> submitJob: " + job_name + " is an array job - no. tasks: " + str(len(taskList)))
+                self.printVerbose("1>>>> submitJob: Submitting array jobs with depend list: " + str(depends_list))
+
+                for t in taskList:
                     # add an environmnent for equiv to taskid in sge
                     self.defEnv = [ { "name": "SGE_TASK_ID",
                                       "value": str(t) } ]
-                    self.defParams['lf'] = lf + '.' + str(t)
+                    self.jobParams['lf'] = lf + '.' + str(t)
                     # create a jobname based on the job_name submitted and the task id
                     subOut = self.batchC.submit_job(
                        jobName = job_name + "_" + str(t),
@@ -399,12 +402,13 @@ class AWS_Batch(Cluster):
                 # conver to depend list
                 arrayDepends_list = [ {'jobId': d['jobId']} for d in submitJobs]
                 # sumbit a sync job for the array
-                self.printVerbose("submitJob", "array job depends list: " + str(arrayDepends_list))
-
-                depends_list = self.getSyncJobs(arrayDepends_list, job_name+'_tasks'+array_range)
-                jobid = depends_list['jobId']
+                msJobName = job_name+'_tasks_'+array_range
+                self.printVerbose("1>>>> submitJob: Submitting Mastersync job " + msJobName +
+                                  " for array jobs")
+                depends_list = self.submitSyncJobs(arrayDepends_list, job_name+'_tasks'+array_range)
+                jobid = depends_list[0]['jobId']
             else:
-                self.printVerbose("submitJob", "single job " + job_name)
+                self.printVerbose("1>>>> submitJob: Submitting single job " + job_name + " with depend list: " + str(depends_list))
 
                 subOut = self.batchC.submit_job(
                    jobName = job_name,
@@ -439,7 +443,7 @@ class AWS_Batch(Cluster):
             # jids from batch is a dict of the form: { 'jobId': 'xxx-yyy', 'jobName': 'myjobName' }
 
         # return the job id (either from the single job or array job)
-        self.printVerbose("submitJob", "name: " + job_name + " returned jobid: " + jobid)
+        self.printVerbose("1>> submitJob: " + job_name + " returning jobid: " + jobid)
 
         return jobid
 
@@ -537,7 +541,7 @@ class SGE_Cluster(Cluster):
         pipe = process.stdout
         sub_out = pipe.readline()
         jobid = sub_out.split()[2].split('.')[0]
-        self.printVerbose("executeJobCmd", "Popen command: " + sub_out)
+        self.printVerbose("1>> executeJobCmd: Popen command: " + sub_out)
 
         return jobid
 

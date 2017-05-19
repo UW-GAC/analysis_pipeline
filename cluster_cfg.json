@@ -57,7 +57,7 @@
                     "--workdir": "",
                     "--dataroot": "/projects",
                     "--Debug": "1",
-                    "--mount": "\"mount -t nfs4 -o vers=4.1 172.255.44.97:/ /projects\""
+                    "--mount": "\"mount -t nfs4 -o vers=4.1 172.31.58.33:/ /projects\""
                 }
             }
         },

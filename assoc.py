@@ -143,7 +143,7 @@ segments = dict(zip(chrom_list, segment_str))
 
 
 # run association tests
-holdids_assoc = []
+holdids_combine = []
 for chromosome in chrom_list:
     job_assoc = assocScript + "_chr" + chromosome
     rscript = os.path.join(pipeline, "R", assocScript + ".R")
@@ -157,7 +157,7 @@ for chromosome in chrom_list:
     args = [rscript, configfile, "--chromosome " + chromosome]
     jobid = cluster.submitJob(job_name=job_comb, cmd=driver, args=args, holdid=jobid, email=email,
     print_only=print_only)
-    holdids_assoc.append(jobid)
+    holdids_combine.append(jobid)
 
 # plots
 job = "assoc_plots"
@@ -173,4 +173,16 @@ config["out_file_qq"] = configdict["out_prefix"] + "_qq.png"
 configfile = configdict["out_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdids_assoc, email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdids_combine, email=email, print_only=print_only)
+
+# analysis report
+job = "assoc_report"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+config = deepcopy(configdict)
+config["out_file"] = configdict["out_prefix"] + "_analysis_report"
+configfile = configdict["out_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
+
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=jobid, email=email, print_only=print_only)
