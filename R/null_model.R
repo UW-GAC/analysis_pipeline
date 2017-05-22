@@ -11,9 +11,9 @@ argv <- parse_args(argp)
 config <- readConfig(argv$config)
 
 required <- c("outcome",
-              "pca_file",
               "phenotype_file")
 optional <- c("gds_file"=NA, # required for conditional variants
+              "pca_file"=NA,
               "pcrelate_file"=NA,
               "grm_file"=NA,
               "binary"=FALSE,
