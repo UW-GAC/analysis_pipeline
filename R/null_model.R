@@ -28,7 +28,7 @@ optional <- c("gds_file"=NA, # required for conditional variants
               "sample_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
-writeConfig(config, paste0(argv$config, ".null_model.params"))
+writeConfig(config, paste0(basename(argv$config), ".null_model.params"))
 
 # get phenotypes
 phen <- getPhenotypes(config)

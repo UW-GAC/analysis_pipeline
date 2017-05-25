@@ -34,7 +34,7 @@ optional <- c("alt_freq_range"="0 1",
               "window_step"=20)
 config <- setConfigDefaults(config, required, optional)
 print(config)
-writeConfig(config, paste0(argv$config, ".assoc_window.params"))
+writeConfig(config, paste0(basename(argv$config), ".assoc_window.params"))
 
 ## gds file can have two parts split by chromosome identifier
 gdsfile <- config["gds_file"]
