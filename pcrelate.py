@@ -38,11 +38,17 @@ driver = os.path.join(pipeline, "runRscript.sh")
 jobid = dict()
     
 configdict = TopmedPipeline.readConfig(configfile)
+configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots"])
 
 
 job = "pcrelate"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
+
+config = deepcopy(configdict)
+config["out_prefix"] = configdict["data_prefix"]
+configfile = configdict["config_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
 
 jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], email=email, print_only=print_only)
 
@@ -52,15 +58,17 @@ job = "kinship_plots"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["kinship_file"] = configdict["out_prefix"] + "_pcrelate.gds"
+config["kinship_file"] = configdict["data_prefix"] + "_pcrelate.gds"
 config["kinship_method"] = "pcrelate"
-config["out_file_all"] = configdict["out_prefix"] + "_kinship_all.pdf"
-config["out_file_cross"] = configdict["out_prefix"] + "_kinship_cross.pdf"
-config["out_file_study"] = configdict["out_prefix"] + "_kinship_study.pdf"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+config["out_file_all"] = configdict["plots_prefix"] + "_kinship_all.pdf"
+config["out_file_cross"] = configdict["plots_prefix"] + "_kinship_cross.pdf"
+config["out_file_study"] = configdict["plots_prefix"] + "_kinship_study.pdf"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["pcrelate"]]
 
 jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, print_only=print_only)
 
+
+cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=[jobid["kinship_plots"]], print_only=print_only)
