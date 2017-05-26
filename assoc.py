@@ -123,7 +123,7 @@ if n_segments is not None:
     args = [driver, rscript, configfile, "--n_segments " + n_segments]
 else:
     args = [driver, rscript, configfile, "--segment_length " + segment_length]
-#subprocess.check_call(args, stdout=log_file, stderr=log_file)
+subprocess.check_call(args, stdout=log_file, stderr=log_file)
 log_file.close()
 
 
