@@ -29,10 +29,10 @@ optional <- c("alt_freq_range"="0 1",
               "test"="burden",
               "test_type"="score",
               "variant_include_file"=NA,
-              "weight_beta"="0.5 0.5")
+              "weight_beta"="1 1")
 config <- setConfigDefaults(config, required, optional)
 print(config)
-writeConfig(config, paste0(argv$config, ".assoc_aggregate.params"))
+writeConfig(config, paste0(basename(argv$config), ".assoc_aggregate.params"))
 
 ## gds file can have two parts split by chromosome identifier
 gdsfile <- config["gds_file"]

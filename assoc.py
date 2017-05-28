@@ -53,6 +53,8 @@ pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
 driver = os.path.join(pipeline, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
+configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots", "report"])
+
 
 # check type of association test - single-variant unrelated is handled differently
 no_pcrel = "pcrelate_file" not in configdict or configdict["pcrelate_file"] == "NA"
@@ -68,8 +70,8 @@ if not single_unrel:
     rscript = os.path.join(pipeline, "R", job + ".R")
 
     config = deepcopy(configdict)
-    config["out_file"] = configdict["out_prefix"] + "_null_model.RData"
-    configfile = configdict["out_prefix"] + "_" + job + ".config"
+    config["out_file"] = configdict["data_prefix"] + "_null_model.RData"
+    configfile = configdict["config_prefix"] + "_" + job + ".config"
     TopmedPipeline.writeConfig(config, configfile)
 
     jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], email=email, print_only=print_only)
@@ -88,8 +90,8 @@ if assoc_type == "aggregate":
     rscript = os.path.join(pipeline, "R", job + ".R")
 
     config = deepcopy(configdict)
-    config["out_file"] = configdict["out_prefix"] + "_" + job + "_chr .RData"
-    configfile = configdict["out_prefix"] + "_" + job + ".config"
+    config["out_file"] = configdict["data_prefix"] + "_" + job + "_chr .RData"
+    configfile = configdict["config_prefix"] + "_" + job + ".config"
     TopmedPipeline.writeConfig(config, configfile)
 
     jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], array_range=chromosomes, email=email, print_only=print_only)
@@ -101,8 +103,8 @@ job = "define_segments"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["out_file"] = configdict["out_prefix"] + "_segments.txt"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+config["out_file"] = configdict["config_prefix"] + "_segments.txt"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 segment_file = config["out_file"]
@@ -126,12 +128,12 @@ cluster.runCmd(job_name=job, cmd=cmd, logfile=log_file)
 # set up config for association test
 config = deepcopy(configdict)
 config["assoc_type"] = assoc_type
-config["null_model_file"] = configdict["out_prefix"] + "_null_model.RData"
+config["null_model_file"] = configdict["data_prefix"] + "_null_model.RData"
 if assoc_type == "aggregate":
-    config["aggregate_variant_file"] = configdict["out_prefix"] + "_aggregate_list_chr .RData"
-config["out_prefix"] = configdict["out_prefix"] + "_" + assocScript
+    config["aggregate_variant_file"] = configdict["data_prefix"] + "_aggregate_list_chr .RData"
+config["out_prefix"] = configdict["data_prefix"] + "_" + assocScript
 config["segment_file"] = segment_file
-configfile = configdict["out_prefix"] + "_" + assocScript + ".config"
+configfile = configdict["config_prefix"] + "_" + assocScript + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 
@@ -165,12 +167,12 @@ job = "assoc_plots"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["assoc_file"] = configdict["out_prefix"] + "_" + assocScript + "_chr .RData"
+config["assoc_file"] = configdict["data_prefix"] + "_" + assocScript + "_chr .RData"
 config["assoc_type"] = assoc_type
 config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
-config["out_file_manh"] = configdict["out_prefix"] + "_manh.png"
-config["out_file_qq"] = configdict["out_prefix"] + "_qq.png"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+config["out_file_manh"] = configdict["plots_prefix"] + "_manh.png"
+config["out_file_qq"] = configdict["plots_prefix"] + "_qq.png"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdids_combine, email=email, print_only=print_only)
@@ -182,7 +184,9 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
 config["out_file"] = configdict["out_prefix"] + "_analysis_report"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=jobid, email=email, print_only=print_only)
+
+cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=jobid, print_only=print_only)

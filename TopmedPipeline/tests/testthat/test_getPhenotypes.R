@@ -1,6 +1,8 @@
 context("getPhenotype tests")
 library(splines)
 library(Biobase)
+library(SeqArray)
+library(gdsfmt)
 
 .testConfig <- function(covars, n_pcs) {
     n <- 100
@@ -106,4 +108,73 @@ test_that("fewer samples with pcs", {
     expect_true(all(is.na(phen$annot$PC1[!(phen$annot$sample.id %in% keep)])))
 
     .cleanupConfig(config)
+})
+
+test_that("parseParam", {
+    expect_null(.parseParam(NA))
+    expect_equal(.parseParam("a"), "a")
+    expect_equal(.parseParam("a b c"), c("a", "b", "c"))
+})
+
+test_that("genotypes", {
+    showfile.gds(closeall=TRUE, verbose=FALSE)
+    gdsfile <- seqExampleFileName("gds")
+    variant.id <- sample(1:100, 2)
+    geno <- .genotypes(gdsfile, variant.id)
+    expect_true(is(geno, "matrix"))
+    expect_equal(colnames(geno), as.character(sort(variant.id)))
+})
+
+.testConditionalConfig <- function(gdsfile, nchr=1, nvar=3) {
+    showfile.gds(closeall=TRUE, verbose=FALSE)
+    gdsfile <- seqExampleFileName("gds")
+    gds <- seqOpen(gdsfile)
+    dat <- data.frame(variant.id=seqGetData(gds, "variant.id"),
+                      chromosome=seqGetData(gds, "chromosome"),
+                      stringsAsFactors=FALSE)
+    seqClose(gds)
+    chr <- sample(unique(dat$chromosome), nchr)
+    dat <- dat[dat$chromosome %in% chr,]
+    dat <- dat[sample(1:nrow(dat), nvar),]
+    cvfile <- tempfile()
+    save(dat, file=cvfile)
+    if (nchr > 1) {
+        gdsfile <-  file.path(tempdir(), "tmp .gds")
+        for (c in chr) {
+            invisible(file.copy(seqExampleFileName("gds"), paste0(tempdir(), "/tmp", c, ".gds")))
+        }
+    }
+    c(gds_file=gdsfile,
+      phenotype_file=system.file("data", "sample_annotation.RData", package="TopmedPipeline"),
+      conditional_variant_file=cvfile,
+      n_pcs=0,
+      outcome="outcome",
+      covars="sex",
+      sample_include_file=NA)
+}
+
+.cleanupConditionalConfig <- function(config) {
+    unlink(config["conditional_variant_file"])
+    unlink(file.path(tempdir(), "/tmp*.gds"))
+}
+    
+
+test_that("conditional variants", {
+    config <- .testConditionalConfig(seqExampleFileName("gds"), nchr=1, nvar=3)
+    phen <- getPhenotypes(config)
+    cv <- getobj(config["conditional_variant_file"])
+    vars <- paste0("var_", cv$variant.id)
+    expect_true(all(vars %in% varLabels(phen$annot)))
+    expect_true(all(vars %in% phen$covars))
+    .cleanupConditionalConfig(config)
+})
+
+test_that("conditional chroms", {
+    config <- .testConditionalConfig(seqExampleFileName("gds"), nchr=2, nvar=5)
+    phen <- getPhenotypes(config)
+    cv <- getobj(config["conditional_variant_file"])
+    vars <- paste0("var_", cv$variant.id)
+    expect_true(all(vars %in% varLabels(phen$annot)))
+    expect_true(all(vars %in% phen$covars))
+    .cleanupConditionalConfig(config)
 })

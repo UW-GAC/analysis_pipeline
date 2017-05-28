@@ -175,9 +175,9 @@ config parameter | default value | description
 --- | --- | ---
 `out_prefix` | | Prefix for files created by this script.
 `gds_file` | | GDS file. Include a space to insert chromosome.
-`pca_file` | | RData file with PCA results created by `pcair.py`.
+`pca_file` | `NA` | RData file with PCA results created by `pcair.py`.
 `pcrelate_file` | `NA` | GDS file created by `pcrelate.py`. 
-`grm_file` | `NA` | RData file with GRM created by `SNPRelate::snpgdsGRM`.
+`grm_file` | `NA` | RData file with GRM created by `grm.py`.
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes.
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
@@ -187,6 +187,7 @@ config parameter | default value | description
 `rescale_variance` | `TRUE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
 `resid_covars` | `TRUE` | Applies only if `inverse_normal` is `TRUE`. Logical for whether covariates should be included in the second null model using the residuals as the outcome variable.
 `n_pcs` | `3` | Number of PCs to include as covariates.
+`conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` and `variant.id`. The alternate allele dosage of these variants will be included as covariates in the analysis.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 `variant_include_file` | `NA` | RData file with vector of variant.id to include.
 `genome_build` | `hg19` | Genome build for the genotypes in the GDS file. Used to divide the genome into segments for parallel processing.
@@ -221,7 +222,7 @@ config parameter | default value | description
 `test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` and `firth` if `binary` is `TRUE`. `firth` is only valid if samples are unrelated (`pcrelate_file` is `NA`).
 `pval_skat` | `kuonen` | Method used to calculate p-values if `test` is `skat`. Options are `kuonen` (uses saddlepoint method), `davies` (uses numerical integration), and `liu` (uses a moment matching approximation).
 `rho` | `0` | A numeric value (or quoted, space-delimited list of numeric values) in [0,1] specifying the rho parameter when `test` is `skat`. `0` is a standard SKAT test, `1` is a score burden test, and multiple values is a SKAT-O test.
-`weight_beta` | `"0.5 0.5"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"0.5 0.5"` is proportional to the Madsen-Browning weights and `"1 25"` gives the Wu weights.
+`weight_beta` | `"1 1"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"1 1"` is flat weights, `"0.5 0.5"` is proportional to the Madsen-Browning weights, and `"1 25"` gives the Wu weights.
 
 
 ### Aggregate

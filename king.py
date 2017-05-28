@@ -47,6 +47,7 @@ driver = os.path.join(pipeline, "runRscript.sh")
 jobid = dict()
     
 configdict = TopmedPipeline.readConfig(configfile)
+configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots"])
 
 
 job = "ld_pruning"
@@ -54,8 +55,8 @@ job = "ld_pruning"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["out_file"] = configdict["out_prefix"] + "_pruned_variants_chr .RData"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+config["out_file"] = configdict["data_prefix"] + "_pruned_variants_chr .RData"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], array_range=chromosomes, email=email, print_only=print_only)
@@ -67,9 +68,9 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = dict()
 config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
-config["in_file"] = configdict["out_prefix"] + "_pruned_variants_chr .RData"
-config["out_file"] = configdict["out_prefix"] + "_pruned_variants.RData"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+config["in_file"] = configdict["data_prefix"] + "_pruned_variants_chr .RData"
+config["out_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["ld_pruning"]]
@@ -82,9 +83,9 @@ job = "ibd_king"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["variant_include_file"] = configdict["out_prefix"] + "_pruned_variants.RData"
-config["out_file"] = configdict["out_prefix"] + "_ibd_king.RData"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+config["variant_include_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
+config["out_file"] = configdict["data_prefix"] + "_ibd_king.RData"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["combine_variants"]]
@@ -97,14 +98,17 @@ job = "kinship_plots"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["kinship_file"] = configdict["out_prefix"] + "_ibd_king.RData"
+config["kinship_file"] = configdict["data_prefix"] + "_ibd_king.RData"
 config["kinship_method"] = "king"
-config["out_file_all"] = configdict["out_prefix"] + "_kinship_all.pdf"
-config["out_file_cross"] = configdict["out_prefix"] + "_kinship_cross.pdf"
-config["out_file_study"] = configdict["out_prefix"] + "_kinship_study.pdf"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+config["out_file_all"] = configdict["plots_prefix"] + "_kinship_all.pdf"
+config["out_file_cross"] = configdict["plots_prefix"] + "_kinship_cross.pdf"
+config["out_file_study"] = configdict["plots_prefix"] + "_kinship_study.pdf"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["ibd_king"]]
 
 jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, print_only=print_only)
+
+
+cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=[jobid["kinship_plots"]], print_only=print_only)

@@ -48,6 +48,7 @@ driver = os.path.join(pipeline, "runRscript.sh")
 jobid = dict()
     
 configdict = TopmedPipeline.readConfig(configfile)
+configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "log"])
 
 
 job = "vcf2gds"
@@ -66,7 +67,7 @@ job = "merge_gds"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 configdict["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(configdict, configfile)
 
 holdid = [jobid["vcf2gds"]]
@@ -81,3 +82,6 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 holdid = [jobid["merge_gds"]]
 
 jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, print_only=print_only)
+
+
+cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=jobid["unique_variant_ids"], print_only=print_only)

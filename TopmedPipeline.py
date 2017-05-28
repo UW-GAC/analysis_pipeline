@@ -1,5 +1,6 @@
 """Utility functions for TOPMed pipeline"""
 
+import os
 import sys
 import csv
 import subprocess
@@ -143,6 +144,14 @@ def stringToDict(s):
     ss = s.split()
     d = dict(zip(ss[0::2], ss[1::2]))
     return d
+
+def directorySetup(config, subdirs=["config", "data", "log", "plots", "report"]):
+    for d in subdirs:
+        if not os.path.exists(d):
+            os.mkdir(d)
+        config[d + "_prefix"] = os.path.join(d, config["out_prefix"])
+
+    return config
 
 # parent class to represent a compute cluster environment
 class Cluster(object):

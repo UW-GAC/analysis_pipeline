@@ -48,6 +48,7 @@ driver = os.path.join(pipeline, "runRscript.sh")
 jobid = dict()
     
 configdict = TopmedPipeline.readConfig(configfile)
+configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots"])
 
 
 job = "find_unrelated"
@@ -55,9 +56,9 @@ job = "find_unrelated"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["out_related_file"] = configdict["out_prefix"] + "_related.RData"
-config["out_unrelated_file"] = configdict["out_prefix"] + "_unrelated.RData"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+config["out_related_file"] = configdict["data_prefix"] + "_related.RData"
+config["out_unrelated_file"] = configdict["data_prefix"] + "_unrelated.RData"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 opts = cluster.memoryOptions(job)
@@ -70,9 +71,9 @@ job = "ld_pruning"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["sample_include_file"] = configdict["out_prefix"] + "_unrelated.RData"
-config["out_file"] = configdict["out_prefix"] + "_pruned_variants_chr .RData"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+config["sample_include_file"] = configdict["data_prefix"] + "_unrelated.RData"
+config["out_file"] = configdict["data_prefix"] + "_pruned_variants_chr .RData"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["find_unrelated"]]
@@ -88,9 +89,9 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = dict()
 config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
-config["in_file"] = configdict["out_prefix"] + "_pruned_variants_chr .RData"
-config["out_file"] = configdict["out_prefix"] + "_pruned_variants.RData"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+config["in_file"] = configdict["data_prefix"] + "_pruned_variants_chr .RData"
+config["out_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["ld_pruning"]]
@@ -105,12 +106,12 @@ job = "pca_byrel"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["related_file"] = configdict["out_prefix"] + "_related.RData"
-config["unrelated_file"] = configdict["out_prefix"] + "_unrelated.RData"
-config["variant_include_file"] = configdict["out_prefix"] + "_pruned_variants.RData"
-config["out_file"] = configdict["out_prefix"] + "_pcair.RData"
-config["out_file_unrel"] = configdict["out_prefix"] + "_pcair_unrel.RData"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+config["related_file"] = configdict["data_prefix"] + "_related.RData"
+config["unrelated_file"] = configdict["data_prefix"] + "_unrelated.RData"
+config["variant_include_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
+config["out_file"] = configdict["data_prefix"] + "_pcair.RData"
+config["out_file_unrel"] = configdict["data_prefix"] + "_pcair_unrel.RData"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["combine_variants"]]
@@ -125,12 +126,12 @@ job = "pca_plots"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["pca_file"] = configdict["out_prefix"] + "_pcair.RData"
-config["out_file_scree"] = configdict["out_prefix"] + "_pca_scree.pdf"
-config["out_file_pc12"] = configdict["out_prefix"] + "_pca_pc12.pdf"
-config["out_file_parcoord"] = configdict["out_prefix"] + "_pca_parcoord.pdf"
-config["out_file_pairs"] = configdict["out_prefix"] + "_pca_pairs.png"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+config["pca_file"] = configdict["data_prefix"] + "_pcair.RData"
+config["out_file_scree"] = configdict["plots_prefix"] + "_pca_scree.pdf"
+config["out_file_pc12"] = configdict["plots_prefix"] + "_pca_pc12.pdf"
+config["out_file_parcoord"] = configdict["plots_prefix"] + "_pca_parcoord.pdf"
+config["out_file_pairs"] = configdict["plots_prefix"] + "_pca_pairs.png"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["pca_byrel"]]
@@ -145,9 +146,9 @@ job = "pca_corr"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["pca_file"] = configdict["out_prefix"] + "_pcair_unrel.RData"
-config["out_file"] = configdict["out_prefix"] + "_pcair_corr_chr .RData"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+config["pca_file"] = configdict["data_prefix"] + "_pcair_unrel.RData"
+config["out_file"] = configdict["data_prefix"] + "_pcair_corr_chr .RData"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["pca_byrel"]]
@@ -164,9 +165,9 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
 config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
-config["corr_file"] = configdict["out_prefix"] + "_pcair_corr_chr .RData"
-config["out_prefix"] = configdict["out_prefix"] + "_pcair_corr"
-configfile = configdict["out_prefix"] + "_" + job + ".config"
+config["corr_file"] = configdict["data_prefix"] + "_pcair_corr_chr .RData"
+config["out_prefix"] = configdict["plots_prefix"] + "_pcair_corr"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 holdid = [jobid["pca_corr"]]
@@ -174,3 +175,6 @@ holdid = [jobid["pca_corr"]]
 opts = cluster.memoryOptions(job)
 
 jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, opts=opts, print_only=print_only)
+
+
+cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=[jobid["pca_plots"], jobid["pca_corr_plots"]], print_only=print_only)
