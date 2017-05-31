@@ -24,14 +24,16 @@ parser.add_argument("--segment_length", default="10000",
                     help="segment length in kb [default %(default)s]")
 parser.add_argument("--n_segments", default=None,
                     help="number of segments for the entire genome (overrides segment_length)")
-parser.add_argument("--cluster_type", default="uw", 
+parser.add_argument("--cluster_type", default="UW_Cluster",
                     help="type of compute cluster environment [default %(default)s]")
-parser.add_argument("--cluster_file", default=None, 
-                    help="file containing options to pass to the cluster (sge_request format)")
+parser.add_argument("--cluster_file", default=None,
+                    help="json file containing cluster options")
 parser.add_argument("-e", "--email", default=None,
                     help="email address for job reporting")
 parser.add_argument("--print_only", action="store_true", default=False,
                     help="print qsub commands without submitting")
+parser.add_argument("--verbose", action="store_true", default=False,
+                    help="enable verbose output to help debug")
 args = parser.parse_args()
 
 assoc_type = args.assoc_type
@@ -43,15 +45,13 @@ cluster_file = args.cluster_file
 cluster_type = args.cluster_type
 email = args.email
 print_only = args.print_only
+verbose = args.verbose
 
-opts = TopmedPipeline.getOptions(cluster_file)
-cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type=cluster_type, options=opts)
+cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
 driver = os.path.join(pipeline, "runRscript.sh")
 
-jobid = dict()
-    
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots", "report"])
 
@@ -61,6 +61,7 @@ no_pcrel = "pcrelate_file" not in configdict or configdict["pcrelate_file"] == "
 no_grm = "grm_file" not in configdict or configdict["grm_file"] == "NA"
 single_unrel = assoc_type == "single" and no_pcrel and no_grm
 
+holdids = []
 
 # null model
 if not single_unrel:
@@ -73,23 +74,19 @@ if not single_unrel:
     configfile = configdict["config_prefix"] + "_" + job + ".config"
     TopmedPipeline.writeConfig(config, configfile)
 
-    opts = cluster.memoryOptions(job)
+    jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], email=email, print_only=print_only)
 
-    jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], email=email, opts=opts, print_only=print_only)
-
-
-    holdid = [jobid["null_model"]]
+    holdids.append(jobid)
     assocScript = "assoc_" + assoc_type
 
 else:
-    holdid = []
     assocScript = "assoc_single_unrel"
 
 
 # for aggregate tests, generate variant list
 if assoc_type == "aggregate":
     job = "aggregate_list"
-   
+
     rscript = os.path.join(pipeline, "R", job + ".R")
 
     config = deepcopy(configdict)
@@ -97,13 +94,9 @@ if assoc_type == "aggregate":
     configfile = configdict["config_prefix"] + "_" + job + ".config"
     TopmedPipeline.writeConfig(config, configfile)
 
-    opts = cluster.memoryOptions(job)
+    jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], array_range=chromosomes, email=email, print_only=print_only)
+    holdids.append(jobid)
 
-    jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], array_range=chromosomes, email=email, opts=opts, print_only=print_only)
-
-    holdid.append(jobid["aggregate_list"])
-
-    
 # define segments
 job = "define_segments"
 
@@ -113,19 +106,24 @@ config = deepcopy(configdict)
 config["out_file"] = configdict["config_prefix"] + "_segments.txt"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
-    
+
 segment_file = config["out_file"]
 
 # run and wait for results
 print "Defining segments..."
-log_file = open(job + "_" + strftime("%Y-%m-%d-%H-%M-%S", localtime()) + ".log", 'w')
+#log_file = open(job + "_" + strftime("%Y-%m-%d-%H-%M-%S", localtime()) + ".log", 'w')
+#if n_segments is not None:
+#    args = [driver, rscript, configfile, "--n_segments " + n_segments]
+#else:
+#    args = [driver, rscript, configfile, "--segment_length " + segment_length]
+#subprocess.check_call(args, stdout=log_file, stderr=log_file)
+#log_file.close()
+log_file = job + "_" + strftime("%Y-%m-%d-%H-%M-%S", localtime()) + ".log"
 if n_segments is not None:
-    args = [driver, rscript, configfile, "--n_segments " + n_segments]
+    cmd = [driver, rscript, configfile, "--n_segments " + n_segments]
 else:
-    args = [driver, rscript, configfile, "--segment_length " + segment_length]
-subprocess.check_call(args, stdout=log_file, stderr=log_file)
-log_file.close()
-
+    cmd = [driver, rscript, configfile, "--segment_length " + segment_length]
+cluster.runCmd(job_name=job, cmd=cmd, logfile=log_file)
 
 # set up config for association test
 config = deepcopy(configdict)
@@ -147,25 +145,21 @@ segments = dict(zip(chrom_list, segment_str))
 
 
 # run association tests
-jobid_chrom = dict()
+holdids_combine = []
 for chromosome in chrom_list:
     job_assoc = assocScript + "_chr" + chromosome
     rscript = os.path.join(pipeline, "R", assocScript + ".R")
     args = ["-s", rscript, configfile, "--chromosome " + chromosome]
-    opts = cluster.memoryOptions("assoc")
     # no email for jobs by segment
-    jobid[job_assoc] = cluster.submitJob(job_name=job_assoc, cmd=driver, args=args, holdid=holdid, array_range=segments[chromosome], opts=opts, print_only=print_only)
+    jobid = cluster.submitJob(job_name=job_assoc, cmd=driver, args=args, holdid=holdids, array_range=segments[chromosome], print_only=print_only)
 
     combScript = "assoc_combine"
     job_comb = combScript + "_chr" + chromosome
     rscript = os.path.join(pipeline, "R", combScript + ".R")
     args = [rscript, configfile, "--chromosome " + chromosome]
-    opts = cluster.memoryOptions("assoc_combine")
-    holdid_comb = [jobid[job_assoc].split(".")[0]]
-    jobid_chrom[job_comb] = cluster.submitJob(job_name=job_comb, cmd=driver, args=args, holdid=holdid_comb, email=email, opts=opts, print_only=print_only)
-    
-jobid.update(jobid_chrom)
-
+    jobid = cluster.submitJob(job_name=job_comb, cmd=driver, args=args, holdid=jobid, email=email,
+    print_only=print_only)
+    holdids_combine.append(jobid)
 
 # plots
 job = "assoc_plots"
@@ -181,12 +175,7 @@ config["out_file_qq"] = configdict["plots_prefix"] + "_qq.png"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-holdid = jobid_chrom.values()
-
-opts = cluster.memoryOptions(job)
-
-jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, opts=opts, print_only=print_only)
-
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdids_combine, email=email, print_only=print_only)
 
 # analysis report
 job = "assoc_report"
@@ -198,9 +187,6 @@ config["out_file"] = configdict["out_prefix"] + "_analysis_report"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-holdid = [jobid["assoc_plots"]]
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=jobid, email=email, print_only=print_only)
 
-jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, print_only=print_only)
-
-
-cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=[jobid["assoc_report"]], print_only=print_only)
+cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=jobid, print_only=print_only)

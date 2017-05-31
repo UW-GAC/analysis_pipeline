@@ -1,0 +1,20 @@
+{
+    "name": "cluster_config",
+    "version": "1",
+    "cluster_types": {
+        "AWS_Batch": {
+            "job_opts": {
+                "rd": "/projects/topmed/dev_code/analysis_pipeline/runRscript.sh"
+            },
+            "submit_opts": {
+                "queue": "HiPriority"
+            }
+        },
+        "AWS_Cluster": {
+            "job_opts": {
+                "-q":"olga.q"
+            }
+        }
+
+    }
+}
