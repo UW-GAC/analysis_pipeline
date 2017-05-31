@@ -19,7 +19,8 @@
                 "memory": 8000,
                 "region": "us-east-1",
                 "dependsOn": [],
-                "env": []
+                "env": [],
+                "command": []
             },
             "memory_limits": {
                 "find_unrelated":3.5,
@@ -69,8 +70,10 @@
                 "-j":"y",
                 "-q":"olga.q",
                 "-S":"/bin/bash",
+                "-terse":"",
                 "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"
             },
+            "parallel_env": "local",
             "memory_limits": {
 
             }
@@ -83,8 +86,10 @@
                 "-j":"y",
                 "-q":"all.q",
                 "-S":"/bin/bash",
+                "-terse":"",
                 "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"
             },
+            "parallel_env": "local",
             "memory_limits": {
                 "find_unrelated":3.5,
                 "ld_pruning":11000,

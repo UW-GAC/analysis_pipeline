@@ -27,7 +27,7 @@ parser.add_argument("--n_segments", default=None,
 parser.add_argument("--cluster_type", default="UW_Cluster",
                     help="type of compute cluster environment [default %(default)s]")
 parser.add_argument("--cluster_file", default=None,
-                    help="file containing options to pass to the cluster (sge_request format)")
+                    help="json file containing cluster options")
 parser.add_argument("-e", "--email", default=None,
                     help="email address for job reporting")
 parser.add_argument("--print_only", action="store_true", default=False,
