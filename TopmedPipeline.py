@@ -285,33 +285,34 @@ class AWS_Batch(Cluster):
         return masterDepend_list
 
     def runCmd(self, job_name, cmd, logfile=None):
+        runCmdOpts = deepcopy(self.runCmdOpts)
         # set rdriver
         key = "--rdriver"
-        if key not in self.runCmdOpts["params"].keys() or self.runCmdOpts["params"][key] == "":
+        if key not in runCmdOpts["params"].keys() or runCmdOpts["params"][key] == "":
             # if use pipelinePath from cfg if defined
             pipelinePath = os.path.dirname(os.path.abspath(cmd[0]))
             baseName = os.path.basename(cmd[0])
             if self.pipelinePath != "":
                 pipelinePath = self.pipelinePath
-            self.runCmdOpts["params"][key] = os.path.join(pipelinePath, baseName)
+            runCmdOpts["params"][key] = os.path.join(pipelinePath, baseName)
 
         # set rargs
         key = "--rargs"
-        if key not in self.runCmdOpts["params"].keys() or self.runCmdOpts["params"][key] == "":
+        if key not in runCmdOpts["params"].keys() or runCmdOpts["params"][key] == "":
             cs = " ".join(cmd[1:])
             qcs = '"' + cs + '"'
-            self.runCmdOpts["params"][key] = qcs
+            runCmdOpts["params"][key] = qcs
 
         # working directory
         key = "--workdir"
-        if key not in self.runCmdOpts["params"].keys() or self.runCmdOpts["params"][key] == "":
-            self.runCmdOpts["params"][key] = self.jobParams['wd']
+        if key not in runCmdOpts["params"].keys() or runCmdOpts["params"][key] == "":
+            runCmdOpts["params"][key] = self.jobParams['wd']
 
         # convert params dict to key-value pair
-        sCmdArgs = " ".join([" ".join([key, str(val)]) for key, val in self.runCmdOpts["params"].items()])
+        sCmdArgs = " ".join([" ".join([key, str(val)]) for key, val in runCmdOpts["params"].items()])
 
         # create the cmd to spawn
-        sCmd = " ".join([self.runCmdOpts["cmd"], sCmdArgs])
+        sCmd = " ".join([runCmdOpts["cmd"], sCmdArgs])
 
         # redirect stdout/stderr
         if logfile != None:
@@ -336,27 +337,27 @@ class AWS_Batch(Cluster):
 
     def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None, print_only=False, **kwargs):
         self.printVerbose("1>> submitJob: " + job_name + " beginning ...")
-
+        jobParams = deepcopy(self.jobParams)
+        submitOpts = deepcopy(self.submitOpts)
+        pipelinePath = self.pipelinePath
         # set the R driver and arguments (e.g., -s rcode cfg --chr cn)
         key = "rd"
-        # if use pipelinePath from cfg if defined
-        pipelinePath = os.path.dirname(os.path.abspath(cmd))
+        # if pipeline path not defined in cfg, then use path from cmd
+        if pipelinePath == "":
+            pipelinePath = os.path.dirname(os.path.abspath(cmd))
         baseName = os.path.basename(cmd)
-        if self.pipelinePath != "":
-            pipelinePath = self.pipelinePath
-        self.jobParams[key] = os.path.join(pipelinePath, baseName)
+        jobParams[key] = os.path.join(pipelinePath, baseName)
 
         key = "ra"
         if args is None:
             args = []
-        self.jobParams[key] = " ".join(args)
+        jobParams[key] = " ".join(args)
 
         # assign the log file
         key = "lf"
-        if key not in self.jobParams:
-            t = str(int(time.time()))
-            lfile = job_name + "_" + t + ".log"
-            self.jobParams[key] = lfile
+        t = str(int(time.time()))
+        lfile = job_name + "_" + t + ".log"
+        jobParams[key] = lfile
 
         # get memory limit option
         key = "memory_limits"
@@ -364,11 +365,11 @@ class AWS_Batch(Cluster):
             # get the memory limits
             memlim = super(AWS_Batch, self).memoryLimit(self.clusterCfg[key], job_name)
             if memlim != None:
-                self.submitOpts["memory"] = memlim
+                submitOpts["memory"] = memlim
 
         # holdid is a list of a list of jid dictionaries ([{'jobId': 'jobid string'}, ... ])
         if holdid is not None:
-            self.submitOpts["dependsOn"] = self.createDependsList(holdid)
+            submitOpts["dependsOn"] = self.createDependsList(holdid)
 
         # if we're doing a job array equivalent submit multiple jobs; else just submit one job
         submitJobs = []
@@ -376,12 +377,12 @@ class AWS_Batch(Cluster):
             # with the current limit of jobs that a submitted job can depend upon (20),
             # we'll use of sync jobs to sync if we have more than 20 hold jobs
             if len(self.submitOpts["dependsOn"]) > 0:
-                depends_list = self.submitSyncJobs(self.submitOpts["dependsOn"], job_name)
+                depends_list = self.submitSyncJobs(submitOpts["dependsOn"], job_name)
             else:
-                depends_list = self.submitOpts["dependsOn"]
+                depends_list = submitOpts["dependsOn"]
 
             if array_range is not None:
-                lf = self.jobParams['lf']
+                lf = jobParams['lf']
                 air = [ int(i) for i in array_range.split( '-' ) ]
                 taskList = range( air[0], air[1]+1 )
                 self.printVerbose("1>>>> submitJob: " + job_name + " is an array job - no. tasks: " + str(len(taskList)))
@@ -389,20 +390,20 @@ class AWS_Batch(Cluster):
 
                 for t in taskList:
                     # add an environmnent for equiv to taskid in sge
-                    self.defEnv = [ { "name": "SGE_TASK_ID",
-                                      "value": str(t) } ]
-                    self.jobParams['lf'] = lf + '.' + str(t)
+                    submitOpts["env"] = [ { "name": "SGE_TASK_ID",
+                                            "value": str(t) } ]
+                    jobParams['lf'] = lf + '.' + str(t)
                     # create a jobname based on the job_name submitted and the task id
                     subOut = self.batchC.submit_job(
                        jobName = job_name + "_" + str(t),
-                       jobQueue = self.submitOpts["queue"],
-                       jobDefinition = self.submitOpts["jobdef"],
-                       parameters = self.jobParams,
+                       jobQueue = submitOpts["queue"],
+                       jobDefinition = submitOpts["jobdef"],
+                       parameters = jobParams,
                        dependsOn = depends_list,
                        containerOverrides = {
-                          "vcpus": self.submitOpts["vcpus"],
-                          "memory": self.submitOpts["memory"],
-                          "environment": self.submitOpts["env"]
+                          "vcpus": submitOpts["vcpus"],
+                          "memory": submitOpts["memory"],
+                          "environment": submitOpts["env"]
                        }
                     )
                     # return from batch submit_job is a dict of the form: { 'jobId': 'xxx-yyy', 'jobName': 'myjobName' },
@@ -421,30 +422,30 @@ class AWS_Batch(Cluster):
 
                 subOut = self.batchC.submit_job(
                    jobName = job_name,
-                   jobQueue = self.submitOpts["queue"],
-                   jobDefinition = self.submitOpts["jobdef"],
-                   parameters = self.jobParams,
+                   jobQueue = submitOpts["queue"],
+                   jobDefinition = submitOpts["jobdef"],
+                   parameters = jobParams,
                    dependsOn = depends_list,
                    containerOverrides = {
-                      "vcpus": self.submitOpts["vcpus"],
-                      "memory": self.submitOpts["memory"],
-                      "environment": self.submitOpts["env"]
+                      "vcpus": submitOpts["vcpus"],
+                      "memory": submitOpts["memory"],
+                      "environment": submitOpts["env"]
                    }
                 )
                 # return from batch submit_job jus the jobId
                 jobid = subOut['jobId']
         else:
             batchCmd = "\n\tjobName = " + job_name
-            batchCmd = batchCmd + ", jobQueue = " + self.submitOpts["queue"]
-            batchCmd = batchCmd + ", jobDef = " + self.submitOpts["jobdef"]
-            batchCmd = batchCmd + ", memory = " + str(self.submitOpts["memory"])
-            batchCmd = batchCmd + ", vcpus = " + str(self.submitOpts["vcpus"])
-            batchCmd = batchCmd + "\n\tparams = " + str(self.jobParams)
+            batchCmd = batchCmd + ", jobQueue = " + submitOpts["queue"]
+            batchCmd = batchCmd + ", jobDef = " + submitOpts["jobdef"]
+            batchCmd = batchCmd + ", memory = " + str(submitOpts["memory"])
+            batchCmd = batchCmd + ", vcpus = " + str(submitOpts["vcpus"])
+            batchCmd = batchCmd + "\n\tparams = " + str(jobParams)
             if array_range is not None:
                 ct = "array job " + array_range
             else:
                 ct = "single job"
-            ht = str(self.submitOpts["dependsOn"])
+            ht = str(submitOpts["dependsOn"])
             jobid = "111-222-333-print_only-" +  job_name
 
             print( "\njob name: " + job_name + " job type: " + ct + "\tdepends: " + ht + "\tjobid:" + jobid +
@@ -458,7 +459,7 @@ class AWS_Batch(Cluster):
 
 class SGE_Cluster(Cluster):
 
-    def __init__(self, cluster_file=None, verbose=False):
+    def __init__(self, cluster_file=None, verbose=True):
         self.class_name = self.__class__.__name__
         super(SGE_Cluster, self).__init__(cluster_file, verbose)
 
@@ -496,6 +497,7 @@ class SGE_Cluster(Cluster):
             sys.exit(2)
 
     def submitJob(self, **kwargs):
+        subOpts = deepcopy(self.clusterCfg["submit_opts"])
         # set the job cmd
         kwargs["job_cmd"] = self.clusterCfg["submit_cmd"]
         # get memory limit option
@@ -503,9 +505,9 @@ class SGE_Cluster(Cluster):
         if key in self.clusterCfg.keys():
             memlim = super(SGE_Cluster, self).memoryLimit(self.clusterCfg[key], kwargs["job_name"])
             if memlim != None:
-                self.submit_opts["-l"] = "h_vmem="+str(memlim)+"G"
+                submit_opts["-l"] = "h_vmem="+str(memlim)+"G"
 
-        jobid = self.executeJobCmd(self.clusterCfg["submit_opts"], **kwargs)
+        jobid = self.executeJobCmd(subOpts, **kwargs)
         return jobid
 
     def executeJobCmd(self, submitOpts, **kwargs):
@@ -524,7 +526,7 @@ class SGE_Cluster(Cluster):
 
         key = "request_cores"
         if key in kwargs:
-            submitOpts["-pe"] = "local " + kwargs["request_cores"]
+            submitOpts["-pe"] = self.clusterCfg["parallel_env"] + " " + kwargs["request_cores"]
 
         key = "email"
         if key in kwargs and kwargs[key] != None:
@@ -545,12 +547,15 @@ class SGE_Cluster(Cluster):
         if key in kwargs and kwargs[key] == True:
             print sub_cmd
             return "000000"
-
+        self.printVerbose("executeJobCmd subprocess/sub_cmd " + sub_cmd)
         process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE)
         pipe = process.stdout
         sub_out = pipe.readline()
-        jobid = sub_out.split()[2].split('.')[0]
-        self.printVerbose("1>> executeJobCmd: Popen command: " + sub_out)
+        jobid = sub_out.strip(' \t\n\r')
+
+        if "array_range" in kwargs:
+            jobid = jobid.split(".")[0]
+        print("Submitting job " + jobid)
 
         return jobid
 
