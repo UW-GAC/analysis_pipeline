@@ -9,7 +9,7 @@ from argparse import ArgumentParser
 from copy import deepcopy
 
 description = """
-PC-Relate
+Genetic Relationship Matrix (GRM)
 """
 parser = ArgumentParser(description=description)
 parser.add_argument("config_file", help="configuration file")
