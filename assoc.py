@@ -14,13 +14,15 @@ description = """
 Association tests
 """
 
+default_segment_length = "10000"
+
 parser = ArgumentParser(description=description)
 parser.add_argument("assoc_type", choices=["single", "window", "aggregate"],
                     help="type of association test")
 parser.add_argument("config_file", help="configuration file")
 parser.add_argument("-c", "--chromosomes", default="1-23",
                     help="range of chromosomes [default %(default)s]")
-parser.add_argument("--segment_length", default="10000",
+parser.add_argument("--segment_length", default=default_segment_length,
                     help="segment length in kb [default %(default)s]")
 parser.add_argument("--n_segments", default=None,
                     help="number of segments for the entire genome (overrides segment_length)")
@@ -99,25 +101,29 @@ if assoc_type == "aggregate":
 
 
 # define segments
-job = "define_segments"
-
-rscript = os.path.join(pipeline, "R", job + ".R")
-
-config = deepcopy(configdict)
-config["out_file"] = configdict["config_prefix"] + "_segments.txt"
-configfile = configdict["config_prefix"] + "_" + job + ".config"
-TopmedPipeline.writeConfig(config, configfile)
-
-segment_file = config["out_file"]
-
-# run and wait for results
-print "Defining segments..."
-log_file = job + "_" + strftime("%Y-%m-%d-%H-%M-%S", localtime()) + ".log"
-if n_segments is not None:
-    cmd = [driver, rscript, configfile, "--n_segments " + n_segments]
+if segment_length == default_segment_length:
+    segment_file = os.path.join(pipeline, "segments.txt")
+    print("Using default segment file with segment_length " + default_segment_length + " kb")
 else:
-    cmd = [driver, rscript, configfile, "--segment_length " + segment_length]
-cluster.runCmd(job_name=job, cmd=cmd, logfile=log_file)
+    job = "define_segments"
+
+    rscript = os.path.join(pipeline, "R", job + ".R")
+
+    config = deepcopy(configdict)
+    config["out_file"] = configdict["config_prefix"] + "_segments.txt"
+    configfile = configdict["config_prefix"] + "_" + job + ".config"
+    TopmedPipeline.writeConfig(config, configfile)
+
+    segment_file = config["out_file"]
+
+    # run and wait for results
+    print("Defining segments...")
+    log_file = job + "_" + strftime("%Y-%m-%d-%H-%M-%S", localtime()) + ".log"
+    if n_segments is not None:
+        cmd = [driver, rscript, configfile, "--n_segments " + n_segments]
+    else:
+        cmd = [driver, rscript, configfile, "--segment_length " + segment_length]
+        cluster.runCmd(job_name=job, cmd=cmd, logfile=log_file)
 
 
 # set up config for association test
