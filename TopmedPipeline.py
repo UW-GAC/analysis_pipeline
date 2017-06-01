@@ -539,7 +539,7 @@ class SGE_Cluster(Cluster):
             submitOpts["-t"] = kwargs["array_range"]
 
         key = "request_cores"
-        if key in kwargs:
+        if key in kwargs and kwargs[key] != None and kwargs[key] != "1":
             submitOpts["-pe"] = self.clusterCfg["parallel_env"] + " " + kwargs["request_cores"]
 
         key = "email"
