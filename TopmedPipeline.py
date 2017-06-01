@@ -7,7 +7,6 @@ import subprocess
 from copy import deepcopy
 import getpass
 import time
-import os
 import json
 import math
 
@@ -51,7 +50,6 @@ def readConfig(file):
     return config
 
 
-
 def writeConfig(config, file):
     """Write a pipeline config file.
 
@@ -68,7 +66,6 @@ def writeConfig(config, file):
     for key, value in config.iteritems():
         writer.writerow([key, value])
     f.close()
-
 
 
 def getFirstColumn(file, skipHeader=True):
@@ -120,7 +117,6 @@ def getChromSegments(map_file, chromosome):
     return segments
 
 
-
 def chromosomeRangeToList(chromosomes):
     chromRange = [int(x) for x in chromosomes.split("-")]
     start = chromRange[0]
@@ -145,6 +141,7 @@ def stringToDict(s):
     d = dict(zip(ss[0::2], ss[1::2]))
     return d
 
+
 def directorySetup(config, subdirs=["config", "data", "log", "plots", "report"]):
     for d in subdirs:
         if not os.path.exists(d):
@@ -152,6 +149,8 @@ def directorySetup(config, subdirs=["config", "data", "log", "plots", "report"])
         config[d + "_prefix"] = os.path.join(d, config["out_prefix"])
 
     return config
+
+
 
 # parent class to represent a compute cluster environment
 class Cluster(object):
@@ -191,6 +190,7 @@ class Cluster(object):
     def printVerbose(self, message):
         if self.verbose:
             print(message)
+
 
 class AWS_Batch(Cluster):
 
@@ -457,6 +457,7 @@ class AWS_Batch(Cluster):
 
         return jobid
 
+
 class SGE_Cluster(Cluster):
 
     def __init__(self, cluster_file=None, verbose=True):
@@ -555,15 +556,17 @@ class SGE_Cluster(Cluster):
 
         if "array_range" in kwargs:
             jobid = jobid.split(".")[0]
-        print("Submitting job " + jobid)
+        print("Submitting job " + jobid + " (" + kwargs["job_name"] + ")")
 
         return jobid
+
 
 class UW_Cluster(SGE_Cluster):
 
     def __init__(self, cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
         super(UW_Cluster, self).__init__(cluster_file, verbose)
+
 
 class AWS_Cluster(SGE_Cluster):
 
@@ -576,6 +579,7 @@ class AWS_Cluster(SGE_Cluster):
         kwargs["email"] = None
         jobid = super(AWS_Cluster, self).submitJob(**kwargs)
         return jobid
+
 
 class ClusterFactory(object):
 

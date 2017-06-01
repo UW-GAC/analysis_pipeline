@@ -97,6 +97,7 @@ if assoc_type == "aggregate":
     jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], array_range=chromosomes, email=email, print_only=print_only)
     holdids.append(jobid)
 
+
 # define segments
 job = "define_segments"
 
@@ -111,19 +112,13 @@ segment_file = config["out_file"]
 
 # run and wait for results
 print "Defining segments..."
-#log_file = open(job + "_" + strftime("%Y-%m-%d-%H-%M-%S", localtime()) + ".log", 'w')
-#if n_segments is not None:
-#    args = [driver, rscript, configfile, "--n_segments " + n_segments]
-#else:
-#    args = [driver, rscript, configfile, "--segment_length " + segment_length]
-#subprocess.check_call(args, stdout=log_file, stderr=log_file)
-#log_file.close()
 log_file = job + "_" + strftime("%Y-%m-%d-%H-%M-%S", localtime()) + ".log"
 if n_segments is not None:
     cmd = [driver, rscript, configfile, "--n_segments " + n_segments]
 else:
     cmd = [driver, rscript, configfile, "--segment_length " + segment_length]
 cluster.runCmd(job_name=job, cmd=cmd, logfile=log_file)
+
 
 # set up config for association test
 config = deepcopy(configdict)
@@ -157,9 +152,9 @@ for chromosome in chrom_list:
     job_comb = combScript + "_chr" + chromosome
     rscript = os.path.join(pipeline, "R", combScript + ".R")
     args = [rscript, configfile, "--chromosome " + chromosome]
-    jobid = cluster.submitJob(job_name=job_comb, cmd=driver, args=args, holdid=jobid, email=email,
-    print_only=print_only)
+    jobid = cluster.submitJob(job_name=job_comb, cmd=driver, args=args, holdid=jobid, email=email, print_only=print_only)
     holdids_combine.append(jobid)
+
 
 # plots
 job = "assoc_plots"
@@ -177,6 +172,7 @@ TopmedPipeline.writeConfig(config, configfile)
 
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdids_combine, email=email, print_only=print_only)
 
+
 # analysis report
 job = "assoc_report"
 
@@ -188,5 +184,6 @@ configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=jobid, email=email, print_only=print_only)
+
 
 cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=jobid, print_only=print_only)
