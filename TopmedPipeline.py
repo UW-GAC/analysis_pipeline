@@ -9,6 +9,7 @@ import getpass
 import time
 import json
 import math
+import collections
 
 try:
     import boto3
@@ -151,6 +152,18 @@ def directorySetup(config, subdirs=["config", "data", "log", "plots", "report"])
     return config
 
 
+# cluster configuration is read from json into nested dictionaries
+# regular dictionary update loses default values below the first level
+# https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
+def update(d, u):
+    for k, v in u.iteritems():
+        if isinstance(v, collections.Mapping):
+            r = update(d.get(k, {}), v)
+            d[k] = r
+        else:
+            d[k] = u[k]
+    return d
+
 
 # parent class to represent a compute cluster environment
 class Cluster(object):
@@ -174,7 +187,7 @@ class Cluster(object):
                 clusterCfg = json.load(cfgFileHandle)
             optCfg = clusterCfg["cluster_types"][self.class_name]
             # update
-            self.clusterCfg.update(optCfg)
+            self.clusterCfg = update(self.clusterCfg, optCfg)
 
     def getClusterCfg(self):
         return self.clusterCfg
