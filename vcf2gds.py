@@ -17,10 +17,12 @@ Convert VCF to GDS with the following steps:
 
 parser = ArgumentParser(description=description)
 parser.add_argument("config_file", help="configuration file")
-parser.add_argument("--cluster_type", default="uw", 
+parser.add_argument("--cluster_type", default="UW_Cluster",
                     help="type of compute cluster environment [default %(default)s]")
-parser.add_argument("--cluster_file", default=None, 
-                    help="file containing options to pass to the cluster (sge_request format)")
+parser.add_argument("--cluster_file", default=None,
+                    help="json file containing options to pass to the cluster")
+parser.add_argument("--verbose", action="store_true", default=False,
+                    help="enable verbose output to help debug")
 parser.add_argument("-c", "--chromosomes", default="1-22",
                     help="range of chromosomes [default %(default)s]")
 parser.add_argument("-n", "--ncores", default="1-8",
@@ -38,15 +40,13 @@ cluster_type = args.cluster_type
 ncores = args.ncores
 email = args.email
 print_only = args.print_only
+verbose = args.verbose
 
-opts = TopmedPipeline.getOptions(cluster_file)
-cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type=cluster_type, options=opts)
+cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
 driver = os.path.join(pipeline, "runRscript.sh")
 
-jobid = dict()
-    
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "log"])
 
@@ -59,7 +59,7 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 if os.path.splitext(configdict["vcf_file"])[1] == ".bcf":
     ncores = None
 
-jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], array_range=chromosomes, request_cores=ncores, email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], array_range=chromosomes, request_cores=ncores, email=email, print_only=print_only)
 
 
 job = "merge_gds"
@@ -70,18 +70,14 @@ configdict["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(configdict, configfile)
 
-holdid = [jobid["vcf2gds"]]
-
-jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=jobid, email=email, print_only=print_only)
 
 
 job = "unique_variant_ids"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
 
-holdid = [jobid["merge_gds"]]
-
-jobid[job] = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=holdid, email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=jobid, email=email, print_only=print_only)
 
 
-cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=jobid["unique_variant_ids"], print_only=print_only)
+cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=jobid, print_only=print_only)
