@@ -54,7 +54,7 @@ maf <- assoc$MAF[assoc$variantID == variant]
 title <- paste(lz.name, "- LD:", ld.title, "- MAF:", formatC(maf, digits=3))
 #title <- paste("LD:", ld.title)
 
-command <- paste("/projects/resources/software/apps/locuszoom/bin/locuszoom",
+command <- paste("locuszoom",
                  "theme=publication",
                  "--cache None",
                  "--no-date",
