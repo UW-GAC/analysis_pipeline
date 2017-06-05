@@ -1,5 +1,19 @@
-#' Combine association test results
-#'
+
+#' @importFrom dplyr "%>%" arrange_ select_
+.arrange_chr_pos <- function(df, chr="chr", pos="pos") {
+    df$chr.factor <- factor(df[[chr]], levels=c(1:22, "X", "Y"))
+    df %>%
+        arrange_("chr.factor", pos) %>%
+        select_("-chr.factor")
+}
+
+.index_chr_pos <- function(x, chr="chr", pos="pos") {
+    df <- do.call(rbind, lapply(x, function(xx) xx[1,c(chr,pos)]))
+    df$chr.factor <- factor(df[[chr]], levels=c(1:22, "X", "Y"))
+    order(df$chr.factor, df[[pos]])
+}
+
+
 #' Combine association test results from multiple files into a single object.
 #' Useful for combining per-segment results into a single file per chromosome.
 #' 
@@ -13,21 +27,26 @@ combineAssoc <- function(files, assoc_type) {
     stopifnot(assoc_type %in% c("single", "aggregate", "window"))
     x <- lapply(unname(files), getobj)
     if (assoc_type == "single") {
-        assoc <- do.call(rbind, x)
+        assoc <- do.call(rbind, x) %>%
+            .arrange_chr_pos()
     } else if (assoc_type  == "aggregate") {
         assoc <- x[[1]][c("param", "nsample")]
-        assoc$results <- do.call(rbind, lapply(x, function(y) y$results))
-        assoc$variantInfo <- do.call(c, lapply(x, function(y) y$variantInfo))
+        varInfo <- do.call(c, lapply(x, function(y) y$variantInfo))
+        # get index to put units in order by chr, pos
+        index <- .index_chr_pos(varInfo)
+        assoc$results <- do.call(rbind, lapply(x, function(y) y$results))[index,]
+        assoc$variantInfo <- varInfo[index]
     } else if (assoc_type == "window") {
         assoc <- x[[1]][c("param", "window", "nsample")]
-        for (v in c("results", "variantInfo")) {
-            assoc[[v]] <- do.call(rbind, lapply(x, function(y) y[[v]])) %>%
-                distinct_()
-        }
-        assoc$results <- assoc$results %>%
+        assoc$results <- do.call(rbind, lapply(x, function(y) y$results)) %>%
+            .arrange_chr_pos(pos="window.start") %>%
+            distinct_() %>%
             group_by_("chr", "window.start", "window.stop") %>%
             filter_(~(n.site == max(n.site)), ~(!duplicated(n.site))) %>%
             as.data.frame()
+        assoc$variantInfo <- do.call(rbind, lapply(x, function(y) y$variantInfo)) %>%
+            .arrange_chr_pos() %>%
+            distinct_()
     }
     assoc
 }
