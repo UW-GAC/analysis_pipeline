@@ -198,6 +198,64 @@ test_that("combine aggregate", {
     unlink(files)
 })
 
+test_that("arrange_chr_pos", {
+    x <- data.frame(chr=c(10,2,"X",1,1), pos=c(1,1,1,2,1), stringsAsFactors=FALSE)
+    xa <- x[c(5,4,2,1,3),]; rownames(xa) <- 1:5
+    expect_equal(.arrange_chr_pos(x), xa)
+    names(x) <- names(xa) <- c("a", "b")
+    expect_equal(.arrange_chr_pos(x, chr="a", pos="b"), xa)
+})
+
+test_that("index_chr_pos", {
+    x <- list(data.frame(chr=2, pos=1:5),
+              data.frame(chr=1, pos=6:10),
+              data.frame(chr="X", pos=1:5, stringsAsFactors=FALSE),
+              data.frame(chr=1, pos=1:5))
+    expect_equal(.index_chr_pos(x), c(4,2,1,3))
+    xa <- lapply(x, function(xx) {names(xx) <- c("a", "b"); xx})
+    expect_equal(.index_chr_pos(xa, chr="a", pos="b"), c(4,2,1,3))
+})
+    
+test_that("combine out of order", {
+    seqData <- .testData()
+    nullmod <- .testNullModel(seqData, MM=TRUE)
+    
+    a1 <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, snp.include=1:10, verbose=FALSE))
+    a2 <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, snp.include=11:20, verbose=FALSE))
+    files <- file.path(tempdir(), c("a", "b"))
+    save(a1, file=files[1])
+    save(a2, file=files[2])
+    assoc <- combineAssoc(files, "single")
+    a <- combineAssoc(files[c(2,1)], "single")
+    expect_equal(a, assoc)
+
+    a1 <- assocTestSeqWindow(seqData, nullmod, chromosome=1, verbose=FALSE)
+    a2 <- assocTestSeqWindow(seqData, nullmod, chromosome=2, verbose=FALSE)
+    save(a1, file=files[1])
+    save(a2, file=files[2])
+    assoc <- combineAssoc(files, "window")
+    a <- combineAssoc(files[c(2,1)], "window") 
+    expect_equal(a, assoc)
+
+    agg1 <- list(a=data.frame(variant.id=101:200, allele.index=1),
+                 b=data.frame(variant.id=1:100, allele.index=1),
+                 c=data.frame(variant.id=501:600, allele.index=1))
+    a1 <- assocTestSeq(seqData, nullmod, agg1, test="SKAT", verbose=FALSE)
+    agg2 <- list(d=data.frame(variant.id=301:400, allele.index=1),
+                 e=data.frame(variant.id=401:500, allele.index=1),
+                 f=data.frame(variant.id=201:300, allele.index=1))
+    a2 <- assocTestSeq(seqData, nullmod, agg2, test="SKAT", verbose=FALSE)
+    save(a1, file=files[1])
+    save(a2, file=files[2])
+    assoc <- combineAssoc(files, "aggregate")
+    agg <- c(agg1, agg2)[c(2,1,6,4,5,3)]
+    a <- assocTestSeq(seqData, nullmod, agg, test="SKAT", verbose=FALSE)
+    expect_equal(a, assoc)
+    
+    seqClose(seqData)
+    unlink(files)
+})
+
 
 test_that("omitKnownHits", {
     assoc <- data.frame(chr=c(rep(1,100), rep(2,100)),
