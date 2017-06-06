@@ -519,7 +519,7 @@ class SGE_Cluster(Cluster):
         if key in self.clusterCfg.keys():
             memlim = super(SGE_Cluster, self).memoryLimit(self.clusterCfg[key], kwargs["job_name"])
             if memlim != None:
-                submit_opts["-l"] = "h_vmem="+str(memlim)+"G"
+                subOpts["-l"] = "h_vmem="+str(memlim)+"G"
 
         jobid = self.executeJobCmd(subOpts, **kwargs)
         return jobid
