@@ -1,4 +1,4 @@
 variantID chr pop
-12 1 AFR
-9 1 AMR
-14 1 EUR
+340 1 AFR
+462 1 AMR
+831 1 EUR
