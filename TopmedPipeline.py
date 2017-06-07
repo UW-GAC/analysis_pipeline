@@ -143,6 +143,13 @@ def stringToDict(s):
     return d
 
 
+def countLines(file):
+    """Count the number of lines in a file"""
+    with open(file) as f:
+        n = sum(1 for _ in f)
+    return n
+
+
 def directorySetup(config, subdirs=["config", "data", "log", "plots", "report"]):
     for d in subdirs:
         if not os.path.exists(d):

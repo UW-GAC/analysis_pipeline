@@ -1,0 +1,4 @@
+variantID chr pop
+12 1 AFR
+9 1 AMR
+14 1 EUR

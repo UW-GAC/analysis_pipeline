@@ -281,5 +281,6 @@ The script [`assoc.py`](assoc.py) submits a SGE array job for each chromosome, w
 config parameter | default value | description
 --- | --- | ---
 `out_prefix` | | Prefix for files created by this script.
-`assoc_file` | | File with association test results.
-`flanking_region` | 500 | Flanking region in Mb
+`assoc_file` | | File with association test result 
+`locus_file` | | Text file with columns `variantID`, `chr`, `pop`
+`flanking_region` | 500 | Flanking region in kb

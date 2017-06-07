@@ -13,9 +13,6 @@ LocusZoom
 """
 parser = ArgumentParser(description=description)
 parser.add_argument("config_file", help="configuration file")
-parser.add_argument("-c", "--chromosome", help="chromosome (1-24 or X,Y)")
-parser.add_argument("--variant", help="variant ID")
-parser.add_argument("--pop", help="population (AFR, AMR, ASN, EUR)")
 parser.add_argument("--cluster_type", default="UW_Cluster",
                     help="type of compute cluster environment [default %(default)s]")
 parser.add_argument("--cluster_file", default=None,
@@ -29,9 +26,6 @@ parser.add_argument("--print_only", action="store_true", default=False,
 args = parser.parse_args()
 
 configfile = args.config_file
-chromosome = args.chromosome
-variant = args.variant
-pop = args.pop
 cluster_file = args.cluster_file
 cluster_type = args.cluster_type
 email = args.email
@@ -56,8 +50,12 @@ config["out_prefix"] = configdict["plots_prefix"]
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-args = [rscript, configfile, "--chromosome " + chromosome, "--variant " + variant, "--pop " + pop]
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=args, email=email, print_only=print_only)
+# find number of jobs to submit by counting lines in file
+n = TopmedPipeline.countLines(configdict["locus_file"])
+range = "1-" + str(n-1)
+
+args = ["-s", rscript, configfile]
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=args, array_range=range, email=email, print_only=print_only)
 
 
 cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=jobid, print_only=print_only)

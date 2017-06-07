@@ -6,26 +6,26 @@ sessionInfo()
 
 argp <- arg_parser("LocusZoom plots")
 argp <- add_argument(argp, "config", help="path to config file")
-argp <- add_argument(argp, "--chromosome", help="chromosome (1-24 or X,Y)", type="character")
-argp <- add_argument(argp, "--variant", help="variant ID", type="integer")
-argp <- add_argument(argp, "--pop", help="population (AFR, AMR, ASN, EUR)", type="character")
+argp <- add_argument(argp, "--segment", help="row in locus_file to plot", default=1, type="integer")
 argv <- parse_args(argp)
 config <- readConfig(argv$config)
-var.chr <- intToChr(argv$chromosome)
-variant <- argv$variant
-pop <- argv$pop
-stopifnot(pop %in% c("AFR", "AMR", "ASN", "EUR"))
+segment <- argv$segment
 
-required <- c("assoc_file")
+required <- c("assoc_file",
+              "locus_file")
 optional <- c("flanking_region"=500,
               "out_prefix"="locuszoom")
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
-assocfile <- config["assoc_file"]
-if (!is.na(var.chr)) {
-    assocfile <- insertChromString(assocfile, var.chr)
-}
+# read selected variant
+locus <- read.table(config["locus_file"], header=TRUE, as.is=TRUE)[segment,]
+variant <- locus$variantID
+var.chr <- locus$chr
+pop <- locus$pop
+stopifnot(pop %in% c("AFR", "AMR", "ASN", "EUR"))
+
+assocfile <- insertChromString(config["assoc_file"], var.chr)
 
 ## get association test results
 assoc <- getobj(assocfile)
@@ -69,7 +69,8 @@ command <- paste("locuszoom",
                  #paste("--chr", var.chr, "--start", start, "--end", end),
                  "--prefix ", prefix,
                  paste0("title=\"", title, "\""),
-                 paste0("signifLine=\"", -log10(5e-8), "\" signifLineColor=\"gray\" signifLineWidth=\"2\""))
+                 paste0("signifLine=\"", -log10(5e-8), "\" signifLineColor=\"gray\" signifLineWidth=\"2\""),
+                 "ylab=\"-log10(p-value) from single variant test\"")
 
 cat(paste(command, "\n"))
 system(command)
