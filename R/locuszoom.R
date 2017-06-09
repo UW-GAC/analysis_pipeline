@@ -15,7 +15,11 @@ required <- c("assoc_file",
               "locus_file")
 optional <- c("flanking_region"=500,
               "locus_type"="variant",
-              "out_prefix"="locuszoom")
+              "out_prefix"="locuszoom",
+              "track_file"=NA,
+              "track_file_type"="window",
+              "track_label"="",
+              "track_threshold"=5e-8)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -60,17 +64,22 @@ if (config["locus_type"] == "variant") {
     title <- paste("LD:", ld.title)
 }
 
+## construct METAL-format file
 assoc <- assoc %>%
     filter(chr == var.chr, pos > start, pos < end) %>%
-    select(variantID, chr, pos, MAF, ends_with("pval")) %>%
-    mutate(MarkerName=paste0("chr", chr, ":", pos))
-names(assoc)[5] <- "P-value"
-
-## construct METAL-format file
-metal <- assoc[,c("MarkerName", "P-value")]
+    select(chr, pos, ends_with("pval"))
+names(assoc)[3] <- "pval"
 assoc.filename <- tempfile()
-write.table(metal, file=assoc.filename, row.names=FALSE, quote=FALSE, sep="\t")
+writeMETAL(assoc, file=assoc.filename)
 
+## construct BED track file
+if (!is.na(config["track_file"])) {
+    trackfile <- insertChromString(config["track_file"], var.chr)
+    track <- getAssoc(trackfile, config["track_file_type"]) %>%
+        filter(pval < as.numeric(config["track_threshold"]))
+    track.filename <- tempfile()
+    writeBED(track, file=track.filename, track.label=config["track_label"])
+}
 
 command <- paste("locuszoom",
                  "theme=publication",
@@ -81,6 +90,7 @@ command <- paste("locuszoom",
                  "--build hg19",
                  "--chr", var.chr,
                  "--metal", assoc.filename,
+                 "--bed-tracks", track.filename,
                  ld.cmd,
                  ld.region,
                  "--prefix ", prefix,
@@ -91,4 +101,4 @@ command <- paste("locuszoom",
 cat(paste(command, "\n"))
 system(command)
 
-
+unlink(c(assoc.filename, track.filename))

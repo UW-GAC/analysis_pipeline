@@ -275,12 +275,19 @@ The script [`assoc.py`](assoc.py) submits a SGE array job for each chromosome, w
 
 ## LocusZoom
 
+LocusZoom plots are created with the [LocusZoom standalone software](http://genome.sph.umich.edu/wiki/LocusZoom_Standalone).
+
 `locuszoom.py`
 1. `locuszoom.R`
 
 config parameter | default value | description
 --- | --- | ---
 `out_prefix` | | Prefix for files created by this script.
-`assoc_file` | | File with association test result 
-`locus_file` | | Text file with columns `variantID`, `chr`, `pop`
-`flanking_region` | 500 | Flanking region in kb
+`assoc_file` | | File with single-variant association test results
+`locus_file` | | Text file with columns `chr`, `pop` and either `variantID` (for `locus_type=variant`) or `start`, `end` (for `locus_type=region`)
+`locus_type` | `variant` | Type of region to plot (`variant` with flanking region, or `region`)
+`flanking_region` | `500` | Flanking region in kb
+`track_file` | `NA` | File with aggregate or window association test results. Regions will be displayed in a track in the LocusZoom plot.
+`track_file_type` | `window` | Type of association regions in `track_file` (`window` or `aggregate`).
+`track_label` | `""` | Label to display to the right of the track in the plot.
+`track_threshold` | `5e-8` | P-value threshold for selecting regions to display.
