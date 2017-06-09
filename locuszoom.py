@@ -38,17 +38,12 @@ pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
 driver = os.path.join(pipeline, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
-configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "log", "plots"])
+configdict = TopmedPipeline.directorySetup(configdict, subdirs=["log", "plots"])
 
 
 job = "locuszoom"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
-
-config = deepcopy(configdict)
-config["out_prefix"] = configdict["plots_prefix"]
-configfile = configdict["config_prefix"] + "_" + job + ".config"
-TopmedPipeline.writeConfig(config, configfile)
 
 # find number of jobs to submit by counting lines in file
 n = TopmedPipeline.countLines(configdict["locus_file"])
