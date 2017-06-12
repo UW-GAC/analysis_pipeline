@@ -59,6 +59,8 @@ test_that("single unrelated", {
     assoc <- getAssoc(files, "single")
     expect_equal(as.character(assoc$chr), a$chr)
     expect_equal(assoc$pos, a$pos)
+    expect_equal(assoc$start, assoc$pos)
+    expect_equal(assoc$end, assoc$pos)
     expect_equal(assoc$stat, a$Wald.stat)
     expect_equal(assoc$pval, a$Wald.pval)
 
@@ -81,6 +83,8 @@ test_that("single related", {
     assoc <- getAssoc(files, "single")
     expect_equal(as.character(assoc$chr), a$chr)
     expect_equal(assoc$pos, a$pos)
+    expect_equal(assoc$start, assoc$pos)
+    expect_equal(assoc$end, assoc$pos)
     expect_equal(assoc$stat, a$Wald.stat)
     expect_equal(assoc$pval, a$Wald.pval)
 
@@ -103,6 +107,8 @@ test_that("window, burden", {
     assoc <- getAssoc(files, "window")
     expect_equal(as.character(assoc$chr), a$chr)
     expect_true(all(assoc$pos > a$window.start & assoc$pos < a$window.stop))
+    expect_equal(assoc$start, a$window.start)
+    expect_equal(assoc$end, a$window.stop)
     expect_equal(assoc$stat, a$Score.stat)
     expect_equal(assoc$pval, a$Score.pval)
 
@@ -129,9 +135,11 @@ test_that("aggregate, skat", {
         filter_(~(n.site > 0))
 
     assoc <- getAssoc(files, "aggregate")
-    expect_equal(assoc$pval, a$pval_0)
+    expect_true(setequal(assoc$pval, a$pval_0))
     expect_equal(as.character(assoc$chr[1]), a1$variantInfo[[1]]$chr[1])
-    expect_equal(assoc$pos[1], a1$variantInfo[[1]]$pos[1])
+    expect_true(assoc$pos[1] > a1$variantInfo[[1]]$pos[1] & assoc$pos[1] < a1$variantInfo[[1]]$pos[100])
+    expect_equal(assoc$start[1], a1$variantInfo[[1]]$pos[1])
+    expect_equal(assoc$end[1], a1$variantInfo[[1]]$pos[100])
 
     seqClose(seqData)
     unlink(files)

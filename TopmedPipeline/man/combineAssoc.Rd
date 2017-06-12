@@ -16,5 +16,7 @@ Association test object
 }
 \description{
 Combine association test results from multiple files into a single object.
+}
+\details{
 Useful for combining per-segment results into a single file per chromosome.
 }
