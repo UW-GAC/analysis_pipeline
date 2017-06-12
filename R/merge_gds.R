@@ -23,8 +23,8 @@ files <- sapply(chr, function(c) insertChromString(gdsfile, c, "gds_file"))
 gdsfile.tmp <- tempfile()
 message("gds temporarily located at ", gdsfile.tmp)
 
-## merge genotypes only (no other format fields)
-seqMerge(files, gdsfile.tmp, fmt.var=character(), storage.option="LZMA_RA")
+## merge genotypes only (no other format or info fields)
+seqMerge(files, gdsfile.tmp, fmt.var=character(), info.var=character(), storage.option="LZMA_RA")
 
 ## copy it
 file.copy(gdsfile.tmp, config["merged_gds_file"])
