@@ -34,8 +34,19 @@ Python scripts are provided to run multi-step analyses on a compute cluster or c
 
 These python scripts require a config argument `out_prefix` in addition to the arguments for each R script called. Some input and output file name parameters are overridden by the scripts in order to link jobs together. Example config files are in `testdata`.
 
-For any python script, run with `-h` or `--help` to see all options. `--print_only` is a useful option to print all cluster submission commands without actually running them.
+Python script arguments are shown below. Note: not all arguments are available in all scripts, and some scripts may have additional arguments. Run with `-h` or `--help` to see details for a particular script.
 
+argument  | default value | description
+--- | --- | ---
+`config_file` | | configuration file
+`--cluster_type` | `UW_Cluster` | type of compute cluster environment (`UW_Cluster`, `AWS_Cluster`, `AWS_Batch`)
+`--cluster_file` | `None` | JSON file containing cluster options
+`-c, --chromosomes` | `1-23` | range of chromosomes (23=X)
+`-n, --ncores` | `1-8` | number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4)
+`-e, --email` | `None` | email address to receive job completion report
+`--print_only` | `False` | print job submission commands without submitting them
+`--verbose` | `False` | verbose messages for debugging
+`-h, --help` | | print help message and exit
 
 ## Conversion to GDS
 
