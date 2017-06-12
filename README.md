@@ -277,17 +277,23 @@ The script [`assoc.py`](assoc.py) submits a SGE array job for each chromosome, w
 
 LocusZoom plots are created with the [LocusZoom standalone software](http://genome.sph.umich.edu/wiki/LocusZoom_Standalone).
 
+Loci to plot are specified in the `locus_file`, with chromosome `chr` and either `variantID` (to specify the reference variant) or `start end` (to indicate a region to plot, in which case the variant with the smallest p-value will be the reference. Population (`pop`) is either `TOPMED` or one of the 1000 Genomes populations (`AFR`, `AMR`, `ASN`, `EUR`). If `pop = TOPMED`, LD is computed from the TOPMed data using the sample set in `ld_sample_include`.
+
+Regions from sliding window or aggregate tests with p-values below a certain threshold can be displayed in a separate track. 
+
 `locuszoom.py`
 1. `locuszoom.R`
 
 config parameter | default value | description
 --- | --- | ---
 `out_prefix` | | Prefix for files created by this script.
-`assoc_file` | | File with single-variant association test results
+`assoc_file` | | File with single-variant association test results. Include a space to insert chromosome.
 `locus_file` | | Text file with columns `chr`, `pop` and either `variantID` (for `locus_type=variant`) or `start`, `end` (for `locus_type=region`)
 `locus_type` | `variant` | Type of region to plot (`variant` with flanking region, or `region`)
 `flanking_region` | `500` | Flanking region in kb
-`track_file` | `NA` | File with aggregate or window association test results. Regions will be displayed in a track in the LocusZoom plot.
+`gds_file` | `NA` | GDS file to use for calculating LD. Include a space to insert chromosome.
+`ld_sample_include` | `NA` | RData file with vector of sample.id to include when calculating LD.
+`track_file` | `NA` | File with aggregate or window association test results. Regions will be displayed in a track in the LocusZoom plot. Include a space to insert chromosome.
 `track_file_type` | `window` | Type of association regions in `track_file` (`window` or `aggregate`).
 `track_label` | `""` | Label to display to the right of the track in the plot.
 `track_threshold` | `5e-8` | P-value threshold for selecting regions to display.
