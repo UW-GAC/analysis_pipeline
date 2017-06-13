@@ -348,7 +348,7 @@ class AWS_Batch(Cluster):
             sys.exit(2)
 
 
-    def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None, print_only=False, **kwargs):
+    def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None, request_cores=None, print_only=False, **kwargs):
         self.printVerbose("1>> submitJob: " + job_name + " beginning ...")
         jobParams = deepcopy(self.jobParams)
         submitOpts = deepcopy(self.submitOpts)
@@ -371,6 +371,11 @@ class AWS_Batch(Cluster):
         t = str(int(time.time()))
         lfile = job_name + "_" + t + ".log"
         jobParams[key] = lfile
+
+        # check for number of cores (1 core = 2 vcpus)
+        key = "vcpus"
+        if request_cores is not None:
+            submitOpts[key] = 2*request_cores
 
         # get memory limit option
         key = "memory_limits"
