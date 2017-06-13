@@ -101,7 +101,7 @@ if assoc_type == "aggregate":
 
 
 # define segments
-if segment_length == default_segment_length:
+if segment_length == default_segment_length and n_segments is None:
     segment_file = os.path.join(pipeline, "segments.txt")
     print("Using default segment file with segment_length " + default_segment_length + " kb")
 else:
@@ -123,7 +123,7 @@ else:
         cmd = [driver, rscript, configfile, "--n_segments " + n_segments]
     else:
         cmd = [driver, rscript, configfile, "--segment_length " + segment_length]
-        cluster.runCmd(job_name=job, cmd=cmd, logfile=log_file)
+    cluster.runCmd(job_name=job, cmd=cmd, logfile=log_file)
 
 
 # set up config for association test
