@@ -3,14 +3,14 @@
     "version": "1",
     "cluster_types": {
         "AWS_Batch": {
-            "aws_region": "us-east-1",
+            "aws_region": "us-west-2",
             "pipeline_path": "/usr/local/analysis_pipeline",
             "job_parameters": {
                 "wd": "",
                 "dr": "/projects",
                 "db": "1",
                 "lf": "",
-                "mt": "mount -t nfs4 -o vers=4.1 172.31.58.33:/ /projects"
+                "mt": "mount -t nfs4 -o vers=4.1 172.255.44.97:/ /projects"
             },
             "submit_opts": {
                 "queue": "LowPriority",
@@ -23,7 +23,7 @@
                 "command": []
             },
             "memory_limits": {
-                "find_unrelated":3.5,
+                "find_unrelated":3500,
                 "ld_pruning":11000,
                 "combine_variants":1000,
                 "pca_byrel":4000,
@@ -58,7 +58,7 @@
                     "--workdir": "",
                     "--dataroot": "/projects",
                     "--Debug": "1",
-                    "--mount": "\"mount -t nfs4 -o vers=4.1 172.31.58.33:/ /projects\""
+                    "--mount": "\"mount -t nfs4 -o vers=4.1 172.255.44.97:/ /projects\""
                 }
             }
         },
