@@ -34,8 +34,19 @@ Python scripts are provided to run multi-step analyses on a compute cluster or c
 
 These python scripts require a config argument `out_prefix` in addition to the arguments for each R script called. Some input and output file name parameters are overridden by the scripts in order to link jobs together. Example config files are in `testdata`.
 
-For any python script, run with `-h` or `--help` to see all options. `--print_only` is a useful option to print all cluster submission commands without actually running them.
+Python script arguments are shown below. Note: not all arguments are available in all scripts, and some scripts may have additional arguments. Run with `-h` or `--help` to see details for a particular script.
 
+argument  | default value | description
+--- | --- | ---
+`config_file` | | configuration file
+`--cluster_type` | `UW_Cluster` | type of compute cluster environment (`UW_Cluster`, `AWS_Cluster`, `AWS_Batch`)
+`--cluster_file` | `None` | JSON file containing cluster options
+`-c, --chromosomes` | `1-23` | range of chromosomes (23=X)
+`-n, --ncores` | `1-8` | number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4)
+`-e, --email` | `None` | email address to receive job completion report
+`--print_only` | `False` | print job submission commands without submitting them
+`--verbose` | `False` | verbose messages for debugging
+`-h, --help` | | print help message and exit
 
 ## Conversion to GDS
 
@@ -270,3 +281,30 @@ The segment file created at the start of each association test contains the chro
 * Sliding window: the length of the segment is increased by `window.size` before selecting variants. This ensures that all possible windows are tested. When the segments are combined into a single file for each chromosome, duplicate windows are discarded. Since the `assocTestSeqWindow` function defines windows starting at position 1, the windows tested when parallelizing by segment are identical to the windows tested when running an entire chromosome in one job.
 
 The script [`assoc.py`](assoc.py) submits a SGE array job for each chromosome, where the SGE task id is the row number of the segment in the segments file. If a segment has no requested variants, its job will exit without error. After all segments are complete, they are combined into a single file for each chromosome and the temporary per-segment output files are deleted.
+
+
+
+## LocusZoom
+
+LocusZoom plots are created with the [LocusZoom standalone software](http://genome.sph.umich.edu/wiki/LocusZoom_Standalone).
+
+Loci to plot are specified in the `locus_file`, with chromosome `chr` and either `variantID` (to specify the reference variant) or `start end` (to indicate a region to plot, in which case the variant with the smallest p-value will be the reference. Population (`pop`) is either `TOPMED` or one of the 1000 Genomes populations (`AFR`, `AMR`, `ASN`, `EUR`). If `pop = TOPMED`, LD is computed from the TOPMed data using the sample set in `ld_sample_include`.
+
+Regions from sliding window or aggregate tests with p-values below a certain threshold can be displayed in a separate track. 
+
+`locuszoom.py`
+1. `locuszoom.R`
+
+config parameter | default value | description
+--- | --- | ---
+`out_prefix` | | Prefix for files created by this script.
+`assoc_file` | | File with single-variant association test results. Include a space to insert chromosome.
+`locus_file` | | Text file with columns `chr`, `pop` and either `variantID` (for `locus_type=variant`) or `start`, `end` (for `locus_type=region`)
+`locus_type` | `variant` | Type of region to plot (`variant` with flanking region, or `region`)
+`flanking_region` | `500` | Flanking region in kb
+`gds_file` | `NA` | GDS file to use for calculating LD. Include a space to insert chromosome.
+`ld_sample_include` | `NA` | RData file with vector of sample.id to include when calculating LD.
+`track_file` | `NA` | File with aggregate or window association test results. Regions will be displayed in a track in the LocusZoom plot. Include a space to insert chromosome.
+`track_file_type` | `window` | Type of association regions in `track_file` (`window` or `aggregate`).
+`track_label` | `""` | Label to display to the right of the track in the plot.
+`track_threshold` | `5e-8` | P-value threshold for selecting regions to display.

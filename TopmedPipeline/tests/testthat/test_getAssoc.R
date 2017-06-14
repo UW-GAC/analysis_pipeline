@@ -59,6 +59,8 @@ test_that("single unrelated", {
     assoc <- getAssoc(files, "single")
     expect_equal(as.character(assoc$chr), a$chr)
     expect_equal(assoc$pos, a$pos)
+    expect_equal(assoc$start, assoc$pos)
+    expect_equal(assoc$end, assoc$pos)
     expect_equal(assoc$stat, a$Wald.stat)
     expect_equal(assoc$pval, a$Wald.pval)
 
@@ -81,6 +83,8 @@ test_that("single related", {
     assoc <- getAssoc(files, "single")
     expect_equal(as.character(assoc$chr), a$chr)
     expect_equal(assoc$pos, a$pos)
+    expect_equal(assoc$start, assoc$pos)
+    expect_equal(assoc$end, assoc$pos)
     expect_equal(assoc$stat, a$Wald.stat)
     expect_equal(assoc$pval, a$Wald.pval)
 
@@ -103,6 +107,8 @@ test_that("window, burden", {
     assoc <- getAssoc(files, "window")
     expect_equal(as.character(assoc$chr), a$chr)
     expect_true(all(assoc$pos > a$window.start & assoc$pos < a$window.stop))
+    expect_equal(assoc$start, a$window.start)
+    expect_equal(assoc$end, a$window.stop)
     expect_equal(assoc$stat, a$Score.stat)
     expect_equal(assoc$pval, a$Score.pval)
 
@@ -129,9 +135,11 @@ test_that("aggregate, skat", {
         filter_(~(n.site > 0))
 
     assoc <- getAssoc(files, "aggregate")
-    expect_equal(assoc$pval, a$pval_0)
+    expect_true(setequal(assoc$pval, a$pval_0))
     expect_equal(as.character(assoc$chr[1]), a1$variantInfo[[1]]$chr[1])
-    expect_equal(assoc$pos[1], a1$variantInfo[[1]]$pos[1])
+    expect_true(assoc$pos[1] > a1$variantInfo[[1]]$pos[1] & assoc$pos[1] < a1$variantInfo[[1]]$pos[100])
+    expect_equal(assoc$start[1], a1$variantInfo[[1]]$pos[1])
+    expect_equal(assoc$end[1], a1$variantInfo[[1]]$pos[100])
 
     seqClose(seqData)
     unlink(files)
@@ -194,6 +202,64 @@ test_that("combine aggregate", {
     a <- assocTestSeq(seqData, nullmod, c(agg1, agg2), test="SKAT", verbose=FALSE)
     expect_equal(a, assoc)
 
+    seqClose(seqData)
+    unlink(files)
+})
+
+test_that("arrange_chr_pos", {
+    x <- data.frame(chr=c(10,2,"X",1,1), pos=c(1,1,1,2,1), stringsAsFactors=FALSE)
+    xa <- x[c(5,4,2,1,3),]; rownames(xa) <- 1:5
+    expect_equal(.arrange_chr_pos(x), xa)
+    names(x) <- names(xa) <- c("a", "b")
+    expect_equal(.arrange_chr_pos(x, chr="a", pos="b"), xa)
+})
+
+test_that("index_chr_pos", {
+    x <- list(data.frame(chr=2, pos=1:5),
+              data.frame(chr=1, pos=6:10),
+              data.frame(chr="X", pos=1:5, stringsAsFactors=FALSE),
+              data.frame(chr=1, pos=1:5))
+    expect_equal(.index_chr_pos(x), c(4,2,1,3))
+    xa <- lapply(x, function(xx) {names(xx) <- c("a", "b"); xx})
+    expect_equal(.index_chr_pos(xa, chr="a", pos="b"), c(4,2,1,3))
+})
+    
+test_that("combine out of order", {
+    seqData <- .testData()
+    nullmod <- .testNullModel(seqData, MM=TRUE)
+    
+    a1 <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, snp.include=1:10, verbose=FALSE))
+    a2 <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, snp.include=11:20, verbose=FALSE))
+    files <- file.path(tempdir(), c("a", "b"))
+    save(a1, file=files[1])
+    save(a2, file=files[2])
+    assoc <- combineAssoc(files, "single")
+    a <- combineAssoc(files[c(2,1)], "single")
+    expect_equal(a, assoc)
+
+    a1 <- assocTestSeqWindow(seqData, nullmod, chromosome=1, verbose=FALSE)
+    a2 <- assocTestSeqWindow(seqData, nullmod, chromosome=2, verbose=FALSE)
+    save(a1, file=files[1])
+    save(a2, file=files[2])
+    assoc <- combineAssoc(files, "window")
+    a <- combineAssoc(files[c(2,1)], "window") 
+    expect_equal(a, assoc)
+
+    agg1 <- list(a=data.frame(variant.id=101:200, allele.index=1),
+                 b=data.frame(variant.id=1:100, allele.index=1),
+                 c=data.frame(variant.id=501:600, allele.index=1))
+    a1 <- assocTestSeq(seqData, nullmod, agg1, test="SKAT", verbose=FALSE)
+    agg2 <- list(d=data.frame(variant.id=301:400, allele.index=1),
+                 e=data.frame(variant.id=401:500, allele.index=1),
+                 f=data.frame(variant.id=201:300, allele.index=1))
+    a2 <- assocTestSeq(seqData, nullmod, agg2, test="SKAT", verbose=FALSE)
+    save(a1, file=files[1])
+    save(a2, file=files[2])
+    assoc <- combineAssoc(files, "aggregate")
+    agg <- c(agg1, agg2)[c(2,1,6,4,5,3)]
+    a <- assocTestSeq(seqData, nullmod, agg, test="SKAT", verbose=FALSE)
+    expect_equal(a, assoc)
+    
     seqClose(seqData)
     unlink(files)
 })

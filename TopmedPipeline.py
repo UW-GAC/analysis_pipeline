@@ -143,6 +143,13 @@ def stringToDict(s):
     return d
 
 
+def countLines(file):
+    """Count the number of lines in a file"""
+    with open(file) as f:
+        n = sum(1 for _ in f)
+    return n
+
+
 def directorySetup(config, subdirs=["config", "data", "log", "plots", "report"]):
     for d in subdirs:
         if not os.path.exists(d):
@@ -524,7 +531,7 @@ class SGE_Cluster(Cluster):
         if key in self.clusterCfg.keys():
             memlim = super(SGE_Cluster, self).memoryLimit(self.clusterCfg[key], kwargs["job_name"])
             if memlim != None:
-                submit_opts["-l"] = "h_vmem="+str(memlim)+"G"
+                subOpts["-l"] = "h_vmem="+str(memlim)+"G"
 
         jobid = self.executeJobCmd(subOpts, **kwargs)
         return jobid
