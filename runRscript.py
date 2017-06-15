@@ -67,6 +67,7 @@ parser.add_argument( "-D", "--Debug", type = int, default = defaultDebug,
 parser.add_argument( "-p", "--printonly", type = int, default = defaultPO,
                      help = "Print summary without executing [default: " + str(defaultPO) + "]" )
 parser.add_argument( "-l", "--logfile", help = "log filename", default = "" )
+parser.add_argument( "-t", "--timeout", help = "mount timeout", default = "10.0" )
 
 args = parser.parse_args()
 # set result of arg parse_args
@@ -76,6 +77,7 @@ dataroot = args.dataroot
 rargs = args.rargs
 mount = args.mount
 logfile = args.logfile
+tmo = args.timeout
 
 debug = args.Debug
 po = args.printonly
@@ -96,9 +98,9 @@ if po:
 if not os.path.isdir( mount.split()[-1] ):
     os.mkdir(mount.split()[-1])
 # mount
-pDebug( "mounting: " + mount )
+pDebug( "mount tmo: " + tmo + "mount command: " + mount )
 sys.stdout.flush()
-mtmo = "timeout 5.2 " + mount
+mtmo = "timeout " + tmo + " " + mount
 process = subprocess.Popen(mtmo, shell=True, stdout=subprocess.PIPE)
 status = process.wait()
 pipe = process.stdout
