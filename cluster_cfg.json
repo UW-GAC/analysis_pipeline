@@ -4,7 +4,7 @@
     "cluster_types": {
         "AWS_Batch": {
             "aws_region": "us-west-2",
-            "pipeline_path": "/usr/local/analysis_pipeline",
+            "pipeline_path": "/projects/topmed/dev_code/analysis_pipeline",
             "job_parameters": {
                 "wd": "",
                 "dr": "/projects",
@@ -13,13 +13,13 @@
                 "mt": "mount -t nfs4 -o vers=4.1 172.255.44.97:/ /projects"
             },
             "submit_opts": {
-                "queue": "LowPriority",
+                "queue": "Optimal_topmed",
                 "jobdef": "topmed_general",
                 "vcpus":  2,
-                "memory": 8000,
-                "region": "us-east-1",
+                "memory": 5000,
+                "region": "us-west-2",
                 "dependsOn": [],
-                "env": [],
+                "env": [ {"name": "R_LIBS_USER", "value": "/projects/resources/gactools/R_packages/library"} ],
                 "command": []
             },
             "memory_limits": {
@@ -45,7 +45,7 @@
                     "jids": ""
                 },
                 "submit_opts": {
-                    "queue": "LowPriority",
+                    "queue": "Optimal_topmed",
                     "jobdef": "topmed_sync",
                     "dependsOn": []
                 }
