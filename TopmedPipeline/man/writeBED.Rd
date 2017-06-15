@@ -10,6 +10,8 @@ writeBED(x, file, track.label = "")
 \item{x}{data.frame with columns "chr", "start", "end"}
 
 \item{file}{output file name}
+
+\item{track.label}{character string to label BED track in plot}
 }
 \description{
 Write a bed file to use as a track in a LocusZoom plot

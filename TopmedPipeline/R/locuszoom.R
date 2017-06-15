@@ -2,6 +2,7 @@
 #'
 #' @param x data.frame with columns "chr", "start", "end"
 #' @param file output file name
+#' @param track.label character string to label BED track in plot
 #'
 #' @importFrom dplyr "%>%" mutate_ rename_ select_
 #' @export
@@ -47,6 +48,7 @@ writeMETAL <- function(x, file) {
 #'
 #' @import SeqArray
 #' @importFrom SeqVarTools altDosage
+#' @importFrom stats cor
 #' @export
 calculateLD <- function(gdsfile, variant.id, ref.var=NULL, sample.id=NULL) {
     gds <- seqOpen(gdsfile)
