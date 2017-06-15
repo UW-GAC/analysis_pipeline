@@ -300,7 +300,7 @@ class AWS_Batch(Cluster):
            parameters = masterParams,
            dependsOn = syncDepends_list)
         masterDepend_list = [ {'jobId': subid['jobId']} ]
-        self.printVerbose("2>> submitSyncJobs: returning Mastersync return job id list: " + str())
+        self.printVerbose("2>> submitSyncJobs: returning Mastersync return job id list: " + str(masterDepend_list))
 
         return masterDepend_list
 
@@ -401,7 +401,7 @@ class AWS_Batch(Cluster):
         if not print_only:
             # with the current limit of jobs that a submitted job can depend upon (20),
             # we'll use of sync jobs to sync if we have more than 20 hold jobs
-            if len(self.submitOpts["dependsOn"]) > 0:
+            if len(submitOpts["dependsOn"]) > 0:
                 depends_list = self.submitSyncJobs(submitOpts["dependsOn"], job_name)
             else:
                 depends_list = submitOpts["dependsOn"]
@@ -415,8 +415,8 @@ class AWS_Batch(Cluster):
 
                 for t in taskList:
                     # add an environmnent for equiv to taskid in sge
-                    submitOpts["env"] = [ { "name": "SGE_TASK_ID",
-                                            "value": str(t) } ]
+                    submitOpts["env"].append( { "name": "SGE_TASK_ID",
+                                                "value": str(t) } )
                     jobParams['lf'] = lf + '.' + str(t)
                     # create a jobname based on the job_name submitted and the task id
                     subOut = self.batchC.submit_job(
