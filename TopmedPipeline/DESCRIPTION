@@ -1,5 +1,5 @@
 Package: TopmedPipeline
-Version: 0.3.5
+Version: 0.3.6
 Type: Package
 Title: Utilities for the TOPMed pipeline
 Description: Utilities for the TOPMed pipeline.

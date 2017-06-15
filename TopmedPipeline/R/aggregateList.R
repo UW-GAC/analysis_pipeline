@@ -11,27 +11,15 @@
 }
 
 
-#' @importFrom dplyr "%>%" arrange_ filter_ mutate_ select_
-#' @importFrom tidyr gather_ separate_ 
+#' @importFrom dplyr "%>%" group_by_ mutate_ rename_
+#' @importFrom tidyr separate_rows_ 
 .expandAlleles <- function(gds) {
-    variants <- .variantDF(gds)
-    
-    alleleCount <- sort(unique(variants$nAlleles))
-    alleles <- lapply(alleleCount, function(n) {
-        if (n == 2) {
-            filter_(variants, ~(nAlleles == n)) %>%
-                mutate_(allele.index=1, allele="alt") %>%
-                select_("-alt")
-        } else {
-            alt.cols <- paste0("alt", 1:(n-1))
-            filter_(variants, ~(nAlleles == n)) %>%
-                separate_("alt", into=alt.cols, sep=",") %>%
-                gather_("allele.index", "allele", alt.cols) %>%
-                mutate_(allele.index=~(sub("alt", "", allele.index)))
-        }
-    })
-    do.call(rbind, alleles) %>%
-        arrange_("variant.id")
+    .variantDF(gds) %>%
+        separate_rows_("alt", sep=",") %>%
+        rename_(allele="alt") %>%
+        group_by_("variant.id") %>%
+        mutate_(allele.index=~1:n()) %>%
+        as.data.frame()
 }
 
 
