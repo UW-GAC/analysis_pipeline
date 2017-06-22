@@ -33,6 +33,7 @@ def Summary(hdr):
     pInfo( '\t\tWorking directory: ' + workdir )
     pInfo( '\t\tData root folder: '+ dataroot )
     pInfo( '\t\tMount command: '+ mount )
+    pInfo( '\t\tMount timeout: '+ tmo)
     if debug:
         pInfo( '\tDebug: True' )
     else:
