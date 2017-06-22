@@ -3,17 +3,21 @@
     "version": "1",
     "cluster_types": {
         "AWS_Batch": {
-            "memory_limits": {
-            },
+            "memory_limits": {},
             "submit_opts": {
                 "queue": "Optimal_topmed_testdata",
-                "jobdef": "topmed_general",
                 "vcpus":  1,
-                "memory": 3100,
-                "region": "us-west-2",
-                "dependsOn": [],
-                "env": [ {"name": "R_LIBS_USER", "value": "/projects/resources/gactools/R_packages/library"} ],
-                "command": []
+                "memory": 3100
+            },
+            "sync_job": {
+                "parameters": {
+                    "msg": "Testdata: Dependent jobs completed\n",
+                    "jids": ""
+                },
+                "submit_opts": {
+                    "queue": "Optimal_topmed_testdata",
+                    "jobdef": "topmed_sync"
+                }
             }
         }
     }

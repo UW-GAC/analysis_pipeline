@@ -163,13 +163,17 @@ def directorySetup(config, subdirs=["config", "data", "log", "plots", "report"])
 # regular dictionary update loses default values below the first level
 # https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
 def update(d, u):
+    ld = deepcopy(d)
     for k, v in u.iteritems():
         if isinstance(v, collections.Mapping):
-            r = update(d.get(k, {}), v)
-            d[k] = r
+            if len(v) == 0:
+                ld[k] = u[k]
+            else:
+                r = update(d.get(k, {}), v)
+                ld[k] = r
         else:
-            d[k] = u[k]
-    return d
+            ld[k] = u[k]
+    return ld
 
 
 # parent class to represent a compute cluster environment
@@ -179,22 +183,39 @@ class Cluster(object):
     def __init__(self, cluster_file=None, verbose=False):
         self.verbose = verbose
         self.class_name = self.__class__.__name__
+        self.openClusterCfg("./cluster_cfg.json", cluster_file, verbose)
+
+    def openClusterCfg(self, stdCfgFile, optCfgFile, verbose):
         # get the standard cluster cfg
         pipePath = os.path.dirname(os.path.abspath(sys.argv[0]))
         self.clusterfile =  os.path.join(pipePath, "./cluster_cfg.json")
-        self.printVerbose("0>> ClusterCtor: Reading internal cfg file: " + self.clusterfile)
+        self.printVerbose("0>> openClusterCfg: Reading internal cfg file: " + self.clusterfile)
 
         with open(self.clusterfile) as cfgFileHandle:
             clusterCfg= json.load(cfgFileHandle)
+        key = "debug"
+        debugCfg = False
+        if key in clusterCfg:
+            if clusterCfg[key] == 1:
+                debugCfg = True
         self.clusterCfg = clusterCfg["cluster_types"][self.class_name]
-        if cluster_file != None:
-            self.printVerbose("0>> ClusterCtor: Reading user cfg file: " + self.clusterfile)
+        if debugCfg:
+            print("0>>> Dump of standard cluster cfg ... \n")
+            print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
+        if optCfgFile != None:
+            self.printVerbose("0>> openClusterCfg: Reading user cfg file: " + self.clusterfile)
 
-            with open(cluster_file) as cfgFileHandle:
+            with open(optCfgFile) as cfgFileHandle:
                 clusterCfg = json.load(cfgFileHandle)
             optCfg = clusterCfg["cluster_types"][self.class_name]
+            if debugCfg:
+                print("0>>> Dump of optional cluster cfg ... \n")
+                print json.dumps(optCfg, indent=3, sort_keys=True)
             # update
             self.clusterCfg = update(self.clusterCfg, optCfg)
+            if debugCfg:
+                print("0>>> Dump of updated cluster cfg ... \n")
+                print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
 
     def getClusterCfg(self):
         return self.clusterCfg
@@ -370,14 +391,12 @@ class AWS_Batch(Cluster):
 
         key = "ra"
         if args is None:
-            args = []
+            args = [" "]
         jobParams[key] = " ".join(args)
 
-        # assign the log file
-        key = "lf"
-        t = str(int(time.time()))
-        lfile = job_name + "_" + t + ".log"
-        jobParams[key] = lfile
+        # using time set a job id (which is for tracking; not the batch job id)
+        trackID = str(int(time.time()))
+        logExt = ".log"
 
         # check for number of cores (1 core = 2 vcpus)
         key = "vcpus"
@@ -405,19 +424,21 @@ class AWS_Batch(Cluster):
                 depends_list = self.submitSyncJobs(submitOpts["dependsOn"], job_name)
             else:
                 depends_list = submitOpts["dependsOn"]
-
+            # set the log file name that's common to both single and array jobs
+            log_prefix = job_name + "_" + trackID
             if array_range is not None:
-                lf = jobParams['lf']
                 air = [ int(i) for i in array_range.split( '-' ) ]
                 taskList = range( air[0], air[1]+1 )
                 self.printVerbose("1>>>> submitJob: " + job_name + " is an array job - no. tasks: " + str(len(taskList)))
                 self.printVerbose("1>>>> submitJob: Submitting array jobs with depend list: " + str(depends_list))
 
                 for t in taskList:
-                    # add an environmnent for equiv to taskid in sge
+                    # add an environmnent for equiv to taskid in sge; and jobid
                     submitOpts["env"].append( { "name": "SGE_TASK_ID",
                                                 "value": str(t) } )
-                    jobParams['lf'] = lf + '.' + str(t)
+                    submitOpts["env"].append( { "name": "JOB_ID",
+                                                "value": trackID } )
+                    jobParams['lf'] = log_prefix + '_' + str(t) + logExt
                     # create a jobname based on the job_name submitted and the task id
                     subOut = self.batchC.submit_job(
                        jobName = job_name + "_" + str(t),
@@ -444,7 +465,9 @@ class AWS_Batch(Cluster):
                 jobid = depends_list[0]['jobId']
             else:
                 self.printVerbose("1>>>> submitJob: Submitting single job " + job_name + " with depend list: " + str(depends_list))
-
+                jobParams['lf'] = log_prefix + logExt
+                submitOpts["env"].append( { "name": "JOB_ID",
+                                            "value": trackID } )
                 subOut = self.batchC.submit_job(
                    jobName = job_name,
                    jobQueue = submitOpts["queue"],
@@ -460,6 +483,7 @@ class AWS_Batch(Cluster):
                 # return from batch submit_job jus the jobId
                 jobid = subOut['jobId']
         else:
+            jobParams['lf'] = log_prefix + "_printonly" + logExt
             batchCmd = "\n\tjobName = " + job_name
             batchCmd = batchCmd + ", jobQueue = " + submitOpts["queue"]
             batchCmd = batchCmd + ", jobDef = " + submitOpts["jobdef"]

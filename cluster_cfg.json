@@ -1,6 +1,7 @@
 {
     "name": "cluster_config",
     "version": "1",
+    "debug": 0,
     "cluster_types": {
         "AWS_Batch": {
             "aws_region": "us-west-2",
@@ -10,6 +11,7 @@
                 "dr": "/projects",
                 "db": "1",
                 "lf": "",
+                "tmo": "15",
                 "mt": "mount -t nfs4 -o vers=4.1 172.255.44.97:/ /projects"
             },
             "submit_opts": {
