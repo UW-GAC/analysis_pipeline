@@ -241,8 +241,6 @@ class AWS_Batch(Cluster):
 
         # get the job parameters
         self.jobParams = self.clusterCfg["job_parameters"]
-        # set the working directory to cwd if not in clusterCfg
-
         #user = getpass.getuser()
         wdkey = "wd"
         if wdkey not in self.jobParams or self.jobParams[wdkey] == "":
@@ -259,6 +257,8 @@ class AWS_Batch(Cluster):
 
         # analysis_pipeline path in the docker image
         self.pipelinePath = self.clusterCfg["pipeline_path"]
+        # get the queue
+        self.queue = self.clusterCfg["queue"]
 
         # create the batch client
         self.batchC = boto3.client('batch',region_name=self.clusterCfg["aws_region"])
@@ -301,7 +301,7 @@ class AWS_Batch(Cluster):
                               " depend list[    " + str(sIndex) + "," + str(lIndex) + "] \n\t\t" + str(depends_list[sIndex:lIndex]))
             subid = self.batchC.submit_job(
                jobName = jobName,
-               jobQueue = self.syncOpts["submit_opts"]["queue"],
+               jobQueue = self.queue,
                jobDefinition = self.syncOpts["submit_opts"]["jobdef"],
                parameters = self.syncOpts["parameters"],
                dependsOn = depends_list[sIndex:lIndex])
@@ -316,7 +316,7 @@ class AWS_Batch(Cluster):
 
         subid = self.batchC.submit_job(
            jobName = jobName,
-           jobQueue = self.syncOpts["submit_opts"]["queue"],
+           jobQueue = self.queue,
            jobDefinition = self.syncOpts["submit_opts"]["jobdef"],
            parameters = masterParams,
            dependsOn = syncDepends_list)
@@ -391,11 +391,11 @@ class AWS_Batch(Cluster):
 
         key = "ra"
         if args is None:
-            args = [" "]
+            args = ["NoArgs"]
         jobParams[key] = " ".join(args)
 
         # using time set a job id (which is for tracking; not the batch job id)
-        trackID = str(int(time.time()))
+        trackID = job_name + "_" + str(int(time.time()*100))
         logExt = ".log"
 
         # check for number of cores (1 core = 2 vcpus)
@@ -425,7 +425,7 @@ class AWS_Batch(Cluster):
             else:
                 depends_list = submitOpts["dependsOn"]
             # set the log file name that's common to both single and array jobs
-            log_prefix = job_name + "_" + trackID
+            log_prefix = trackID
             if array_range is not None:
                 air = [ int(i) for i in array_range.split( '-' ) ]
                 taskList = range( air[0], air[1]+1 )
@@ -438,11 +438,11 @@ class AWS_Batch(Cluster):
                                                 "value": str(t) } )
                     submitOpts["env"].append( { "name": "JOB_ID",
                                                 "value": trackID } )
-                    jobParams['lf'] = log_prefix + '_' + str(t) + logExt
+                    jobParams['lf'] = log_prefix + '.task_' + str(t) + logExt
                     # create a jobname based on the job_name submitted and the task id
                     subOut = self.batchC.submit_job(
                        jobName = job_name + "_" + str(t),
-                       jobQueue = submitOpts["queue"],
+                       jobQueue = self.queue,
                        jobDefinition = submitOpts["jobdef"],
                        parameters = jobParams,
                        dependsOn = depends_list,
@@ -470,7 +470,7 @@ class AWS_Batch(Cluster):
                                             "value": trackID } )
                 subOut = self.batchC.submit_job(
                    jobName = job_name,
-                   jobQueue = submitOpts["queue"],
+                   jobQueue = self.queue,
                    jobDefinition = submitOpts["jobdef"],
                    parameters = jobParams,
                    dependsOn = depends_list,
@@ -483,9 +483,10 @@ class AWS_Batch(Cluster):
                 # return from batch submit_job jus the jobId
                 jobid = subOut['jobId']
         else:
+            log_prefix = trackID
             jobParams['lf'] = log_prefix + "_printonly" + logExt
             batchCmd = "\n\tjobName = " + job_name
-            batchCmd = batchCmd + ", jobQueue = " + submitOpts["queue"]
+            batchCmd = batchCmd + ", jobQueue = " + self.queue
             batchCmd = batchCmd + ", jobDef = " + submitOpts["jobdef"]
             batchCmd = batchCmd + ", memory = " + str(submitOpts["memory"])
             batchCmd = batchCmd + ", vcpus = " + str(submitOpts["vcpus"])
