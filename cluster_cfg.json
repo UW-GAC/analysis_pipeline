@@ -6,16 +6,16 @@
         "AWS_Batch": {
             "aws_region": "us-west-2",
             "pipeline_path": "/projects/topmed/dev_code/analysis_pipeline",
+            "queue": "Optimal_topmed",
             "job_parameters": {
                 "wd": "",
                 "dr": "/projects",
                 "db": "1",
                 "lf": "",
-                "tmo": "15",
+                "tmo": "60",
                 "mt": "mount -t nfs4 -o vers=4.1 172.255.44.97:/ /projects"
             },
             "submit_opts": {
-                "queue": "Optimal_topmed",
                 "jobdef": "topmed_general",
                 "vcpus":  2,
                 "memory": 5000,
@@ -47,7 +47,6 @@
                     "jids": ""
                 },
                 "submit_opts": {
-                    "queue": "Optimal_topmed",
                     "jobdef": "topmed_sync",
                     "dependsOn": []
                 }
