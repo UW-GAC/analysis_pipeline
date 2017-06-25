@@ -99,7 +99,7 @@ if po:
 if not os.path.isdir( mount.split()[-1] ):
     os.mkdir(mount.split()[-1])
 # mount
-pDebug( "mount tmo: " + tmo + "mount command: " + mount )
+pDebug( "mount tmo: " + tmo + " mount command: " + mount )
 sys.stdout.flush()
 mtmo = "timeout " + tmo + " " + mount
 process = subprocess.Popen(mtmo, shell=True, stdout=subprocess.PIPE)
