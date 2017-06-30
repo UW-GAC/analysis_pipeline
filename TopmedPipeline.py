@@ -163,13 +163,17 @@ def directorySetup(config, subdirs=["config", "data", "log", "plots", "report"])
 # regular dictionary update loses default values below the first level
 # https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
 def update(d, u):
+    ld = deepcopy(d)
     for k, v in u.iteritems():
         if isinstance(v, collections.Mapping):
-            r = update(d.get(k, {}), v)
-            d[k] = r
+            if len(v) == 0:
+                ld[k] = u[k]
+            else:
+                r = update(d.get(k, {}), v)
+                ld[k] = r
         else:
-            d[k] = u[k]
-    return d
+            ld[k] = u[k]
+    return ld
 
 
 # parent class to represent a compute cluster environment
@@ -179,22 +183,39 @@ class Cluster(object):
     def __init__(self, cluster_file=None, verbose=False):
         self.verbose = verbose
         self.class_name = self.__class__.__name__
+        self.openClusterCfg("./cluster_cfg.json", cluster_file, verbose)
+
+    def openClusterCfg(self, stdCfgFile, optCfgFile, verbose):
         # get the standard cluster cfg
         pipePath = os.path.dirname(os.path.abspath(sys.argv[0]))
         self.clusterfile =  os.path.join(pipePath, "./cluster_cfg.json")
-        self.printVerbose("0>> ClusterCtor: Reading internal cfg file: " + self.clusterfile)
+        self.printVerbose("0>> openClusterCfg: Reading internal cfg file: " + self.clusterfile)
 
         with open(self.clusterfile) as cfgFileHandle:
             clusterCfg= json.load(cfgFileHandle)
+        key = "debug"
+        debugCfg = False
+        if key in clusterCfg:
+            if clusterCfg[key] == 1:
+                debugCfg = True
         self.clusterCfg = clusterCfg["cluster_types"][self.class_name]
-        if cluster_file != None:
-            self.printVerbose("0>> ClusterCtor: Reading user cfg file: " + self.clusterfile)
+        if debugCfg:
+            print("0>>> Dump of standard cluster cfg ... \n")
+            print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
+        if optCfgFile != None:
+            self.printVerbose("0>> openClusterCfg: Reading user cfg file: " + self.clusterfile)
 
-            with open(cluster_file) as cfgFileHandle:
+            with open(optCfgFile) as cfgFileHandle:
                 clusterCfg = json.load(cfgFileHandle)
             optCfg = clusterCfg["cluster_types"][self.class_name]
+            if debugCfg:
+                print("0>>> Dump of optional cluster cfg ... \n")
+                print json.dumps(optCfg, indent=3, sort_keys=True)
             # update
             self.clusterCfg = update(self.clusterCfg, optCfg)
+            if debugCfg:
+                print("0>>> Dump of updated cluster cfg ... \n")
+                print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
 
     def getClusterCfg(self):
         return self.clusterCfg
@@ -220,8 +241,6 @@ class AWS_Batch(Cluster):
 
         # get the job parameters
         self.jobParams = self.clusterCfg["job_parameters"]
-        # set the working directory to cwd if not in clusterCfg
-
         #user = getpass.getuser()
         wdkey = "wd"
         if wdkey not in self.jobParams or self.jobParams[wdkey] == "":
@@ -238,6 +257,8 @@ class AWS_Batch(Cluster):
 
         # analysis_pipeline path in the docker image
         self.pipelinePath = self.clusterCfg["pipeline_path"]
+        # get the queue
+        self.queue = self.clusterCfg["queue"]
 
         # create the batch client
         self.batchC = boto3.client('batch',region_name=self.clusterCfg["aws_region"])
@@ -280,7 +301,7 @@ class AWS_Batch(Cluster):
                               " depend list[    " + str(sIndex) + "," + str(lIndex) + "] \n\t\t" + str(depends_list[sIndex:lIndex]))
             subid = self.batchC.submit_job(
                jobName = jobName,
-               jobQueue = self.syncOpts["submit_opts"]["queue"],
+               jobQueue = self.queue,
                jobDefinition = self.syncOpts["submit_opts"]["jobdef"],
                parameters = self.syncOpts["parameters"],
                dependsOn = depends_list[sIndex:lIndex])
@@ -295,12 +316,12 @@ class AWS_Batch(Cluster):
 
         subid = self.batchC.submit_job(
            jobName = jobName,
-           jobQueue = self.syncOpts["submit_opts"]["queue"],
+           jobQueue = self.queue,
            jobDefinition = self.syncOpts["submit_opts"]["jobdef"],
            parameters = masterParams,
            dependsOn = syncDepends_list)
         masterDepend_list = [ {'jobId': subid['jobId']} ]
-        self.printVerbose("2>> submitSyncJobs: returning Mastersync return job id list: " + str())
+        self.printVerbose("2>> submitSyncJobs: returning Mastersync return job id list: " + str(masterDepend_list))
 
         return masterDepend_list
 
@@ -355,7 +376,7 @@ class AWS_Batch(Cluster):
             sys.exit(2)
 
 
-    def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None, print_only=False, **kwargs):
+    def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None, request_cores=None, print_only=False, **kwargs):
         self.printVerbose("1>> submitJob: " + job_name + " beginning ...")
         jobParams = deepcopy(self.jobParams)
         submitOpts = deepcopy(self.submitOpts)
@@ -370,14 +391,17 @@ class AWS_Batch(Cluster):
 
         key = "ra"
         if args is None:
-            args = []
+            args = ["NoArgs"]
         jobParams[key] = " ".join(args)
 
-        # assign the log file
-        key = "lf"
-        t = str(int(time.time()))
-        lfile = job_name + "_" + t + ".log"
-        jobParams[key] = lfile
+        # using time set a job id (which is for tracking; not the batch job id)
+        trackID = job_name + "_" + str(int(time.time()*100))
+        logExt = ".log"
+
+        # check for number of cores (1 core = 2 vcpus)
+        key = "vcpus"
+        if request_cores is not None:
+            submitOpts[key] = 2*request_cores
 
         # get memory limit option
         key = "memory_limits"
@@ -396,27 +420,29 @@ class AWS_Batch(Cluster):
         if not print_only:
             # with the current limit of jobs that a submitted job can depend upon (20),
             # we'll use of sync jobs to sync if we have more than 20 hold jobs
-            if len(self.submitOpts["dependsOn"]) > 0:
+            if len(submitOpts["dependsOn"]) > 0:
                 depends_list = self.submitSyncJobs(submitOpts["dependsOn"], job_name)
             else:
                 depends_list = submitOpts["dependsOn"]
-
+            # set the log file name that's common to both single and array jobs
+            log_prefix = trackID
             if array_range is not None:
-                lf = jobParams['lf']
                 air = [ int(i) for i in array_range.split( '-' ) ]
                 taskList = range( air[0], air[1]+1 )
                 self.printVerbose("1>>>> submitJob: " + job_name + " is an array job - no. tasks: " + str(len(taskList)))
                 self.printVerbose("1>>>> submitJob: Submitting array jobs with depend list: " + str(depends_list))
 
                 for t in taskList:
-                    # add an environmnent for equiv to taskid in sge
-                    submitOpts["env"] = [ { "name": "SGE_TASK_ID",
-                                            "value": str(t) } ]
-                    jobParams['lf'] = lf + '.' + str(t)
+                    # add an environmnent for equiv to taskid in sge; and jobid
+                    submitOpts["env"].append( { "name": "SGE_TASK_ID",
+                                                "value": str(t) } )
+                    submitOpts["env"].append( { "name": "JOB_ID",
+                                                "value": trackID } )
+                    jobParams['lf'] = log_prefix + '.task_' + str(t) + logExt
                     # create a jobname based on the job_name submitted and the task id
                     subOut = self.batchC.submit_job(
                        jobName = job_name + "_" + str(t),
-                       jobQueue = submitOpts["queue"],
+                       jobQueue = self.queue,
                        jobDefinition = submitOpts["jobdef"],
                        parameters = jobParams,
                        dependsOn = depends_list,
@@ -439,10 +465,12 @@ class AWS_Batch(Cluster):
                 jobid = depends_list[0]['jobId']
             else:
                 self.printVerbose("1>>>> submitJob: Submitting single job " + job_name + " with depend list: " + str(depends_list))
-
+                jobParams['lf'] = log_prefix + logExt
+                submitOpts["env"].append( { "name": "JOB_ID",
+                                            "value": trackID } )
                 subOut = self.batchC.submit_job(
                    jobName = job_name,
-                   jobQueue = submitOpts["queue"],
+                   jobQueue = self.queue,
                    jobDefinition = submitOpts["jobdef"],
                    parameters = jobParams,
                    dependsOn = depends_list,
@@ -455,8 +483,10 @@ class AWS_Batch(Cluster):
                 # return from batch submit_job jus the jobId
                 jobid = subOut['jobId']
         else:
+            log_prefix = trackID
+            jobParams['lf'] = log_prefix + "_printonly" + logExt
             batchCmd = "\n\tjobName = " + job_name
-            batchCmd = batchCmd + ", jobQueue = " + submitOpts["queue"]
+            batchCmd = batchCmd + ", jobQueue = " + self.queue
             batchCmd = batchCmd + ", jobDef = " + submitOpts["jobdef"]
             batchCmd = batchCmd + ", memory = " + str(submitOpts["memory"])
             batchCmd = batchCmd + ", vcpus = " + str(submitOpts["vcpus"])

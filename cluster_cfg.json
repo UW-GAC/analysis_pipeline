@@ -1,29 +1,31 @@
 {
     "name": "cluster_config",
     "version": "1",
+    "debug": 0,
     "cluster_types": {
         "AWS_Batch": {
-            "aws_region": "us-east-1",
-            "pipeline_path": "/usr/local/analysis_pipeline",
+            "aws_region": "us-west-2",
+            "pipeline_path": "/projects/topmed/dev_code/analysis_pipeline",
+            "queue": "Optimal_topmed",
             "job_parameters": {
                 "wd": "",
                 "dr": "/projects",
                 "db": "1",
                 "lf": "",
-                "mt": "mount -t nfs4 -o vers=4.1 172.31.58.33:/ /projects"
+                "tmo": "60",
+                "mt": "mount -t nfs4 -o vers=4.1 172.255.44.97:/ /projects"
             },
             "submit_opts": {
-                "queue": "LowPriority",
                 "jobdef": "topmed_general",
                 "vcpus":  2,
-                "memory": 8000,
-                "region": "us-east-1",
+                "memory": 5000,
+                "region": "us-west-2",
                 "dependsOn": [],
-                "env": [],
+                "env": [ {"name": "R_LIBS_USER", "value": "/projects/resources/gactools/R_packages/library"} ],
                 "command": []
             },
             "memory_limits": {
-                "find_unrelated":3.5,
+                "find_unrelated":3500,
                 "ld_pruning":11000,
                 "combine_variants":1000,
                 "pca_byrel":4000,
@@ -45,7 +47,6 @@
                     "jids": ""
                 },
                 "submit_opts": {
-                    "queue": "LowPriority",
                     "jobdef": "topmed_sync",
                     "dependsOn": []
                 }
@@ -58,7 +59,7 @@
                     "--workdir": "",
                     "--dataroot": "/projects",
                     "--Debug": "1",
-                    "--mount": "\"mount -t nfs4 -o vers=4.1 172.31.58.33:/ /projects\""
+                    "--mount": "\"mount -t nfs4 -o vers=4.1 172.255.44.97:/ /projects\""
                 }
             }
         },
