@@ -37,9 +37,9 @@
                 "aggregate_list":6000,
                 "assoc_single":24000,
                 "assoc_aggregate":24000,
-                "assoc_window":24000,
-                "assoc_combine":6000,
-                "assoc_plots":4000
+                "assoc_window":17000,
+                "assoc_combine":2000,
+                "assoc_plots":13000
             },
             "sync_job": {
                 "parameters": {
