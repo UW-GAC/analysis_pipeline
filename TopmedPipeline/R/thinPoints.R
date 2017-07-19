@@ -29,5 +29,5 @@ thinPoints <- function(dat, value, n=10000, nbins=10, groupBy=NULL){
         sample_frac(1) %>%
         filter_(~(row_number() <= n)) %>%
         ungroup() %>%
-        select_(~(-bin))
+        select_(.dots="-bin")
 }
