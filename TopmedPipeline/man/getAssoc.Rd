@@ -12,7 +12,7 @@ getAssoc(files, assoc_type)
 \item{assoc_type}{Type of association test ("single", "aggregate", "window")}
 }
 \value{
-data.frame including standard columns ("chr", "pos", "stat", "pval")
+data.frame including standard columns ("chr", "pos", "start", "end", "stat", "pval")
 }
 \description{
 Return association test results in a standard format
@@ -20,4 +20,6 @@ Return association test results in a standard format
 \details{
 Read association test results in multiple files and combine all into a single
 data frame with standard column names.
+
+If a single aggregate unit contains variants from multiple chromosomes, each chromosome will have its own row in the output.
 }

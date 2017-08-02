@@ -61,7 +61,8 @@ p <- ggplot(dat, aes(-log10(exp), -log10(obs))) +
     xlab(expression(paste(-log[10], "(expected P)"))) +
     ylab(expression(paste(-log[10], "(observed P)"))) +
     ggtitle(paste("lambda =", format(lambda, digits=4, nsmall=3))) +
-    theme_bw()
+    theme_bw() +
+    theme(plot.title = element_text(size = 22))
 ggsave(config["out_file_qq"], plot=p, width=6, height=6)
 
 rm(dat)
