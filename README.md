@@ -167,16 +167,19 @@ Association tests are done with a mixed model if a kinship matrix (`pcrelate_fil
 
 When combining samples from groups with different variances for a trait (e.g., study or ancestry group), it is recommended to allow the null model to fit heterogeneous variances by group using the parameter `group_var`. The default pipeline options will then result in the following procedure:
 
-1. For each group separately:
-    1. Fit null mixed model including covariates and PCs (as fixed effects) and kinship (as random effect)
-    2. Inverse normal transform marginal residuals (if `inverse_normal = TRUE`)
-    3. Rescale variance to match original (if `rescale_variance = TRUE`)
-   
-2. For all samples together:
+1. For all samples together:
+    1. Fit null mixed model with outcome variable
+	    - Allow heterogeneous variance by `group_var`
+        - Include covariates and PCs as fixed effects
+        - Include kinship as random effect
+2. For each group separately:
+    1. Inverse normal transform marginal residuals (if `inverse_normal = TRUE`)
+    2. Rescale variance to match original (if `rescale_variance = TRUE`)
+3. For all samples together:
     1. Fit null mixed model using transformed residuals as outcome
-    2. Allow heterogeneous variance by `group_var`
-    3. Include covariates and PCs as fixed effects (if `resid_covars = TRUE`)
-    4. Include kinship as random effect
+        - Allow heterogeneous variance by `group_var`
+        - Include covariates and PCs as fixed effects (if `resid_covars = TRUE`)
+        - Include kinship as random effect
 
 For single-variant tests, the effect estimate is for the reference allele. For aggregate and sliding window tests, the effect estimate is for the alternate alelle, and multiple alternate alelles for a single variant are treated separately.
 
