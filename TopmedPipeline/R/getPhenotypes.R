@@ -31,8 +31,10 @@ getPhenotypes <- function(config) {
     outcome <- unname(config["outcome"])
     covars <- .parseParam(config["covars"])
     covars <- c(covars, pccols)
+    group.var <- unname(config["group_var"])
+    if (is.na(group.var)) group.var <- NULL
 
-    annot <- annot[,c("sample.id", outcome, covars)]
+    annot <- annot[,unique(c("sample.id", outcome, covars, group.var))]
 
     ## select samples
     if (!is.na(config["sample_include_file"])) {
@@ -51,7 +53,7 @@ getPhenotypes <- function(config) {
     cc <- annot$sample.id[complete.cases(pData(annot))]
     sample.id <- intersect(sample.id, cc)
 
-    list(annot=annot, outcome=outcome, covars=covars, sample.id=sample.id)
+    list(annot=annot, outcome=outcome, covars=covars, group.var=group.var, sample.id=sample.id)
     
 }
 
