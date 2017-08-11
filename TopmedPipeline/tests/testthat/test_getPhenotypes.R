@@ -4,7 +4,7 @@ library(Biobase)
 library(SeqArray)
 library(gdsfmt)
 
-.testConfig <- function(covars, n_pcs) {
+.testConfig <- function(covars, n_pcs, group_var=NA) {
     n <- 100
     phen <- AnnotatedDataFrame(data.frame(sample.id=as.character(1:n),
                                           outcome=rnorm(n),
@@ -24,6 +24,7 @@ library(gdsfmt)
       n_pcs=n_pcs,
       outcome="outcome",
       covars=covars,
+      group_var=group_var,
       sample_include_file=NA)
 }
 
@@ -82,6 +83,46 @@ test_that("no covariates or PCs", {
 
     .cleanupConfig(config)
 })
+
+test_that("group.var is NA", {
+    config <- .testConfig(covars="study", n_pcs=0, group_var=NA)
+    
+    phen <- getPhenotypes(config)
+    expect_is(phen$annot, "AnnotatedDataFrame")
+    expect_equal(phen$covars, c("study"))
+    expect_null(phen$group.var)
+    expect_equal(varLabels(phen$annot), c("sample.id", "outcome", "study"))
+    expect_equal(phen$sample.id, phen$annot$sample.id)
+
+    .cleanupConfig(config)
+})
+
+test_that("group.var is covar", {
+    config <- .testConfig(covars="study", n_pcs=0, group_var="study")
+    
+    phen <- getPhenotypes(config)
+    expect_is(phen$annot, "AnnotatedDataFrame")
+    expect_equal(phen$covars, c("study"))
+    expect_equal(phen$group.var, c("study"))
+    expect_equal(varLabels(phen$annot), c("sample.id", "outcome", "study"))
+    expect_equal(phen$sample.id, phen$annot$sample.id)
+
+    .cleanupConfig(config)
+})
+
+test_that("group.var is not covar", {
+    config <- .testConfig(covars=NA, n_pcs=0, group_var="study")
+    
+    phen <- getPhenotypes(config)
+    expect_is(phen$annot, "AnnotatedDataFrame")
+    expect_null(phen$covars)
+    expect_equal(phen$group.var, c("study"))
+    expect_equal(varLabels(phen$annot), c("sample.id", "outcome", "study"))
+    expect_equal(phen$sample.id, phen$annot$sample.id)
+
+    .cleanupConfig(config)
+})
+
 
 test_that("spline", {
     config <- .testConfig(covars="study age.spline", n_pcs=2)
