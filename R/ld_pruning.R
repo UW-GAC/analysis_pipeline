@@ -66,6 +66,7 @@ maf <- as.numeric(config["maf_threshold"])
 r <- as.numeric(config["ld_r_threshold"])
 win <- as.numeric(config["ld_win_size"]) * 1e6
 
+set.seed(100) # make pruned SNPs reproducible
 snpset <- snpgdsLDpruning(gds, sample.id=sample.id, snp.id=variant.id, maf=maf, 
                           method="corr", slide.max.bp=win, ld.threshold=r,
                           num.thread=countThreads())
