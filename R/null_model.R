@@ -35,6 +35,7 @@ phen <- getPhenotypes(config)
 annot <- phen[["annot"]]
 outcome <- phen[["outcome"]]
 covars <- phen[["covars"]]
+group.var <- phen[["group.var"]]
 sample.id <- phen[["sample.id"]]
 
 if (as.logical(config["binary"])) {
@@ -42,13 +43,6 @@ if (as.logical(config["binary"])) {
     family <- binomial
 } else {
     family <- gaussian
-}
-
-# heterogeneous residual variance
-if (!is.na(config["group_var"])) {
-    group.var <- config["group_var"]
-} else {
-    group.var <- NULL
 }
 
 # kinship matrix or GRM
