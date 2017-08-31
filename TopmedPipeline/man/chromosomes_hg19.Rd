@@ -3,16 +3,19 @@
 \docType{data}
 \name{chromosomes_hg19}
 \alias{chromosomes_hg19}
-\title{Start and end positions of each chromosome for build hg19}
+\alias{chromosomes_hg38}
+\title{Start and end positions of each chromosome}
 \format{\code{\link[GenomicRanges]{GRanges}} object}
 \source{
 UCSC Genome Browser
 }
 \usage{
 chromosomes_hg19
+
+chromosomes_hg38
 }
 \description{
-Start and end positions of each chromosome for build hg19
+Start and end positions of each chromosome
 }
 \examples{
 library(dplyr)
