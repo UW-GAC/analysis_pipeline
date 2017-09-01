@@ -15,6 +15,7 @@ required <- c("assoc_file",
               "locus_file")
 optional <- c("flanking_region"=500,
               "gds_file"=NA,
+              "genome_build"="hg19",
               "ld_sample_include"=NA,
               "locus_type"="variant",
               "out_prefix"="locuszoom",
@@ -34,7 +35,7 @@ print(locus)
 
 # population for LD
 pop <- toupper(locus$pop)
-stopifnot(pop %in% c("TOPMED", "AFR", "AMR", "ASN", "EUR"))
+stopifnot(pop %in% c("TOPMED", "AFR", "AMR", "ASN", "EUR", "EAS", "SAS"))
 
 ## get association test results
 var.chr <- locus$chr
@@ -75,7 +76,7 @@ writeMETAL(assoc, file=assoc.filename)
 
 # LD
 if (pop != "TOPMED") {
-    ld.cmd <- paste("--pop", pop, "--source 1000G_March2012")
+    ld.cmd <- paste("--pop", pop, "--source 1000G_Nov2014")
     ld.title <- paste("LD: 1000G", pop)
 } else {
     if (!is.na(config["ld_sample_include"])) {
@@ -105,6 +106,9 @@ if (!is.na(config["track_file"])) {
         filter(pval < as.numeric(config["track_threshold"]))
     track.filename <- tempfile()
     writeBED(track, file=track.filename, track.label=config["track_label"])
+    track.cmd <- paste("--bed-tracks", track.filename)
+} else {
+    track.cmd <- ""
 }
 
 command <- paste("locuszoom",
@@ -113,10 +117,10 @@ command <- paste("locuszoom",
                  "--no-date",
                  "--plotonly",
                  "--gene-table gencode",
-                 "--build hg19",
+                 "--build", config["genome_build"],
                  "--chr", var.chr,
                  "--metal", assoc.filename,
-                 "--bed-tracks", track.filename,
+                 track.cmd,
                  ld.cmd,
                  ld.region,
                  "--prefix ", prefix,
