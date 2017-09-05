@@ -11,6 +11,7 @@ config <- readConfig(argv$config)
 
 required <- c("gds_file")
 optional <- c("exclude_pca_corr"=TRUE,
+              "genome_build"="hg19",
               "maf_threshold"=0.001,
               "method"="gcta",
               "out_file"="grm.RData",
@@ -37,7 +38,7 @@ if (!is.na(varfile)) {
 filterByPass(gds)
 filterBySNV(gds)
 if (as.logical(config["exclude_pca_corr"])) {
-    filterByPCAcorr(gds)
+    filterByPCAcorr(gds, build=config["genome_build"])
 }
 
 variant.id <- seqGetData(gds, "variant.id")

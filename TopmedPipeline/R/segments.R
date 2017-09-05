@@ -1,4 +1,4 @@
-#' Start and end positions of each chromosome for build hg19
+#' Start and end positions of each chromosome
 #'
 #' @format \code{\link[GenomicRanges]{GRanges}} object
 #' @source UCSC Genome Browser
@@ -19,6 +19,9 @@
 #'                             ranges=IRanges(start=1, end=dat$size))
 "chromosomes_hg19"
 
+#' @rdname chromosomes_hg19
+"chromosomes_hg38"
+
 
 #' Define segments for parallel processing of the genome
 #'
@@ -33,8 +36,9 @@
 #' @importFrom IRanges IRanges
 #' @importFrom utils data
 #' @export
-defineSegments <- function(seg.length, n, build="hg19") {
+defineSegments <- function(seg.length, n, build=c("hg19", "hg38")) {
     # load GRanges object with chromosomes for this build
+    build <- match.arg(build)
     gr <- get(data(list=paste("chromosomes", build, sep="_"),
                    package="TopmedPipeline", envir=environment()))
 
