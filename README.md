@@ -177,7 +177,7 @@ When combining samples from groups with different variances for a trait (e.g., s
         - Include kinship as random effect
 2. For each group separately:
     1. Inverse normal transform marginal residuals (if `inverse_normal = TRUE`)
-    2. Rescale variance to match original (if `rescale_variance = TRUE`)
+    2. Rescale variance to match original (if `rescale_variance = "marginal"` or `"varcomp"`)
 3. For all samples together:
     1. Fit null mixed model using transformed residuals as outcome
         - Allow heterogeneous variance by `group_var`
@@ -203,7 +203,7 @@ config parameter | default value | description
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
 `group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
 `inverse_normal` | `TRUE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately.
-`rescale_variance` | `TRUE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
+`rescale_variance` | `marginal` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Controls whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform. Options are `marginal`, `varcomp`, or `none`.
 `resid_covars` | `TRUE` | Applies only if `inverse_normal` is `TRUE`. Logical for whether covariates should be included in the second null model using the residuals as the outcome variable.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` and `variant.id`. The alternate allele dosage of these variants will be included as covariates in the analysis.
