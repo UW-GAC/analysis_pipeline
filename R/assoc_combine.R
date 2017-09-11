@@ -25,3 +25,7 @@ save(assoc, file=constructFilename(config["out_prefix"], chr))
 
 # delete segment files
 unlink(files)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")
