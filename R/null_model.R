@@ -60,7 +60,7 @@ model.string <- modelString(outcome, covars, random, group.var)
 message("Model: ", model.string)
 
 if (!is.null(grm)) {
-    
+
     ## fit null model allowing heterogeneous variances among studies
     nullmod <- fitNullMM(annot, outcome=outcome, covars=covars,
                          covMatList=grm, scan.include=sample.id,
@@ -87,7 +87,7 @@ if (!is.null(grm)) {
             }))
             annot$resid.norm <- resid.group$resid.norm[match(annot$sample.id, resid.group$sample.id)]
         }
-        
+
         ## fit null model again with these residuals as outcome and allowing heterogeneous variances
         resid.covars <- if (config["resid_covars"]) covars else NULL
         nullmod <- fitNullMM(annot, outcome="resid.norm", covars=resid.covars,
@@ -106,7 +106,11 @@ if (!is.null(grm)) {
         nullmod <- fitNullReg(annot, outcome="resid.norm", covars=resid.covars,
                               scan.include=sample.id, family=family)
     }
-    
+
 }
 
 save(nullmod, file=config["out_file"])
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")
