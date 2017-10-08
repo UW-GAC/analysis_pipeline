@@ -53,7 +53,6 @@ defaultWorkdir = defaultDataroot + "/batch"
 defaultRargs = ""
 defaultDebug = 0
 defaultPO = 0
-defaultNoMount = 0
 
 # command line parser
 parser = ArgumentParser( description = "docker script to run tm analysis pipeline R code via R control file (e.g., runRscript.sh)" )
@@ -62,7 +61,8 @@ parser.add_argument( "-w", "--workdir", default = defaultWorkdir,
 parser.add_argument( "-d", "--dataroot", default = defaultDataroot,
                      help = "external data root folder [default: " + defaultDataroot + "]" )
 parser.add_argument( "-n", "--nomount", default = defaultNoMount,
-                     help = "do not mount nfs/cifs disk [default: " + str(defaultNoMount) + "]" )
+                     help = "do not mount nfs/cifs disk [default: false]", 
+                     action = "store_true")
 parser.add_argument("--rdriver", default = defaultRdriver,
                      help = "full path of pipeline R driver bash file [default: " + defaultRdriver + "]" )
 parser.add_argument("-m", "--mount", default = defaultMount,
