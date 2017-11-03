@@ -39,6 +39,18 @@ test_that("formatAssocSingle unrelated", {
     seqClose(seqData)
     expect_true(all(c("variantID", "chr", "pos", "MAF") %in% names(assoc)))
 })
+    
+test_that("formatAssocSingle unrelated - binary", {
+    seqData <- .testData()
+    dat <- sampleData(seqData)
+    dat$status <- rbinom(nrow(dat), 1, prob=0.4)
+    sampleData(seqData) <- dat
+    seqSetFilter(seqData, variant.sel=1:10, verbose=FALSE)
+    assoc <- regression(seqData, outcome="status", covar="sex", model.type="logistic")
+    assoc <- formatAssocSingle(seqData, assoc)
+    seqClose(seqData)
+    expect_true(all(c("variantID", "chr", "pos", "MAF", "n") %in% names(assoc)))
+})
                     
     
 
