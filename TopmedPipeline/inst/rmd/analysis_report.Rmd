@@ -34,12 +34,13 @@ params <- lapply(setNames(files, scripts), readConfig)
 
 ```{r}
 config <- params$null_model
+# unrelated analyses have no null model
+if (is.null(config)) config <- params$assoc_single
 phen <- getPhenotypes(config)
 outcome <- phen$outcome
 covars <- phen$covars
 annot <- filter(pData(phen$annot), sample.id %in% phen$sample.id)
-random <- ifelse(!is.na(config["pcrelate_file"]), "kinship",
-                 ifelse(!is.na(config["grm_file"]), "grm", NULL))
+random <- if (!is.na(config["pcrelate_file"])) "kinship" else if (!is.na(config["grm_file"])) "grm" else NULL
 group_var <- if (is.na(config["group_var"])) NULL else config["group_var"]
 model.string <- modelString(outcome, covars, random, group_var)
 ```

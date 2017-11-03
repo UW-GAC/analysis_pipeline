@@ -138,6 +138,10 @@ formatAssocSingle <- function(seqData, assoc) {
     if (!("chr" %in% names(assoc))) {
         assoc$chr <- seqGetData(seqData, "chromosome")
     }
+    if ("n0" %in% names(assoc)) {
+        assoc$n <- rowSums(assoc[,c("freq0", "freq1")], na.rm=TRUE)
+        assoc$freq <- rowMeans(assoc[,c("freq0", "freq1")], na.rm=TRUE)
+    }
     if (!("MAF" %in% names(assoc))) {
         assoc$MAF <- pmin(assoc$freq, 1 - assoc$freq)
         assoc$minor.allele <- ifelse(assoc$freq > 0.5, "ref", "alt")

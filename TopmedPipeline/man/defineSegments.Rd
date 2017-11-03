@@ -4,7 +4,7 @@
 \alias{defineSegments}
 \title{Define segments for parallel processing of the genome}
 \usage{
-defineSegments(seg.length, n, build = "hg19")
+defineSegments(seg.length, n, build = c("hg19", "hg38"))
 }
 \arguments{
 \item{seg.length}{Segment length in base pairs}

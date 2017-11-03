@@ -157,3 +157,11 @@ test_that("window", {
     unlink(files)
     unlink(segfile)
 })
+
+
+test_that("build  38", {
+    data(chromosomes_hg38)
+    n <- sample(1:23, 1)
+    seg <- defineSegments(n=n, build="hg38")
+    expect_equal(seg, chromosomes_hg38)
+})

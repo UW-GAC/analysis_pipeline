@@ -85,6 +85,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning.
 	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
+	`genome_build` | `hg19` | Genome build, used to define correlation regions.
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
@@ -109,11 +110,12 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`kinship_method` | `king` | Type of kinship estimates to use for finding unrelated set. Options are `king` or `pcrelate`.
 	`kinship_threshold` | `0.04419417` | Minimum kinship estimate to use for assigning relatives (default is `2^(-9/2)` or 3rd degree relatives).
 	`pcrelate_file` | `NA` | GDS file created by `pcrelate.py`. Only used if `kinship_method` is `pcrelate`.
-	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
+	`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 	`ld_r_threshold` | `0.32` | `r` threshold for LD pruning. Default is `r^2 = 0.1`.
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning. 
-	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
+	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions). 
+	`genome_build` | `hg19` | Genome build, used to define correlation regions.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
 	`n_pcs` | `20` | Number of PCs to return.
 	`n_pair` | `6` | Number of PCs in include in the pairs plot.
@@ -157,6 +159,7 @@ config parameter | default value | description
 `method` | `gcta` | Method used to compute GRM. Options are `gcta` and `eigmix`.
 `maf_threshold` | `0.001` | Minimum MAF for variants used in LD pruning.
 `exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
+`genome_build` | `hg19` | Genome build, used to define correlation regions.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include.
 `variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
 
@@ -174,7 +177,7 @@ When combining samples from groups with different variances for a trait (e.g., s
         - Include kinship as random effect
 2. For each group separately:
     1. Inverse normal transform marginal residuals (if `inverse_normal = TRUE`)
-    2. Rescale variance to match original (if `rescale_variance = TRUE`)
+    2. Rescale variance to match original (if `rescale_variance = "marginal"` or `"varcomp"`)
 3. For all samples together:
     1. Fit null mixed model using transformed residuals as outcome
         - Allow heterogeneous variance by `group_var`
@@ -200,13 +203,13 @@ config parameter | default value | description
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
 `group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
 `inverse_normal` | `TRUE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately.
-`rescale_variance` | `TRUE` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Logical for whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform.
+`rescale_variance` | `marginal` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Controls whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform. Options are `marginal`, `varcomp`, or `none`.
 `resid_covars` | `TRUE` | Applies only if `inverse_normal` is `TRUE`. Logical for whether covariates should be included in the second null model using the residuals as the outcome variable.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` and `variant.id`. The alternate allele dosage of these variants will be included as covariates in the analysis.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 `variant_include_file` | `NA` | RData file with vector of variant.id to include.
-`genome_build` | `hg19` | Genome build for the genotypes in the GDS file. Used to divide the genome into segments for parallel processing.
+`genome_build` | `hg19` | Genome build for the genotypes in the GDS file (`hg19` or `hg38`). Used to divide the genome into segments for parallel processing.
 `thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 
 
@@ -291,7 +294,7 @@ The script [`assoc.py`](assoc.py) submits a SGE array job for each chromosome, w
 
 LocusZoom plots are created with the [LocusZoom standalone software](http://genome.sph.umich.edu/wiki/LocusZoom_Standalone).
 
-Loci to plot are specified in the `locus_file`, with chromosome `chr` and either `variantID` (to specify the reference variant) or `start end` (to indicate a region to plot, in which case the variant with the smallest p-value will be the reference. Population (`pop`) is either `TOPMED` or one of the 1000 Genomes populations (`AFR`, `AMR`, `ASN`, `EUR`). If `pop = TOPMED`, LD is computed from the TOPMed data using the sample set in `ld_sample_include`.
+Loci to plot are specified in the `locus_file`, with chromosome `chr` and either `variantID` (to specify the reference variant) or `start end` (to indicate a region to plot, in which case the variant with the smallest p-value will be the reference. Population (`pop`) is either `TOPMED` or one of the 1000 Genomes populations (`hg19`:`AFR`, `AMR`, `ASN`, `EUR`; `hg38`: `AFR`, `AMR`, `EUR`, `EAS`, `SAS`). If `pop = TOPMED`, LD is computed from the TOPMed data using the sample set in `ld_sample_include`.
 
 Regions from sliding window or aggregate tests with p-values below a certain threshold can be displayed in a separate track. 
 
@@ -305,7 +308,8 @@ config parameter | default value | description
 `locus_file` | | Text file with columns `chr`, `pop` and either `variantID` (for `locus_type=variant`) or `start`, `end` (for `locus_type=region`)
 `locus_type` | `variant` | Type of region to plot (`variant` with flanking region, or `region`)
 `flanking_region` | `500` | Flanking region in kb
-`gds_file` | `NA` | GDS file to use for calculating LD. Include a space to insert chromosome.
+`gds_file` | `NA` | GDS file to use for calculating LD. Include a space to insert chromosome. 
+`genome_build` | `hg19` | Genome build (`hg19` or `hg38`).
 `ld_sample_include` | `NA` | RData file with vector of sample.id to include when calculating LD.
 `track_file` | `NA` | File with aggregate or window association test results. Regions will be displayed in a track in the LocusZoom plot. Include a space to insert chromosome.
 `track_file_type` | `window` | Type of association regions in `track_file` (`window` or `aggregate`).

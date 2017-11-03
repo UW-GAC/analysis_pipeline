@@ -13,6 +13,7 @@ chr <- intToChr(argv$chromosome)
 
 required <- c("gds_file")
 optional <- c("exclude_pca_corr"=TRUE,
+              "genome_build"="hg19",
               "ld_r_threshold"=0.32,
               "ld_win_size"=10,
               "maf_threshold"=0.01,
@@ -56,7 +57,7 @@ if (!is.na(chr) && !bychrfile) {
 filterByPass(gds)
 filterBySNV(gds)
 if (as.logical(config["exclude_pca_corr"])) {
-    filterByPCAcorr(gds)
+    filterByPCAcorr(gds, build=config["genome_build"])
 }
 
 variant.id <- seqGetData(gds, "variant.id")
@@ -66,6 +67,7 @@ maf <- as.numeric(config["maf_threshold"])
 r <- as.numeric(config["ld_r_threshold"])
 win <- as.numeric(config["ld_win_size"]) * 1e6
 
+set.seed(100) # make pruned SNPs reproducible
 snpset <- snpgdsLDpruning(gds, sample.id=sample.id, snp.id=variant.id, maf=maf, 
                           method="corr", slide.max.bp=win, ld.threshold=r,
                           num.thread=countThreads())
