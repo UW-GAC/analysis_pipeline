@@ -20,20 +20,27 @@ optional <- c("kinship_method"="king",
               "out_file_cross"="kinship_cross_study.pdf",
               "out_file_study"="kinship_within_study.pdf",
               "phenotype_file"=NA,
+              "sample_include_file"=NA,
               "study"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
+
+if (!is.na(config["sample_include_file"])) {
+    sample.id <- getobj(config["sample_include_file"])
+} else {
+    sample.id <- NULL
+}
 
 ## select type of kinship estimates to use (king or pcrelate)
 kin.type <- tolower(config["kinship_method"])
 kin.thresh <- as.numeric(config["kinship_threshold"])
 if (kin.type == "king") {
     king <- getobj(config["kinship_file"])
-    kinship <- snpgdsIBDSelection(king, kinship.cutoff=kin.thresh)
+    kinship <- snpgdsIBDSelection(king, kinship.cutoff=kin.thresh, samp.sel=sample.id)
     xvar <- "IBS0"
 } else if (kin.type == "pcrelate") {
     pcr <- openfn.gds(config["kinship_file"])
-    kinship <- pcrelateReadKinship(pcr, kin.thresh=kin.thresh)
+    kinship <- pcrelateReadKinship(pcr, kin.thresh=kin.thresh, scan.include=sample.id)
     closefn.gds(pcr)
     kinship <- kinship %>%
         rename(kinship=kin) %>%
