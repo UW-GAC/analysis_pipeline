@@ -11,6 +11,7 @@ argv <- parse_args(argp)
 config <- readConfig(argv$config)
 
 required <- c("assoc_file",
+
               "assoc_type")
 optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X",
               "known_hits_file"=NA,
@@ -34,7 +35,7 @@ if (!is.na(config["known_hits_file"]) & config["assoc_type"] == "single") {
 
 if ("stat" %in% names(assoc)) {
     ## burden or single
-    lambda <- calculateLambda(assoc$stat, df=1)
+    lambda <- calculateLambda((assoc$stat)^2, df=1)
 } else {
     ## SKAT
     lambda <- calculateLambda(qchisq(assoc$pval, df=1, lower=FALSE), df=1)
@@ -69,7 +70,7 @@ rm(dat)
 
 
 ## manhattan plot
-chr <- levels(assoc$chr)
+chr <- levels(assoc$chromosome)
 cmap <- setNames(rep_len(brewer.pal(8, "Dark2"), length(chr)), chr)
 
 # significance level
@@ -83,10 +84,10 @@ if (config["assoc_type"] == "single") {
 
 if (as.logical(config["thin"])) {
     assoc <- mutate(assoc, logp=-log10(pval)) %>%
-        thinPoints("logp", n=10000, nbins=10, groupBy="chr")
+        thinPoints("logp", n=10000, nbins=10, groupBy="chromosome")
 }
 
-p <- ggplot(assoc, aes(chr, -log10(pval), group=interaction(chr, pos), color=chr)) +
+p <- ggplot(assoc, aes(chromosome, -log10(pval), group=interaction(chromosome, position), color=chromosome)) +
     geom_point(position=position_dodge(0.8)) +
     scale_color_manual(values=cmap, breaks=names(cmap)) +
     geom_hline(yintercept=-log10(signif), linetype='dashed') +

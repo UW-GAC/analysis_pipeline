@@ -1,13 +1,13 @@
 
 #' @importFrom dplyr "%>%" arrange_ select_
-.arrange_chr_pos <- function(df, chr="chr", pos="pos") {
+.arrange_chr_pos <- function(df, chr="chromosome", pos="position") {
     df$chr.factor <- factor(df[[chr]], levels=c(1:22, "X", "Y"))
     df %>%
         arrange_("chr.factor", pos) %>%
         select_("-chr.factor")
 }
 
-.index_chr_pos <- function(x, chr="chr", pos="pos") {
+.index_chr_pos <- function(x, chr="chromosome", pos="position") {
     df <- do.call(rbind, lapply(x, function(xx) xx[1,c(chr,pos)]))
     df$chr.factor <- factor(df[[chr]], levels=c(1:22, "X", "Y"))
     order(df$chr.factor, df[[pos]])
@@ -32,24 +32,14 @@ combineAssoc <- function(files, assoc_type) {
     if (assoc_type == "single") {
         assoc <- do.call(rbind, x) %>%
             .arrange_chr_pos()
-    } else if (assoc_type  == "aggregate") {
-        assoc <- x[[1]][c("param", "nsample")]
+    } else if (assoc_type  %in% c("aggregate", "window")) {
+        assoc <- list()
+        #assoc <- x[[1]][c("param", "nsample")]
         varInfo <- do.call(c, lapply(x, function(y) y$variantInfo))
         # get index to put units in order by chr, pos
         index <- .index_chr_pos(varInfo)
         assoc$results <- do.call(rbind, lapply(x, function(y) y$results))[index,]
         assoc$variantInfo <- varInfo[index]
-    } else if (assoc_type == "window") {
-        assoc <- x[[1]][c("param", "window", "nsample")]
-        assoc$results <- do.call(rbind, lapply(x, function(y) y$results)) %>%
-            .arrange_chr_pos(pos="window.start") %>%
-            distinct_() %>%
-            group_by_("chr", "window.start", "window.stop") %>%
-            filter_(~(n.site == max(n.site)), ~(!duplicated(n.site))) %>%
-            as.data.frame()
-        assoc$variantInfo <- do.call(rbind, lapply(x, function(y) y$variantInfo)) %>%
-            .arrange_chr_pos() %>%
-            distinct_()
     }
     assoc
 }
@@ -64,7 +54,7 @@ combineAssoc <- function(files, assoc_type) {
 #' If a single aggregate unit contains variants from multiple chromosomes, each chromosome will have its own row in the output.
 #' 
 #' @inheritParams combineAssoc
-#' @return data.frame including standard columns ("chr", "pos", "start", "end", "stat", "pval")
+#' @return data.frame including standard columns ("chromosome", "position", "start", "end", "stat", "pval")
 #'
 #' @importFrom dplyr "%>%" filter_ group_by_ left_join mutate_ n rename_ select_ summarise_
 #' @export
@@ -72,26 +62,22 @@ getAssoc <- function(files, assoc_type) {
     stopifnot(assoc_type %in% c("single", "aggregate", "window"))
     assoc <- do.call(rbind, lapply(unname(files), function(f) {
         x <- getobj(f)
-        if (assoc_type  == "aggregate") {
+        if (assoc_type  %in% c("aggregate", "window")) {
             tmp <- x$results %>%
                 mutate_(group_id=~(1:n())) %>%
                 filter_(~(n.site > 0))
             group.info <- do.call(rbind, lapply(tmp$group_id, function(g) {
                 x$variantInfo[[g]] %>%
-                    group_by_("chr") %>%
-                    summarise_(start=~min(pos),
-                               end=~max(pos),
-                               pos=~(floor((min(pos) + max(pos))/2))) %>%
+                    group_by_("chromosome") %>%
+                    summarise_(start=~min(position),
+                               end=~max(position),
+                               position=~(floor((min(position) + max(position))/2))) %>%
                     mutate_(group_id=g) %>%
                     as.data.frame()
             }))
             x <- left_join(tmp, group.info, by="group_id")
-        } else if (assoc_type == "window") {
-            x <- filter_(x$results, ~(n.site > 0), ~(dup == 0)) %>%
-                mutate_(pos=~(floor((window.start + window.stop)/2))) %>%
-                rename_(start="window.start", end="window.stop")
         } else {
-            x <- mutate_(x, start="pos", end="pos")
+            x <- mutate_(x, start="position", end="position")
         }
         x
     }))
@@ -99,15 +85,15 @@ getAssoc <- function(files, assoc_type) {
     if ("pval_0" %in% names(assoc)) {
         ## SKAT
         pval.col <- if ("pval_SKATO" %in% names(assoc)) "pval_SKATO" else "pval_0"
-        assoc <- select_(assoc, "chr", "pos", "start", "end", pval.col) %>%
+        assoc <- select_(assoc, "chromosome", "position", "start", "end", pval.col) %>%
             rename_(pval=pval.col)
     } else {
         ## burden or single
-        assoc <- select_(assoc, "chr", "pos", "start", "end", ~ends_with("stat"), ~ends_with("pval"))
+        assoc <- select_(assoc, "chromosome", "position", "start", "end", ~ends_with("stat"), ~ends_with("pval"))
         names(assoc)[5:6] <- c("stat", "pval")
     }
     assoc <- filter_(assoc, ~(!is.na(pval))) %>%
-        mutate_(chr=~factor(chr, levels=c(1:22, "X")))
+        mutate_(chromosome=~factor(chromosome, levels=c(1:22, "X")))
     assoc
 }
 
@@ -168,10 +154,10 @@ formatAssocSingle <- function(seqData, assoc) {
 #' @importFrom S4Vectors queryHits
 #' @export
 omitKnownHits <- function(assoc, hits, flank=500) {
-    stopifnot(all(c("chr", "pos") %in% names(hits)))
-    assoc.gr <- GRanges(seqnames=assoc$chr, ranges=IRanges(start=assoc$pos, end=assoc$pos))
-    hits.gr <- GRanges(seqnames=hits$chr, ranges=IRanges(start=hits$pos-(flank*1000),
-                                              end=hits$pos+(flank*1000)))
+    stopifnot(all(c("chromosome", "position") %in% names(hits)))
+    assoc.gr <- GRanges(seqnames=assoc$chr, ranges=IRanges(start=assoc$position, end=assoc$position))
+    hits.gr <- GRanges(seqnames=hits$chr, ranges=IRanges(start=hits$position-(flank*1000),
+                                              end=hits$position+(flank*1000)))
     ol <- findOverlaps(assoc.gr, hits.gr)
     assoc[-queryHits(ol),]
 }

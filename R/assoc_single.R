@@ -2,7 +2,7 @@ library(argparser)
 library(TopmedPipeline)
 library(SeqVarTools)
 library(Biobase)
-library(GENESIS)
+library(genesis2)
 sessionInfo()
 
 argp <- arg_parser("Association test - single variant")
@@ -43,7 +43,8 @@ gds <- seqOpen(gdsfile)
 nullModel <- getobj(config["null_model_file"])
 
 # get samples included in null model
-sample.id <- nullModel$scanID
+#sample.id <- nullModel$scanID
+sample.id <- rownames(nullModel$model.matrix)
 
 if (!is.na(segment)) {
     filterBySegment(gds, segment, config["segment_file"])
@@ -67,8 +68,8 @@ maf.min <- as.numeric(config["maf_threshold"])
 filterByMAF(gds, sample.id, mac.min, maf.min)
 
 checkSelectedVariants(gds)
-variant.id <- seqGetData(gds, "variant.id")
-seqResetFilter(gds, verbose=FALSE)
+#variant.id <- seqGetData(gds, "variant.id")
+#seqResetFilter(gds, verbose=FALSE)
 
 
 # get phenotypes
@@ -76,15 +77,17 @@ annot <- getobj(config["phenotype_file"])
 
 # createSeqVarData object
 seqData <- SeqVarData(gds, sampleData=annot)
+iterator <- SeqVarBlockIterator(seqData)
 
 test <- switch(tolower(config["test_type"]),
                score="Score",
                wald="Wald")
 
-assoc <- assocTestMM(seqData, nullModel, test=test, snp.include=variant.id)
+#assoc <- assocTestMM(seqData, nullModel, test=test, snp.include=variant.id)
+assoc <- assocTestMM2(iterator, nullModel, test=test)
 
 ## make output consistent with aggregate tests
-assoc <- formatAssocSingle(seqData, assoc)
+#assoc <- formatAssocSingle(seqData, assoc)
 
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 
