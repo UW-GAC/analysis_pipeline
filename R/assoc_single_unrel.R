@@ -54,7 +54,7 @@ message("Model: ", outcome, " ~ ", paste(covars, collapse=" + "))
 test <- tolower(config["test_type"])
 
 if (as.logical(config["binary"])) {
-    stopifnot(all(annot[[outcome]] %in% c(0,1)))
+    stopifnot(all(annot[[outcome]] %in% c(0,1,NA)))
     stopifnot(test %in% c("logistic", "firth"))
     family <- binomial
 } else {
