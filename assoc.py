@@ -58,31 +58,22 @@ configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots", "report"])
 
 
-# check type of association test - single-variant unrelated is handled differently
-no_pcrel = "pcrelate_file" not in configdict or configdict["pcrelate_file"] == "NA"
-no_grm = "grm_file" not in configdict or configdict["grm_file"] == "NA"
-single_unrel = assoc_type == "single" and no_pcrel and no_grm
-
 holdids = []
 
 # null model
-if not single_unrel:
-    job = "null_model"
+job = "null_model"
 
-    rscript = os.path.join(pipeline, "R", job + ".R")
+rscript = os.path.join(pipeline, "R", job + ".R")
 
-    config = deepcopy(configdict)
-    config["out_file"] = configdict["data_prefix"] + "_null_model.RData"
-    configfile = configdict["config_prefix"] + "_" + job + ".config"
-    TopmedPipeline.writeConfig(config, configfile)
+config = deepcopy(configdict)
+config["out_file"] = configdict["data_prefix"] + "_null_model.RData"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
 
-    jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], email=email, print_only=print_only)
 
-    holdids.append(jobid)
-    assocScript = "assoc_" + assoc_type
-
-else:
-    assocScript = "assoc_single_unrel"
+holdids.append(jobid)
+assocScript = "assoc_" + assoc_type
 
 
 # for aggregate tests, generate variant list
