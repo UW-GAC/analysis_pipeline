@@ -2,6 +2,7 @@ library(argparser)
 library(TopmedPipeline)
 library(Biobase)
 library(genesis2)
+library(genesis2tests)
 library(gdsfmt)
 sessionInfo()
 
@@ -61,13 +62,10 @@ nullmod <- fitNullModel2(annot, outcome=outcome, covars=covars,
 ## if we need an inverse normal transform, take residuals and refit null model
 if (as.logical(config["inverse_normal"])) {
     if (is.null(group.var)) {
-        group.idx <- NULL
         rankNorm.option <- "all"
         rescale <- "None"
     } else {
-        group.idx <- genesis2:::.indexList(annot[[group.var]])
-        rankNorm.option <- "by.group"
-        
+        rankNorm.option <- "by.group"        
         if (config["rescale_variance"] == "varcomp") {
             rescale <- "model"
         } else if (config["rescale_variance"] == "marginal") {
@@ -75,11 +73,10 @@ if (as.logical(config["inverse_normal"])) {
         }
     }
     
-    nullmod <- updateNullModelOutcome(nullmod,
-                                      covMatList=grm,
-                                      group.idx=group.idx,
-                                      rankNorm.option=rankNorm.option,
-                                      rescale=rescale)
+    nullmod <- updateNullModOutcome(nullmod,
+                                    covMatList=grm,
+                                    rankNorm.option=rankNorm.option,
+                                    rescale=rescale)
 }
 
 save(nullmod, file=config["out_file"])
