@@ -39,6 +39,12 @@ if (!is.na(chr)) {
     
 gds <- seqOpen(gdsfile)
 
+# get phenotypes
+annot <- getobj(config["phenotype_file"])
+
+# createSeqVarData object
+seqData <- SeqVarData(gds, sampleData=annot)
+
 # get null model
 nullModel <- getobj(config["null_model_file"])
 
@@ -47,36 +53,31 @@ nullModel <- getobj(config["null_model_file"])
 sample.id <- rownames(nullModel$model.matrix)
 
 if (!is.na(segment)) {
-    filterBySegment(gds, segment, config["segment_file"])
+    filterBySegment(seqData, segment, config["segment_file"])
 }
 
 if (!is.na(varfile)) {
-    filterByFile(gds, varfile)
+    filterByFile(seqData, varfile)
 }
 
 ## if we have a chromosome indicator but only one gds file, select chromosome
 if (!is.na(chr) && !bychrfile) {
-    filterByChrom(gds, chr)
+    filterByChrom(seqData, chr)
 }
 
 if (as.logical(config["pass_only"])) {
-    filterByPass(gds)
+    filterByPass(seqData)
 }
 
 mac.min <- as.numeric(config["mac_threshold"])
 maf.min <- as.numeric(config["maf_threshold"])
-filterByMAF(gds, sample.id, mac.min, maf.min)
+filterByMAF(seqData, sample.id, mac.min, maf.min)
 
-checkSelectedVariants(gds)
+checkSelectedVariants(seqData)
 #variant.id <- seqGetData(gds, "variant.id")
 #seqResetFilter(gds, verbose=FALSE)
 
-
-# get phenotypes
-annot <- getobj(config["phenotype_file"])
-
-# createSeqVarData object
-seqData <- SeqVarData(gds, sampleData=annot)
+# create iterator
 iterator <- SeqVarBlockIterator(seqData)
 
 test <- switch(tolower(config["test_type"]),

@@ -71,6 +71,7 @@ filterBySNV <- function(gds, biallelic=TRUE, verbose=TRUE) {
 #' @rdname filterVariants
 #'
 #' @import SeqArray
+#' @importFrom SeqVarTools alleleFrequency
 #' @export
 filterByMAF <- function(gds, sample.id=NULL, mac.min=NA, maf.min=NA, verbose=TRUE) {
     if (sum(seqGetFilter(gds)$variant.sel) == 0) return(invisible())
@@ -78,7 +79,7 @@ filterByMAF <- function(gds, sample.id=NULL, mac.min=NA, maf.min=NA, verbose=TRU
         (!is.na(maf.min) & maf.min > 0)) {
         if (is.null(sample.id)) sample.id <- seqGetData(gds, "sample.id")
         seqSetFilter(gds, sample.id=sample.id, verbose=FALSE)
-        ref.freq <- seqAlleleFreq(gds)
+        ref.freq <- alleleFrequency(gds)
         maf <- pmin(ref.freq, 1-ref.freq)
         if (!is.na(mac.min)) {
             maf.filt <- 2 * maf * (1-maf) * length(sample.id) >= mac.min
