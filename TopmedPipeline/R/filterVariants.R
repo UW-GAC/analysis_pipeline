@@ -92,6 +92,44 @@ filterByMAF <- function(gds, sample.id=NULL, mac.min=NA, maf.min=NA, verbose=TRU
     }
 }
 
+.minAltFreq <- function(f) {
+    sapply(f, function(x) {
+        x <- x[-1]
+        x <- x[x > 0]
+        if (length(x) > 0) return(min(x)) else return(NA)
+    })
+}
+
+#' @param sample.id Samples to include in calculating allele freqency
+#' @param af.max Maximum alternate allele frequency to include
+#' @rdname filterVariants
+#'
+#' @import SeqArray
+#' @importFrom SeqVarTools alleleFrequency
+#' @export
+filterByRare <- function(gds, sample.id=NULL, af.max=0.01, verbose=TRUE) {
+    if (sum(seqGetFilter(gds)$variant.sel) == 0) return(invisible())
+    if (is.null(sample.id)) sample.id <- seqGetData(gds, "sample.id")
+    seqSetFilter(gds, sample.id=sample.id, verbose=FALSE)
+    alt.freq <- alleleFrequency(gds, n=1)
+    af.filt <- alt.freq > 0 & alt.freq < 1 & alt.freq <= af.max
+
+    ## check frequency for multiallelic variants
+    n <- seqNumAllele(gds)
+    multi <- which(n > 2)
+    if (length(multi) > 0) {
+        seqSetFilter(gds, variant.sel=multi, action="push+intersect", verbose=FALSE)
+        alt.freq <- alleleFrequency(gds, n=NULL)
+        min.freq <- .minAltFreq(alt.freq)
+        multi.filt <- !is.na(min.freq) & min.freq <= af.max
+        af.filt[multi] <- af.filt[multi] | multi.filt
+        seqSetFilter(gds, action="pop", verbose=FALSE)
+    }
+    
+    if (verbose) message(paste("Running on", sum(af.filt), "variants with alternate allele frequency <=", af.max))
+    seqSetFilter(gds, variant.sel=af.filt, action="intersect", verbose=verbose)
+}
+
 #' @param build Genome build to use when identifying regions to exclude from PCA because of high correlation (HLA, LCT, inversions)
 #' @rdname filterVariants
 #'

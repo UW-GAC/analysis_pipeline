@@ -151,6 +151,20 @@ test_that("filterByMAF", {
 })
 
 
+test_that("minAltFreq", {
+    f <- list(c(1,0.5,0.2), c(1,0,0), c(1,0.1,0,1))
+    expect_equal(.minAltFreq(f), c(0.2,NA,0.1))
+})
+
+test_that("filterByRare", {
+    gds <- .testData()
+    freq <- seqAlleleFreq(gds, ref.allele=1)
+    filterByRare(gds, af.max=0.1, verbose=FALSE)
+    expect_equal(sum(seqGetFilter(gds)$variant.sel), sum(freq > 0 & freq <= 0.1))
+    seqClose(gds)
+})
+
+
 
 test_that("filterByPCAcorr", {
     gds <- .testData()
