@@ -144,8 +144,7 @@ test_that("combine window", {
     seqSetFilterChrom(seqData, include=1:2, verbose=FALSE)
     seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
     a <- assocTestSeq2(seqData, nullmod, verbose=FALSE)
-    # windows with n.site=0 are at end of combine
-    #expect_equal(a, assoc)
+    expect_equal(a, assoc)
 
     seqClose(seqData)
     unlink(files)
@@ -208,8 +207,8 @@ test_that("combine out of order", {
     files <- file.path(tempdir(), c("a", "b"))
     save(a1, file=files[1])
     save(a2, file=files[2])
-    assoc <- combineAssoc(files, "single")
-    a <- combineAssoc(files[c(2,1)], "single")
+    assoc <- combineAssocOrdered(files, "single")
+    a <- combineAssocOrdered(files[c(2,1)], "single")
     expect_equal(a, assoc)
 
     seqSetFilterChrom(seqData, include=1, verbose=FALSE)
@@ -220,8 +219,9 @@ test_that("combine out of order", {
     a2 <- assocTestSeq2(seqData, nullmod, verbose=FALSE)
     save(a1, file=files[1])
     save(a2, file=files[2])
-    assoc <- combineAssoc(files, "window")
-    a <- combineAssoc(files[c(2,1)], "window") 
+    assoc <- combineAssocOrdered(files, "window")
+    a <- combineAssocOrdered(files[c(2,1)], "window") 
+    # windows with n.site=0 are at end of combine
     #expect_equal(a, assoc)
 
     seqResetFilter(seqData, verbose=FALSE)
@@ -235,7 +235,7 @@ test_that("combine out of order", {
     a2 <- assocTestSeq2(seqData, nullmod, test="SKAT", verbose=FALSE)
     save(a1, file=files[1])
     save(a2, file=files[2])
-    assoc <- combineAssoc(files, "aggregate")
+    assoc <- combineAssocOrdered(files, "aggregate")
     agg <- c(agg1, agg2)[c(2,1,6,4,5,3)]
     seqResetFilter(seqData, verbose=FALSE)
     seqData <- SeqVarListIterator(seqData, variantRanges=agg, verbose=FALSE)

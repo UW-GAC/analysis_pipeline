@@ -19,14 +19,14 @@
 #' Combine association test results from multiple files into a single object.
 #' 
 #' Useful for combining per-segment results into a single file per chromosome.
+#' Orderes by chromosome and position, but windows or aggregate units with n.site=0 will be placed at the end.
 #' 
 #' @param files Vector of file names with association test results
 #' @param assoc_type Type of association test ("single", "aggregate", "window")
 #' @return Association test object
 #'
-#' @importFrom dplyr "%>%" distinct_ filter_ group_by_
-#' @export
-combineAssoc <- function(files, assoc_type) {
+#' @noRd
+combineAssocOrdered <- function(files, assoc_type) {
     stopifnot(assoc_type %in% c("single", "aggregate", "window"))
     x <- lapply(unname(files), getobj)
     if (assoc_type == "single") {
@@ -40,6 +40,32 @@ combineAssoc <- function(files, assoc_type) {
         index <- .index_chr_pos(varInfo)
         assoc$results <- do.call(rbind, lapply(x, function(y) y$results))[index,]
         assoc$variantInfo <- varInfo[index]
+    }
+    assoc
+}
+
+#' Combine association test results
+#' 
+#' Combine association test results from multiple files into a single object.
+#' 
+#' Useful for combining per-segment results into a single file per chromosome.
+#' Assumes files are already ordered by segment.
+#' 
+#' @param files Vector of file names with association test results
+#' @param assoc_type Type of association test ("single", "aggregate", "window")
+#' @return Association test object
+#'
+#' @export
+combineAssoc <- function(files, assoc_type) {
+    stopifnot(assoc_type %in% c("single", "aggregate", "window"))
+    x <- lapply(unname(files), getobj)
+    if (assoc_type == "single") {
+        assoc <- do.call(rbind, x)
+    } else if (assoc_type  %in% c("aggregate", "window")) {
+        assoc <- list()
+        #assoc <- x[[1]][c("param", "nsample")]
+        assoc$results <- do.call(rbind, lapply(x, function(y) y$results))
+        assoc$variantInfo <- do.call(c, lapply(x, function(y) y$variantInfo))
     }
     assoc
 }

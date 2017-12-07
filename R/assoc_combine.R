@@ -18,6 +18,8 @@ writeConfig(config, paste0(basename(argv$config), ".assoc_combine.params"))
 
 file.pattern <- paste0(basename(config["out_prefix"]), "_chr", chr, "_seg[[:digit:]]+.RData")
 files <- list.files(path=dirname(config["out_prefix"]), pattern=file.pattern, full.names=TRUE)
+segments <- sub("_seg", "", regmatches(basename(files), regexpr("_seg[[:digit:]]+", basename(files))))
+files <- files[order(as.integer(segments))]
 
 assoc <- combineAssoc(files, config["assoc_type"])
 

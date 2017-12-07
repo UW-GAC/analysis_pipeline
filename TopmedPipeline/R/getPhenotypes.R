@@ -91,7 +91,7 @@ addInvNorm <- function(annot, nullmod, outcome, covars) {
 #' @param param Parameter to parse
 #' @return \code{NULL} if \code{param} is \code{NA}, vector otherwise
 #'
-#' @keywords internal
+#' @noRd
 .parseParam <- function(param) {
     if (!is.na(param)) {
         strsplit(param, " ", fixed=TRUE)[[1]]
@@ -124,7 +124,7 @@ addInvNorm <- function(annot, nullmod, outcome, covars) {
 #' @import SeqArray
 #' @importFrom SeqVarTools altDosage
 #'
-#' @keywords internal
+#' @noRd
 .genotypes <- function(gdsfile, variant.id, sample.id=NULL) {
     gds <- seqOpen(gdsfile)
     seqSetFilter(gds, variant.id=variant.id, sample.id=sample.id, verbose=FALSE)
