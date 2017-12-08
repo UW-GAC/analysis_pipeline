@@ -59,12 +59,12 @@ nullModel <- getobj(config["null_model_file"])
 # get samples included in null model
 sample.id <- rownames(nullModel$model.matrix)
 
-size <- as.numeric(config["window_size"])
-step <- as.numeric(config["window_step"])
+size <- as.numeric(config["window_size"])*1000
+step <- as.numeric(config["window_step"])*1000
 
 if (!is.na(segment)) {
     ## pad each segment by window size to be sure we get all possible windows
-    filterBySegment(seqData, segment, config["segment_file"], pad.right=size*1000)
+    filterBySegment(seqData, segment, config["segment_file"], pad.right=size)
 }
 
 if (!is.na(varfile)) {
