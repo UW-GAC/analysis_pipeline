@@ -123,6 +123,9 @@ assoc <- assocTestSeq2(iterator, nullModel,
                        rho=rho,
                        pval.method=pval)
 
+## add window information
+assoc$results <- addWindows(iterator, assoc$results)
+
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 
 seqClose(seqData)

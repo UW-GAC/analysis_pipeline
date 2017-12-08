@@ -1,4 +1,21 @@
 
+#' Add information on windows to a data.frame of results
+#'
+#' @param iterator SeqVarWindowIterator object
+#' @param x data.frame of results
+#'
+#' @importFrom SeqVarTools variantRanges
+#' @importFrom GenomicRanges seqnames
+#' @export
+addWindows <- function(iterator, x) {
+    windows <- variantRanges(iterator)
+    win.df <- data.frame(chromosome=as.character(seqnames(windows)),
+                         start=BiocGenerics::start(windows),
+                         end=BiocGenerics::end(windows),
+                         stringsAsFactors=FALSE)
+    cbind(win.df, x)
+}
+
 #' @importFrom dplyr "%>%" arrange_ select_
 .arrange_chr_pos <- function(df, chr="chromosome", pos="position") {
     df$chr.factor <- factor(df[[chr]], levels=c(1:22, "X", "Y"))
@@ -24,7 +41,8 @@
 #' @param files Vector of file names with association test results
 #' @param assoc_type Type of association test ("single", "aggregate", "window")
 #' @return Association test object
-#'
+#' 
+#' @importFrom dplyr "%>%" distinct_ filter_ group_by_
 #' @noRd
 combineAssocOrdered <- function(files, assoc_type) {
     stopifnot(assoc_type %in% c("single", "aggregate", "window"))
@@ -32,7 +50,7 @@ combineAssocOrdered <- function(files, assoc_type) {
     if (assoc_type == "single") {
         assoc <- do.call(rbind, x) %>%
             .arrange_chr_pos()
-    } else if (assoc_type  %in% c("aggregate", "window")) {
+    } else if (assoc_type == "aggregate") {
         assoc <- list()
         #assoc <- x[[1]][c("param", "nsample")]
         varInfo <- do.call(c, lapply(x, function(y) y$variantInfo))
@@ -40,6 +58,18 @@ combineAssocOrdered <- function(files, assoc_type) {
         index <- .index_chr_pos(varInfo)
         assoc$results <- do.call(rbind, lapply(x, function(y) y$results))[index,]
         assoc$variantInfo <- varInfo[index]
+    } else if (assoc_type == "window") {
+        assoc <- list()
+        #assoc <- x[[1]][c("param", "window", "nsample")]
+        assoc$results <- do.call(rbind, lapply(x, function(y) y$results)) %>%
+            .arrange_chr_pos(pos="start") %>%
+            distinct_() %>%
+            group_by_("chromosome", "start", "end") %>%
+            filter_(~(n.site == max(n.site)), ~(!duplicated(n.site))) %>%
+            as.data.frame()
+        assoc$variantInfo <- do.call(rbind, lapply(x, function(y) y$variantInfo)) %>%
+            .arrange_chr_pos() %>%
+            distinct_()
     }
     assoc
 }
@@ -55,17 +85,30 @@ combineAssocOrdered <- function(files, assoc_type) {
 #' @param assoc_type Type of association test ("single", "aggregate", "window")
 #' @return Association test object
 #'
+#' @importFrom dplyr "%>%" distinct_ filter_ group_by_ mutate_
 #' @export
 combineAssoc <- function(files, assoc_type) {
     stopifnot(assoc_type %in% c("single", "aggregate", "window"))
     x <- lapply(unname(files), getobj)
     if (assoc_type == "single") {
         assoc <- do.call(rbind, x)
-    } else if (assoc_type  %in% c("aggregate", "window")) {
+    } else if (assoc_type %in% c("aggregate", "window")) {
         assoc <- list()
         #assoc <- x[[1]][c("param", "nsample")]
         assoc$results <- do.call(rbind, lapply(x, function(y) y$results))
         assoc$variantInfo <- do.call(c, lapply(x, function(y) y$variantInfo))
+    }
+    if (assoc_type == "window") {
+        # remove duplicated windows
+        assoc$results <- assoc$results %>%
+            mutate_(index=~1:n()) %>%
+            distinct_() %>%
+            group_by_("chromosome", "start", "end") %>%
+            filter_(~(n.site == max(n.site)), ~(!duplicated(n.site))) %>%
+            as.data.frame()
+        assoc$variantInfo <- assoc$variantInfo[assoc$results$index]
+        assoc$results <- assoc$results %>%
+            select_(~-index)
     }
     assoc
 }
