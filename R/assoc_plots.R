@@ -69,7 +69,7 @@ rm(dat)
 
 
 ## manhattan plot
-chr <- levels(assoc$chromosome)
+chr <- levels(assoc$chr)
 cmap <- setNames(rep_len(brewer.pal(8, "Dark2"), length(chr)), chr)
 
 # significance level
@@ -83,10 +83,10 @@ if (config["assoc_type"] == "single") {
 
 if (as.logical(config["thin"])) {
     assoc <- mutate(assoc, logp=-log10(pval)) %>%
-        thinPoints("logp", n=10000, nbins=10, groupBy="chromosome")
+        thinPoints("logp", n=10000, nbins=10, groupBy="chr")
 }
 
-p <- ggplot(assoc, aes(chromosome, -log10(pval), group=interaction(chromosome, position), color=chromosome)) +
+p <- ggplot(assoc, aes(chr, -log10(pval), group=interaction(chr, pos), color=chr)) +
     geom_point(position=position_dodge(0.8)) +
     scale_color_manual(values=cmap, breaks=names(cmap)) +
     geom_hline(yintercept=-log10(signif), linetype='dashed') +

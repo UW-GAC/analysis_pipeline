@@ -1,4 +1,5 @@
 context("getAssoc tests")
+library(dplyr)
 library(genesis2)
 library(gdsfmt)
 library(SeqVarTools)
@@ -38,8 +39,8 @@ test_that("single related", {
         filter_(~!is.na(Wald.pval))
 
     assoc <- getAssoc(files, "single")
-    expect_equal(as.character(assoc$chromosome), a$chromosome)
-    expect_equal(assoc$position, a$position)
+    expect_equal(as.character(assoc$chr), a$chr)
+    expect_equal(assoc$pos, a$pos)
     expect_equal(assoc$start, assoc$pos)
     expect_equal(assoc$end, assoc$pos)
     expect_equal(assoc$stat, a$Wald.Stat)
@@ -93,10 +94,10 @@ test_that("aggregate, skat", {
 
     assoc <- getAssoc(files, "aggregate")
     expect_true(setequal(assoc$pval, a$pval_0))
-    expect_equal(as.character(assoc$chromosome[1]), a1$variantInfo[[1]]$chromosome[1])
-    expect_true(assoc$position[1] > a1$variantInfo[[1]]$position[1] & assoc$position[1] < max(a1$variantInfo[[1]]$position))
-    expect_equal(assoc$start[1], a1$variantInfo[[1]]$position[1])
-    expect_equal(assoc$end[1], max(a1$variantInfo[[1]]$position))
+    expect_equal(as.character(assoc$chr[1]), a1$variantInfo[[1]]$chr[1])
+    expect_true(assoc$pos[1] > a1$variantInfo[[1]]$pos[1] & assoc$pos[1] < max(a1$variantInfo[[1]]$pos))
+    expect_equal(assoc$start[1], a1$variantInfo[[1]]$pos[1])
+    expect_equal(assoc$end[1], max(a1$variantInfo[[1]]$pos))
 
     seqClose(seqData)
     unlink(files)
@@ -180,7 +181,7 @@ test_that("combine aggregate", {
 })
 
 test_that("arrange_chr_pos", {
-    x <- data.frame(chromosome=c(10,2,"X",1,1), position=c(1,1,1,2,1), stringsAsFactors=FALSE)
+    x <- data.frame(chr=c(10,2,"X",1,1), pos=c(1,1,1,2,1), stringsAsFactors=FALSE)
     xa <- x[c(5,4,2,1,3),]; rownames(xa) <- 1:5
     expect_equal(.arrange_chr_pos(x), xa)
     names(x) <- names(xa) <- c("a", "b")
@@ -188,10 +189,10 @@ test_that("arrange_chr_pos", {
 })
 
 test_that("index_chr_pos", {
-    x <- list(data.frame(chromosome=2, position=1:5),
-              data.frame(chromosome=1, position=6:10),
-              data.frame(chromosome="X", position=1:5, stringsAsFactors=FALSE),
-              data.frame(chromosome=1, position=1:5))
+    x <- list(data.frame(chr=2, pos=1:5),
+              data.frame(chr=1, pos=6:10),
+              data.frame(chr="X", pos=1:5, stringsAsFactors=FALSE),
+              data.frame(chr=1, pos=1:5))
     expect_equal(.index_chr_pos(x), c(4,2,1,3))
     xa <- lapply(x, function(xx) {names(xx) <- c("a", "b"); xx})
     expect_equal(.index_chr_pos(xa, chr="a", pos="b"), c(4,2,1,3))
@@ -210,40 +211,42 @@ test_that("combine out of order", {
     files <- file.path(tempdir(), c("a", "b"))
     save(a1, file=files[1])
     save(a2, file=files[2])
-    assoc <- combineAssocOrdered(files, "single")
-    a <- combineAssocOrdered(files[c(2,1)], "single")
+    assoc <- combineAssoc(files, "single", ordered=TRUE)
+    a <- combineAssoc(files[c(2,1)], "single", ordered=TRUE)
     expect_equal(a, assoc)
 
     seqSetFilterChrom(seqData, include=1, verbose=FALSE)
     seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
     a1 <- assocTestSeq2(seqData, nullmod, verbose=FALSE)
+    a1$results <- addWindows(seqData, a1$results)
     seqSetFilterChrom(seqData, include=2, verbose=FALSE)
     seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
     a2 <- assocTestSeq2(seqData, nullmod, verbose=FALSE)
+    a2$results <- addWindows(seqData, a2$results)
     save(a1, file=files[1])
     save(a2, file=files[2])
-    assoc <- combineAssocOrdered(files, "window")
-    a <- combineAssocOrdered(files[c(2,1)], "window") 
-    # windows with n.site=0 are at end of combine
-    #expect_equal(a, assoc)
+    assoc <- combineAssoc(files, "window", ordered=TRUE)
+    a <- combineAssoc(files[c(2,1)], "window", ordered=TRUE) 
+    expect_equal(a, assoc)
 
     seqResetFilter(seqData, verbose=FALSE)
     gr <- granges(seqData)
-    agg1 <- GRangesList(gr[1:100], gr[101:200], gr[201:300])
+    agg1 <- GRangesList(gr[101:200], gr[1:100], gr[501:600])
     seqData <- SeqVarListIterator(seqData, variantRanges=agg1, verbose=FALSE)
     a1 <- assocTestSeq2(seqData, nullmod, test="SKAT", verbose=FALSE)
     seqResetFilter(seqData, verbose=FALSE)
-    agg2 <- GRangesList(gr[301:400], gr[401:500], gr[501:600])
+    agg2 <- GRangesList(gr[301:400], gr[401:500], gr[201:300])
     seqData <- SeqVarListIterator(seqData, variantRanges=agg2, verbose=FALSE)
     a2 <- assocTestSeq2(seqData, nullmod, test="SKAT", verbose=FALSE)
     save(a1, file=files[1])
     save(a2, file=files[2])
-    assoc <- combineAssocOrdered(files, "aggregate")
+    assoc <- combineAssoc(files, "aggregate", ordered=TRUE)
+    rownames(assoc$results) <- 1:nrow(assoc$results)
     agg <- c(agg1, agg2)[c(2,1,6,4,5,3)]
     seqResetFilter(seqData, verbose=FALSE)
     seqData <- SeqVarListIterator(seqData, variantRanges=agg, verbose=FALSE)
     a <- assocTestSeq2(seqData, nullmod, test="SKAT", verbose=FALSE)
-    #expect_equal(a, assoc)
+    expect_equal(a, assoc)
     
     seqClose(seqData)
     unlink(files)
@@ -251,8 +254,8 @@ test_that("combine out of order", {
 
 
 test_that("omitKnownHits", {
-    assoc <- data.frame(chromosome=c(rep(1,100), rep(2,100)),
-                        position=c(sort(sample(1:10000, 100)), sort(sample(1:10000, 100))))
+    assoc <- data.frame(chr=c(rep(1,100), rep(2,100)),
+                        pos=c(sort(sample(1:10000, 100)), sort(sample(1:10000, 100))))
     hits <- assoc[sample(1:nrow(assoc), 20),]
     res <- omitKnownHits(assoc, hits, flank=0)
     .pos <- function(x) paste0(x$chr, x$pos)
