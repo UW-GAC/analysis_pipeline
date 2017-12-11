@@ -23,7 +23,7 @@ optional <- c("gds_file"=NA, # required for conditional variants
               "inverse_normal"=TRUE,
               "n_pcs"=3,
               "out_file"="null_model.RData",
-              "rescale_variance"=TRUE,
+              "rescale_variance"="marginal",
               "resid_covars"=TRUE,
               "sample_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
@@ -35,6 +35,7 @@ phen <- getPhenotypes(config)
 annot <- phen[["annot"]]
 outcome <- phen[["outcome"]]
 covars <- phen[["covars"]]
+group.var <- phen[["group.var"]]
 sample.id <- phen[["sample.id"]]
 
 if (as.logical(config["binary"])) {
@@ -42,13 +43,6 @@ if (as.logical(config["binary"])) {
     family <- binomial
 } else {
     family <- gaussian
-}
-
-# heterogeneous residual variance
-if (!is.na(config["group_var"])) {
-    group.var <- config["group_var"]
-} else {
-    group.var <- NULL
 }
 
 # kinship matrix or GRM
@@ -79,8 +73,11 @@ if (!is.null(grm)) {
                 resid.norm <- rankNorm(resid.g)
                 ## rescale the inverse-normal residuals to have study-specific variances =
                 ## kinship variance component + study-specific residual
-                if (as.logical(config["rescale_variance"])) {
+                if (config["rescale_variance"] == "varcomp") {
                     resid.scale <- nullmod$varComp["V_A"] + nullmod$varComp[paste0("V_", g)]
+                    resid.norm <- resid.norm * sqrt(resid.scale)
+                } else if (config["rescale_variance"] == "marginal") {
+                    resid.scale <- var(resid.g)
                     resid.norm <- resid.norm * sqrt(resid.scale)
                 }
                 data.frame(sample.id=samp.g, resid.norm, stringsAsFactors=FALSE)

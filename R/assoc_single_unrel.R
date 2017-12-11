@@ -54,7 +54,7 @@ message("Model: ", outcome, " ~ ", paste(covars, collapse=" + "))
 test <- tolower(config["test_type"])
 
 if (as.logical(config["binary"])) {
-    stopifnot(all(annot[[outcome]] %in% c(0,1)))
+    stopifnot(all(annot[[outcome]] %in% c(0,1,NA)))
     stopifnot(test %in% c("logistic", "firth"))
     family <- binomial
 } else {
@@ -69,7 +69,7 @@ if (as.logical(config["inverse_normal"])) {
     outcome <- "resid.norm"
     covars <- NULL
 }
-    
+
 gds <- seqOpen(gdsfile)
 
 if (!is.na(segment)) {
@@ -108,3 +108,7 @@ assoc <- formatAssocSingle(seqData, assoc)
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 
 seqClose(seqData)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

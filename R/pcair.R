@@ -61,5 +61,9 @@ pca <- pcair(seqData, v=n_pcs,
              scan.include=sample.id, snp.include=variant.id)
 
 save(pca, file=config["out_file"])
-    
+
 seqClose(seqData)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")
