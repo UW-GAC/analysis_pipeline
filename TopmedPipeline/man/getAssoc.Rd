@@ -12,7 +12,7 @@ getAssoc(files, assoc_type)
 \item{assoc_type}{Type of association test ("single", "aggregate", "window")}
 }
 \value{
-data.frame including standard columns ("chromosome", "position", "start", "end", "stat", "pval")
+data.frame including standard columns ("chr", "pos", "start", "end", "stat", "pval")
 }
 \description{
 Return association test results in a standard format

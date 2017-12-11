@@ -91,13 +91,13 @@ combineAssoc <- function(files, assoc_type, ordered=FALSE) {
 #' @inheritParams combineAssoc
 #' @return data.frame including standard columns ("chr", "pos", "start", "end", "stat", "pval")
 #'
-#' @importFrom dplyr "%>%" ends_with_ filter_ group_by_ left_join mutate_ n rename_ select_ summarise_
+#' @importFrom dplyr "%>%" ends_with filter_ group_by_ left_join mutate_ n rename_ select_ summarise_
 #' @export
 getAssoc <- function(files, assoc_type) {
     stopifnot(assoc_type %in% c("single", "aggregate", "window"))
     assoc <- do.call(rbind, lapply(unname(files), function(f) {
         x <- getobj(f)
-        if (assoc_type  %in% c("aggregate", "window")) {
+        if (assoc_type == "aggregate") {
             tmp <- x$results %>%
                 mutate_(group_id=~(1:n())) %>%
                 filter_(~(n.site > 0))
@@ -111,6 +111,9 @@ getAssoc <- function(files, assoc_type) {
                     as.data.frame()
             }))
             x <- left_join(tmp, group.info, by="group_id")
+        } else if (assoc_type == "window") {
+            x <- filter_(x$results, ~(n.site > 0)) %>%
+                mutate_(pos=~(floor((start + end)/2)))
         } else {
             x <- mutate_(x, start="pos", end="pos")
         }
@@ -124,7 +127,7 @@ getAssoc <- function(files, assoc_type) {
             rename_(pval=pval.col)
     } else {
         ## burden or single
-        assoc <- select_(assoc, "chr", "pos", "start", "end", ~ends_with("stat"), ~ends_with("pval"))
+        assoc <- select_(assoc, "chr", "pos", "start", "end", ~ends_with("Stat"), ~ends_with("pval"))
         names(assoc)[5:6] <- c("stat", "pval")
     }
     assoc <- filter_(assoc, ~(!is.na(pval))) %>%

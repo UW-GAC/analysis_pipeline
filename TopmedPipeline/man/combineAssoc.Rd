@@ -4,7 +4,7 @@
 \alias{combineAssoc}
 \title{Combine association test results}
 \usage{
-combineAssoc(files, assoc_type)
+combineAssoc(files, assoc_type, ordered = FALSE)
 }
 \arguments{
 \item{files}{Vector of file names with association test results}
