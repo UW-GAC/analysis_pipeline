@@ -104,8 +104,9 @@ if assoc_type == "aggregate":
 
 # define segments
 if segment_length == default_segment_length and n_segments is None:
-    segment_file = os.path.join(pipeline, "segments.txt")
-    print("Using default segment file with segment_length " + default_segment_length + " kb")
+    build = configdict.setdefault("genome_build", "hg19")
+    segment_file = os.path.join(pipeline, "segments_" + build + ".txt")
+    print("Using default segment file for build " + build + " with segment_length " + default_segment_length + " kb")
 else:
     job = "define_segments"
 
@@ -148,7 +149,7 @@ segments = dict(zip(chrom_list, segment_str))
 
 
 # run association tests
-hc_jobids = []
+hold_combine = []
 for chromosome in chrom_list:
     job_assoc = assocScript + "_chr" + chromosome
     rscript = os.path.join(pipeline, "R", assocScript + ".R")
@@ -163,10 +164,7 @@ for chromosome in chrom_list:
     hold_assoc = [submitID]
     submitID = cluster.submitJob(job_name=job_comb, cmd=driver, args=args, holdid=hold_assoc, email=email, print_only=print_only)
 
-    hc_jobids = hc_jobids + submitID.values()[0]
-# create the hold on combine job ids
-hold_combine = [{'assoc_combine': hc_jobids}]
-
+    hold_combine.append(submitID)
 # plots
 job = "assoc_plots"
 
