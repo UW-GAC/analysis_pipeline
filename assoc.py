@@ -66,7 +66,7 @@ job = "null_model"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["out_file"] = configdict["data_prefix"] + "_null_model.RData"
+config["out_prefix"] = configdict["data_prefix"] + "_null_model"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
@@ -121,7 +121,7 @@ else:
 # set up config for association test
 config = deepcopy(configdict)
 config["assoc_type"] = assoc_type
-config["null_model_file"] = configdict["data_prefix"] + "_null_model.RData"
+config["null_model_file"] = configdict["data_prefix"] + "_null_model_proj.RData"
 if assoc_type == "aggregate":
     config["aggregate_variant_file"] = configdict["data_prefix"] + "_aggregate_list_chr .RData"
 config["out_prefix"] = configdict["data_prefix"] + "_" + assocScript

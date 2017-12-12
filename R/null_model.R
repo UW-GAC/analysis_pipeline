@@ -23,7 +23,7 @@ optional <- c("gds_file"=NA, # required for conditional variants
               "group_var"=NA,
               "inverse_normal"=TRUE,
               "n_pcs"=3,
-              "out_file"="null_model.RData",
+              "out_prefix"="null_model",
               "rescale_variance"="marginal",
               #"resid_covars"=TRUE,
               "sample_include_file"=NA)
@@ -79,4 +79,8 @@ if (as.logical(config["inverse_normal"])) {
                                     rescale=rescale)
 }
 
-save(nullmod, file=config["out_file"])
+save(nullmod, file=paste0(config["out_prefix"], ".RData"))
+
+## calculate projection matrix and save
+nullprep <- nullModelTestPrep(nullmod)
+save(nullprep, file=paste0(config["out_prefix"], "_proj.RData"))
