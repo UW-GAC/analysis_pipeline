@@ -54,7 +54,9 @@ getPhenotypes <- function(config) {
     sample.id <- intersect(sample.id, cc)
 
     ## match annot to gds file
-    annot <- .matchAnnotGds(config, annot)
+    if (!is.na(config["gds_file"])) {
+        annot <- .matchAnnotGds(config, annot)
+    }
 
     list(annot=annot, outcome=outcome, covars=covars, group.var=group.var, sample.id=sample.id)
     
@@ -149,7 +151,8 @@ addInvNorm <- function(annot, nullmod, outcome, covars) {
 #'
 #' @keywords internal
 .matchAnnotGds <- function(config, annot) {
-    gdsfile <- insertChromString(config["gds_file"], 1)
+    tmp <- sub(" ", "[[:alnum:]]+", config["gds_file"])
+    gdsfile <-  list.files(path=dirname(tmp), pattern=basename(tmp), full.names=TRUE)[1]
     gds <- seqOpen(gdsfile)
     sample.id <- seqGetData(gds, "sample.id")
     seqClose(gds)
