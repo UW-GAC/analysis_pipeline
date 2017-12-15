@@ -32,8 +32,11 @@ def Summary(hdr):
     pInfo( '\tSystem parameters:' )
     pInfo( '\t\tWorking directory: ' + workdir )
     pInfo( '\t\tData root folder: '+ dataroot )
-    pInfo( '\t\tMount command: '+ mount )
-    pInfo( '\t\tMount timeout: '+ tmo)
+    if nomount:
+        pInfo("\t\tNot mounting network storage (should be mounted via docker run -v command)")
+    else:
+        pInfo( '\t\tMount command: '+ mount )
+        pInfo( '\t\tMount timeout: '+ tmo)
     if debug:
         pInfo( '\tDebug: True' )
     else:
@@ -57,6 +60,8 @@ parser.add_argument( "-w", "--workdir", default = defaultWorkdir,
                      help = "full path of working directory (where R runs) [default: " + defaultWorkdir + "]" )
 parser.add_argument( "-d", "--dataroot", default = defaultDataroot,
                      help = "external data root folder [default: " + defaultDataroot + "]" )
+parser.add_argument( "-n", "--nomount", help = "do not mount nfs/cifs disk [default: false]", 
+                     action = "store_true")
 parser.add_argument("--rdriver", default = defaultRdriver,
                      help = "full path of pipeline R driver bash file [default: " + defaultRdriver + "]" )
 parser.add_argument("-m", "--mount", default = defaultMount,
@@ -82,6 +87,7 @@ tmo = args.timeout
 
 debug = args.Debug
 po = args.printonly
+nomount = args.nomount
 
 # check for logile; if so, make it a full path to working directory
 if logfile != "":
@@ -99,20 +105,23 @@ if po:
 if not os.path.isdir( mount.split()[-1] ):
     os.mkdir(mount.split()[-1])
 # mount
-pDebug( "mount tmo: " + tmo + " mount command: " + mount )
-sys.stdout.flush()
-mtmo = "timeout " + tmo + " " + mount
-process = subprocess.Popen(mtmo, shell=True, stdout=subprocess.PIPE)
-status = process.wait()
-pipe = process.stdout
-msg = pipe.readline()
-if status == 32:
-    pInfo("Warning: mount volume already mounted.")
-elif status:
-    if status == 124:
-        msg = "mount timed out"
-    pError("Mount error: " + msg )
-    sys.exit(2)
+if not nomount:
+    pDebug( "mount tmo: " + tmo + " mount command: " + mount )
+    sys.stdout.flush()
+    mtmo = "timeout " + tmo + " " + mount
+    process = subprocess.Popen(mtmo, shell=True, stdout=subprocess.PIPE)
+    status = process.wait()
+    pipe = process.stdout
+    msg = pipe.readline()
+    if status == 32:
+        pInfo("Warning: mount volume already mounted.")
+    elif status:
+        if status == 124:
+            msg = "mount timed out"
+        pError("Mount error: " + msg )
+        sys.exit(2)
+else:
+    pDebug( "Not mounting network storage" )
 
 # check for files and folders exists
 if not os.path.isfile( rdriver ):
