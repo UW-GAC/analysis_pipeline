@@ -13,7 +13,7 @@
                 "db": "1",
                 "lf": "",
                 "tmo": "60",
-                "mt": "mount -t nfs4 -o vers=4.1 172.255.44.97:/ /projects"
+                "mt": "mount -t nfs4 -o vers=4.1 fs-6ccd31c5.efs.us-west-2.amazonaws.com:/ /projects"
             },
             "submit_opts": {
                 "jobdef": "topmed_general",
@@ -37,9 +37,9 @@
                 "aggregate_list":6000,
                 "assoc_single":24000,
                 "assoc_aggregate":24000,
-                "assoc_window":24000,
-                "assoc_combine":6000,
-                "assoc_plots":4000
+                "assoc_window":17000,
+                "assoc_combine":2000,
+                "assoc_plots":13000
             },
             "sync_job": {
                 "parameters": {
@@ -59,7 +59,7 @@
                     "--workdir": "",
                     "--dataroot": "/projects",
                     "--Debug": "1",
-                    "--mount": "\"mount -t nfs4 -o vers=4.1 172.255.44.97:/ /projects\""
+                    "--mount": "\"mount -t nfs4 -o vers=4.1 fs-6ccd31c5.efs.us-west-2.amazonaws.com:/ /projects\""
                 }
             }
         },
