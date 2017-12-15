@@ -6,8 +6,10 @@ sessionInfo()
 
 argp <- arg_parser("GRM")
 argp <- add_argument(argp, "config", help="path to config file")
+argp <- add_argument(argp, "--chromosome", help="chromosome (1-24 or X,Y)", type="character")
 argv <- parse_args(argp)
 config <- readConfig(argv$config)
+chr <- intToChr(argv$chromosome)
 
 required <- c("gds_file")
 optional <- c("exclude_pca_corr"=TRUE,
@@ -20,7 +22,19 @@ optional <- c("exclude_pca_corr"=TRUE,
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
-gds <- seqOpen(config["gds_file"])
+## gds file can have two parts split by chromosome identifier
+gdsfile <- config["gds_file"]
+outfile <- config["out_file"]
+varfile <- config["variant_include_file"]
+if (!is.na(chr)) {
+    message("Running on chromosome ", chr)
+    bychrfile <- grepl(" ", gdsfile) # do we have one file per chromosome?
+    gdsfile <- insertChromString(gdsfile, chr)
+    outfile <- insertChromString(outfile, chr, err="out_file")
+    varfile <- insertChromString(varfile, chr)
+}
+
+gds <- seqOpen(gdsfile)
 
 if (!is.na(config["sample_include_file"])) {
     sample.id <- getobj(config["sample_include_file"])
@@ -30,9 +44,13 @@ if (!is.na(config["sample_include_file"])) {
     message("Using all samples")
 }
 
-varfile <- config["variant_include_file"]
 if (!is.na(varfile)) {
     filterByFile(gds, varfile)
+}
+
+## if we have a chromosome indicator but only one gds file, select chromosome
+if (!is.na(chr) && !bychrfile) {
+    filterByChrom(gds, chr)
 }
 
 filterByPass(gds)
@@ -50,10 +68,8 @@ method <- switch(tolower(config["method"]),
                  gcta="GCTA",
                  eigmix="EIGMIX")
 
-grm <- snpgdsGRM(gds, sample.id=sample.id, snp.id=variant.id,
-                 maf=maf.min, method=method,
-                 num.thread=countThreads())
-
-save(grm, file=config["out_file"])
+snpgdsGRM(gds, sample.id=sample.id, snp.id=variant.id,
+          maf=maf.min, method=method, out.fn=outfile,
+          num.thread=countThreads())
 
 seqClose(gds)
