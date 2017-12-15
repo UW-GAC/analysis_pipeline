@@ -51,7 +51,7 @@ if (kin.type == "king") {
 }
 message("Plotting ", kin.type, " kinship estimates")
 
-p <- ggplot(kinship, aes_string(xvar, "kinship")) + 
+p <- ggplot(kinship, aes_string(xvar, "kinship")) +
     geom_hline(yintercept=2^(-seq(3,9,2)/2), linetype="dashed", color="grey") +
     geom_point(alpha=0.5) +
     ylab("kinship estimate") +
@@ -68,7 +68,7 @@ annot <- getobj(config["phenotype_file"])
 stopifnot(study %in% varLabels(annot))
 annot <- pData(annot) %>%
     select_("sample.id", study)
-    
+
 kinship <- kinship %>%
     left_join(annot, by=c(ID1="sample.id")) %>%
     rename_(study1=study) %>%
@@ -101,3 +101,7 @@ if (nrow(kinship.cross) > 0){
     theme_bw()
   ggsave(config["out_file_cross"], plot=p, width=8, height=7)
 }
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

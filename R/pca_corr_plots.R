@@ -61,15 +61,19 @@ bins <- as.integer(cut(1:n_pcs, n_plots))
 for (i in 1:n_plots) {
     bin <- paste0("PC", which(bins == i))
     dat <- filter(corr, PC %in% bin)
-    
+
     p <- ggplot(dat, aes(chr, value, group=interaction(chr, pos), color=chr)) +
         geom_point(position=position_dodge(0.8)) +
         facet_wrap(~PC, scales="free", ncol=1) +
         scale_color_manual(values=cmap, breaks=names(cmap)) +
-        ylim(0,1) + 
+        ylim(0,1) +
         theme_bw() +
         theme(legend.position="none") +
         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
         xlab("chromosome") + ylab("abs(correlation)")
     ggsave(paste0(config["out_prefix"], "_" , i, ".png"), plot=p, width=10, height=15)
 }
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

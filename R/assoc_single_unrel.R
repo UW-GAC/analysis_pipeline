@@ -69,7 +69,7 @@ if (as.logical(config["inverse_normal"])) {
     outcome <- "resid.norm"
     covars <- NULL
 }
-    
+
 gds <- seqOpen(gdsfile)
 
 if (!is.na(segment)) {
@@ -108,3 +108,7 @@ assoc <- formatAssocSingle(seqData, assoc)
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 
 seqClose(seqData)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")
