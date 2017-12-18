@@ -73,3 +73,7 @@ snpgdsGRM(gds, sample.id=sample.id, snp.id=variant.id,
           num.thread=countThreads())
 
 seqClose(gds)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

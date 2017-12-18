@@ -35,3 +35,7 @@ ibd <- snpgdsIBDKING(gds, sample.id=sample.id, snp.id=variant.id,
 save(ibd, file=config["out_file"])
 
 seqClose(gds)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

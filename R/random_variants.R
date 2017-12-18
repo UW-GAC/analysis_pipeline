@@ -24,7 +24,7 @@ if (!is.null(chr)) {
     gdsfile <- insertChromString(gdsfile, chr)
     outfile <- insertChromString(outfile, chr, err="out_file")
 }
-    
+
 gds <- seqOpen(gdsfile)
 
 filt <- seqGetData(gds, "annotation/filter") == "PASS"
@@ -55,3 +55,7 @@ if (length(variant.id) > nvar) {
 save(variant.id, file=outfile)
 
 seqClose(gds)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")
