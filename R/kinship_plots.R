@@ -36,7 +36,8 @@ kin.type <- tolower(config["kinship_method"])
 kin.thresh <- as.numeric(config["kinship_threshold"])
 if (kin.type == "king") {
     king <- getobj(config["kinship_file"])
-    kinship <- snpgdsIBDSelection(king, kinship.cutoff=kin.thresh, samp.sel=sample.id)
+    samp.sel <- king$sample.id %in% sample.id
+    kinship <- snpgdsIBDSelection(king, kinship.cutoff=kin.thresh, samp.sel=samp.sel)
     xvar <- "IBS0"
 } else if (kin.type == "pcrelate") {
     pcr <- openfn.gds(config["kinship_file"])
