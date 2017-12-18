@@ -77,7 +77,7 @@ if (config["assoc_type"] == "single") {
     ## genome-wide significance
     signif <- 5e-8
 } else {
-    ## bonferroni 
+    ## bonferroni
     signif <- 0.05/nrow(assoc)
 }
 
@@ -95,3 +95,7 @@ p <- ggplot(assoc, aes(chr, -log10(pval), group=interaction(chr, pos), color=chr
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
     xlab("chromosome") + ylab(expression(-log[10](p)))
 ggsave(config["out_file_manh"], plot=p, width=10, height=5)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

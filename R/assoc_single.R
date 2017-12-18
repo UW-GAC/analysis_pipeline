@@ -36,7 +36,7 @@ if (!is.na(chr)) {
     gdsfile <- insertChromString(gdsfile, chr)
     varfile <- insertChromString(varfile, chr)
 }
-    
+
 gds <- seqOpen(gdsfile)
 
 # get phenotypes
@@ -93,3 +93,7 @@ assoc <- assocTestMM2(iterator, nullModel, test=test)
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 
 seqClose(seqData)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

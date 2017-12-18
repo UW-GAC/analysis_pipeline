@@ -28,7 +28,7 @@ if (!is.na(chr)) {
     outfile <- insertChromString(outfile, chr, err="out_file")
     varfile <- insertChromString(varfile, chr)
 }
-    
+
 gds <- seqOpen(gdsfile)
 
 groups <- getobj(varfile)
@@ -53,3 +53,7 @@ save(aggVarList, file=outfile)
 message("Saved ", sum(sapply(aggVarList, nrow)), " variant alleles in ", length(aggVarList), " groups")
 
 seqClose(gds)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

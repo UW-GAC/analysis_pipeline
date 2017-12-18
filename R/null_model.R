@@ -84,3 +84,7 @@ save(nullmod, file=paste0(config["out_prefix"], ".RData"))
 ## calculate projection matrix and save
 nullprep <- nullModelTestPrep(nullmod)
 save(nullprep, file=paste0(config["out_prefix"], "_proj.RData"))
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

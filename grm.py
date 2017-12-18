@@ -13,6 +13,8 @@ Genetic Relationship Matrix (GRM)
 """
 parser = ArgumentParser(description=description)
 parser.add_argument("config_file", help="configuration file")
+parser.add_argument("-c", "--chromosomes", default="1-22",
+                    help="range of chromosomes [default %(default)s]")
 parser.add_argument("--cluster_type", default="UW_Cluster",
                     help="type of compute cluster environment [default %(default)s]")
 parser.add_argument("--cluster_file", default=None,
@@ -28,6 +30,7 @@ parser.add_argument("--print_only", action="store_true", default=False,
 args = parser.parse_args()
 
 configfile = args.config_file
+chromosomes = args.chromosomes
 cluster_file = args.cluster_file
 cluster_type = args.cluster_type
 ncores = args.ncores
@@ -49,11 +52,25 @@ job = "grm"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["out_file"] = configdict["data_prefix"] + "_grm.RData"
+config["out_file"] = configdict["data_prefix"] + "_grm_chr .gds"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], request_cores=ncores, email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], request_cores=ncores, array_range=chromosomes, email=email, print_only=print_only)
+
+
+job = "grm_combine"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+config = dict()
+config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
+config["in_file"] = configdict["data_prefix"] + "_grm_chr .gds"
+config["out_file"] = configdict["data_prefix"] + "_grm.gds"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
+
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], holdid=jobid, email=email, print_only=print_only)
 
 
 cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=jobid, print_only=print_only)

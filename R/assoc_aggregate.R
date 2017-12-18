@@ -43,7 +43,7 @@ if (!is.na(chr)) {
     aggfile <- insertChromString(aggfile, chr, err="aggregate_variant_file")
     varfile <- insertChromString(varfile, chr)
 }
-    
+
 gds <- seqOpen(gdsfile)
 
 # get null model
@@ -101,3 +101,7 @@ assoc <- assocTestSeq(seqData, nullModel, aggVarList,
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 
 seqClose(seqData)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")
