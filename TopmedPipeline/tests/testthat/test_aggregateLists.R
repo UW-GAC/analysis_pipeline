@@ -135,3 +135,47 @@ test_that("aggregateListByPosition gets all alternate alleles", {
     
     seqClose(gds)
 })
+
+test_that("aggregateGRangesList", {
+    gds <- .opengds()
+    variants <- .testVariants(gds)
+    
+    aggList <- aggregateGRangesList(variants)
+    expect_equal(unique(variants$group_id), names(aggList))
+    
+    gr <- unlist(aggList)
+    expect_true(all(c("ref", "alt") %in% names(mcols(gr))))
+    
+    expect_equal(length(gr), nrow(variants))
+    
+    seqClose(gds)
+})
+
+test_that("aggregateGRangesList can handle multiple groups per variant", {
+    gds <- .opengds()
+    variants <- .testVariants(gds)
+    groups <- unique(variants$group_id)
+    variants <- filter_(variants, ~(group_id == groups[1])) %>%
+        mutate_(group_id=~(groups[2])) %>%
+        rbind(variants)
+    
+    aggList <- aggregateGRangesList(variants)
+    for (group in groups[1:2]) {
+        g1 <- filter_(variants, ~(group_id == group)) %>%
+            mutate(id=paste(chr, pos, ref))
+        g2 <- aggList[[group]] %>%
+            as.data.frame() %>%
+            mutate_(id=~(paste(seqnames, start, ref)))
+        expect_true(setequal(g1$id, g2$id))
+    }
+
+    seqClose(gds)
+})
+
+test_that("aggregateGRanges", {
+    gds <- .opengds()
+    groups <- .testGroups(gds)
+    aggList <- aggregateGRanges(groups)
+    expect_true(setequal(groups$group_id, names(aggList)))
+    seqClose(gds)
+})

@@ -121,3 +121,43 @@ aggregateListByPosition <- function(gds, groups, indexOnly=FALSE) {
         left_join(variants, by="variant.id")
     .groupVariants(variants, indexOnly)
 }
+
+
+
+#' @return A GRangesList with one element per group
+#' 
+#' @rdname aggregateList
+#'
+#' @importFrom GenomicRanges GRanges mcols
+#' @importFrom IRanges IRanges
+#' @importFrom stats setNames
+#' @export
+aggregateGRangesList <- function(variants) {
+    stopifnot(all(c("group_id", "chr", "pos") %in% names(variants)))
+    groups <- unique(variants$group_id)
+    cols <- setdiff(names(variants), c("group_id", "chr", "pos"))
+    GRangesList(lapply(setNames(groups, groups), function(g) {
+        x <- variants[variants$group_id == g,]
+        gr <- GRanges(seqnames=x$chr, ranges=IRanges(start=x$pos, width=1))
+        mcols(gr) <- x[,cols]
+        gr
+    }))
+}
+
+
+#' @return A GRanges with one range per group
+#' 
+#' @rdname aggregateList
+#'
+#' @importFrom GenomicRanges GRanges mcols
+#' @importFrom IRanges IRanges
+#' @export
+aggregateGRanges <- function(groups) {
+    stopifnot(all(c("group_id", "chr", "start", "end") %in% names(groups)))
+    cols <- setdiff(names(groups), c("group_id", "chr", "start", "end"))
+    gr <- GRanges(seqnames=groups$chr,
+                  ranges=IRanges(start=groups$start, end=groups$end))
+    names(gr) <- groups$group_id
+    mcols(gr) <- groups[,cols]
+    gr
+}
