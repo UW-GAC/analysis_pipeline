@@ -149,7 +149,7 @@ addInvNorm <- function(annot, nullmod, outcome, covars) {
 #' @import Biobase
 #' @importFrom dplyr left_join
 #'
-#' @keywords internal
+#' @noRd
 .matchAnnotGds <- function(config, annot) {
     tmp <- sub(" ", "[[:alnum:]]+", config["gds_file"])
     gdsfile <-  list.files(path=dirname(tmp), pattern=basename(tmp), full.names=TRUE)[1]

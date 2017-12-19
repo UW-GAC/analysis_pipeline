@@ -1,25 +1,11 @@
-#' @import SeqArray
-#' @importFrom SeqVarTools refChar altChar
-.variantDF <- function(gds) {
-    data.frame(variant.id=seqGetData(gds, "variant.id"),
-               chromosome=seqGetData(gds, "chromosome"),
-               position=seqGetData(gds, "position"),
-               ref=refChar(gds),
-               alt=altChar(gds),
-               nAlleles=seqNumAllele(gds),
-               stringsAsFactors=FALSE)
-}
 
-
-#' @importFrom dplyr "%>%" group_by_ mutate_ rename_
-#' @importFrom tidyr separate_rows_ 
+#' @importFrom SeqVarTools nAlleles variantInfo
+#' @importFrom dplyr "%>%" rename_
 .expandAlleles <- function(gds) {
-    .variantDF(gds) %>%
-        separate_rows_("alt", sep=",") %>%
-        rename_(allele="alt") %>%
-        group_by_("variant.id") %>%
-        mutate_(allele.index=~1:n()) %>%
-        as.data.frame()
+    x <- variantInfo(gds, alleles=TRUE, expanded=TRUE) %>%
+        rename_(allele="alt")
+    x$nAlleles <- nAlleles(gds)[expandedVariantIndex(gds)]
+    x
 }
 
 
@@ -28,7 +14,7 @@
 .groupVariants <- function(variants, indexOnly) {
 
     ## columns to return
-    extraCols <- if (indexOnly) character(0) else c("chromosome", "position", "ref", "nAlleles", "allele")
+    extraCols <- if (indexOnly) character(0) else c("chr", "pos", "ref", "nAlleles", "allele")
     
     groups <- unique(variants$group_id)
     lapply(setNames(groups, groups), function(g) {
@@ -44,12 +30,12 @@
 #' These functions produce output suitable for providing to \code{\link[GENESIS]{assocTestSeq}} in the \pkg{\link[GENESIS]{GENESIS}} package.
 #'
 #' @param gds A \code{\link[SeqArray]{SeqVarGDSClass}} object
-#' @param variants A data.frame of variants with columns "group_id", "chromosome", "position", "ref", "alt".
+#' @param variants A data.frame of variants with columns "group_id", "chr", "pos", "ref", "alt".
 #' @param indexOnly Logical for whether to return only the "variant.id" and "allele.index" columns in the output (see Value).
 #' @return A list of data frames, one for each group. A single variant may have multiple rows if multiple alternate alleles are selected. Each data frame contains the following columns:
 #' \item{variant.id}{Unique identifier for the variant}
-#' \item{chromosome}{Chromosome}
-#' \item{position}{Position in base pairs}
+#' \item{chr}{Chromosome}
+#' \item{pos}{Position in base pairs}
 #' \item{ref}{Reference allele}
 #' \item{nAlleles}{Total number of alleles for this variant}
 #' \item{allele}{Alternate allele}
@@ -58,8 +44,8 @@
 #' library(SeqVarTools)
 #' gds <- seqOpen(seqExampleFileName())
 #' seqSetFilter(gds, variant.sel=seqGetData(gds, "chromosome") == 22)
-#' variants <- data.frame(chromosome=seqGetData(gds, "chromosome"),
-#'                        position=seqGetData(gds, "position"),
+#' variants <- data.frame(chr=seqGetData(gds, "chromosome"),
+#'                        pos=seqGetData(gds, "position"),
 #'                        ref=refChar(gds),
 #'                        alt=altChar(gds, n=1),
 #'                        stringsAsFactors=FALSE)
@@ -67,7 +53,7 @@
 #' aggregateListByAllele(gds, variants)
 #' 
 #' groups <- data.frame(group_id=LETTERS[1:2],
-#'                      chromosome=22,
+#'                      chr=22,
 #'                      start=c(16000000, 2900000), 
 #'                      end=c(30000000, 49000000),
 #' 		     stringsAsFactors=FALSE)
@@ -82,16 +68,16 @@
 #' @importFrom dplyr "%>%" inner_join
 #' @export
 aggregateListByAllele <- function(gds, variants, indexOnly=FALSE) {
-    stopifnot(all(c("group_id", "chromosome", "position", "ref", "alt") %in% names(variants)))
+    stopifnot(all(c("group_id", "chr", "pos", "ref", "alt") %in% names(variants)))
 
     ## set filter to listed variants only
     filtOrig <- seqGetFilter(gds)
-    gr <- GRanges(seqnames=variants$chromosome,
-                  ranges=IRanges(variants$position, variants$position))
+    gr <- GRanges(seqnames=variants$chr,
+                  ranges=IRanges(variants$pos, variants$pos))
     seqSetFilter(gds, gr, verbose=FALSE)
   
     variants <- .expandAlleles(gds) %>%
-        inner_join(variants, by=c("chromosome", "position", "ref", allele="alt"))
+        inner_join(variants, by=c("chr", "pos", "ref", allele="alt"))
 
     seqSetFilter(gds, sample.sel=filtOrig$sample.sel,
                  variant.sel=filtOrig$variant.sel, verbose=FALSE)
@@ -100,7 +86,7 @@ aggregateListByAllele <- function(gds, variants, indexOnly=FALSE) {
 }
 
 
-#' @param groups A data.frame of groups with column "group_id", "chromosome", "start", "end".
+#' @param groups A data.frame of groups with column "group_id", "chr", "start", "end".
 #' @rdname aggregateList
 #'
 #' @import SeqArray
@@ -110,11 +96,11 @@ aggregateListByAllele <- function(gds, variants, indexOnly=FALSE) {
 #' @importFrom dplyr "%>%" distinct_ left_join
 #' @export
 aggregateListByPosition <- function(gds, groups, indexOnly=FALSE) {
-    stopifnot(all(c("group_id", "chromosome", "start", "end") %in% names(groups)))
+    stopifnot(all(c("group_id", "chr", "start", "end") %in% names(groups)))
 
     ## select only variants in requested regions
     filtOrig <- seqGetFilter(gds)
-    gr <- GRanges(seqnames=groups$chromosome,
+    gr <- GRanges(seqnames=groups$chr,
                   ranges=IRanges(groups$start, groups$end, names=groups$group_id))
     seqSetFilter(gds, gr, verbose=FALSE)
 
@@ -124,8 +110,8 @@ aggregateListByPosition <- function(gds, groups, indexOnly=FALSE) {
                  variant.sel=filtOrig$variant.sel, verbose=FALSE)
     
     ## find group_id for each variant
-    vr <- GRanges(seqnames=variants$chromosome,
-                  ranges=IRanges(variants$position, variants$position, names=variants$variant.id))
+    vr <- GRanges(seqnames=variants$chr,
+                  ranges=IRanges(variants$pos, variants$pos, names=variants$variant.id))
     ol <- findOverlaps(vr, gr)
     map <- data.frame(group_id=names(gr)[subjectHits(ol)],
                       variant.id=as.integer(names(vr))[queryHits(ol)],
