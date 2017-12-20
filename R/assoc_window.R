@@ -57,7 +57,7 @@ seqData <- SeqVarData(gds, sampleData=annot)
 nullModel <- getobj(config["null_model_file"])
 
 # get samples included in null model
-sample.id <- rownames(nullModel$model.matrix)
+sample.id <- nullModel$sample.id
 
 size <- as.numeric(config["window_size"])*1000
 step <- as.numeric(config["window_step"])*1000
