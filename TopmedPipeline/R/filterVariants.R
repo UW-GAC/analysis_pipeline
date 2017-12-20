@@ -108,6 +108,8 @@ filterByMAF <- function(gds, sample.id=NULL, mac.min=NA, maf.min=NA, verbose=TRU
 #' @importFrom SeqVarTools alleleFrequency
 #' @export
 filterByRare <- function(gds, sample.id=NULL, af.max=0.01, verbose=TRUE) {
+    stopifnot(af.max >= 0 & af.max <= 1)
+    if (af.max == 1) return(invisible())
     if (sum(seqGetFilter(gds)$variant.sel) == 0) return(invisible())
     if (is.null(sample.id)) sample.id <- seqGetData(gds, "sample.id")
     seqSetFilter(gds, sample.id=sample.id, verbose=FALSE)
