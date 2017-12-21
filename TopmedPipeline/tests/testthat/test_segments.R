@@ -185,7 +185,7 @@ test_that("window", {
         if (sum(seqGetFilter(seqData)$variant.sel) == 0) next
         iterator <- SeqVarWindowIterator(seqData, windowSize=size, windowShift=shift, verbose=FALSE)
         assoc <- assocTestSeq2(iterator, nullmod, verbose=FALSE)
-        assoc$results <- addWindows(iterator, assoc$results)
+        assoc <- addWindows(iterator, assoc)
         files[i] <- tempfile()
         save(assoc, file=files[i])
     }
@@ -196,7 +196,7 @@ test_that("window", {
     seqSetFilterChrom(seqData, include=22, verbose=FALSE)
     iterator <- SeqVarWindowIterator(seqData, windowSize=size, windowShift=shift, verbose=FALSE)
     a <- assocTestSeq2(iterator, nullmod, verbose=FALSE)
-    a$results <- addWindows(iterator, a$results)
+    a <- addWindows(iterator, a)
     expect_equal(a, assoc)
 
     seqClose(seqData)
