@@ -1,32 +1,4 @@
 
-#' Add group names or sliding windows to association test results
-#'
-#' @param iterator SeqVarIterator object
-#' @param x assocTestSeq results
-#'
-#' @importFrom SeqVarTools variantRanges
-#' @export
-addGroups <- function(iterator, x) {
-    groups <- variantRanges(iterator)
-    rownames(x$results) <- names(groups)
-    names(x$variantInfo) <- names(groups)
-    x
-}
-
-#' @rdname addGroups
-#' @importFrom SeqVarTools variantRanges
-#' @importFrom GenomicRanges seqnames
-#' @export
-addWindows <- function(iterator, x) {
-    windows <- variantRanges(iterator)
-    win.df <- data.frame(chr=as.character(seqnames(windows)),
-                         start=BiocGenerics::start(windows),
-                         end=BiocGenerics::end(windows),
-                         stringsAsFactors=FALSE)
-    x$results <- cbind(win.df, x$results)
-    x
-}
-
 #' @importFrom dplyr "%>%" arrange_ select_
 .arrange_chr_pos <- function(df, chr="chr", pos="pos") {
     df$chr.factor <- factor(df[[chr]], levels=c(1:22, "X", "Y"))
