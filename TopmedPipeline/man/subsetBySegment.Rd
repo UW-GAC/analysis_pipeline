@@ -7,7 +7,7 @@
 subsetBySegment(varList, segment, segment.file)
 }
 \arguments{
-\item{varList}{A list of data.frames, each with columns "chr" and "pos" OR a GRangesList}
+\item{varList}{A list of data.frames, each with columns "chr" and "pos" OR a GRanges or GRangesList}
 
 \item{segment}{An integer indicating which segment to select}
 

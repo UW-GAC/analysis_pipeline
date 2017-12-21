@@ -114,7 +114,7 @@ getSegments <- function(file) {
 subsetBySegment <- function(varList, segment, segment.file) {
     # create a GRanges object containing the first variant from each item in varList
     if (is(varList, "GRangesList")) {
-        gr <- do.call(c, (lapply(varList, function(x) x[1])))
+        gr <- unlist(endoapply(varList, function(x) x[1]))
     } else if (is(varList, "GRanges")) {
         gr <- varList
     } else if (is.list(varList)) {
