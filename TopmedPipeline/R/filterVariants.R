@@ -65,7 +65,7 @@ filterBySNV <- function(gds, biallelic=TRUE, verbose=TRUE) {
     seqSetFilter(gds, variant.sel=snv, action="intersect", verbose=verbose)
 }
 
-#' @param sample.id Samples to include in calculating MAF
+#' @param sample.id Samples to include in calculating allele frequency
 #' @param mac.min Minimum minor allele count (effective N) to include
 #' @param maf.min Minimum MAF to include
 #' @rdname filterVariants
@@ -100,7 +100,6 @@ filterByMAF <- function(gds, sample.id=NULL, mac.min=NA, maf.min=NA, verbose=TRU
     })
 }
 
-#' @param sample.id Samples to include in calculating allele freqency
 #' @param af.max Maximum alternate allele frequency to include
 #' @rdname filterVariants
 #'

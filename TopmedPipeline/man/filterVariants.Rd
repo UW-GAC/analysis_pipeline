@@ -49,7 +49,7 @@ checkSelectedVariants(gds)
 
 \item{biallelic}{Logical for whether to select only biallelic SNVs}
 
-\item{sample.id}{Samples to include in calculating MAF}
+\item{sample.id}{Samples to include in calculating allele frequency}
 
 \item{mac.min}{Minimum minor allele count (effective N) to include}
 
@@ -58,8 +58,6 @@ checkSelectedVariants(gds)
 \item{af.max}{Maximum alternate allele frequency to include}
 
 \item{build}{Genome build to use when identifying regions to exclude from PCA because of high correlation (HLA, LCT, inversions)}
-
-\item{sample.id}{Samples to include in calculating allele freqency}
 }
 \description{
 Set variant filters on SeqVarGDSClass objects

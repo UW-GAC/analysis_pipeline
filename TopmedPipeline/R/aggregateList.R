@@ -1,5 +1,5 @@
 
-#' @importFrom SeqVarTools nAlleles variantInfo
+#' @importFrom SeqVarTools expandedVariantIndex nAlleles variantInfo
 #' @importFrom dplyr "%>%" rename_
 .expandAlleles <- function(gds) {
     x <- variantInfo(gds, alleles=TRUE, expanded=TRUE) %>%
@@ -128,7 +128,7 @@ aggregateListByPosition <- function(gds, groups, indexOnly=FALSE) {
 #' 
 #' @rdname aggregateList
 #'
-#' @importFrom GenomicRanges GRanges mcols
+#' @importFrom GenomicRanges GRanges GRangesList mcols<-
 #' @importFrom IRanges IRanges
 #' @importFrom stats setNames
 #' @export
@@ -149,7 +149,7 @@ aggregateGRangesList <- function(variants) {
 #' 
 #' @rdname aggregateList
 #'
-#' @importFrom GenomicRanges GRanges mcols
+#' @importFrom GenomicRanges GRanges mcols<-
 #' @importFrom IRanges IRanges
 #' @export
 aggregateGRanges <- function(groups) {

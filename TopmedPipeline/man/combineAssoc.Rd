@@ -10,6 +10,8 @@ combineAssoc(files, assoc_type, ordered = FALSE)
 \item{files}{Vector of file names with association test results}
 
 \item{assoc_type}{Type of association test ("single", "aggregate", "window")}
+
+\item{ordered}{Logical for whether to order the output by chromosome and position}
 }
 \value{
 Association test object

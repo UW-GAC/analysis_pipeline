@@ -107,14 +107,14 @@ getSegments <- function(file) {
 #' @return Subset of \code{varList} where the first variant is in the segment \code{segment}
 #' @seealso \code{\link{defineSegments}}, \code{\link{writeSegmentFile}}, \code{\link{filterBySegment}}, \code{\link{aggregateList}}
 #' 
-#' @importFrom GenomicRanges GRanges findOverlaps
+#' @importFrom GenomicRanges findOverlaps GRanges
 #' @importFrom IRanges IRanges
-#' @importFrom S4Vectors queryHits
+#' @importFrom S4Vectors endoapply queryHits
 #' @export
 subsetBySegment <- function(varList, segment, segment.file) {
     # create a GRanges object containing the first variant from each item in varList
     if (is(varList, "GRangesList")) {
-        gr <- unlist(endoapply(varList, function(x) x[1]))
+        gr <- BiocGenerics::unlist(endoapply(varList, function(x) x[1]))
     } else if (is(varList, "GRanges")) {
         gr <- varList
     } else if (is.list(varList)) {

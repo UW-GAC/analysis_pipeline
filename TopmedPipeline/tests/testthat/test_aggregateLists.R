@@ -144,7 +144,7 @@ test_that("aggregateGRangesList", {
     expect_equal(unique(variants$group_id), names(aggList))
     
     gr <- unlist(aggList)
-    expect_true(all(c("ref", "alt") %in% names(mcols(gr))))
+    expect_true(all(c("ref", "alt") %in% names(GenomicRanges::mcols(gr))))
     
     expect_equal(length(gr), nrow(variants))
     

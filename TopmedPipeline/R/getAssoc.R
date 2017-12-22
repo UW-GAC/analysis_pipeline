@@ -23,6 +23,7 @@
 #' 
 #' @param files Vector of file names with association test results
 #' @param assoc_type Type of association test ("single", "aggregate", "window")
+#' @param ordered Logical for whether to order the output by chromosome and position
 #' @return Association test object
 #'
 #' @importFrom dplyr "%>%" distinct_ filter_ group_by_ mutate_
