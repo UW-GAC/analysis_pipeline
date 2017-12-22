@@ -16,7 +16,7 @@
                 "mt": "mount -t nfs4 -o vers=4.1 fs-6ccd31c5.efs.us-west-2.amazonaws.com:/ /projects"
             },
             "submit_opts": {
-                "jobdef": "topmed_general",
+                "jobdef": "topmed_arrays",
                 "vcpus":  2,
                 "memory": 5000,
                 "region": "us-west-2",
@@ -52,7 +52,7 @@
                 }
             },
             "run_cmd": {
-                "cmd": "docker run --privileged rollinroy/r-332-tm /usr/local/analysis_pipeline/runRscript.py",
+                "cmd": "docker run --privileged rollinroy/r-332-tm /usr/local/analysis_pipeline/batchJob.py",
                 "params": {
                     "--rdriver": "",
                     "--rargs": "",
