@@ -211,6 +211,7 @@ config parameter | default value | description
 `conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` and `variant.id`. The alternate allele dosage of these variants will be included as covariates in the analysis.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 `variant_include_file` | `NA` | RData file with vector of variant.id to include.
+`pass_only` | `TRUE` | `TRUE` to select only variants with FILTER=PASS.
 `genome_build` | `hg19` | Genome build for the genotypes in the GDS file (`hg19` or `hg38`). Used to divide the genome into segments for parallel processing.
 `thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 
@@ -229,7 +230,6 @@ config parameter | default value | description
 --- | --- | ---
 `mac_threshold` | `5` | Minimum minor allele count for variants to include in test. Use a higher threshold when outcome is binary.
 `maf_threshold` | `0.001` | Minimum minor allele frequency for variants to include in test. Only used if `mac_threshold` is `NA`.
-`pass_only` | `TRUE` | `TRUE` to select only variants with FILTER=PASS.
 `test_type` | `score` | Type of test to perform. If samples are related (mixed model), options are `score` and `wald` if `binary` is `FALSE`, `score` only if `binary` is `TRUE`.  For unrelated samples (`pcrelate_file` is `NA`), options are `linear` (Wald test) if `binary` is `FALSE`, `logistic` (Wald test) or `firth` if `binary` is `TRUE`.
 `known_hits_file` | `NA` | RData file with data.frame containing columns `chr` and `pos`. If provided, 1 Mb regions surrounding each variant listed will be omitted from the QQ and manhattan plots.
 

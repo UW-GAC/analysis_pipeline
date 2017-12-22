@@ -10,49 +10,41 @@ argv <- parse_args(argp)
 config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)
 
-required <- c("gds_file",
-              "variant_group_file")
+required <- c("variant_group_file")
 optional <- c("aggregate_type"="allele",
               "out_file"="aggregate_list.RData")
 config <- setConfigDefaults(config, required, optional)
 print(config)
 writeConfig(config, paste0(basename(argv$config), ".aggregate_list.params"))
 
-## gds file can have two parts split by chromosome identifier
-gdsfile <- config["gds_file"]
+## file can have two parts split by chromosome identifier
 outfile <- config["out_file"]
 varfile <- config["variant_group_file"]
 if (!is.na(chr)) {
-    bychrfile <- grepl(" ", gdsfile) # do we have one file per chromosome?
-    gdsfile <- insertChromString(gdsfile, chr)
     outfile <- insertChromString(outfile, chr, err="out_file")
     varfile <- insertChromString(varfile, chr)
 }
 
-gds <- seqOpen(gdsfile)
-
 groups <- getobj(varfile)
 
-## subset groups by chromosome
-groups <- groups[groups$chromosome == chr,]
+## rename columns if necessary
+names(groups)[names(groups) == "chromosome"] <- "chr"
+names(groups)[names(groups) == "position"] <- "pos"
 
-## chromosome must be character to match with gds
-if (!is.character(groups$chromosome)) groups$chromosome <- as.character(groups$chromosome)
+## subset groups by chromosome
+groups <- groups[groups$chr == chr,]
+
+if (!is.character(groups$chr)) groups$chr <- as.character(groups$chr)
 
 if (config["aggregate_type"] == "allele") {
-    message("Sorting ", nrow(groups), " variant alleles")
-    aggVarList <- aggregateListByAllele(gds, groups)
+    aggVarList <- aggregateGRangesList(groups)
 } else if (config["aggregate_type"] == "position") {
-    message("Finding variants in ", nrow(groups), " groups")
-    aggVarList <- aggregateListByPosition(gds, groups)
+    aggVarList <- aggregateGRanges(groups)
 } else {
     stop("aggregrate_type must be 'allele' or 'position'")
 }
 
 save(aggVarList, file=outfile)
-message("Saved ", sum(sapply(aggVarList, nrow)), " variant alleles in ", length(aggVarList), " groups")
-
-seqClose(gds)
 
 # mem stats
 ms <- gc()
