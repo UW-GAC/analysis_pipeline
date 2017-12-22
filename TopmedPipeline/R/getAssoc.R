@@ -48,11 +48,16 @@ combineAssoc <- function(files, assoc_type, ordered=FALSE) {
             assoc$variantInfo <- assoc$variantInfo[index]
         }
     }
+    if (assoc_type == "aggregate") {
+        # remove duplicated units
+        index <- !duplicated(names(assoc$variantInfo))
+        assoc$results <- assoc$results[index,]
+        assoc$variantInfo <- assoc$variantInfo[index]
+    }
     if (assoc_type == "window") {
         # remove duplicated windows
         assoc$results <- assoc$results %>%
             mutate_(index=~1:n()) %>%
-            distinct_() %>%
             group_by_("chr", "start", "end") %>%
             filter_(~(n.site == max(n.site)), ~(!duplicated(n.site))) %>%
             as.data.frame()
