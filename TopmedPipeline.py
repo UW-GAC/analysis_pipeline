@@ -267,7 +267,10 @@ class AWS_Batch(Cluster):
         # for the submit holds, return a dictionary of all job names in a single string
         # and a list of all job ids
         nlist = [name for d in submitHolds for name in d]
-        jobnames = "_".join(nlist)
+        maxLen = 1
+        if len(nlist) > maxLen:
+            nlist = nlist[:maxLen]
+        jobnames = "_".join(nlist) + "_more"
         jobids = [id for d in submitHolds for il in d.values() for id in il]
         return {'jobnames': jobnames, 'jobids': jobids}
 
