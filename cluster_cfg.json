@@ -52,7 +52,7 @@
                 }
             },
             "run_cmd": {
-                "cmd": "docker run --privileged rollinroy/r-332-tm /usr/local/analysis_pipeline/batchJob.py",
+                "cmd": "docker run --privileged uwgac/r343-topmed:devel /usr/local/analysis_pipeline/batchJob.py",
                 "params": {
                     "--rdriver": "",
                     "--rargs": "",
