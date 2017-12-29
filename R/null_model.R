@@ -39,7 +39,7 @@ group.var <- phen[["group.var"]]
 sample.id <- phen[["sample.id"]]
 
 if (as.logical(config["binary"])) {
-    stopifnot(all(annot[[outcome]] %in% c(0,1)))
+    stopifnot(all(annot[[outcome]] %in% c(0,1,NA)))
     family <- binomial
 } else {
     family <- gaussian
