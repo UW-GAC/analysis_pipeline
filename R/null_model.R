@@ -23,7 +23,8 @@ optional <- c("gds_file"=NA, # required for conditional variants
               "group_var"=NA,
               "inverse_normal"=TRUE,
               "n_pcs"=3,
-              "out_prefix"="null_model",
+              "out_file"="null_model.RData",
+              "out_phenotype_file"="phenotypes.RData",
               "rescale_variance"="marginal",
               #"resid_covars"=TRUE,
               "sample_include_file"=NA)
@@ -39,7 +40,7 @@ covars <- phen[["covars"]]
 group.var <- phen[["group.var"]]
 sample.id <- phen[["sample.id"]]
 
-save(annot, file=paste0(config["out_prefix"], "_phenotypes.RData"))
+save(annot, file=config["out_phenotype_file"])
 
 if (as.logical(config["binary"])) {
     stopifnot(all(annot[[outcome]] %in% c(0,1,NA)))
@@ -81,11 +82,7 @@ if (as.logical(config["inverse_normal"])) {
                                     rescale=rescale)
 }
 
-save(nullmod, file=paste0(config["out_prefix"], ".RData"))
-
-## calculate projection matrix and save
-nullprep <- nullModelTestPrep(nullmod)
-save(nullprep, file=paste0(config["out_prefix"], "_proj.RData"))
+save(nullmod, file=config["out_file"])
 
 # mem stats
 ms <- gc()
