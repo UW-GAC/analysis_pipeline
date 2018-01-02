@@ -410,7 +410,7 @@ class AWS_Batch(Cluster):
         else:
             submitHolds = []
 
-        # if we're doing a job array equivalent submit multiple jobs; else just submit one job
+        # if we're doing an array job, specify arrayProperty; else just submit one job
         if not print_only:
             # see if there are any holdids
             if len(submitHolds) > 0:
@@ -426,33 +426,23 @@ class AWS_Batch(Cluster):
             if array_range is not None:
                 air = [ int(i) for i in array_range.split( '-' ) ]
                 taskList = range( air[0], air[1]+1 )
-                self.printVerbose("\t1> submitJob: " + job_name + " is an array job - no. tasks: " + str(len(taskList)))
+                noJobs = len(taskList)
+                self.printVerbose("\t1> submitJob: " + job_name + " is an array job - no. tasks: " + str(noJobs))
                 hold_name = job_name + "_" + trackID
-                job_ids=[]
-                for t in taskList:
-                    # add an environmnent for equiv to taskid in sge; and jobid
-                    submitOpts["env"].append( { "name": "SGE_TASK_ID",
-                                                "value": str(t) } )
-                    submitOpts["env"].append( { "name": "JOB_ID",
-                                                "value": trackID } )
-                    jobParams['lf'] = log_prefix + '.task_' + str(t) + logExt
-                    # create a jobname based on the job_name submitted and the task id
-                    subOut = self.batchC.submit_job(
-                       jobName = job_name + "_" + str(t),
-                       jobQueue = self.queue,
-                       jobDefinition = submitOpts["jobdef"],
-                       parameters = jobParams,
-                       dependsOn = submitOpts["dependsOn"],
-                       containerOverrides = {
-                          "vcpus": submitOpts["vcpus"],
-                          "memory": submitOpts["memory"],
-                          "environment": submitOpts["env"]
-                       }
-                    )
-                    # append to the list of job ids
-                    job_ids.append(subOut['jobId'])
-                # create the submit id dictionary
-                submit_id = {job_name: job_ids}
+                jobParams["at"] = "1"
+                subOut = self.batchC.submit_job(
+                   jobName = job_name + "_" + str(noJobs),
+                   jobQueue = self.queue,
+                   arrayProperties = { "size": noJobs },
+                   jobDefinition = submitOpts["jobdef"],
+                   parameters = jobParams,
+                   dependsOn = submitOpts["dependsOn"],
+                   containerOverrides = {
+                      "vcpus": submitOpts["vcpus"],
+                      "memory": submitOpts["memory"],
+                      "environment": submitOpts["env"]
+                   }
+                )
             else:
                 self.printVerbose("\t1> submitJob: " + job_name + " is a single job")
                 jobParams['lf'] = log_prefix + logExt
@@ -471,13 +461,14 @@ class AWS_Batch(Cluster):
                    }
                 )
                 # return the "submit_id" which is a list of dictionaries
-                submit_id = {job_name: [subOut['jobId']]}
+            submit_id = {job_name: [subOut['jobId']]}
         else:
             log_prefix = trackID
             jobParams['lf'] = log_prefix + "_printonly" + logExt
             print("Submit job: " + job_name)
             if array_range is not None:
                 print("\tjob is an array job: " + array_range)
+                jobParams["at"] = "1"
             else:
                 print("\tjob is a single job")
             print("\tbatch queue: " + self.queue)
