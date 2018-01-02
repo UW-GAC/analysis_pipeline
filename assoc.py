@@ -123,6 +123,7 @@ else:
 config = deepcopy(configdict)
 config["assoc_type"] = assoc_type
 config["null_model_file"] = configdict["data_prefix"] + "_null_model_proj.RData"
+config["phenotype_file"] = configdict["data_prefix"] + "_null_model_phenotypes.RData"
 if assoc_type == "aggregate":
     config["aggregate_variant_file"] = configdict["data_prefix"] + "_aggregate_list_chr .RData"
 config["out_prefix"] = configdict["data_prefix"] + "_" + assocScript

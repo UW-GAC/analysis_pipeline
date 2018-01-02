@@ -39,6 +39,8 @@ covars <- phen[["covars"]]
 group.var <- phen[["group.var"]]
 sample.id <- phen[["sample.id"]]
 
+save(annot, file=paste0(config["out_prefix"], "_phenotypes.RData"))
+
 if (as.logical(config["binary"])) {
     stopifnot(all(annot[[outcome]] %in% c(0,1,NA)))
     family <- binomial
