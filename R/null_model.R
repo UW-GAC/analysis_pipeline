@@ -23,6 +23,7 @@ optional <- c("gds_file"=NA, # required for conditional variants
               "inverse_normal"=TRUE,
               "n_pcs"=3,
               "out_file"="null_model.RData",
+              "out_phenotype_file"="phenotypes.RData",
               "rescale_variance"="marginal",
               "resid_covars"=TRUE,
               "sample_include_file"=NA)
@@ -37,6 +38,8 @@ outcome <- phen[["outcome"]]
 covars <- phen[["covars"]]
 group.var <- phen[["group.var"]]
 sample.id <- phen[["sample.id"]]
+
+save(annot, file=config["out_phenotype_file"])
 
 if (as.logical(config["binary"])) {
     stopifnot(all(annot[[outcome]] %in% c(0,1,NA)))
