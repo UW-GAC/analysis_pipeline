@@ -88,6 +88,10 @@ if (pop != "TOPMED") {
         ref.var <- variant
     } else {
         ref.var <- filter(assoc, pval == min(pval))$variantID
+        if (length(ref.var) > 1) {
+            message("Multiple variants with minimum pval; selecting the first one as reference")
+            ref.var <- ref.var[1]
+        }
     }
     gdsfile <- insertChromString(config["gds_file"], var.chr)
     ld <- calculateLD(gdsfile, variant.id=assoc$variantID, ref.var=ref.var, sample.id=sample.id)
