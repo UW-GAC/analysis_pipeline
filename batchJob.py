@@ -9,7 +9,7 @@ from    argparse import ArgumentParser
 from     datetime import datetime, timedelta
 
 # init globals
-version='1.0'
+version='1.2'
 msgErrPrefix='>>> Error: '
 msgInfoPrefix='>>> Info: '
 debugPrefix='>>> Debug: '
@@ -83,6 +83,9 @@ parser.add_argument( "-l", "--logfile", help = "log filename", default = "" )
 parser.add_argument( "-t", "--timeout", help = "mount timeout", default = "10.0" )
 parser.add_argument( "-a", "--arraytype", type = int, default = defaultArrayType,
                      help = "Batch job is array type [default: " + str(defaultArrayType) + " ]" )
+parser.add_argument("--version", action="store_true", default = False,
+                    help = "Print version of " + __file__ )
+
 
 args = parser.parse_args()
 # set result of arg parse_args
@@ -98,6 +101,10 @@ debug = args.Debug
 po = args.printonly
 nomount = args.nomount
 arrayType = args.arraytype
+# version
+if args.version:
+    print(__file__ + " version: " + version)
+    sys.exit()
 
 # handle array type
 if arrayType:
