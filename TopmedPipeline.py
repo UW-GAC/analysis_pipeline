@@ -430,6 +430,10 @@ class AWS_Batch(Cluster):
                 self.printVerbose("\t1> submitJob: " + job_name + " is an array job - no. tasks: " + str(noJobs))
                 jobParams['lf'] = log_prefix + logExt
                 jobParams["at"] = "1"
+                submitOpts["env"].append( { "name": "SGE_TASK_ID",
+                                            "value": str(taskList[0]) } )
+                submitOpts["env"].append( { "name": "JOB_ID",
+                                            "value": trackID } )
                 subOut = self.batchC.submit_job(
                    jobName = job_name + "_" + str(noJobs),
                    jobQueue = self.queue,

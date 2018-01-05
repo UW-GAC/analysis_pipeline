@@ -108,21 +108,19 @@ if args.version:
 
 # handle array type
 if arrayType:
-    # get the batch array index and set SGE_TASK_ID accordingly
-    # batch array index is 0 based; sge task is one based
-    batchID = str(int(os.environ['AWS_BATCH_JOB_ARRAY_INDEX'])+1)
-    os.environ['SGE_TASK_ID'] = batchID
+    # get the batch array index
+    arrayIndex = str(int(os.environ['AWS_BATCH_JOB_ARRAY_INDEX']))
 # check for logile; if so, make it a full path to working directory
 if logfile != "":
     if arrayType:
-        logfile = logfile + "_" + batchID
+        logfile = logfile + "_" + arrayIndex
     fullLog = workdir + "/" + logfile
 
 # summarize and check for required params
 Summary("Summary of " + __file__)
 
 if arrayType:
-    pInfo("Array type job: setting task id (1 based) to " + batchID)
+    pInfo("Array type job - array index: " + arrayIndex)
 
 if po:
     pInfo( "Exiting without executing." )
