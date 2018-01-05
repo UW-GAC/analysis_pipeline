@@ -99,13 +99,23 @@ po = args.printonly
 nomount = args.nomount
 arrayType = args.arraytype
 
+# handle array type
+if arrayType:
+    # get the batch array index and set SGE_TASK_ID accordingly
+    # batch array index is 0 based; sge task is one based
+    batchID = str(int(os.environ['AWS_BATCH_JOB_ARRAY_INDEX'])+1)
+    os.environ['SGE_TASK_ID'] = batchID
 # check for logile; if so, make it a full path to working directory
 if logfile != "":
+    if arrayType:
+        logfile = logfile + "_" + batchID
     fullLog = workdir + "/" + logfile
-
 
 # summarize and check for required params
 Summary("Summary of " + __file__)
+
+if arrayType:
+    pInfo("Array type job: setting task id (1 based) to " + batchID)
 
 if po:
     pInfo( "Exiting without executing." )
@@ -150,13 +160,6 @@ pInfo( "Changed working directory to " + workdir )
 cmd = rdriver + ' ' + rargs
 pDebug( "Executing " + cmd )
 sys.stdout.flush()
-# handle array type
-if arrayType:
-    # get the batch array index and set SGE_TASK_ID accordingly
-    # batch array index is 0 based; sge task is one based
-    batchID = str(int(os.environ['AWS_BATCH_JOB_ARRAY_INDEX'])+1)
-    pInfo("Array type job: setting task id (1 based) to " + batchID)
-    os.environ['SGE_TASK_ID'] = batchID
 # redirect stdout to logile
 if logfile != "":
     sout = sys.stdout
