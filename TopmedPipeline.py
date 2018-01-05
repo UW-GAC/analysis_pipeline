@@ -428,7 +428,7 @@ class AWS_Batch(Cluster):
                 taskList = range( air[0], air[1]+1 )
                 noJobs = len(taskList)
                 self.printVerbose("\t1> submitJob: " + job_name + " is an array job - no. tasks: " + str(noJobs))
-                hold_name = job_name + "_" + trackID
+                jobParams['lf'] = log_prefix + logExt
                 jobParams["at"] = "1"
                 subOut = self.batchC.submit_job(
                    jobName = job_name + "_" + str(noJobs),
