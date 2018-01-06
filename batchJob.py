@@ -9,7 +9,7 @@ from    argparse import ArgumentParser
 from     datetime import datetime, timedelta
 
 # init globals
-version='1.3'
+version='1.4'
 msgErrPrefix='>>> Error: '
 msgInfoPrefix='>>> Info: '
 debugPrefix='>>> Debug: '
@@ -129,9 +129,12 @@ if arrayType:
     os.environ['SGE_TASK_ID'] = taskID
 
 # check for logile; if so, make it a full path to working directory
+logExt = ".log"
 if logfile != "":
     if arrayType:
-        logfile = logfile + "_" + taskID
+        logfile = logfile + "_" + taskID + logExt
+    else:
+        logfile = logfile + logExt
     fullLog = workdir + "/" + logfile
 
 # summarize and check for required params

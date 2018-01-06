@@ -389,7 +389,6 @@ class AWS_Batch(Cluster):
 
         # using time set a job id (which is for tracking; not the batch job id)
         trackID = job_name + "_" + str(int(time.time()*100))
-        logExt = ".log"
 
         # check for number of cores (1 core = 2 vcpus)
         key = "vcpus"
@@ -410,7 +409,7 @@ class AWS_Batch(Cluster):
         else:
             submitHolds = []
         log_prefix = trackID
-        jobParams['lf'] = log_prefix + logExt
+        jobParams['lf'] = log_prefix
         submitOpts["env"].append( { "name": "JOB_ID",
                                     "value": trackID } )
 
@@ -433,6 +432,7 @@ class AWS_Batch(Cluster):
                 self.printVerbose("\t1> submitJob: " + jobName + " is an array job - no. tasks: " + str(noJobs))
                 self.printVerbose("\t1> FIRST_INDEX: " + str(taskList[0]))
                 jobParams["at"] = "1"
+                jobParams['lf'] = jobParams['lf'] + ".task"
                 submitOpts["env"].append( { "name": "FIRST_INDEX",
                                             "value": str(taskList[0]) } )
                 subOut = self.batchC.submit_job(
@@ -473,8 +473,10 @@ class AWS_Batch(Cluster):
                 jobName = job_name + "_" + str(noJobs)
                 submitOpts["env"].append( { "name": "FIRST_INDEX",
                                             "value": str(taskList[0]) } )
-                submitOpts["env"].append( { "name": "JOB_ID",
-                                            "value": trackID } )
+                jobParams["at"] = "1"
+                jobParams['lf'] = jobParams['lf'] + ".task"
+                submitOpts["env"].append( { "name": "FIRST_INDEX",
+                                            "value": str(taskList[0]) } )
                 print("\t\tsubmitJob: " + jobName + " is an array job - no. tasks: " + str(noJobs))
                 print("\t\tFIRST_INDEX: " + str(taskList[0]))
             else:
