@@ -429,14 +429,15 @@ class AWS_Batch(Cluster):
                 air = [ int(i) for i in array_range.split( '-' ) ]
                 taskList = range( air[0], air[1]+1 )
                 noJobs = len(taskList)
-                self.printVerbose("\t1> submitJob: " + jobName + " is an array job - no. tasks: " + str(noJobs))
+                subName = job_name + "_" + str(noJobs)
+                self.printVerbose("\t1> submitJob: " + subName + " is an array job - no. tasks: " + str(noJobs))
                 self.printVerbose("\t1> FIRST_INDEX: " + str(taskList[0]))
                 jobParams["at"] = "1"
                 jobParams['lf'] = jobParams['lf'] + ".task"
                 submitOpts["env"].append( { "name": "FIRST_INDEX",
                                             "value": str(taskList[0]) } )
                 subOut = self.batchC.submit_job(
-                   jobName = job_name + "_" + str(noJobs),
+                   jobName = subName,
                    jobQueue = self.queue,
                    arrayProperties = { "size": noJobs },
                    jobDefinition = submitOpts["jobdef"],
