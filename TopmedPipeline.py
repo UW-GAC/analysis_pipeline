@@ -409,6 +409,10 @@ class AWS_Batch(Cluster):
             submitHolds = holdid
         else:
             submitHolds = []
+        log_prefix = trackID
+        jobParams['lf'] = log_prefix + logExt
+        submitOpts["env"].append( { "name": "JOB_ID",
+                                    "value": trackID } )
 
         # if we're doing an array job, specify arrayProperty; else just submit one job
         if not print_only:
@@ -422,18 +426,15 @@ class AWS_Batch(Cluster):
             else:
                 self.printVerbose("\t1> submitJob: " + job_name + " does not depend on other jobs" )
 
-            log_prefix = trackID
             if array_range is not None:
                 air = [ int(i) for i in array_range.split( '-' ) ]
                 taskList = range( air[0], air[1]+1 )
                 noJobs = len(taskList)
-                self.printVerbose("\t1> submitJob: " + job_name + " is an array job - no. tasks: " + str(noJobs))
-                jobParams['lf'] = log_prefix + logExt
+                self.printVerbose("\t1> submitJob: " + jobName + " is an array job - no. tasks: " + str(noJobs))
+                self.printVerbose("\t1> FIRST_INDEX: " + str(taskList[0]))
                 jobParams["at"] = "1"
-                submitOpts["env"].append( { "name": "SGE_TASK_ID",
+                submitOpts["env"].append( { "name": "FIRST_INDEX",
                                             "value": str(taskList[0]) } )
-                submitOpts["env"].append( { "name": "JOB_ID",
-                                            "value": trackID } )
                 subOut = self.batchC.submit_job(
                    jobName = job_name + "_" + str(noJobs),
                    jobQueue = self.queue,
@@ -449,9 +450,6 @@ class AWS_Batch(Cluster):
                 )
             else:
                 self.printVerbose("\t1> submitJob: " + job_name + " is a single job")
-                jobParams['lf'] = log_prefix + logExt
-                submitOpts["env"].append( { "name": "JOB_ID",
-                                            "value": trackID } )
                 subOut = self.batchC.submit_job(
                    jobName = job_name,
                    jobQueue = self.queue,
@@ -467,18 +465,27 @@ class AWS_Batch(Cluster):
                 # return the "submit_id" which is a list of dictionaries
             submit_id = {job_name: [subOut['jobId']]}
         else:
-            log_prefix = trackID
-            jobParams['lf'] = log_prefix + "_printonly" + logExt
-            print("Submit job: " + job_name)
+            print("Job name: " + job_name)
             if array_range is not None:
-                print("\tjob is an array job: " + array_range)
-                jobParams["at"] = "1"
+                air = [ int(i) for i in array_range.split( '-' ) ]
+                taskList = range( air[0], air[1]+1 )
+                noJobs = len(taskList)
+                jobName = job_name + "_" + str(noJobs)
+                submitOpts["env"].append( { "name": "FIRST_INDEX",
+                                            "value": str(taskList[0]) } )
+                submitOpts["env"].append( { "name": "JOB_ID",
+                                            "value": trackID } )
+                print("\t\tsubmitJob: " + jobName + " is an array job - no. tasks: " + str(noJobs))
+                print("\t\tFIRST_INDEX: " + str(taskList[0]))
             else:
                 print("\tjob is a single job")
+            print("\tlog file: " + jobParams['lf'])
+            print("\tJOB_ID: " + trackID)
             print("\tbatch queue: " + self.queue)
             print("\tjob definition: " + submitOpts["jobdef"])
             print("\tjob memory: " + str(submitOpts["memory"]))
             print("\tjob vcpus: " + str(submitOpts["vcpus"]))
+            print("\tjob env: \n\t\t" + str(submitOpts["env"]))
             print("\tjob params: \n\t\t" + str(jobParams))
             jobid = "111-222-333-print_only-" +  job_name
             submit_id = {job_name: [jobid]}

@@ -9,7 +9,7 @@ from    argparse import ArgumentParser
 from     datetime import datetime, timedelta
 
 # init globals
-version='1.2'
+version='1.3'
 msgErrPrefix='>>> Error: '
 msgInfoPrefix='>>> Info: '
 debugPrefix='>>> Debug: '
@@ -44,7 +44,10 @@ def Summary(hdr):
     else:
         pInfo( '\tDebug: False' )
     if arrayType:
-        pInfo( '\tArray type: True')
+        pInfo( '\tArray type: True' )
+        pInfo( '\tArray index: ' + arrayIndex )
+        pInfo( '\tFirst index: ' + firstSegIndex)
+        pInfo( '\tSGE Task ID: ' +  os.environ['SGE_TASK_ID'])
     else:
         pInfo( '\tArray type: False')
     tbegin=time.asctime()
@@ -108,19 +111,31 @@ if args.version:
 
 # handle array type
 if arrayType:
-    # get the batch array index
-    arrayIndex = str(int(os.environ['AWS_BATCH_JOB_ARRAY_INDEX']))
+    # get the batch array index, the first segment index and set SGE_TASK_ID
+    # which corresponds to a segment index in a chromosome
+    echeck = 'AWS_BATCH_JOB_ARRAY_INDEX'
+    if echeck in os.environ:
+        arrayIndex = os.environ[echeck]
+    else:
+        pError("Required array job env " + echeck + " not found")
+        sys.exit(2)
+    echeck = 'FIRST_INDEX'
+    if echeck in os.environ:
+        firstSegIndex = os.environ[echeck]
+    else:
+        pError("Required first index env " + echeck + " not found")
+        sys.exit(2)
+    taskID = str(int(arrayIndex) + int(firstSegIndex))
+    os.environ['SGE_TASK_ID'] = taskID
+
 # check for logile; if so, make it a full path to working directory
 if logfile != "":
     if arrayType:
-        logfile = logfile + "_" + arrayIndex
+        logfile = logfile + "_" + taskID
     fullLog = workdir + "/" + logfile
 
 # summarize and check for required params
 Summary("Summary of " + __file__)
-
-if arrayType:
-    pInfo("Array type job - array index: " + arrayIndex)
 
 if po:
     pInfo( "Exiting without executing." )
