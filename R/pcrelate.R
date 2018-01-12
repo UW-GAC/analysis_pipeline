@@ -46,3 +46,7 @@ pcrelate(seqData,
          scan.block.size=as.integer(config["sample_block_size"]))
 
 seqClose(seqData)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

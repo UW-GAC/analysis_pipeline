@@ -20,20 +20,28 @@ optional <- c("kinship_method"="king",
               "out_file_cross"="kinship_cross_study.pdf",
               "out_file_study"="kinship_within_study.pdf",
               "phenotype_file"=NA,
+              "sample_include_file"=NA,
               "study"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
+
+if (!is.na(config["sample_include_file"])) {
+    sample.id <- getobj(config["sample_include_file"])
+} else {
+    sample.id <- NULL
+}
 
 ## select type of kinship estimates to use (king or pcrelate)
 kin.type <- tolower(config["kinship_method"])
 kin.thresh <- as.numeric(config["kinship_threshold"])
 if (kin.type == "king") {
     king <- getobj(config["kinship_file"])
-    kinship <- snpgdsIBDSelection(king, kinship.cutoff=kin.thresh)
+    samp.sel <- king$sample.id %in% sample.id
+    kinship <- snpgdsIBDSelection(king, kinship.cutoff=kin.thresh, samp.sel=samp.sel)
     xvar <- "IBS0"
 } else if (kin.type == "pcrelate") {
     pcr <- openfn.gds(config["kinship_file"])
-    kinship <- pcrelateReadKinship(pcr, kin.thresh=kin.thresh)
+    kinship <- pcrelateReadKinship(pcr, kin.thresh=kin.thresh, scan.include=sample.id)
     closefn.gds(pcr)
     kinship <- kinship %>%
         rename(kinship=kin) %>%
@@ -44,7 +52,7 @@ if (kin.type == "king") {
 }
 message("Plotting ", kin.type, " kinship estimates")
 
-p <- ggplot(kinship, aes_string(xvar, "kinship")) + 
+p <- ggplot(kinship, aes_string(xvar, "kinship")) +
     geom_hline(yintercept=2^(-seq(3,9,2)/2), linetype="dashed", color="grey") +
     geom_point(alpha=0.5) +
     ylab("kinship estimate") +
@@ -61,7 +69,7 @@ annot <- getobj(config["phenotype_file"])
 stopifnot(study %in% varLabels(annot))
 annot <- pData(annot) %>%
     select_("sample.id", study)
-    
+
 kinship <- kinship %>%
     left_join(annot, by=c(ID1="sample.id")) %>%
     rename_(study1=study) %>%
@@ -94,3 +102,7 @@ if (nrow(kinship.cross) > 0){
     theme_bw()
   ggsave(config["out_file_cross"], plot=p, width=8, height=7)
 }
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

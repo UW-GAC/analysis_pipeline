@@ -54,3 +54,7 @@ unrels <- part$unrels
 save(rels, file=config["out_related_file"])
 save(unrels, file=config["out_unrelated_file"])
 message("Found ", length(unrels), " unrelated and ", length(rels), " related samples")
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

@@ -23,6 +23,7 @@ optional <- c("gds_file"=NA, # required for conditional variants
               "inverse_normal"=TRUE,
               "n_pcs"=3,
               "out_file"="null_model.RData",
+              "out_phenotype_file"="phenotypes.RData",
               "rescale_variance"="marginal",
               "resid_covars"=TRUE,
               "sample_include_file"=NA)
@@ -38,8 +39,10 @@ covars <- phen[["covars"]]
 group.var <- phen[["group.var"]]
 sample.id <- phen[["sample.id"]]
 
+save(annot, file=config["out_phenotype_file"])
+
 if (as.logical(config["binary"])) {
-    stopifnot(all(annot[[outcome]] %in% c(0,1)))
+    stopifnot(all(annot[[outcome]] %in% c(0,1,NA)))
     family <- binomial
 } else {
     family <- gaussian
@@ -54,7 +57,7 @@ model.string <- modelString(outcome, covars, random, group.var)
 message("Model: ", model.string)
 
 if (!is.null(grm)) {
-    
+
     ## fit null model allowing heterogeneous variances among studies
     nullmod <- fitNullMM(annot, outcome=outcome, covars=covars,
                          covMatList=grm, scan.include=sample.id,
@@ -84,7 +87,7 @@ if (!is.null(grm)) {
             }))
             annot$resid.norm <- resid.group$resid.norm[match(annot$sample.id, resid.group$sample.id)]
         }
-        
+
         ## fit null model again with these residuals as outcome and allowing heterogeneous variances
         resid.covars <- if (config["resid_covars"]) covars else NULL
         nullmod <- fitNullMM(annot, outcome="resid.norm", covars=resid.covars,
@@ -103,7 +106,11 @@ if (!is.null(grm)) {
         nullmod <- fitNullReg(annot, outcome="resid.norm", covars=resid.covars,
                               scan.include=sample.id, family=family)
     }
-    
+
 }
 
 save(nullmod, file=config["out_file"])
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

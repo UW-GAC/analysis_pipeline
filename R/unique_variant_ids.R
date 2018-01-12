@@ -43,7 +43,7 @@ for (c in chr) {
     id.old <- var$variant.id[var$chromosome == c]
     id.new <- var$variant.id.new[var$chromosome == c]
     if (identical(id.old, id.new)) next
-    
+
     node <- index.gdsn(gds.list[[c]], "variant.id")
     compress <- objdesp.gdsn(node)$compress
     compression.gdsn(node, "")
@@ -52,3 +52,6 @@ for (c in chr) {
     seqClose(gds.list[[c]])
 }
 
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

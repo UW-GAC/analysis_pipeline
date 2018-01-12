@@ -2,6 +2,7 @@ context("getPhenotype tests")
 library(splines)
 library(Biobase)
 library(SeqArray)
+library(SeqVarTools)
 library(gdsfmt)
 
 .testConfig <- function(covars, n_pcs, group_var=NA) {
@@ -218,4 +219,38 @@ test_that("conditional chroms", {
     expect_true(all(vars %in% varLabels(phen$annot)))
     expect_true(all(vars %in% phen$covars))
     .cleanupConditionalConfig(config)
+})
+
+
+.testSmallConfig <- function(gdsfile) {
+    showfile.gds(closeall=TRUE, verbose=FALSE)
+    gdsfile <-  file.path(tempdir(), "tmp .gds")
+    invisible(file.copy(seqExampleFileName("gds"), paste0(tempdir(), "/tmp1.gds")))
+    
+    phenfile <- tempfile()
+    phen <- getobj(system.file("data", "sample_annotation.RData", package="TopmedPipeline"))
+    phen <- phen[sort(sample(1:nrow(phen), 50)),]
+    save(phen, file=phenfile)
+
+    c(gds_file=gdsfile,
+      phenotype_file=phenfile,
+      n_pcs=0,
+      outcome="outcome",
+      covars="sex",
+      sample_include_file=NA)
+}
+
+.cleanupSmallConfig <- function(config) {
+    unlink(config["phenotype_file"])
+    unlink(file.path(tempdir(), "/tmp*.gds"))
+}
+    
+
+test_that("fewer samples in phenotype file", {
+    config <- .testSmallConfig(seqExampleFileName("gds"))
+    phen <- getPhenotypes(config)
+    expect_equal(sum(is.na(phen$annot$outcome)), 40)
+    svd <- SeqVarData(insertChromString(config["gds_file"], 1), phen$annot)
+    seqClose(svd)
+    .cleanupSmallConfig(config)
 })

@@ -18,3 +18,7 @@ files <- sapply(chr, function(c) insertChromString(config["in_file"], c, "in_fil
 
 var <- unlist(lapply(files, getobj), use.names=FALSE)
 save(var, file=config["out_file"])
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

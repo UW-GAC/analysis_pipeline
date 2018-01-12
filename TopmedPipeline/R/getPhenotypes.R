@@ -53,6 +53,11 @@ getPhenotypes <- function(config) {
     cc <- annot$sample.id[complete.cases(pData(annot))]
     sample.id <- intersect(sample.id, cc)
 
+    ## match annot to gds file
+    if (!is.na(config["gds_file"])) {
+        annot <- .matchAnnotGds(config, annot)
+    }
+
     list(annot=annot, outcome=outcome, covars=covars, group.var=group.var, sample.id=sample.id)
     
 }
@@ -131,4 +136,27 @@ addInvNorm <- function(annot, nullmod, outcome, covars) {
     geno <- altDosage(gds)
     seqClose(gds)
     geno
+}
+
+
+#' Return an expanded AnnotatedDataFrame with the same sample.id as the gds_file
+#'
+#' @param config  Config object (named vector) with params "gds_file"
+#' @param annot AnnotatedDataFrame with sample.id matching gds file
+#' @return AnnotatedDataFrame with sample.id matching gds file, and NA values for all
+#'   samples not in original annot
+#'
+#' @import Biobase
+#' @importFrom dplyr left_join
+#'
+#' @keywords internal
+.matchAnnotGds <- function(config, annot) {
+    tmp <- sub(" ", "[[:alnum:]]+", config["gds_file"])
+    gdsfile <-  list.files(path=dirname(tmp), pattern=basename(tmp), full.names=TRUE)[1]
+    gds <- seqOpen(gdsfile)
+    sample.id <- seqGetData(gds, "sample.id")
+    seqClose(gds)
+    dat <- data.frame(sample.id, stringsAsFactors=FALSE)
+    pData(annot) <- left_join(dat, pData(annot), by="sample.id")
+    annot
 }
