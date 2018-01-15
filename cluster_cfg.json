@@ -6,7 +6,7 @@
         "AWS_Batch": {
             "aws_region": "us-west-2",
             "pipeline_path": "/projects/topmed/dev_code/analysis_pipeline",
-            "queue": "Optimal_topmed",
+            "queue": "TM_Opt_100_queue",
             "job_parameters": {
                 "wd": "",
                 "dr": "/projects",
@@ -17,7 +17,7 @@
                 "at": "0"
             },
             "submit_opts": {
-                "jobdef": "topmed_arrays",
+                "jobdef": "TM_nomount",
                 "vcpus":  2,
                 "memory": 5000,
                 "region": "us-west-2",
@@ -42,13 +42,16 @@
                 "assoc_combine":2000,
                 "assoc_plots":13000
             },
+            "retryStrategy": {
+                "attempts": 2
+            },
             "sync_job": {
                 "parameters": {
                     "msg": "Dependent jobs completed\n",
                     "jids": ""
                 },
                 "submit_opts": {
-                    "jobdef": "topmed_sync",
+                    "jobdef": "TM_sync",
                     "dependsOn": []
                 }
             },
