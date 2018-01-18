@@ -58,7 +58,7 @@ message("Model: ", model.string)
 
 ## fit null model allowing heterogeneous variances among studies
 nullmod <- fitNullModel2(annot, outcome=outcome, covars=covars,
-                         covMatList=grm, sample.id=sample.id,
+                         cov.mat=grm, sample.id=sample.id,
                          family=family, group.var=group.var)
 
 ## if we need an inverse normal transform, take residuals and refit null model
