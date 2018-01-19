@@ -263,6 +263,9 @@ class AWS_Batch(Cluster):
         # create the batch client
         self.batchC = boto3.client('batch',region_name=self.clusterCfg["aws_region"])
 
+        # retryStrategy
+        self.retryStrategy = self.clusterCfg["retryStrategy"]
+
     def getIDsAndNames(self, submitHolds):
         # for the submit holds, return a dictionary of all job names in a single string
         # and a list of all job ids
@@ -447,7 +450,8 @@ class AWS_Batch(Cluster):
                       "vcpus": submitOpts["vcpus"],
                       "memory": submitOpts["memory"],
                       "environment": submitOpts["env"]
-                   }
+                   },
+                   retryStrategy = self.retryStrategy
                 )
             else:
                 self.printVerbose("\t1> submitJob: " + job_name + " is a single job")
@@ -461,7 +465,8 @@ class AWS_Batch(Cluster):
                       "vcpus": submitOpts["vcpus"],
                       "memory": submitOpts["memory"],
                       "environment": submitOpts["env"]
-                   }
+                   },
+                   retryStrategy = self.retryStrategy
                 )
                 # return the "submit_id" which is a list of dictionaries
             submit_id = {job_name: [subOut['jobId']]}
