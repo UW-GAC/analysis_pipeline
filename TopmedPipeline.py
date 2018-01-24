@@ -401,6 +401,8 @@ class AWS_Batch(Cluster):
             ncs = request_cores.split("-")
             nci = int(ncs[len(ncs)-1])
             submitOpts[key] = nci
+            submitOpts["env"].append( { "name": "NSLOTS",
+                                        "value": str(nci) } )
 
         # get memory limit option
         key = "memory_limits"
