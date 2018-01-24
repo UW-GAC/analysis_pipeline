@@ -393,10 +393,14 @@ class AWS_Batch(Cluster):
         # using time set a job id (which is for tracking; not the batch job id)
         trackID = job_name + "_" + str(int(time.time()*100))
 
-        # check for number of cores (1 core = 2 vcpus)
+        # check for number of cores - sge can be 1-8; or 4; etc.  In batch we'll
+        # if request cores is 1-8, set the number of vcpus to 8; else we'll set
+        # it to the single value
         key = "vcpus"
         if request_cores is not None:
-            submitOpts[key] = 2*request_cores
+            ncs = request_cores.split("-")
+            nci = int(ncs[len(ncs)-1])
+            submitOpts[key] = nci
 
         # get memory limit option
         key = "memory_limits"
