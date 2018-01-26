@@ -6,17 +6,18 @@
         "AWS_Batch": {
             "aws_region": "us-west-2",
             "pipeline_path": "/projects/topmed/dev_code/analysis_pipeline",
-            "queue": "Optimal_topmed",
+            "queue": "TM_Opt_100_queue",
             "job_parameters": {
                 "wd": "",
                 "dr": "/projects",
                 "db": "1",
                 "lf": "",
                 "tmo": "60",
-                "mt": "mount -t nfs4 -o vers=4.1 fs-6ccd31c5.efs.us-west-2.amazonaws.com:/ /projects"
+                "mt": "mount -t nfs4 -o vers=4.1 fs-6ccd31c5.efs.us-west-2.amazonaws.com:/ /projects",
+                "at": "0"
             },
             "submit_opts": {
-                "jobdef": "topmed_general",
+                "jobdef": "TM_nomount",
                 "vcpus":  2,
                 "memory": 5000,
                 "region": "us-west-2",
@@ -41,18 +42,21 @@
                 "assoc_combine":2000,
                 "assoc_plots":13000
             },
+            "retryStrategy": {
+                "attempts": 2
+            },
             "sync_job": {
                 "parameters": {
                     "msg": "Dependent jobs completed\n",
                     "jids": ""
                 },
                 "submit_opts": {
-                    "jobdef": "topmed_sync",
+                    "jobdef": "TM_sync",
                     "dependsOn": []
                 }
             },
             "run_cmd": {
-                "cmd": "docker run --privileged rollinroy/r-332-tm /usr/local/analysis_pipeline/runRscript.py",
+                "cmd": "docker run --privileged uwgac/r343-topmed:devel /usr/local/analysis_pipeline/batchJob.py",
                 "params": {
                     "--rdriver": "",
                     "--rargs": "",
@@ -69,7 +73,7 @@
                 "-cwd":"",
                 "-N":"",
                 "-j":"y",
-                "-q":"olga.q",
+                "-q":"topmed.q",
                 "-S":"/bin/bash",
                 "-terse":"",
                 "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"

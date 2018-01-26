@@ -1,0 +1,13 @@
+{ "name": "cluster_config",
+    "version": "1",
+    "cluster_types": {
+        "AWS_Batch": {
+            "submit_opts": {
+                "vcpus":  1
+            },
+            "retryStrategy": {
+                "attempts": 10
+            }
+        }
+    }
+}
