@@ -73,7 +73,7 @@
                 "-cwd":"",
                 "-N":"",
                 "-j":"y",
-                "-q":"olga.q",
+                "-q":"topmed.q",
                 "-S":"/bin/bash",
                 "-terse":"",
                 "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"
