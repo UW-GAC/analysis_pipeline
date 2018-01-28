@@ -1,7 +1,9 @@
 { "name": "cluster_config",
-    "version": "1",
+    "version": "2",
+    "memlim_key": "freeze5",
     "cluster_types": {
         "AWS_Batch": {
+            "queue": "TM_Spot_Opt_100_queue",
             "submit_opts": {
                 "vcpus":  1
             },
