@@ -193,6 +193,15 @@ class Cluster(object):
 
         with open(self.clusterfile) as cfgFileHandle:
             clusterCfg= json.load(cfgFileHandle)
+        # check version
+        cfgVersion = "2"
+        key = "version"
+        if key in clusterCfg:
+            if clusterCfg[key] != cfgVersion:
+                print( "Error: version of : " + stdCfgFile + " should be " + cfgVersion +
+                       " not " + clusterCfg[key])
+                print( "\t> " + str(sCmd) )
+                sys.exit(2)
         key = "debug"
         debugCfg = False
         if key in clusterCfg:
@@ -207,6 +216,13 @@ class Cluster(object):
 
             with open(optCfgFile) as cfgFileHandle:
                 clusterCfg = json.load(cfgFileHandle)
+            key = "version"
+            if key in clusterCfg:
+                if clusterCfg[key] != cfgVersion:
+                    print( "Error: version of : " + optCfgFile + " should be " + cfgVersion +
+                           " not " + clusterCfg[key])
+                    print( "\t> " + str(sCmd) )
+                    sys.exit(2)
             optCfg = clusterCfg["cluster_types"][self.class_name]
             if debugCfg:
                 print("0>>> Dump of optional cluster cfg ... \n")
@@ -216,12 +232,21 @@ class Cluster(object):
             if debugCfg:
                 print("0>>> Dump of updated cluster cfg ... \n")
                 print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
+        key = "memlim_key"
+        if key in clusterCfg:
+            self.memlim_key = clusterCfg["memlim_key"]
+        else:
+            self.memlim_key = "freeze5"
 
     def getClusterCfg(self):
         return self.clusterCfg
 
     def memoryLimit(self, memLimits, job_name):
         memlim = None
+        freezeMem = [ item for item in memLimits for k in item if k == self.memlim_key' ]
+        if len(freezeMem) == 0:
+            return memlim
+        jobMem = [ v for av in freezeMem[0].values() for k,v in av.iteritems() if job_name.startswith(k) ]
         a =[ akey for akey in memLimits.keys() if job_name.startswith( akey ) ]
         if len(a):
             # just find the first match to job_name
