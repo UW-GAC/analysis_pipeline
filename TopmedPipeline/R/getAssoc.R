@@ -49,10 +49,12 @@ combineAssoc <- function(files, assoc_type, ordered=FALSE) {
         }
     }
     if (assoc_type == "aggregate") {
-        # remove duplicated units
-        index <- !duplicated(names(assoc$variantInfo))
-        assoc$results <- assoc$results[index,]
-        assoc$variantInfo <- assoc$variantInfo[index]
+        if (!is.null(names(assoc$variantInfo))) {
+            # remove duplicated units
+            index <- !duplicated(names(assoc$variantInfo))
+            assoc$results <- assoc$results[index,]
+            assoc$variantInfo <- assoc$variantInfo[index]
+        }
     }
     if (assoc_type == "window") {
         # remove duplicated windows
