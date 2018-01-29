@@ -21,7 +21,7 @@ library(GenomicRanges)
     } else {
         grm <- NULL
     }
-    fitNullModel2(sampleData(seqData), outcome="outcome", covars="sex", covMatList=grm, verbose=FALSE)
+    fitNullModel2(sampleData(seqData), outcome="outcome", covars="sex", cov.mat=grm, verbose=FALSE)
 }
         
 
