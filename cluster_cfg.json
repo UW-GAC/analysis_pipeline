@@ -7,7 +7,8 @@
         "AWS_Batch": {
             "aws_region": "us-west-2",
             "pipeline_path": "/projects/topmed/dev_code/analysis_pipeline",
-            "queue": "TM_Opt_100_queue",
+            "queue": "OD_opt_queue",
+            "maxperf": "1",
             "job_parameters": {
                 "wd": "",
                 "dr": "/projects",
@@ -19,7 +20,7 @@
             },
             "submit_opts": {
                 "jobdef": "TM_nomount",
-                "vcpus":  2,
+                "vcpus":  1,
                 "memory": 5000,
                 "region": "us-west-2",
                 "dependsOn": [],
@@ -70,8 +71,9 @@
                     "assoc_window":17000,
                     "assoc_combine":10000,
                     "assoc_plots":13000,
-                    "grm":10000,
+                    "grm":20000,
                     "grm_combine":12000,
+                    "cleanup":12000,
                     "vcf2gds":16000,
                     "merge_gds":16000,
                     "unique_variant_ids":16000

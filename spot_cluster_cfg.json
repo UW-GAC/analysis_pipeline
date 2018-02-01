@@ -1,12 +1,41 @@
-{ "name": "cluster_config",
+{
+    "name": "cluster_config",
     "version": "2",
-    "memlim_key": "freeze5",
+    "memlim_key": "grm",
     "cluster_types": {
         "AWS_Batch": {
-            "queue": "TM_Spot_Opt_100_queue",
-            "submit_opts": {
-                "vcpus":  1
-            },
+            "pipeline_path": "/usr/local/analysis_pipeline",
+            "queue": "SPOT_c4_ht_grm",
+            "maxperf": "1",
+            "memory_limits": [
+                { "skat": {
+                    "null_model":25000,
+                    "assoc_window":17000,
+                    "assoc_combine":5000,
+                    "assoc_plots":3000
+                    }
+                },
+                { "burden": {
+                    "null_model":25000,
+                    "assoc_window":17000,
+                    "assoc_combine":5000,
+                    "assoc_plots":3000
+                    }
+                },
+                { "burden_test": {
+                    "null_model":2000,
+                    "assoc_window":2000,
+                    "assoc_combine":2000,
+                    "assoc_plots":2000
+                    }
+                },
+                { "grm": {
+                    "grm":15000,
+                    "grm_combine":12000,
+                    "cleanup":12000
+                    }
+                }
+            ],
             "retryStrategy": {
                 "attempts": 10
             }
