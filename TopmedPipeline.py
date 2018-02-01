@@ -212,7 +212,7 @@ class Cluster(object):
             print("0>>> Dump of standard cluster cfg ... \n")
             print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
         if optCfgFile != None:
-            self.printVerbose("0>> openClusterCfg: Reading user cfg file: " + self.clusterfile)
+            self.printVerbose("0>> openClusterCfg: Reading user cfg file: " + optCfgFile)
 
             with open(optCfgFile) as cfgFileHandle:
                 clusterCfg = json.load(cfgFileHandle)
@@ -243,14 +243,13 @@ class Cluster(object):
 
     def memoryLimit(self, memLimits, job_name):
         memlim = None
-        freezeMem = [ item for item in memLimits for k in item if k == self.memlim_key' ]
+        freezeMem = [ item for item in memLimits for k in item if k == self.memlim_key ]
         if len(freezeMem) == 0:
             return memlim
-        jobMem = [ v for av in freezeMem[0].values() for k,v in av.iteritems() if job_name.startswith(k) ]
-        a =[ akey for akey in memLimits.keys() if job_name.startswith( akey ) ]
-        if len(a):
+        jobMem = [ v for av in freezeMem[0].values() for k,v in av.iteritems() if job_name == k ]
+        if len(jobMem):
             # just find the first match to job_name
-            memlim = memLimits[a[0]]
+            memlim = jobMem[0]
         return memlim
 
     def printVerbose(self, message):
@@ -270,6 +269,11 @@ class AWS_Batch(Cluster):
         wdkey = "wd"
         if wdkey not in self.jobParams or self.jobParams[wdkey] == "":
             self.jobParams[wdkey] = os.getcwd()
+
+        # set maxperf
+        self.maxperf = True
+        if self.clusterCfg["maxperf"] == 0:
+            self.maxperf = False
 
         # get the submit options
         self.submitOpts = self.clusterCfg["submit_opts"]
@@ -419,8 +423,9 @@ class AWS_Batch(Cluster):
         trackID = job_name + "_" + str(int(time.time()*100))
 
         # check for number of cores - sge can be 1-8; or 4; etc.  In batch we'll
-        # if request cores is 1-8, set the number of vcpus to 8; else we'll set
-        # it to the single value
+        # use the highest number.  e.g., if 1-8, then we'll use 8.  in AWS, vcpus
+        # is the number of physical + hyper-threaded cores.  to max performance
+        # (at an increase cost) allocate 2 vcpus for each core.
         key = "vcpus"
         if request_cores is not None:
             ncs = request_cores.split("-")
@@ -428,6 +433,8 @@ class AWS_Batch(Cluster):
             submitOpts[key] = nci
             submitOpts["env"].append( { "name": "NSLOTS",
                                         "value": str(nci) } )
+        if self.maxperf:
+            submitOpts[key] = 2*submitOpts[key]
 
         # get memory limit option
         key = "memory_limits"
