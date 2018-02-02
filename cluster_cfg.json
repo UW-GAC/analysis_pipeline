@@ -71,7 +71,7 @@
                     "assoc_window":17000,
                     "assoc_combine":10000,
                     "assoc_plots":13000,
-                    "grm":20000,
+                    "grm":15000,
                     "grm_combine":12000,
                     "cleanup":12000,
                     "vcf2gds":16000,
@@ -111,7 +111,7 @@
                 "-cwd":"",
                 "-N":"",
                 "-j":"y",
-                "-q":"olga.q",
+                "-q":"topmed.q",
                 "-S":"/bin/bash",
                 "-terse":"",
                 "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"
