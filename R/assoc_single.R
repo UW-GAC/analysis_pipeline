@@ -23,7 +23,8 @@ optional <- c("mac_threshold"=5, # takes precedence
               "pass_only"=TRUE,
               "segment_file"=NA,
               "test_type"="score",
-              "variant_include_file"=NA)
+              "variant_include_file"=NA,
+              "variant_block_size"=1024)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 writeConfig(config, paste0(basename(argv$config), ".assoc_single.params"))
@@ -77,7 +78,8 @@ checkSelectedVariants(seqData)
 #seqResetFilter(gds, verbose=FALSE)
 
 # create iterator
-iterator <- SeqVarBlockIterator(seqData)
+block.size <- as.integer(config["variant_block_size"])
+iterator <- SeqVarBlockIterator(seqData, variantBlock=block.size)
 
 test <- switch(tolower(config["test_type"]),
                score="Score",
