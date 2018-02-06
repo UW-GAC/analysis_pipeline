@@ -56,6 +56,7 @@ grm <- getGRM(config, sample.id)
 random <- if (!is.na(config["pcrelate_file"])) "kinship" else if (!is.na(config["grm_file"])) "GRM" else NULL
 model.string <- modelString(outcome, covars, random, group.var)
 message("Model: ", model.string)
+message(length(sample.id), " samples")
 
 ## fit null model allowing heterogeneous variances among studies
 nullmod <- fitNullModel2(annot, outcome=outcome, covars=covars,
