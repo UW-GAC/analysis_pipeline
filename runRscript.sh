@@ -21,7 +21,8 @@ fi
 
 args=("$@") # all arguments
 unset args[0] # remove first argument (R script name)
-
+tb=`date`
+echo ">>> Start job: $JOB_ID at $tb ... "
 R -q --vanilla --args ${args[@]} $TASK < $1
 
 
@@ -35,5 +36,6 @@ then
     touch fail.${JOB_ID}
   fi
 fi
-
+te=`date`
+echo ">>> End job: $JOB_ID at $te"
 exit $R_exit_code

@@ -1,12 +1,14 @@
 {
     "name": "cluster_config",
-    "version": "1",
+    "version": "2",
     "debug": 0,
+    "memlim_key": "freeze3",
     "cluster_types": {
         "AWS_Batch": {
             "aws_region": "us-west-2",
             "pipeline_path": "/projects/topmed/dev_code/analysis_pipeline",
-            "queue": "TM_Opt_100_queue",
+            "queue": "OD_opt_queue",
+            "maxperf": "1",
             "job_parameters": {
                 "wd": "",
                 "dr": "/projects",
@@ -18,30 +20,66 @@
             },
             "submit_opts": {
                 "jobdef": "TM_nomount",
-                "vcpus":  2,
+                "vcpus":  1,
                 "memory": 5000,
                 "region": "us-west-2",
                 "dependsOn": [],
                 "env": [ {"name": "R_LIBS_USER", "value": "/projects/resources/gactools/R_packages/library"} ],
                 "command": []
             },
-            "memory_limits": {
-                "find_unrelated":3500,
-                "ld_pruning":11000,
-                "combine_variants":1000,
-                "pca_byrel":4000,
-                "pca_plots":1000,
-                "pca_corr":7000,
-                "pca_corr_plots":32000,
-                "pcrelate":8000,
-                "null_model":36000,
-                "aggregate_list":6000,
-                "assoc_single":24000,
-                "assoc_aggregate":24000,
-                "assoc_window":17000,
-                "assoc_combine":2000,
-                "assoc_plots":13000
-            },
+            "memory_limits": [
+                { "freeze3": {
+                    "find_unrelated":3500,
+                    "ld_pruning":11000,
+                    "combine_variants":1000,
+                    "ibd_king":8000,
+                    "kinship_plots":32000,
+                    "pca_byrel":4000,
+                    "pca_plots":1000,
+                    "pca_corr":7000,
+                    "pca_corr_plots":32000,
+                    "pcrelate":8000,
+                    "null_model":32000,
+                    "aggregate_list":6000,
+                    "assoc_single":24000,
+                    "assoc_aggregate":24000,
+                    "assoc_window":17000,
+                    "assoc_combine":2000,
+                    "assoc_plots":13000,
+                    "grm":8000,
+                    "grm_combine":10000,
+                    "vcf2gds":16000,
+                    "merge_gds":16000,
+                    "unique_variant_ids":16000
+                    }
+                },
+                { "freeze5": {
+                    "find_unrelated":3500,
+                    "ld_pruning":11000,
+                    "combine_variants":1000,
+                    "ibd_king":8000,
+                    "kinship_plots":32000,
+                    "pca_byrel":4000,
+                    "pca_plots":1000,
+                    "pca_corr":7000,
+                    "pca_corr_plots":32000,
+                    "pcrelate":8000,
+                    "null_model":36000,
+                    "aggregate_list":6000,
+                    "assoc_single":24000,
+                    "assoc_aggregate":24000,
+                    "assoc_window":17000,
+                    "assoc_combine":10000,
+                    "assoc_plots":13000,
+                    "grm":15000,
+                    "grm_combine":12000,
+                    "cleanup":12000,
+                    "vcf2gds":16000,
+                    "merge_gds":16000,
+                    "unique_variant_ids":16000
+                    }
+                }
+            ],
             "retryStrategy": {
                 "attempts": 2
             },
@@ -79,9 +117,9 @@
                 "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"
             },
             "parallel_env": "local",
-            "memory_limits": {
+            "memory_limits": [
 
-            }
+            ]
         },
         "AWS_Cluster": {
             "submit_cmd": "qsub",
@@ -95,23 +133,44 @@
                 "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"
             },
             "parallel_env": "local",
-            "memory_limits": {
-                "find_unrelated":3.5,
-                "ld_pruning":11000,
-                "combine_variants":1000,
-                "pca_byrel":4000,
-                "pca_plots":1000,
-                "pca_corr":7000,
-                "pca_corr_plots":32000,
-                "pcrelate":8000,
-                "null_model":36000,
-                "aggregate_list":6000,
-                "assoc_single":24000,
-                "assoc_aggregate":24000,
-                "assoc_window":24000,
-                "assoc_combine":6000,
-                "assoc_plots":4000
-            }
+            "memory_limits": [
+                { "freeze3": {
+                    "find_unrelated":3500,
+                    "ld_pruning":11000,
+                    "combine_variants":1000,
+                    "pca_byrel":4000,
+                    "pca_plots":1000,
+                    "pca_corr":7000,
+                    "pca_corr_plots":32000,
+                    "pcrelate":8000,
+                    "null_model":36000,
+                    "aggregate_list":6000,
+                    "assoc_single":24000,
+                    "assoc_aggregate":24000,
+                    "assoc_window":24000,
+                    "assoc_combine":6000,
+                    "assoc_plots":4000
+                    }
+                },
+                { "freeze5": {
+                    "find_unrelated":3500,
+                    "ld_pruning":11000,
+                    "combine_variants":1000,
+                    "pca_byrel":4000,
+                    "pca_plots":1000,
+                    "pca_corr":7000,
+                    "pca_corr_plots":32000,
+                    "pcrelate":8000,
+                    "null_model":36000,
+                    "aggregate_list":6000,
+                    "assoc_single":24000,
+                    "assoc_aggregate":24000,
+                    "assoc_window":17000,
+                    "assoc_combine":2000,
+                    "assoc_plots":13000
+                    }
+                }
+            ]
         }
     }
 }
