@@ -21,3 +21,6 @@ snpgdsMergeGRM(files, out.fn=config["out_file"])
 
 # delete by-chrom files
 unlink(files)
+
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")
