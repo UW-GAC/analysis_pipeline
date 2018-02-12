@@ -31,6 +31,9 @@ parser.add_argument("-e", "--email", default=None,
                     help="email address for job reporting")
 parser.add_argument("--print_only", action="store_true", default=False,
                     help="print qsub commands without submitting")
+parser.add_argument("--version", action="version",
+                    version="TopmedPipeline "+TopmedPipeline.__version__,
+                    help="show the version number and exit")
 args = parser.parse_args()
 
 configfile = args.config_file
