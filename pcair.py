@@ -120,7 +120,7 @@ config["out_file_pairs"] = configdict["plots_prefix"] + "_pca_pairs.png"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=[jobid_pca] email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=[jobid_pca], email=email, print_only=print_only)
 jobsPlots.append(jobid)
 
 
