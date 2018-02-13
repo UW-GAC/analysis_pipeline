@@ -1,5 +1,7 @@
 """Utility functions for TOPMed pipeline"""
 
+__version__ = "2.0.0"
+
 import os
 import sys
 import csv

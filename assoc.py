@@ -36,6 +36,9 @@ parser.add_argument("--print_only", action="store_true", default=False,
                     help="print qsub commands without submitting")
 parser.add_argument("--verbose", action="store_true", default=False,
                     help="enable verbose output to help debug")
+parser.add_argument("--version", action="version",
+                    version="TopmedPipeline "+TopmedPipeline.__version__,
+                    help="show the version number and exit")
 args = parser.parse_args()
 
 assoc_type = args.assoc_type
