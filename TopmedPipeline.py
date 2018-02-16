@@ -246,10 +246,11 @@ class Cluster(object):
         freezeMem = [ item for item in memLimits for k in item if k == self.memlim_key ]
         if len(freezeMem) == 0:
             return memlim
-        jobMem = [ v for av in freezeMem[0].values() for k,v in av.iteritems() if job_name == k ]
+        jobMem = [ v for av in freezeMem[0].values() for k,v in av.iteritems() if job_name.find(k) != -1 ]
         if len(jobMem):
             # just find the first match to job_name
             memlim = jobMem[0]
+        self.printVerbose('\t>>> Memory Limit - job: ' + job_name + " mem: " + str(memlim) + "MB")
         return memlim
 
     def printVerbose(self, message):
@@ -591,7 +592,7 @@ class SGE_Cluster(Cluster):
         if key in self.clusterCfg.keys():
             memlim = super(SGE_Cluster, self).memoryLimit(self.clusterCfg[key], kwargs["job_name"])
             if memlim != None:
-                subOpts["-l"] = "h_vmem="+str(memlim)+"G"
+                subOpts["-l"] = "h_vmem="+str(memlim)+"M"
 
         jobid = self.executeJobCmd(subOpts, **kwargs)
         return jobid

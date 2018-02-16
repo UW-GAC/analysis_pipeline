@@ -1,9 +1,10 @@
-{ "name": "cluster_config",
+{
+    "name": "cluster_config",
     "version": "2",
     "memlim_key": "skat_test",
     "cluster_types": {
         "AWS_Batch": {
-            "maxperf": "1",
+            "maxperf": 1,
             "queue": "SPOT_c4_ht_grm",
             "memory_limits": [
                 { "skat": {
