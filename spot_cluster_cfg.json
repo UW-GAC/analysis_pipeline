@@ -6,7 +6,7 @@
         "AWS_Batch": {
             "pipeline_path": "/usr/local/analysis_pipeline",
             "queue": "SPOT_c4_ht_grm",
-            "maxperf": "1",
+            "maxperf": 1,
             "memory_limits": [
                 { "skat": {
                     "null_model":25000,
