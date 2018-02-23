@@ -77,10 +77,9 @@ if (as.logical(config["inverse_normal"])) {
         }
     }
     
-    nullmod <- updateNullModOutcome(nullmod,
-                                    covMatList=grm,
-                                    rankNorm.option=rankNorm.option,
-                                    rescale=rescale)
+    nullmod <- invNormNullModel(nullmod, cov.mat=grm,
+                                rankNorm.option=rankNorm.option,
+                                rescale=rescale)
 }
 
 save(nullmod, file=config["out_file"])
