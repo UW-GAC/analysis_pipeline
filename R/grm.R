@@ -68,11 +68,20 @@ method <- switch(tolower(config["method"]),
                  gcta="GCTA",
                  eigmix="EIGMIX")
 
+## write to the scratch disk of each node
+outfile.tmp <- tempfile()
+message("gds temporarily located at ", outfile.tmp)
+
 snpgdsGRM(gds, sample.id=sample.id, snp.id=variant.id,
-          maf=maf.min, method=method, out.fn=outfile,
+          maf=maf.min, method=method, out.fn=outfile.tmp,
           num.thread=countThreads())
 
 seqClose(gds)
+
+## copy it
+file.copy(outfile.tmp, outfile)
+## remove the tmp file
+file.remove(outfile.tmp)
 
 # mem stats
 ms <- gc()

@@ -17,7 +17,16 @@ print(config)
 chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 files <- sapply(chr, function(c) insertChromString(config["in_file"], c, "in_file"))
 
-snpgdsMergeGRM(files, out.fn=config["out_file"])
+## write to the scratch disk of each node
+outfile.tmp <- tempfile()
+message("gds temporarily located at ", outfile.tmp)
+
+snpgdsMergeGRM(files, out.fn=outfile.tmp)
+
+## copy it
+file.copy(outfile.tmp, config["out_file"])
+## remove the tmp file
+file.remove(outfile.tmp)
 
 # delete by-chrom files
 unlink(files)
