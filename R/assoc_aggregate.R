@@ -94,8 +94,6 @@ af.max <- as.numeric(config["alt_freq_max"])
 filterByRare(seqData, sample.id, af.max)
 
 checkSelectedVariants(seqData)
-#variant.id <- seqGetData(gds, "variant.id")
-#seqResetFilter(gds, verbose=FALSE)
 
 
 if (config["aggregate_type"] == "allele") {
@@ -113,26 +111,17 @@ test.type <- switch(tolower(config["test_type"]),
                     score="Score",
                     wald="Wald")
 
-#af.range <- as.numeric(strsplit(config["alt_freq_range"], " ", fixed=TRUE)[[1]])
 weights <- as.numeric(strsplit(config["weight_beta"], " ", fixed=TRUE)[[1]])
 rho <- as.numeric(strsplit(config["rho"], " ", fixed=TRUE)[[1]])
 pval <- tolower(config["pval_skat"])
 
-## assoc <- assocTestSeq(seqData, nullModel, aggVarList,
-##                       test=test,
-##                       burden.test=test.type,
-##                       AF.range=af.range,
-##                       weight.beta=weights,
-##                       rho=rho,
-##                       pval.method=pval)
-
-assoc <- assocTestSeq2(iterator, nullModel,
-                       AF.max=af.max,
-                       weight.beta=weights,
-                       test=test,
-                       burden.test=test.type,
-                       rho=rho,
-                       pval.method=pval)
+assoc <- assocTestAggregate(iterator, nullModel,
+                            AF.max=af.max,
+                            weight.beta=weights,
+                            test=test,
+                            burden.test=test.type,
+                            rho=rho,
+                            pval.method=pval)
 
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 

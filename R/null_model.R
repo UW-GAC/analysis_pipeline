@@ -2,7 +2,6 @@ library(argparser)
 library(TopmedPipeline)
 library(Biobase)
 library(genesis2)
-library(genesis2tests)
 library(gdsfmt)
 sessionInfo()
 
@@ -28,7 +27,6 @@ optional <- c("gds_file"=NA, # required for conditional variants
               "out_file"="null_model.RData",
               "out_phenotype_file"="phenotypes.RData",
               "rescale_variance"="marginal",
-              #"resid_covars"=TRUE,
               "sample_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -61,15 +59,15 @@ message("Model: ", model.string)
 message(length(sample.id), " samples")
 
 ## fit null model allowing heterogeneous variances among studies
-nullmod <- fitNullModel2(annot, outcome=outcome, covars=covars,
-                         cov.mat=grm, sample.id=sample.id,
-                         family=family, group.var=group.var)
+nullmod <- fitNullModel(annot, outcome=outcome, covars=covars,
+                        cov.mat=grm, sample.id=sample.id,
+                        family=family, group.var=group.var)
 
 ## if we need an inverse normal transform, take residuals and refit null model
 if (as.logical(config["inverse_normal"])) {
     if (is.null(group.var)) {
         rankNorm.option <- "all"
-        rescale <- "None"
+        rescale <- "none"
     } else {
         rankNorm.option <- "by.group"        
         if (config["rescale_variance"] == "varcomp") {
@@ -79,7 +77,7 @@ if (as.logical(config["inverse_normal"])) {
         }
     }
     
-    nullmod <- invNormNullModel(nullmod, cov.mat=grm,
+    nullmod <- nullModelInvNorm(nullmod, cov.mat=grm,
                                 rankNorm.option=rankNorm.option,
                                 rescale=rescale)
 }

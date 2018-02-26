@@ -76,8 +76,6 @@ maf.min <- as.numeric(config["maf_threshold"])
 filterByMAF(seqData, sample.id, mac.min, maf.min)
 
 checkSelectedVariants(seqData)
-#variant.id <- seqGetData(gds, "variant.id")
-#seqResetFilter(gds, verbose=FALSE)
 
 # create iterator
 block.size <- as.integer(config["variant_block_size"])
@@ -87,11 +85,7 @@ test <- switch(tolower(config["test_type"]),
                score="Score",
                wald="Wald")
 
-#assoc <- assocTestMM(seqData, nullModel, test=test, snp.include=variant.id)
-assoc <- assocTestMM2(iterator, nullModel, test=test)
-
-## make output consistent with aggregate tests
-#assoc <- formatAssocSingle(seqData, assoc)
+assoc <- assocTestSingle(iterator, nullModel, test=test)
 
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 
