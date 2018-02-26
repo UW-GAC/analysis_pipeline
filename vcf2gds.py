@@ -45,6 +45,8 @@ email = args.email
 print_only = args.print_only
 verbose = args.verbose
 
+version = "--version " + TopmedPipeline.__version__
+
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -62,7 +64,7 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 if os.path.splitext(configdict["vcf_file"])[1] == ".bcf":
     ncores = None
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], array_range=chromosomes, request_cores=ncores, email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], array_range=chromosomes, request_cores=ncores, email=email, print_only=print_only)
 
 
 job = "merge_gds"
@@ -73,14 +75,14 @@ configdict["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(configdict, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=[jobid], email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
 
 
 job = "unique_variant_ids"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=[jobid], email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
 
 
 cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=[jobid], print_only=print_only)

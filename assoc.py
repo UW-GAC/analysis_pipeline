@@ -52,6 +52,8 @@ email = args.email
 print_only = args.print_only
 verbose = args.verbose
 
+version = "--version " + TopmedPipeline.__version__
+
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -75,7 +77,7 @@ config["out_phenotype_file"] = configdict["data_prefix"] + "_phenotypes.RData"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], email=email, print_only=print_only)
+submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], email=email, print_only=print_only)
 
 hold_null_agg.append(submitID)
 assocScript = "assoc_" + assoc_type
@@ -92,7 +94,7 @@ if assoc_type == "aggregate":
     configfile = configdict["config_prefix"] + "_" + job + ".config"
     TopmedPipeline.writeConfig(config, configfile)
 
-    submitID = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], array_range=chromosomes, email=email, print_only=print_only)
+    submitID = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], array_range=chromosomes, email=email, print_only=print_only)
     hold_null_agg.append(submitID)
 
 
@@ -148,14 +150,14 @@ hold_combine = []
 for chromosome in chrom_list:
     job_assoc = assocScript + "_chr" + chromosome
     rscript = os.path.join(pipeline, "R", assocScript + ".R")
-    args = ["-s", rscript, configfile, "--chromosome " + chromosome]
+    args = ["-s", rscript, configfile, "--chromosome " + chromosome, version]
     # no email for jobs by segment
     submitID = cluster.submitJob(job_name=job_assoc, cmd=driver, args=args, holdid=hold_null_agg, array_range=segments[chromosome], print_only=print_only)
 
     combScript = "assoc_combine"
     job_comb = combScript + "_chr" + chromosome
     rscript = os.path.join(pipeline, "R", combScript + ".R")
-    args = [rscript, configfile, "--chromosome " + chromosome]
+    args = [rscript, configfile, "--chromosome " + chromosome, version]
     hold_assoc = [submitID]
     submitID = cluster.submitJob(job_name=job_comb, cmd=driver, args=args, holdid=hold_assoc, email=email, print_only=print_only)
 
@@ -174,7 +176,7 @@ config["out_file_qq"] = configdict["plots_prefix"] + "_qq.png"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=hold_combine, email=email, print_only=print_only)
+submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=hold_combine, email=email, print_only=print_only)
 hold_plots = [submitID]
 
 # analysis report
@@ -187,7 +189,7 @@ config["out_file"] = configdict["out_prefix"] + "_analysis_report"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=hold_plots, email=email, print_only=print_only)
+submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=hold_plots, email=email, print_only=print_only)
 hold_report = [submitID]
 
 cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=hold_report, print_only=print_only)

@@ -6,7 +6,9 @@ argp <- arg_parser("Define genome segments for association test")
 argp <- add_argument(argp, "config", help="path to config file")
 argp <- add_argument(argp, "--segment_length", help="segment length in kb", type="integer", default=10000)
 argp <- add_argument(argp, "--n_segments", help="number of segments (overrides segment length)", type="integer", default=NA)
+argp <- add_argument(argp, "--version", help="pipeline version number")
 argv <- parse_args(argp)
+cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 seg.length <- argv$segment_length * 1000
 n <- argv$n_segments
