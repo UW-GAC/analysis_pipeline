@@ -35,6 +35,8 @@ email = args.email
 print_only = args.print_only
 verbose = args.verbose
 
+version = "--version " + TopmedPipeline.__version__
+
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -52,7 +54,7 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 n = TopmedPipeline.countLines(configdict["locus_file"])
 range = "1-" + str(n-1)
 
-args = ["-s", rscript, configfile]
+args = ["-s", rscript, configfile, version]
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=args, array_range=range, email=email, print_only=print_only)
 
 

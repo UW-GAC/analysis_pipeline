@@ -45,6 +45,8 @@ email = args.email
 print_only = args.print_only
 verbose = args.verbose
 
+version = "--version " + TopmedPipeline.__version__
+
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -64,7 +66,7 @@ config["out_unrelated_file"] = configdict["data_prefix"] + "_unrelated.RData"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], email=email, print_only=print_only)
 
 
 job = "ld_pruning"
@@ -77,7 +79,7 @@ config["out_file"] = configdict["data_prefix"] + "_pruned_variants_chr .RData"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], holdid=[jobid], array_range=chromosomes, email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid], array_range=chromosomes, email=email, print_only=print_only)
 
 
 job = "combine_variants"
@@ -91,7 +93,7 @@ config["out_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=[jobid], email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
 
 
 job = "pca_byrel"
@@ -107,7 +109,7 @@ config["out_file_unrel"] = configdict["data_prefix"] + "_pcair_unrel.RData"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid_pca = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=[jobid], request_cores=ncores, email=email, print_only=print_only)
+jobid_pca = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], request_cores=ncores, email=email, print_only=print_only)
 
 
 job = "pca_plots"
@@ -123,7 +125,7 @@ config["out_file_pairs"] = configdict["plots_prefix"] + "_pca_pairs.png"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=[jobid_pca], email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid_pca], email=email, print_only=print_only)
 jobsPlots.append(jobid)
 
 
@@ -138,7 +140,7 @@ configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 # single core only
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], holdid=[jobid_pca], array_range=chromosomes, email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid_pca], array_range=chromosomes, email=email, print_only=print_only)
 
 
 job = "pca_corr_plots"
@@ -152,7 +154,7 @@ config["out_prefix"] = configdict["plots_prefix"] + "_pcair_corr"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=[jobid], email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
 jobsPlots.append(jobid)
 
 
