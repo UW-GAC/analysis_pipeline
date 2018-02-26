@@ -9,7 +9,9 @@ argp <- arg_parser("Association test - aggregate")
 argp <- add_argument(argp, "config", help="path to config file")
 argp <- add_argument(argp, "--chromosome", help="chromosome (1-24 or X,Y)", type="character")
 argp <- add_argument(argp, "--segment", help="segment number", type="integer")
+argp <- add_argument(argp, "--version", help="pipeline version number")
 argv <- parse_args(argp)
+cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)
 segment <- argv$segment
@@ -43,7 +45,7 @@ if (!is.na(chr)) {
     aggfile <- insertChromString(aggfile, chr, err="aggregate_variant_file")
     varfile <- insertChromString(varfile, chr)
 }
-    
+
 gds <- seqOpen(gdsfile)
 
 # get null model
@@ -101,3 +103,7 @@ assoc <- assocTestSeq(seqData, nullModel, aggVarList,
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 
 seqClose(seqData)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

@@ -5,7 +5,7 @@
 #' @return GRM or kinship matrix. \code{NULL} if both pcrelate_file and grm_file are \code{NA}.
 #'
 #' @importFrom GENESIS pcrelateMakeGRM
-#' @importFrom gdsfmt openfn.gds closefn.gds
+#' @importFrom gdsfmt openfn.gds closefn.gds index.gdsn read.gdsn readex.gdsn
 #' @export
 getGRM <- function(config, sample.id) {
     if (!is.na(config["pcrelate_file"]) & !is.na(config["grm_file"])) {
@@ -18,10 +18,19 @@ getGRM <- function(config, sample.id) {
         grm <- pcrelateMakeGRM(pcr, scan.include=sample.id, scaleKin=2)
         closefn.gds(pcr)
     } else if (!is.na(config["grm_file"])) {
-        x <- getobj(config["grm_file"])
-        colnames(x$grm) <- rownames(x$grm) <- x$sample.id
-        keep <- x$sample.id %in% sample.id
-        grm <- x$grm[keep,keep]
+        if (tools::file_ext(config["grm_file"]) == "gds") {
+            x <- openfn.gds(config["grm_file"])
+            samp <- read.gdsn(index.gdsn(x, "sample.id"))
+            sel <- samp %in% sample.id
+            grm <- readex.gdsn(index.gdsn(x, "grm"), sel=list(sel,sel))
+            colnames(grm) <- rownames(grm) <- samp[sel]
+            closefn.gds(x)
+        } else {
+            x <- getobj(config["grm_file"])
+            colnames(x$grm) <- rownames(x$grm) <- x$sample.id
+            keep <- x$sample.id %in% sample.id
+            grm <- x$grm[keep,keep]
+        }
     } else {
         grm <- NULL
     }

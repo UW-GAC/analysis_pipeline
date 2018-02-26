@@ -6,7 +6,9 @@ sessionInfo()
 
 argp <- arg_parser("Partition samples into related and unrelated sets")
 argp <- add_argument(argp, "config", help="path to config file")
+argp <- add_argument(argp, "--version", help="pipeline version number")
 argv <- parse_args(argp)
+cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
 required <- c("king_file")
@@ -54,3 +56,7 @@ unrels <- part$unrels
 save(rels, file=config["out_related_file"])
 save(unrels, file=config["out_unrelated_file"])
 message("Found ", length(unrels), " unrelated and ", length(rels), " related samples")
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

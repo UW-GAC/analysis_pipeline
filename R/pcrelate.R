@@ -7,7 +7,9 @@ sessionInfo()
 
 argp <- arg_parser("PC-Relate")
 argp <- add_argument(argp, "config", help="path to config file")
+argp <- add_argument(argp, "--version", help="pipeline version number")
 argv <- parse_args(argp)
+cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
 required <- c("gds_file",
@@ -46,3 +48,7 @@ pcrelate(seqData,
          scan.block.size=as.integer(config["sample_block_size"]))
 
 seqClose(seqData)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

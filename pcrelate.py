@@ -1,4 +1,4 @@
-#! /usr/local/bin/python2.7
+#! /usr/bin/env python2.7
 
 """PC-Relate"""
 
@@ -35,6 +35,8 @@ email = args.email
 print_only = args.print_only
 verbose = args.verbose
 
+version = "--version " + TopmedPipeline.__version__
+
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -53,7 +55,7 @@ config["out_prefix"] = configdict["data_prefix"]
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], email=email, print_only=print_only)
 
 
 job = "kinship_plots"
@@ -69,7 +71,7 @@ config["out_file_study"] = configdict["plots_prefix"] + "_kinship_study.pdf"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=jobid, email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
 
 
-cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=jobid, print_only=print_only)
+cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=[jobid], print_only=print_only)

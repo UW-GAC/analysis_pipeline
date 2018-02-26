@@ -6,7 +6,9 @@ sessionInfo()
 
 argp <- arg_parser("Select random set of variants above a MAF threshold")
 argp <- add_argument(argp, "config", help="path to config file")
+argp <- add_argument(argp, "--version", help="pipeline version number")
 argv <- parse_args(argp)
+cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)
 
@@ -24,7 +26,7 @@ if (!is.null(chr)) {
     gdsfile <- insertChromString(gdsfile, chr)
     outfile <- insertChromString(outfile, chr, err="out_file")
 }
-    
+
 gds <- seqOpen(gdsfile)
 
 filt <- seqGetData(gds, "annotation/filter") == "PASS"
@@ -55,3 +57,7 @@ if (length(variant.id) > nvar) {
 save(variant.id, file=outfile)
 
 seqClose(gds)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

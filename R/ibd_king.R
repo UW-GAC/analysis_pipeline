@@ -6,7 +6,9 @@ sessionInfo()
 
 argp <- arg_parser("IBD with KING-robust")
 argp <- add_argument(argp, "config", help="path to config file")
+argp <- add_argument(argp, "--version", help="pipeline version number")
 argv <- parse_args(argp)
+cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
 required <- c("gds_file",
@@ -35,3 +37,7 @@ ibd <- snpgdsIBDKING(gds, sample.id=sample.id, snp.id=variant.id,
 save(ibd, file=config["out_file"])
 
 seqClose(gds)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

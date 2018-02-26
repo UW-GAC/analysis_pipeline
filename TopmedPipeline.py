@@ -1,6 +1,6 @@
 """Utility functions for TOPMed pipeline"""
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 import os
 import sys
@@ -195,6 +195,15 @@ class Cluster(object):
 
         with open(self.clusterfile) as cfgFileHandle:
             clusterCfg= json.load(cfgFileHandle)
+        # check version
+        cfgVersion = "2"
+        key = "version"
+        if key in clusterCfg:
+            if clusterCfg[key] != cfgVersion:
+                print( "Error: version of : " + stdCfgFile + " should be " + cfgVersion +
+                       " not " + clusterCfg[key])
+                print( "\t> " + str(sCmd) )
+                sys.exit(2)
         key = "debug"
         debugCfg = False
         if key in clusterCfg:
@@ -205,10 +214,17 @@ class Cluster(object):
             print("0>>> Dump of standard cluster cfg ... \n")
             print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
         if optCfgFile != None:
-            self.printVerbose("0>> openClusterCfg: Reading user cfg file: " + self.clusterfile)
+            self.printVerbose("0>> openClusterCfg: Reading user cfg file: " + optCfgFile)
 
             with open(optCfgFile) as cfgFileHandle:
                 clusterCfg = json.load(cfgFileHandle)
+            key = "version"
+            if key in clusterCfg:
+                if clusterCfg[key] != cfgVersion:
+                    print( "Error: version of : " + optCfgFile + " should be " + cfgVersion +
+                           " not " + clusterCfg[key])
+                    print( "\t> " + str(sCmd) )
+                    sys.exit(2)
             optCfg = clusterCfg["cluster_types"][self.class_name]
             if debugCfg:
                 print("0>>> Dump of optional cluster cfg ... \n")
@@ -218,16 +234,25 @@ class Cluster(object):
             if debugCfg:
                 print("0>>> Dump of updated cluster cfg ... \n")
                 print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
+        key = "memlim_key"
+        if key in clusterCfg:
+            self.memlim_key = clusterCfg["memlim_key"]
+        else:
+            self.memlim_key = "freeze5"
 
     def getClusterCfg(self):
         return self.clusterCfg
 
     def memoryLimit(self, memLimits, job_name):
         memlim = None
-        a =[ akey for akey in memLimits.keys() if job_name.startswith( akey ) ]
-        if len(a):
+        freezeMem = [ item for item in memLimits for k in item if k == self.memlim_key ]
+        if len(freezeMem) == 0:
+            return memlim
+        jobMem = [ v for av in freezeMem[0].values() for k,v in av.iteritems() if job_name.find(k) != -1 ]
+        if len(jobMem):
             # just find the first match to job_name
-            memlim = memLimits[a[0]]
+            memlim = jobMem[0]
+        self.printVerbose('\t>>> Memory Limit - job: ' + job_name + " mem: " + str(memlim) + "MB")
         return memlim
 
     def printVerbose(self, message):
@@ -248,6 +273,11 @@ class AWS_Batch(Cluster):
         if wdkey not in self.jobParams or self.jobParams[wdkey] == "":
             self.jobParams[wdkey] = os.getcwd()
 
+        # set maxperf
+        self.maxperf = True
+        if self.clusterCfg["maxperf"] == 0:
+            self.maxperf = False
+
         # get the submit options
         self.submitOpts = self.clusterCfg["submit_opts"]
 
@@ -265,67 +295,64 @@ class AWS_Batch(Cluster):
         # create the batch client
         self.batchC = boto3.client('batch',region_name=self.clusterCfg["aws_region"])
 
-    def createDependsList(self, holdid):
-        # holdid is either a single job id or a list of job ids (1 or more)
-        if  not isinstance(holdid, list):
-            holdid = [ holdid ]
-        # create a list of jobids that the job depends on
-        depends_list = [ {'jobId': id} for id in holdid ]
+        # retryStrategy
+        self.retryStrategy = self.clusterCfg["retryStrategy"]
 
-        return depends_list
+    def getIDsAndNames(self, submitHolds):
+        # for the submit holds, return a dictionary of all job names in a single string
+        # and a list of all job ids
+        nlist = [name for d in submitHolds for name in d]
+        maxLen = 1
+        if len(nlist) > maxLen:
+            nlist = nlist[:maxLen]
+        jobnames = "_".join(nlist) + "_more"
+        jobids = [id for d in submitHolds for il in d.values() for id in il]
+        return {'jobnames': jobnames, 'jobids': jobids}
 
-    def submitSyncJobs(self, depends_list, jName):
-        # submit sync jobs for each each set of 20 jobIDs and return jobids for
-        # each sync job
-        subIDs = []
-        self.printVerbose("2>> submitSyncJobs: job/depends_list: " + jName + "/" + str(depends_list))
-        # set the synjobparams
-        self.syncOpts["parameters"]["jids"] = str([ d['jobId'] for d in depends_list ])
-        # submit sync job in batches of 20
+    def submitSyncJobs(self, job_name, submitHolds):
+        # create a list of {'jobId': jobid} compatible with batch submit job associated with the
+        # submit holds. if no. of jobids > 20, create two or more sync jobs and return those jobids
+        holds = self.getIDsAndNames(submitHolds)
+        jids = holds['jobids']
+        hold_jnames = holds['jobnames']
+        dependsList = [{'jobId': jid} for jid in jids]
+        self.printVerbose("\t2> submitSyncJobs: job " + job_name + " depends on " + hold_jnames + " with " + str(len(jids)) + " job ids")
         maxDepends = 20
-        noDepends = len(depends_list)
-        noSyncJobs = int(math.ceil(noDepends/(maxDepends+1))) + 1
-        noDependsLast = noDepends % maxDepends
-        if noDependsLast == 0:
-            noDependsLast = maxDepends
-        if noSyncJobs > maxDepends:
-            sys.exit("Error: Too many depend jobs (" + str(noDepends) + ").  Max number is " + str(maxDepends))
-        self.printVerbose("2>>>> submitSyncJobs: No. holds/sync jobs/noLast: " + str(noDepends) + "/" + str(noSyncJobs) +
-                          "/" + str(noDependsLast))
+        if len(jids)> maxDepends:
+            self.printVerbose("\t2> submitSyncJobs: job " + job_name + " - creating intemediary sync jobs ...")
+            # set the synjobparams
+            self.syncOpts["parameters"]["jids"] = str(jids)
+            # submit sync job in batches of 20
+            maxDepends = 20
+            noDepends = len(jids)
+            noSyncJobs = int(math.ceil(noDepends/(maxDepends+1))) + 1
+            noDependsLast = noDepends % maxDepends
+            if noDependsLast == 0:
+                noDependsLast = maxDepends
+            if noSyncJobs > maxDepends:
+                sys.exit("Error: Too many hold jobs to sync_ (" + str(noDepends) + ").  Max number of sync jobs is " + str(maxDepends))
+            self.printVerbose("\t\t2>> submitSyncJobs: No. holds/sync jobs/noLast: " + str(noDepends) + "/" + str(noSyncJobs) +
+                              "/" + str(noDependsLast))
+            syncDepends_list = []
+            for sj in range(noSyncJobs):
+                sIndex = sj*maxDepends
+                lIndex = sIndex+maxDepends
+                if sj == noSyncJobs - 1:
+                    lIndex = sIndex+noDependsLast
+                jobName = job_name + '_DependsOn_' + hold_jnames + '_' + str(sj)
+                self.printVerbose("\t\t2>> submitSyncJobs: Sumbitting sync job: " + jobName +
+                                  " depend list[    " + str(sIndex) + "," + str(lIndex) + "] \n\t\t\t" + str(dependsList[sIndex:lIndex]))
+                subid = self.batchC.submit_job(
+                   jobName = jobName,
+                   jobQueue = self.queue,
+                   jobDefinition = self.syncOpts["submit_opts"]["jobdef"],
+                   parameters = self.syncOpts["parameters"],
+                   dependsOn = dependsList[sIndex:lIndex])
+                syncDepends_list.append({'jobId': subid['jobId']})
+            dependsList = syncDepends_list
 
-        for sj in range(noSyncJobs):
-            sIndex = sj*maxDepends
-            lIndex = sIndex+maxDepends
-            if sj == noSyncJobs - 1:
-                lIndex = sIndex+noDependsLast
-            jobName = 'sync_' + jName + '_' + str(sj)
-            self.printVerbose("2>>>> submitSyncJobs: Sumbitting sync job: " + jobName +
-                              " depend list[    " + str(sIndex) + "," + str(lIndex) + "] \n\t\t" + str(depends_list[sIndex:lIndex]))
-            subid = self.batchC.submit_job(
-               jobName = jobName,
-               jobQueue = self.queue,
-               jobDefinition = self.syncOpts["submit_opts"]["jobdef"],
-               parameters = self.syncOpts["parameters"],
-               dependsOn = depends_list[sIndex:lIndex])
-            subIDs.append(subid)
-        # get the job ids for the above sync jobs
-        syncDepends_list = [{'jobId': d['jobId']} for d in subIDs]
-        # now sumbit a master sync job that waits for the other sync jobs
-        # to complete;  just return one jobid that the caller can use
-        masterParams = {'msg': 'master job completed', 'jids': jName}
-        jobName = 'Mastersync_' + jName
-        self.printVerbose("2>> submitSyncJobs: Sumbitting Mastersync job: " + jobName)
-
-        subid = self.batchC.submit_job(
-           jobName = jobName,
-           jobQueue = self.queue,
-           jobDefinition = self.syncOpts["submit_opts"]["jobdef"],
-           parameters = masterParams,
-           dependsOn = syncDepends_list)
-        masterDepend_list = [ {'jobId': subid['jobId']} ]
-        self.printVerbose("2>> submitSyncJobs: returning Mastersync return job id list: " + str(masterDepend_list))
-
-        return masterDepend_list
+        self.printVerbose("\t2> submitSyncJobs: job " + job_name + " will depend on the job ids:\n\t\t" + str(dependsList))
+        return dependsList
 
     def runCmd(self, job_name, cmd, logfile=None):
         runCmdOpts = deepcopy(self.runCmdOpts)
@@ -377,9 +404,8 @@ class AWS_Batch(Cluster):
             print( "\t> " + str(sCmd) )
             sys.exit(2)
 
-
     def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None, request_cores=None, print_only=False, **kwargs):
-        self.printVerbose("1>> submitJob: " + job_name + " beginning ...")
+        self.printVerbose("1===== submitJob: job " + job_name + " beginning ...")
         jobParams = deepcopy(self.jobParams)
         submitOpts = deepcopy(self.submitOpts)
         pipelinePath = self.pipelinePath
@@ -398,12 +424,20 @@ class AWS_Batch(Cluster):
 
         # using time set a job id (which is for tracking; not the batch job id)
         trackID = job_name + "_" + str(int(time.time()*100))
-        logExt = ".log"
 
-        # check for number of cores (1 core = 2 vcpus)
+        # check for number of cores - sge can be 1-8; or 4; etc.  In batch we'll
+        # use the highest number.  e.g., if 1-8, then we'll use 8.  in AWS, vcpus
+        # is the number of physical + hyper-threaded cores.  to max performance
+        # (at an increase cost) allocate 2 vcpus for each core.
         key = "vcpus"
         if request_cores is not None:
-            submitOpts[key] = 2*request_cores
+            ncs = request_cores.split("-")
+            nci = int(ncs[len(ncs)-1])
+            submitOpts[key] = nci
+            submitOpts["env"].append( { "name": "NSLOTS",
+                                        "value": str(nci) } )
+        if self.maxperf:
+            submitOpts[key] = 2*submitOpts[key]
 
         # get memory limit option
         key = "memory_limits"
@@ -413,101 +447,103 @@ class AWS_Batch(Cluster):
             if memlim != None:
                 submitOpts["memory"] = memlim
 
-        # holdid is a list of a list of jid dictionaries ([{'jobId': 'jobid string'}, ... ])
+        # holdid is a previous submit_id dict {job_name: [job_Ids]}
         if holdid is not None:
-            submitOpts["dependsOn"] = self.createDependsList(holdid)
+            submitHolds = holdid
+        else:
+            submitHolds = []
+        log_prefix = trackID
+        jobParams['lf'] = log_prefix
+        submitOpts["env"].append( { "name": "JOB_ID",
+                                    "value": trackID } )
 
-        # if we're doing a job array equivalent submit multiple jobs; else just submit one job
-        submitJobs = []
+        # if we're doing an array job, specify arrayProperty; else just submit one job
         if not print_only:
-            # with the current limit of jobs that a submitted job can depend upon (20),
-            # we'll use of sync jobs to sync if we have more than 20 hold jobs
-            if len(submitOpts["dependsOn"]) > 0:
-                depends_list = self.submitSyncJobs(submitOpts["dependsOn"], job_name)
-            else:
-                depends_list = submitOpts["dependsOn"]
+            # see if there are any holdids
+            if len(submitHolds) > 0:
+                # process hold ids and return a "dependsOn" list
+                submitOpts["dependsOn"] = self.submitSyncJobs(job_name, submitHolds)
             # set the log file name that's common to both single and array jobs
-            log_prefix = trackID
+            if len(submitOpts["dependsOn"]) > 0:
+                self.printVerbose("\t1> submitJob: " + job_name + " depends on " + self.getIDsAndNames(submitHolds)['jobnames'])
+            else:
+                self.printVerbose("\t1> submitJob: " + job_name + " does not depend on other jobs" )
+
             if array_range is not None:
                 air = [ int(i) for i in array_range.split( '-' ) ]
                 taskList = range( air[0], air[1]+1 )
-                self.printVerbose("1>>>> submitJob: " + job_name + " is an array job - no. tasks: " + str(len(taskList)))
-                self.printVerbose("1>>>> submitJob: Submitting array jobs with depend list: " + str(depends_list))
-
-                for t in taskList:
-                    # add an environmnent for equiv to taskid in sge; and jobid
-                    submitOpts["env"].append( { "name": "SGE_TASK_ID",
-                                                "value": str(t) } )
-                    submitOpts["env"].append( { "name": "JOB_ID",
-                                                "value": trackID } )
-                    jobParams['lf'] = log_prefix + '.task_' + str(t) + logExt
-                    # create a jobname based on the job_name submitted and the task id
-                    subOut = self.batchC.submit_job(
-                       jobName = job_name + "_" + str(t),
-                       jobQueue = self.queue,
-                       jobDefinition = submitOpts["jobdef"],
-                       parameters = jobParams,
-                       dependsOn = depends_list,
-                       containerOverrides = {
-                          "vcpus": submitOpts["vcpus"],
-                          "memory": submitOpts["memory"],
-                          "environment": submitOpts["env"]
-                       }
-                    )
-                    # return from batch submit_job is a dict of the form: { 'jobId': 'xxx-yyy', 'jobName': 'myjobName' },
-                    # which we'll return as a list of submit jobs dict
-                    submitJobs.append( subOut )
-                # conver to depend list
-                arrayDepends_list = [ {'jobId': d['jobId']} for d in submitJobs]
-                # sumbit a sync job for the array
-                msJobName = job_name+'_tasks_'+array_range
-                self.printVerbose("1>>>> submitJob: Submitting Mastersync job " + msJobName +
-                                  " for array jobs")
-                depends_list = self.submitSyncJobs(arrayDepends_list, job_name+'_tasks'+array_range)
-                jobid = depends_list[0]['jobId']
+                noJobs = len(taskList)
+                subName = job_name + "_" + str(noJobs)
+                self.printVerbose("\t1> submitJob: " + subName + " is an array job - no. tasks: " + str(noJobs))
+                self.printVerbose("\t1> FIRST_INDEX: " + str(taskList[0]))
+                jobParams["at"] = "1"
+                jobParams['lf'] = jobParams['lf'] + ".task"
+                submitOpts["env"].append( { "name": "FIRST_INDEX",
+                                            "value": str(taskList[0]) } )
+                subOut = self.batchC.submit_job(
+                   jobName = subName,
+                   jobQueue = self.queue,
+                   arrayProperties = { "size": noJobs },
+                   jobDefinition = submitOpts["jobdef"],
+                   parameters = jobParams,
+                   dependsOn = submitOpts["dependsOn"],
+                   containerOverrides = {
+                      "vcpus": submitOpts["vcpus"],
+                      "memory": submitOpts["memory"],
+                      "environment": submitOpts["env"]
+                   },
+                   retryStrategy = self.retryStrategy
+                )
             else:
-                self.printVerbose("1>>>> submitJob: Submitting single job " + job_name + " with depend list: " + str(depends_list))
-                jobParams['lf'] = log_prefix + logExt
-                submitOpts["env"].append( { "name": "JOB_ID",
-                                            "value": trackID } )
+                self.printVerbose("\t1> submitJob: " + job_name + " is a single job")
                 subOut = self.batchC.submit_job(
                    jobName = job_name,
                    jobQueue = self.queue,
                    jobDefinition = submitOpts["jobdef"],
                    parameters = jobParams,
-                   dependsOn = depends_list,
+                   dependsOn = submitOpts["dependsOn"],
                    containerOverrides = {
                       "vcpus": submitOpts["vcpus"],
                       "memory": submitOpts["memory"],
                       "environment": submitOpts["env"]
-                   }
+                   },
+                   retryStrategy = self.retryStrategy
                 )
-                # return from batch submit_job jus the jobId
-                jobid = subOut['jobId']
+                # return the "submit_id" which is a list of dictionaries
+            submit_id = {job_name: [subOut['jobId']]}
         else:
-            log_prefix = trackID
-            jobParams['lf'] = log_prefix + "_printonly" + logExt
-            batchCmd = "\n\tjobName = " + job_name
-            batchCmd = batchCmd + ", jobQueue = " + self.queue
-            batchCmd = batchCmd + ", jobDef = " + submitOpts["jobdef"]
-            batchCmd = batchCmd + ", memory = " + str(submitOpts["memory"])
-            batchCmd = batchCmd + ", vcpus = " + str(submitOpts["vcpus"])
-            batchCmd = batchCmd + "\n\tparams = " + str(jobParams)
+            print("Job name: " + job_name)
             if array_range is not None:
-                ct = "array job " + array_range
+                air = [ int(i) for i in array_range.split( '-' ) ]
+                taskList = range( air[0], air[1]+1 )
+                noJobs = len(taskList)
+                jobName = job_name + "_" + str(noJobs)
+                submitOpts["env"].append( { "name": "FIRST_INDEX",
+                                            "value": str(taskList[0]) } )
+                jobParams["at"] = "1"
+                jobParams['lf'] = jobParams['lf'] + ".task"
+                submitOpts["env"].append( { "name": "FIRST_INDEX",
+                                            "value": str(taskList[0]) } )
+                print("\t\tsubmitJob: " + jobName + " is an array job - no. tasks: " + str(noJobs))
+                print("\t\tFIRST_INDEX: " + str(taskList[0]))
             else:
-                ct = "single job"
-            ht = str(submitOpts["dependsOn"])
+                print("\tjob is a single job")
+            print("\tlog file: " + jobParams['lf'])
+            print("\tJOB_ID: " + trackID)
+            print("\tbatch queue: " + self.queue)
+            print("\tjob definition: " + submitOpts["jobdef"])
+            print("\tjob memory: " + str(submitOpts["memory"]))
+            print("\tjob vcpus: " + str(submitOpts["vcpus"]))
+            print("\tjob env: \n\t\t" + str(submitOpts["env"]))
+            print("\tjob params: \n\t\t" + str(jobParams))
             jobid = "111-222-333-print_only-" +  job_name
-
-            print( "\njob name: " + job_name + " job type: " + ct + "\tdepends: " + ht + "\tjobid:" + jobid +
-                   "\nbatch.submit_job : " + batchCmd )
-            # jids from batch is a dict of the form: { 'jobId': 'xxx-yyy', 'jobName': 'myjobName' }
+            submit_id = {job_name: [jobid]}
+            print("\tsubmit_id: " + str(submit_id))
 
         # return the job id (either from the single job or array job)
-        self.printVerbose("1>> submitJob: " + job_name + " returning jobid: " + jobid)
+        self.printVerbose("\t1> submitJob: " + job_name + " returning submit_id: " + str(submit_id))
 
-        return jobid
+        return submit_id
 
 
 class SGE_Cluster(Cluster):
@@ -558,7 +594,7 @@ class SGE_Cluster(Cluster):
         if key in self.clusterCfg.keys():
             memlim = super(SGE_Cluster, self).memoryLimit(self.clusterCfg[key], kwargs["job_name"])
             if memlim != None:
-                subOpts["-l"] = "h_vmem="+str(memlim)+"G"
+                subOpts["-l"] = "h_vmem="+str(memlim)+"M"
 
         jobid = self.executeJobCmd(subOpts, **kwargs)
         return jobid

@@ -7,7 +7,9 @@ sessionInfo()
 argp <- arg_parser("LocusZoom plots")
 argp <- add_argument(argp, "config", help="path to config file")
 argp <- add_argument(argp, "--segment", help="row in locus_file to plot", default=1, type="integer")
+argp <- add_argument(argp, "--version", help="pipeline version number")
 argv <- parse_args(argp)
+cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 segment <- argv$segment
 
@@ -88,6 +90,10 @@ if (pop != "TOPMED") {
         ref.var <- variant
     } else {
         ref.var <- filter(assoc, pval == min(pval))$variantID
+        if (length(ref.var) > 1) {
+            message("Multiple variants with minimum pval; selecting the first one as reference")
+            ref.var <- ref.var[1]
+        }
     }
     gdsfile <- insertChromString(config["gds_file"], var.chr)
     ld <- calculateLD(gdsfile, variant.id=assoc$variantID, ref.var=ref.var, sample.id=sample.id)

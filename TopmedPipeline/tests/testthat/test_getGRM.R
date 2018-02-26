@@ -14,6 +14,12 @@ library(SNPRelate)
         grmfile <- tempfile()
         save(grm, file=grmfile)
         config["grm_file"] <- grmfile
+    } else if (type == "grm_gds") {
+        gds <- seqOpen(seqExampleFileName())
+        grmfile <- file.path(tempdir(), "tmp.gds")
+        grm <- snpgdsGRM(gds, out.fn=grmfile, verbose=FALSE)
+        seqClose(gds)
+        config["grm_file"] <- grmfile
     }
     config
 }
@@ -37,6 +43,19 @@ test_that("grm", {
     
     x <- getobj(config["grm_file"])
     samp <- x$sample.id[1:10]
+    grm <- getGRM(config, sample.id=samp)
+    expect_is(grm, "matrix")
+    expect_equal(colnames(grm), samp)
+    
+    .cleanupConfig(config)
+})
+
+test_that("grm_gds", {
+    config <- .testConfig(type="grm_gds")
+    
+    x <- openfn.gds(config["grm_file"])
+    samp <- read.gdsn(index.gdsn(x, "sample.id"))[1:10]
+    closefn.gds(x)
     grm <- getGRM(config, sample.id=samp)
     expect_is(grm, "matrix")
     expect_equal(colnames(grm), samp)

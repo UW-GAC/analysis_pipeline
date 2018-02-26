@@ -7,7 +7,9 @@ sessionInfo()
 argp <- arg_parser("LD pruning")
 argp <- add_argument(argp, "config", help="path to config file")
 argp <- add_argument(argp, "--chromosome", help="chromosome (1-24 or X,Y)", type="character")
+argp <- add_argument(argp, "--version", help="pipeline version number")
 argv <- parse_args(argp)
+cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)
 
@@ -34,7 +36,7 @@ if (!is.na(chr)) {
     outfile <- insertChromString(outfile, chr, err="out_file")
     varfile <- insertChromString(varfile, chr)
 }
-    
+
 gds <- seqOpen(gdsfile)
 
 if (!is.na(config["sample_include_file"])) {
@@ -68,7 +70,7 @@ r <- as.numeric(config["ld_r_threshold"])
 win <- as.numeric(config["ld_win_size"]) * 1e6
 
 set.seed(100) # make pruned SNPs reproducible
-snpset <- snpgdsLDpruning(gds, sample.id=sample.id, snp.id=variant.id, maf=maf, 
+snpset <- snpgdsLDpruning(gds, sample.id=sample.id, snp.id=variant.id, maf=maf,
                           method="corr", slide.max.bp=win, ld.threshold=r,
                           num.thread=countThreads())
 
@@ -76,3 +78,7 @@ pruned <- unlist(snpset, use.names=FALSE)
 save(pruned, file=outfile)
 
 seqClose(gds)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")

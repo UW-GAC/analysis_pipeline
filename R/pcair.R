@@ -7,7 +7,9 @@ sessionInfo()
 
 argp <- arg_parser("PC-AiR (partition relatives and run PCA)")
 argp <- add_argument(argp, "config", help="path to config file")
+argp <- add_argument(argp, "--version", help="pipeline version number")
 argv <- parse_args(argp)
+cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
 required <- c("gds_file",
@@ -61,5 +63,9 @@ pca <- pcair(seqData, v=n_pcs,
              scan.include=sample.id, snp.include=variant.id)
 
 save(pca, file=config["out_file"])
-    
+
 seqClose(seqData)
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")
