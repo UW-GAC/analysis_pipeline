@@ -296,7 +296,7 @@ The script [`assoc.py`](assoc.py) submits a SGE array job for each chromosome, w
 
 LocusZoom plots are created with the [LocusZoom standalone software](http://genome.sph.umich.edu/wiki/LocusZoom_Standalone).
 
-Loci to plot are specified in the `locus_file`, with chromosome `chr` and either `variantID` (to specify the reference variant) or `start end` (to indicate a region to plot, in which case the variant with the smallest p-value will be the reference. Population (`pop`) is either `TOPMED` or one of the 1000 Genomes populations (`hg19`:`AFR`, `AMR`, `ASN`, `EUR`; `hg38`: `AFR`, `AMR`, `EUR`, `EAS`, `SAS`). If `pop = TOPMED`, LD is computed from the TOPMed data using the sample set in `ld_sample_include`.
+Loci to plot are specified in the `locus_file`, with chromosome `chr` and either `variant.id` (to specify the reference variant) or `start end` (to indicate a region to plot, in which case the variant with the smallest p-value will be the reference. Population (`pop`) is either `TOPMED` or one of the 1000 Genomes populations (`hg19`:`AFR`, `AMR`, `ASN`, `EUR`; `hg38`: `AFR`, `AMR`, `EUR`, `EAS`, `SAS`). If `pop = TOPMED`, LD is computed from the TOPMed data using the sample set in `ld_sample_include`.
 
 Regions from sliding window or aggregate tests with p-values below a certain threshold can be displayed in a separate track. 
 
@@ -307,7 +307,7 @@ config parameter | default value | description
 --- | --- | ---
 `out_prefix` | | Prefix for files created by this script.
 `assoc_file` | | File with single-variant association test results. Include a space to insert chromosome.
-`locus_file` | | Text file with columns `chr`, `pop` and either `variantID` (for `locus_type=variant`) or `start`, `end` (for `locus_type=region`)
+`locus_file` | | Text file with columns `chr`, `pop` and either `variant.id` (for `locus_type=variant`) or `start`, `end` (for `locus_type=region`)
 `locus_type` | `variant` | Type of region to plot (`variant` with flanking region, or `region`)
 `flanking_region` | `500` | Flanking region in kb
 `gds_file` | `NA` | GDS file to use for calculating LD. Include a space to insert chromosome. 
