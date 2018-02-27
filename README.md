@@ -46,6 +46,7 @@ argument  | default value | description
 `-e, --email` | `None` | email address to receive job completion report
 `--print_only` | `False` | print job submission commands without submitting them
 `--verbose` | `False` | verbose messages for debugging
+`--version` | | show the version number and exit
 `-h, --help` | | print help message and exit
 
 ## Conversion to GDS
@@ -169,7 +170,7 @@ config parameter | default value | description
 
 ## Association testing
 
-Association tests are done with a mixed model if a kinship matrix (`pcrelate_file`) is given in the config file. If `pcrelate_file` is `NA` or missing, testing is done with a fixed effects model.
+Association tests are done with a mixed model if a kinship matrix (`pcrelate_file`) or GRM (`grm_file`) is given in the config file. If `pcrelate_file` and `grm_file` are both `NA` or missing, testing is done with a fixed effects model.
 
 When combining samples from groups with different variances for a trait (e.g., study or ancestry group), it is recommended to allow the null model to fit heterogeneous variances by group using the parameter `group_var`. The default pipeline options will then result in the following procedure:
 
@@ -295,7 +296,7 @@ The script [`assoc.py`](assoc.py) submits a SGE array job for each chromosome, w
 
 ## LocusZoom
 
-LocusZoom plots are created with the [LocusZoom standalone software](http://genome.sph.umich.edu/wiki/LocusZoom_Standalone).
+LocusZoom plots are created with the [LocusZoom standalone software](https://github.com/UW-GAC/locuszoom-standalone).
 
 Loci to plot are specified in the `locus_file`, with chromosome `chr` and either `variantID` (to specify the reference variant) or `start end` (to indicate a region to plot, in which case the variant with the smallest p-value will be the reference. Population (`pop`) is either `TOPMED` or one of the 1000 Genomes populations (`hg19`:`AFR`, `AMR`, `ASN`, `EUR`; `hg38`: `AFR`, `AMR`, `EUR`, `EAS`, `SAS`). If `pop = TOPMED`, LD is computed from the TOPMed data using the sample set in `ld_sample_include`.
 
