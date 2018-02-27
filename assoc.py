@@ -9,6 +9,7 @@ import subprocess
 from time import localtime, strftime
 from argparse import ArgumentParser
 from copy import deepcopy
+from shutil import copyfile
 
 description = """
 Association tests
@@ -62,25 +63,34 @@ driver = os.path.join(pipeline, "runRscript.sh")
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots", "report"])
 
-# hold is a list of submit IDs. A submit ID ia a dict:
+# hold is a list of submit IDs. A submit ID is a dict:
 #     {jobname: [jobids]}
 hold_null_agg = []
 
 # null model
 job = "null_model"
 
-rscript = os.path.join(pipeline, "R", job + ".R")
+# if a null model file is given in the config, skip this step
+run_null_model = "null_model_file" not in configdict
+if run_null_model:
 
-config = deepcopy(configdict)
-config["out_file"] = configdict["data_prefix"] + "_null_model.RData"
-config["out_phenotype_file"] = configdict["data_prefix"] + "_phenotypes.RData"
-configfile = configdict["config_prefix"] + "_" + job + ".config"
-TopmedPipeline.writeConfig(config, configfile)
+    rscript = os.path.join(pipeline, "R", job + ".R")
 
-submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], email=email, print_only=print_only)
+    config = deepcopy(configdict)
+    config["out_file"] = configdict["data_prefix"] + "_null_model.RData"
+    config["out_phenotype_file"] = configdict["data_prefix"] + "_phenotypes.RData"
+    configfile = configdict["config_prefix"] + "_" + job + ".config"
+    TopmedPipeline.writeConfig(config, configfile)
 
-hold_null_agg.append(submitID)
-assocScript = "assoc_" + assoc_type
+    submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], email=email, print_only=print_only)
+
+    hold_null_agg.append(submitID)
+else:
+    print("Using null model in " + configdict["null_model_file"])
+    # copy parameter file for report
+    if "null_model_params" in configdict:
+        paramfile = os.path.basename(configdict["config_prefix"]) + "_" + job + ".config.null_model.params"
+        copyfile(configdict["null_model_params"], paramfile)
 
 
 # for aggregate tests, generate variant list
@@ -128,10 +138,17 @@ else:
 # set up config for association test
 config = deepcopy(configdict)
 config["assoc_type"] = assoc_type
-config["null_model_file"] = configdict["data_prefix"] + "_null_model.RData"
-config["phenotype_file"] = configdict["data_prefix"] + "_phenotypes.RData"
+
+# if we just ran the null model, use output files as input for assoc test
+# otherwise, these parameters should already be in the config
+if run_null_model:
+    config["null_model_file"] = configdict["data_prefix"] + "_null_model.RData"
+    config["phenotype_file"] = configdict["data_prefix"] + "_phenotypes.RData"
+
 if assoc_type == "aggregate":
     config["aggregate_variant_file"] = configdict["data_prefix"] + "_aggregate_list_chr .RData"
+
+assocScript = "assoc_" + assoc_type
 config["out_prefix"] = configdict["data_prefix"] + "_" + assocScript
 config["segment_file"] = segment_file
 configfile = configdict["config_prefix"] + "_" + assocScript + ".config"

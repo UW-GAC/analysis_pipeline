@@ -188,7 +188,7 @@ When combining samples from groups with different variances for a trait (e.g., s
         - Include covariates and PCs as fixed effects
         - Include kinship as random effect
 
-For single-variant tests, the effect estimate is for the reference allele. For aggregate and sliding window tests, the effect estimate is for the alternate alelle, and multiple alternate alelles for a single variant are treated separately.
+The effect estimate is for the alternate alelle, and multiple alternate alelles for a single variant are treated separately.
 
 Association tests have an additional level of parallelization: by segment within chromosome. The R scripts take an optional `"--segment"` (or `"-s"`) argument. The python script `assoc.py` uses the environment variable `SGE_TASK_ID` to submit jobs by segment for each chromosome. By default each segment is 10 Mb in length, but this may be changed by using the arguments `"--segment_length"` or `"--n_segments"`. Note that `"--n_segments"` defines the number of segments for the entire genome, so using this argument with selected chromosomes may result in fewer segments than you expect (and the minimum is one segment per chromosome).
 
@@ -290,6 +290,11 @@ The segment file created at the start of each association test contains the chro
 * Sliding window: the length of the segment is increased by `window.size` before selecting variants. This ensures that all possible windows are tested. When the segments are combined into a single file for each chromosome, duplicate windows are discarded. Since the `assocTestSeqWindow` function defines windows starting at position 1, the windows tested when parallelizing by segment are identical to the windows tested when running an entire chromosome in one job.
 
 The script [`assoc.py`](assoc.py) submits a SGE array job for each chromosome, where the SGE task id is the row number of the segment in the segments file. If a segment has no requested variants, its job will exit without error. After all segments are complete, they are combined into a single file for each chromosome and the temporary per-segment output files are deleted.
+
+
+### Multiple tests with the same null model
+
+To run additional tests using the same null model as a previous test, add the config parameters `null_model_file` and `null_model_params`. `null_model_file` is the output file created by a previous association test run. `null_model_params` is the parameter file ending in `null_model.params` in the `report` directory for the previous association test. The parameter file is needed to generate the report for the new test.
 
 
 
