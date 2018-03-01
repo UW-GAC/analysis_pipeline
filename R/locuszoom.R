@@ -45,17 +45,17 @@ assocfile <- insertChromString(config["assoc_file"], var.chr)
 assoc <- getobj(assocfile)
 
 if (config["locus_type"] == "variant") {
-    stopifnot("variantID" %in% names(locus))
-    variant <- locus$variantID
+    stopifnot("variant.id" %in% names(locus))
+    variant <- locus$variant.id
     flank <- as.numeric(config["flanking_region"]) * 1000
-    var.pos <- assoc$pos[assoc$variantID == variant]
+    var.pos <- assoc$pos[assoc$variant.id == variant]
     start <- var.pos - flank
     end <- var.pos + flank
     
     lz.name <- paste0("chr", var.chr, ":", var.pos)
     ld.region <- paste0("--refsnp \"", lz.name, "\"", " --flank ", config["flanking_region"], "kb")
     prefix <- paste0(config["out_prefix"], "_var", variant, "_ld_", pop)
-    maf <- assoc$MAF[assoc$variantID == variant]
+    maf <- assoc$MAF[assoc$variant.id == variant]
     title <- paste(lz.name, "- MAF:", formatC(maf, digits=3))
     
 } else if (config["locus_type"] == "region") {
@@ -71,7 +71,7 @@ if (config["locus_type"] == "variant") {
 ## construct METAL-format file
 assoc <- assoc %>%
     filter(chr == var.chr, pos > start, pos < end) %>%
-    select(variantID, chr, pos, ends_with("pval"))
+    select(variant.id, chr, pos, ends_with("pval"))
 names(assoc)[4] <- "pval"
 assoc.filename <- tempfile()
 writeMETAL(assoc, file=assoc.filename)
@@ -89,14 +89,14 @@ if (pop != "TOPMED") {
     if (config["locus_type"] == "variant") {
         ref.var <- variant
     } else {
-        ref.var <- filter(assoc, pval == min(pval))$variantID
+        ref.var <- filter(assoc, pval == min(pval))$variant.id
         if (length(ref.var) > 1) {
             message("Multiple variants with minimum pval; selecting the first one as reference")
             ref.var <- ref.var[1]
         }
     }
     gdsfile <- insertChromString(config["gds_file"], var.chr)
-    ld <- calculateLD(gdsfile, variant.id=assoc$variantID, ref.var=ref.var, sample.id=sample.id)
+    ld <- calculateLD(gdsfile, variant.id=assoc$variant.id, ref.var=ref.var, sample.id=sample.id)
     ld.filename <- tempfile()
     writeLD(assoc, ld, ref.var, file=ld.filename)
 

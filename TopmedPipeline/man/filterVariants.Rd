@@ -8,6 +8,7 @@
 \alias{filterByPass}
 \alias{filterBySNV}
 \alias{filterByMAF}
+\alias{filterByRare}
 \alias{filterByPCAcorr}
 \alias{checkSelectedVariants}
 \title{Filter SeqVarGDSClass objects}
@@ -24,6 +25,8 @@ filterBySNV(gds, biallelic = TRUE, verbose = TRUE)
 
 filterByMAF(gds, sample.id = NULL, mac.min = NA, maf.min = NA,
   verbose = TRUE)
+
+filterByRare(gds, sample.id = NULL, af.max = 0.01, verbose = TRUE)
 
 filterByPCAcorr(gds, build = "hg19", verbose = TRUE)
 
@@ -46,11 +49,13 @@ checkSelectedVariants(gds)
 
 \item{biallelic}{Logical for whether to select only biallelic SNVs}
 
-\item{sample.id}{Samples to include in calculating MAF}
+\item{sample.id}{Samples to include in calculating allele frequency}
 
 \item{mac.min}{Minimum minor allele count (effective N) to include}
 
 \item{maf.min}{Minimum MAF to include}
+
+\item{af.max}{Maximum alternate allele frequency to include}
 
 \item{build}{Genome build to use when identifying regions to exclude from PCA because of high correlation (HLA, LCT, inversions)}
 }

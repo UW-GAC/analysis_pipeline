@@ -7,11 +7,11 @@
 writeLD(x, ld, ref.var, file)
 }
 \arguments{
-\item{x}{data.frame with columns "variantID", "chr", "pos"}
+\item{x}{data.frame with columns "variant.id", "chr", "pos"}
 
 \item{ld}{vector of LD}
 
-\item{ref.var}{variantID of the reference variant}
+\item{ref.var}{variant.id of the reference variant}
 
 \item{file}{output file name}
 }

@@ -1,8 +1,10 @@
 context("getAssoc tests")
-library(GENESIS)
+library(dplyr)
+library(genesis2)
 library(gdsfmt)
 library(SeqVarTools)
 library(Biobase)
+library(GenomicRanges)
 
 .testData <- function() {
     showfile.gds(closeall=TRUE, verbose=FALSE)
@@ -16,76 +18,20 @@ library(Biobase)
 .testNullModel <- function(seqData, MM=FALSE) {
     if (MM) {
         data(grm)
-        fitNullMM(sampleData(seqData), outcome="outcome", covars="sex", covMatList=grm, verbose=FALSE)
     } else {
-        fitNullReg(sampleData(seqData), outcome="outcome", covars="sex", verbose=FALSE)
+        grm <- NULL
     }
+    fitNullModel(sampleData(seqData), outcome="outcome", covars="sex", cov.mat=grm, verbose=FALSE)
 }
-
-test_that("formatAssocSingle related", {
-    seqData <- .testData()
-    nullmod <- .testNullModel(seqData, MM=TRUE)
-    assoc <- assocTestMM(seqData, nullmod, verbose=FALSE)
-    assoc <- formatAssocSingle(seqData, assoc)
-    seqClose(seqData)
-    expect_true(all(c("variantID", "chr", "pos", "MAF") %in% names(assoc)))
-})
-   
-test_that("formatAssocSingle unrelated", {
-    seqData <- .testData()
-    seqSetFilter(seqData, variant.sel=1:10, verbose=FALSE)
-    assoc <- regression(seqData, outcome="outcome", covar="sex")
-    assoc <- formatAssocSingle(seqData, assoc)
-    seqClose(seqData)
-    expect_true(all(c("variantID", "chr", "pos", "MAF") %in% names(assoc)))
-})
-    
-test_that("formatAssocSingle unrelated - binary", {
-    seqData <- .testData()
-    dat <- sampleData(seqData)
-    dat$status <- rbinom(nrow(dat), 1, prob=0.4)
-    sampleData(seqData) <- dat
-    seqSetFilter(seqData, variant.sel=1:10, verbose=FALSE)
-    assoc <- regression(seqData, outcome="status", covar="sex", model.type="logistic")
-    assoc <- formatAssocSingle(seqData, assoc)
-    seqClose(seqData)
-    expect_true(all(c("variantID", "chr", "pos", "MAF", "n") %in% names(assoc)))
-})
-                    
-    
-
-
-test_that("single unrelated", {
-    seqData <- .testData()
-    chr <- seqGetData(seqData, "chromosome")
-    seqSetFilter(seqData, variant.sel=(chr == 1), verbose=FALSE)
-    a1 <- formatAssocSingle(seqData, regression(seqData, outcome="outcome"))
-    seqSetFilter(seqData, variant.sel=(chr == 2), verbose=FALSE)
-    a2 <- formatAssocSingle(seqData, regression(seqData, outcome="outcome"))
-    files <- c(tempfile(), tempfile())
-    save(a1, file=files[1])
-    save(a2, file=files[2])
-    a <- rbind(a1, a2) %>%
-        filter_(~!is.na(Wald.pval))
-
-    assoc <- getAssoc(files, "single")
-    expect_equal(as.character(assoc$chr), a$chr)
-    expect_equal(assoc$pos, a$pos)
-    expect_equal(assoc$start, assoc$pos)
-    expect_equal(assoc$end, assoc$pos)
-    expect_equal(assoc$stat, a$Wald.stat)
-    expect_equal(assoc$pval, a$Wald.pval)
-
-    seqClose(seqData)
-    unlink(files)
-})
-
+        
 
 test_that("single related", {
-    seqData <- .testData()
+    seqData <- SeqVarBlockIterator(.testData(), verbose=FALSE)
     nullmod <- .testNullModel(seqData, MM=TRUE)
-    a1 <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, chromosome=1, verbose=FALSE))
-    a2 <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, chromosome=2, verbose=FALSE))
+    seqSetFilterChrom(seqData, include=1, verbose=FALSE)
+    a1 <- assocTestSingle(seqData, nullmod, verbose=FALSE)
+    seqSetFilterChrom(seqData, include=2, verbose=FALSE)
+    a2 <- assocTestSingle(seqData, nullmod, verbose=FALSE)
     files <- c(tempfile(), tempfile())
     save(a1, file=files[1])
     save(a2, file=files[2])
@@ -97,7 +43,7 @@ test_that("single related", {
     expect_equal(assoc$pos, a$pos)
     expect_equal(assoc$start, assoc$pos)
     expect_equal(assoc$end, assoc$pos)
-    expect_equal(assoc$stat, a$Wald.stat)
+    expect_equal(assoc$stat, a$Wald.Stat)
     expect_equal(assoc$pval, a$Wald.pval)
 
     seqClose(seqData)
@@ -108,20 +54,20 @@ test_that("single related", {
 test_that("window, burden", {
     seqData <- .testData()
     nullmod <- .testNullModel(seqData)
-    a1 <- assocTestSeqWindow(seqData, nullmod, chromosome=1, verbose=FALSE)
-    a2 <- assocTestSeqWindow(seqData, nullmod, chromosome=2, verbose=FALSE)
+    seqSetFilterChrom(seqData, include=1, verbose=FALSE)
+    seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
+    a1 <- assocTestAggregate(seqData, nullmod, verbose=FALSE)
+    seqSetFilterChrom(seqData, include=2, verbose=FALSE)
+    seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
+    a2 <- assocTestAggregate(seqData, nullmod, verbose=FALSE)
     files <- c(tempfile(), tempfile())
     save(a1, file=files[1])
     save(a2, file=files[2])
     a <- rbind(a1$results, a2$results) %>%
-        filter_(~(n.site > 0), ~(dup == 0))
+        filter_(~(n.site > 0))
 
     assoc <- getAssoc(files, "window")
-    expect_equal(as.character(assoc$chr), a$chr)
-    expect_true(all(assoc$pos > a$window.start & assoc$pos < a$window.stop))
-    expect_equal(assoc$start, a$window.start)
-    expect_equal(assoc$end, a$window.stop)
-    expect_equal(assoc$stat, a$Score.stat)
+    expect_equal(assoc$stat, a$Score.Stat)
     expect_equal(assoc$pval, a$Score.pval)
 
     seqClose(seqData)
@@ -132,14 +78,14 @@ test_that("window, burden", {
 test_that("aggregate, skat", {
     seqData <- .testData()
     nullmod <- .testNullModel(seqData)
-    agg <- list(data.frame(variant.id=1:100, allele.index=1),
-                 data.frame(variant.id=101:200, allele.index=1),
-                 data.frame(variant.id=201:300, allele.index=1))
-    a1 <- assocTestSeq(seqData, nullmod, agg, test="SKAT", verbose=FALSE)
-    agg <- list(data.frame(variant.id=301:400, allele.index=1),
-                 data.frame(variant.id=401:500, allele.index=1),
-                 data.frame(variant.id=501:600, allele.index=1))
-    a2 <- assocTestSeq(seqData, nullmod, agg, test="SKAT", verbose=FALSE)
+    gr <- granges(seqData)
+    agg <- GRangesList(gr[1:100], gr[101:200], gr[201:300])
+    seqData <- SeqVarListIterator(seqData, variantRanges=agg, verbose=FALSE)
+    a1 <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
+    seqResetFilter(seqData, verbose=FALSE)
+    agg <- GRangesList(gr[301:400], gr[401:500], gr[501:600])
+    seqData <- SeqVarListIterator(seqData, variantRanges=agg, verbose=FALSE)
+    a2 <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
     files <- c(tempfile(), tempfile())
     save(a1, file=files[1])
     save(a2, file=files[2])
@@ -149,9 +95,9 @@ test_that("aggregate, skat", {
     assoc <- getAssoc(files, "aggregate")
     expect_true(setequal(assoc$pval, a$pval_0))
     expect_equal(as.character(assoc$chr[1]), a1$variantInfo[[1]]$chr[1])
-    expect_true(assoc$pos[1] > a1$variantInfo[[1]]$pos[1] & assoc$pos[1] < a1$variantInfo[[1]]$pos[100])
+    expect_true(assoc$pos[1] > a1$variantInfo[[1]]$pos[1] & assoc$pos[1] < max(a1$variantInfo[[1]]$pos))
     expect_equal(assoc$start[1], a1$variantInfo[[1]]$pos[1])
-    expect_equal(assoc$end[1], a1$variantInfo[[1]]$pos[100])
+    expect_equal(assoc$end[1], max(a1$variantInfo[[1]]$pos))
 
     seqClose(seqData)
     unlink(files)
@@ -159,18 +105,22 @@ test_that("aggregate, skat", {
 
 
 test_that("combine single", {
-    seqData <- .testData()
+    seqData <- SeqVarBlockIterator(.testData(), verbose=FALSE)
     nullmod <- .testNullModel(seqData, MM=TRUE)
-    a1 <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, chromosome=1, verbose=FALSE))
-    a2 <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, chromosome=2, verbose=FALSE))
+    seqSetFilterChrom(seqData, include=1, verbose=FALSE)
+    a1 <- assocTestSingle(seqData, nullmod, verbose=FALSE)
+    seqSetFilterChrom(seqData, include=2, verbose=FALSE)
+    a2 <- assocTestSingle(seqData, nullmod, verbose=FALSE)
     files <- c(tempfile(), tempfile())
     save(a1, file=files[1])
     save(a2, file=files[2])
 
     assoc <- combineAssoc(files, "single")
     
-    a <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, chromosome=1:2, verbose=FALSE))
-    expect_equal(a, assoc)
+    seqSetFilterChrom(seqData, include=1:2, verbose=FALSE)
+    a <- assocTestSingle(seqData, nullmod, verbose=FALSE)
+    expect_true(all(a == assoc, na.rm=TRUE))
+    expect_true(all(is.na(a) == is.na(assoc)))
 
     seqClose(seqData)
     unlink(files)
@@ -179,15 +129,22 @@ test_that("combine single", {
 test_that("combine window", {
     seqData <- .testData()
     nullmod <- .testNullModel(seqData)
-    a1 <- assocTestSeqWindow(seqData, nullmod, chromosome=1, verbose=FALSE)
-    a2 <- assocTestSeqWindow(seqData, nullmod, chromosome=2, verbose=FALSE)
+    seqSetFilterChrom(seqData, include=1, verbose=FALSE)
+    seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
+    a1 <- assocTestAggregate(seqData, nullmod, verbose=FALSE)
+    seqSetFilterChrom(seqData, include=2, verbose=FALSE)
+    seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
+    a2 <- assocTestAggregate(seqData, nullmod, verbose=FALSE)
     files <- c(tempfile(), tempfile())
     save(a1, file=files[1])
     save(a2, file=files[2])
 
     assoc <- combineAssoc(files, "window")
     
-    a <- assocTestSeqWindow(seqData, nullmod, chromosome=1:2, verbose=FALSE)
+    seqData <- .testData()
+    seqSetFilterChrom(seqData, include=1:2, verbose=FALSE)
+    seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
+    a <- assocTestAggregate(seqData, nullmod, verbose=FALSE)
     expect_equal(a, assoc)
 
     seqClose(seqData)
@@ -197,21 +154,23 @@ test_that("combine window", {
 test_that("combine aggregate", {
     seqData <- .testData()
     nullmod <- .testNullModel(seqData)
-    agg1 <- list(data.frame(variant.id=1:100, allele.index=1),
-                 data.frame(variant.id=101:200, allele.index=1),
-                 data.frame(variant.id=201:300, allele.index=1))
-    a1 <- assocTestSeq(seqData, nullmod, agg1, test="SKAT", verbose=FALSE)
-    agg2 <- list(data.frame(variant.id=301:400, allele.index=1),
-                 data.frame(variant.id=401:500, allele.index=1),
-                 data.frame(variant.id=501:600, allele.index=1))
-    a2 <- assocTestSeq(seqData, nullmod, agg2, test="SKAT", verbose=FALSE)
+    gr <- granges(seqData)
+    agg1 <- GRangesList(gr[1:100], gr[101:200], gr[201:300])
+    seqData <- SeqVarListIterator(seqData, variantRanges=agg1, verbose=FALSE)
+    a1 <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
+    seqResetFilter(seqData, verbose=FALSE)
+    agg2 <- GRangesList(gr[301:400], gr[401:500], gr[501:600])
+    seqData <- SeqVarListIterator(seqData, variantRanges=agg2, verbose=FALSE)
+    a2 <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
     files <- c(tempfile(), tempfile())
     save(a1, file=files[1])
     save(a2, file=files[2])
 
     assoc <- combineAssoc(files, "aggregate")
-
-    a <- assocTestSeq(seqData, nullmod, c(agg1, agg2), test="SKAT", verbose=FALSE)
+    
+    seqResetFilter(seqData, verbose=FALSE)
+    seqData <- SeqVarListIterator(seqData, variantRanges=c(agg1, agg2), verbose=FALSE)
+    a <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
     expect_equal(a, assoc)
 
     seqClose(seqData)
@@ -239,37 +198,49 @@ test_that("index_chr_pos", {
 test_that("combine out of order", {
     seqData <- .testData()
     nullmod <- .testNullModel(seqData, MM=TRUE)
-    
-    a1 <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, snp.include=1:10, verbose=FALSE))
-    a2 <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, snp.include=11:20, verbose=FALSE))
+
+    seqSetFilter(seqData, variant.sel=1:10, verbose=FALSE)
+    seqData <- SeqVarBlockIterator(seqData, verbose=FALSE)
+    a1 <- assocTestSingle(seqData, nullmod, verbose=FALSE)
+    seqSetFilter(seqData, variant.sel=11:20, verbose=FALSE)
+    seqData <- SeqVarBlockIterator(seqData, verbose=FALSE)
+    a2 <- assocTestSingle(seqData, nullmod, verbose=FALSE)
     files <- file.path(tempdir(), c("a", "b"))
     save(a1, file=files[1])
     save(a2, file=files[2])
-    assoc <- combineAssoc(files, "single")
-    a <- combineAssoc(files[c(2,1)], "single")
+    assoc <- combineAssoc(files, "single", ordered=TRUE)
+    a <- combineAssoc(files[c(2,1)], "single", ordered=TRUE)
     expect_equal(a, assoc)
 
-    a1 <- assocTestSeqWindow(seqData, nullmod, chromosome=1, verbose=FALSE)
-    a2 <- assocTestSeqWindow(seqData, nullmod, chromosome=2, verbose=FALSE)
+    seqSetFilterChrom(seqData, include=1, verbose=FALSE)
+    seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
+    a1 <- assocTestAggregate(seqData, nullmod, verbose=FALSE)
+    seqSetFilterChrom(seqData, include=2, verbose=FALSE)
+    seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
+    a2 <- assocTestAggregate(seqData, nullmod, verbose=FALSE)
     save(a1, file=files[1])
     save(a2, file=files[2])
-    assoc <- combineAssoc(files, "window")
-    a <- combineAssoc(files[c(2,1)], "window") 
+    assoc <- combineAssoc(files, "window", ordered=TRUE)
+    a <- combineAssoc(files[c(2,1)], "window", ordered=TRUE) 
     expect_equal(a, assoc)
 
-    agg1 <- list(a=data.frame(variant.id=101:200, allele.index=1),
-                 b=data.frame(variant.id=1:100, allele.index=1),
-                 c=data.frame(variant.id=501:600, allele.index=1))
-    a1 <- assocTestSeq(seqData, nullmod, agg1, test="SKAT", verbose=FALSE)
-    agg2 <- list(d=data.frame(variant.id=301:400, allele.index=1),
-                 e=data.frame(variant.id=401:500, allele.index=1),
-                 f=data.frame(variant.id=201:300, allele.index=1))
-    a2 <- assocTestSeq(seqData, nullmod, agg2, test="SKAT", verbose=FALSE)
+    seqResetFilter(seqData, verbose=FALSE)
+    gr <- granges(seqData)
+    agg1 <- GRangesList(gr[101:200], gr[1:100], gr[501:600])
+    seqData <- SeqVarListIterator(seqData, variantRanges=agg1, verbose=FALSE)
+    a1 <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
+    seqResetFilter(seqData, verbose=FALSE)
+    agg2 <- GRangesList(gr[301:400], gr[401:500], gr[201:300])
+    seqData <- SeqVarListIterator(seqData, variantRanges=agg2, verbose=FALSE)
+    a2 <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
     save(a1, file=files[1])
     save(a2, file=files[2])
-    assoc <- combineAssoc(files, "aggregate")
+    assoc <- combineAssoc(files, "aggregate", ordered=TRUE)
+    rownames(assoc$results) <- 1:nrow(assoc$results)
     agg <- c(agg1, agg2)[c(2,1,6,4,5,3)]
-    a <- assocTestSeq(seqData, nullmod, agg, test="SKAT", verbose=FALSE)
+    seqResetFilter(seqData, verbose=FALSE)
+    seqData <- SeqVarListIterator(seqData, variantRanges=agg, verbose=FALSE)
+    a <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
     expect_equal(a, assoc)
     
     seqClose(seqData)

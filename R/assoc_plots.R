@@ -36,7 +36,7 @@ if (!is.na(config["known_hits_file"]) & config["assoc_type"] == "single") {
 
 if ("stat" %in% names(assoc)) {
     ## burden or single
-    lambda <- calculateLambda(assoc$stat, df=1)
+    lambda <- calculateLambda((assoc$stat)^2, df=1)
 } else {
     ## SKAT
     lambda <- calculateLambda(qchisq(assoc$pval, df=1, lower=FALSE), df=1)
