@@ -7,12 +7,18 @@ We recommend building R with [Intel MKL](https://software.intel.com/en-us/intel-
 1. Install R packages and dependencies from Bioconductor  
 ```{r}
 source("https://bioconductor.org/biocLite.R")
-biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "argparser", "dplyr", "tidyr", "ggplot2", "GGally"))
+biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "argparser", "dplyr", "tidyr", "ggplot2", "GGally", "rmarkdown", "devtools", "Matrix"))
 ```
-2. Install updated GENESIS from github  
+2. Install development packages from github  
 ```{r}
-library(devtools)
-install_github("smgogarten/GENESIS")
+library(devtools) 
+install_github("zhengxwen/gdsfmt")
+install_github("zhengxwen/SeqArray") 
+install_github("zhengxwen/SNPRelate")
+install_github("smgogarten/SeqVarTools") 
+install_github("smgogarten/GENESIS") 
+install_github("UW-GAC/genesis2_tests") 
+install_github("UW-GAC/genesis2")
 ```
 3. Install TopmedPipeline R package  
 ```
