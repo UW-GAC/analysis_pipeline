@@ -34,6 +34,8 @@ optional <- c("aggregate_type"="allele",
               "test"="burden",
               "test_type"="score",
               "variant_include_file"=NA,
+              "variant_weight_file"=NA,
+              "weight_user"="weight",
               "weight_beta"="1 1")
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -57,6 +59,17 @@ annot <- getobj(config["phenotype_file"])
 
 # createSeqVarData object
 seqData <- SeqVarData(gds, sampleData=annot)
+
+# get weights
+if (!is.na(config["variant_weight_file"])) {
+    dat <- getobj(config["variant_weight_file"])
+    weight.user <- config["weight_user"]
+    stopifnot(weight.user %in% names(dat))
+    seqData <- addVariantData(seqData, dat)
+    rm(dat)
+} else {
+    weight.user <- NULL
+}
 
 # get null model
 nullModel <- getobj(config["null_model_file"])
@@ -111,13 +124,14 @@ test.type <- switch(tolower(config["test_type"]),
                     score="Score",
                     wald="Wald")
 
-weights <- as.numeric(strsplit(config["weight_beta"], " ", fixed=TRUE)[[1]])
+weight.beta <- as.numeric(strsplit(config["weight_beta"], " ", fixed=TRUE)[[1]])
 rho <- as.numeric(strsplit(config["rho"], " ", fixed=TRUE)[[1]])
 pval <- tolower(config["pval_skat"])
 
 assoc <- assocTestAggregate(iterator, nullModel,
                             AF.max=af.max,
-                            weight.beta=weights,
+                            weight.beta=weight.beta,
+                            weight.user=weight.user,
                             test=test,
                             burden.test=test.type,
                             rho=rho,

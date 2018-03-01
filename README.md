@@ -231,7 +231,7 @@ config parameter | default value | description
 --- | --- | ---
 `mac_threshold` | `5` | Minimum minor allele count for variants to include in test. Use a higher threshold when outcome is binary.
 `maf_threshold` | `0.001` | Minimum minor allele frequency for variants to include in test. Only used if `mac_threshold` is `NA`.
-`test_type` | `score` | Type of test to perform. If samples are related (mixed model), options are `score` and `wald` if `binary` is `FALSE`, `score` only if `binary` is `TRUE`.  For unrelated samples (`pcrelate_file` is `NA`), options are `linear` (Wald test) if `binary` is `FALSE`, `logistic` (Wald test) or `firth` if `binary` is `TRUE`.
+`test_type` | `score` | Type of test to perform. If samples are related (mixed model), options are `score` and `wald` if `binary` is `FALSE`, `score` only if `binary` is `TRUE`.
 `known_hits_file` | `NA` | RData file with data.frame containing columns `chr` and `pos`. If provided, 1 Mb regions surrounding each variant listed will be omitted from the QQ and manhattan plots.
 
 
@@ -244,7 +244,9 @@ config parameter | default value | description
 `test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` if `binary` is `TRUE`.
 `pval_skat` | `kuonen` | Method used to calculate p-values if `test` is `skat`. Options are `kuonen` (uses saddlepoint method), `davies` (uses numerical integration), and `liu` (uses a moment matching approximation).
 `rho` | `0` | A numeric value (or quoted, space-delimited list of numeric values) in [0,1] specifying the rho parameter when `test` is `skat`. `0` is a standard SKAT test, `1` is a score burden test, and multiple values is a SKAT-O test.
-`weight_beta` | `"1 1"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"1 1"` is flat weights, `"0.5 0.5"` is proportional to the Madsen-Browning weights, and `"1 25"` gives the Wu weights.
+`variant_weight_file` | `NA` | RData file with data frame defining variant weights. Columns should contain either `variant.id` or all of (`chr`, `pos`, `ref`, `alt`).
+`weight_user` | `"weight"` | Name of column in `variant_weight_file` containing the weight for each variant.
+`weight_beta` | `"1 1"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"1 1"` is flat weights, `"0.5 0.5"` is proportional to the Madsen-Browning weights, and `"1 25"` gives the Wu weights. This parameter is ignored if `variant_weight_file` is provided.
 
 
 ### Aggregate
