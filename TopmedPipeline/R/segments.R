@@ -110,6 +110,7 @@ getSegments <- function(file) {
 #' @importFrom GenomicRanges findOverlaps GRanges
 #' @importFrom IRanges IRanges
 #' @importFrom S4Vectors endoapply queryHits
+#' @importFrom methods is
 #' @export
 subsetBySegment <- function(varList, segment, segment.file) {
     # create a GRanges object containing the first variant from each item in varList

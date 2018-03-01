@@ -127,50 +127,6 @@ getAssoc <- function(files, assoc_type) {
 }
 
 
-#' Format single-variant assocation test results
-#'
-#' Return association test results for single-variant tests in a standard format
-#'
-#' Ensures that single-variant association test results from different sources
-#' (\code{\link[GENESIS]{assocTestMM}}, \code{\link[SeqVarTools]{regression}})
-#' will all have a standard format.
-#'
-#' @param seqData A \code{\link[SeqArray]{SeqVarGDSClass}} object
-#'   (needed to get chromosome and position if not present)
-#' @param assoc data.frame with assocation test results
-#' @return data.frame including standard columns ("variantID", "chr", "pos", "n", "MAF", "minor.allele")
-#' 
-#' @import SeqArray
-#' @export
-formatAssocSingle <- function(seqData, assoc) {
-
-    names(assoc)[names(assoc) %in% c("snpID", "variant.id")] <- "variantID"
-    names(assoc) <- sub(".Stat", ".stat", names(assoc), fixed=TRUE)
-    names(assoc) <- sub(".Pval", ".pval", names(assoc), fixed=TRUE)
-    
-    seqSetFilter(seqData, variant.id=assoc$variantID, action="push+set", verbose=FALSE)
-    assoc$pos <- seqGetData(seqData, "position")
-    if (!("chr" %in% names(assoc))) {
-        assoc$chr <- seqGetData(seqData, "chromosome")
-    }
-    if ("n0" %in% names(assoc)) {
-        assoc$n <- rowSums(assoc[,c("freq0", "freq1")], na.rm=TRUE)
-        assoc$freq <- rowMeans(assoc[,c("freq0", "freq1")], na.rm=TRUE)
-    }
-    if (!("MAF" %in% names(assoc))) {
-        assoc$MAF <- pmin(assoc$freq, 1 - assoc$freq)
-        assoc$minor.allele <- ifelse(assoc$freq > 0.5, "ref", "alt")
-    }
-    seqSetFilter(seqData, action="pop", verbose=FALSE)
-    
-    init.cols <- c("variantID", "chr", "pos", "n", "MAF", "minor.allele")
-    cols <- setdiff(names(assoc), c(init.cols, "freq"))
-    assoc <- assoc[,c(init.cols, cols)]
-
-    assoc
-}
-
-
 #' Omit known hits from an association test data frame
 #'
 #' @param assoc data.frame with assocation test results (including columns chr, pos)

@@ -63,34 +63,6 @@ getPhenotypes <- function(config) {
 }
 
 
-#' Add inverse normal transform
-#'
-#' Inverse normal transform the residuals of a null model, and add the results to annotation.
-#'
-#' @param annot Data frame with sample annotation
-#' @param nullmod Null model from \pkg{\link[GENESIS]{GENESIS}}
-#' @param outcome Name of outcome (for printing message)
-#' @param covars Names of covariates (for printing message)
-#' @return \code{annot} with additional column "resid.norm"
-#'
-#' @importFrom methods is
-#' @export
-addInvNorm <- function(annot, nullmod, outcome, covars) {
-    resid.str <- if (is(nullmod, "GENESIS.nullMixedModel")) "resid.marginal" else "resid.response"
-    resid.norm <- rankNorm(nullmod[[resid.str]])
-    annot$resid.norm <- resid.norm[match(annot$sample.id, nullmod$scanID)]
-    
-    if (is(nullmod, "GENESIS.nullMixedModel")) {
-        message(paste0("resid.norm = rankNorm(resid.marginal(", outcome, " ~ ", paste(c(covars, "(1|kinship)"), collapse=" + "), "))"))
-        message("Model: resid.norm ~ (1|kinship)")
-    } else {
-        message(paste0("resid.norm = rankNorm(resid.response(", outcome, " ~ ", paste(covars, collapse=" + "), "))"))
-    }
-    
-    annot
-}
-
-
 #' Parse space-separated parameter list
 #'
 #' @param param Parameter to parse
