@@ -64,7 +64,7 @@ nullmod <- fitNullModel(annot, outcome=outcome, covars=covars,
                         family=family, group.var=group.var)
 
 ## if we need an inverse normal transform, take residuals and refit null model
-if (as.logical(config["inverse_normal"])) {
+if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
     if (is.null(group.var)) {
         rankNorm.option <- "all"
         rescale <- "none"
