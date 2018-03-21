@@ -177,6 +177,32 @@ test_that("combine aggregate", {
     unlink(files)
 })
 
+test_that("combine aggregate - empty set", {
+    seqData <- .testData()
+    nullmod <- .testNullModel(seqData)
+    gr <- granges(seqData)
+    agg1 <- GRangesList(GRanges(seqnames=1, IRanges(start=2000000, width=1)))
+    seqData <- SeqVarListIterator(seqData, variantRanges=agg1, verbose=FALSE)
+    a1 <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
+    seqResetFilter(seqData, verbose=FALSE)
+    agg2 <- GRangesList(gr[1:100], gr[101:200], gr[201:300])
+    seqData <- SeqVarListIterator(seqData, variantRanges=agg2, verbose=FALSE)
+    a2 <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
+    files <- c(tempfile(), tempfile())
+    save(a1, file=files[1])
+    save(a2, file=files[2])
+
+    assoc <- combineAssoc(files, "aggregate")
+    
+    seqResetFilter(seqData, verbose=FALSE)
+    seqData <- SeqVarListIterator(seqData, variantRanges=c(agg1, agg2), verbose=FALSE)
+    a <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
+    expect_equal(a, assoc)
+
+    seqClose(seqData)
+    unlink(files)
+})
+
 test_that("arrange_chr_pos", {
     x <- data.frame(chr=c(10,2,"X",1,1), pos=c(1,1,1,2,1), stringsAsFactors=FALSE)
     xa <- x[c(5,4,2,1,3),]; rownames(xa) <- 1:5

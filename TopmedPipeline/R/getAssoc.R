@@ -26,20 +26,20 @@
 #' @param ordered Logical for whether to order the output by chromosome and position
 #' @return Association test object
 #'
-#' @importFrom dplyr "%>%" distinct_ filter_ group_by_ mutate_
+#' @importFrom dplyr "%>%" bind_rows distinct_ filter_ group_by_ mutate_
 #' @export
 combineAssoc <- function(files, assoc_type, ordered=FALSE) {
     stopifnot(assoc_type %in% c("single", "aggregate", "window"))
     x <- lapply(unname(files), getobj)
     if (assoc_type == "single") {
-        assoc <- do.call(rbind, x)
+        assoc <- bind_rows(x)
         if (ordered) {
             assoc <- .arrange_chr_pos(assoc)
         }
     } else if (assoc_type %in% c("aggregate", "window")) {
         assoc <- list()
         #assoc <- x[[1]][c("param", "nsample")]
-        assoc$results <- do.call(rbind, lapply(x, function(y) y$results))
+        assoc$results <- bind_rows(lapply(x, function(y) y$results))
         assoc$variantInfo <- do.call(c, lapply(x, function(y) y$variantInfo))
         if (ordered) {
             # get index to put units in order by chr, pos
@@ -82,17 +82,17 @@ combineAssoc <- function(files, assoc_type, ordered=FALSE) {
 #' @inheritParams combineAssoc
 #' @return data.frame including standard columns ("chr", "pos", "start", "end", "stat", "pval")
 #'
-#' @importFrom dplyr "%>%" ends_with filter_ group_by_ left_join mutate_ n rename_ select_ summarise_
+#' @importFrom dplyr "%>%" bind_rows ends_with filter_ group_by_ left_join mutate_ n rename_ select_ summarise_
 #' @export
 getAssoc <- function(files, assoc_type) {
     stopifnot(assoc_type %in% c("single", "aggregate", "window"))
-    assoc <- do.call(rbind, lapply(unname(files), function(f) {
+    assoc <- bind_rows(lapply(unname(files), function(f) {
         x <- getobj(f)
         if (assoc_type == "aggregate") {
             tmp <- x$results %>%
                 mutate_(group_id=~(1:n())) %>%
                 filter_(~(n.site > 0))
-            group.info <- do.call(rbind, lapply(tmp$group_id, function(g) {
+            group.info <- bind_rows(lapply(tmp$group_id, function(g) {
                 x$variantInfo[[g]] %>%
                     group_by_("chr") %>%
                     summarise_(start=~min(pos),
