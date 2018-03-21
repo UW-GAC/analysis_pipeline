@@ -71,9 +71,20 @@ if (as.logical(config["pass_only"])) {
     filterByPass(seqData)
 }
 
+## MAC/MAF filtering
+if (nullModel$family$family == "binomial") {
+    outcome <- colnames(nullModel$outcome)
+} else {
+    outcome <- NULL
+}
+
 mac.min <- as.numeric(config["mac_threshold"])
 maf.min <- as.numeric(config["maf_threshold"])
-filterByMAF(seqData, sample.id, mac.min, maf.min)
+if (!is.na(mac.min)) {
+    filterByMAC(seqData, sample.id, binary.outcome=outcome, mac.min=mac.min)
+} else {
+    filterByMAF(seqData, sample.id, binary.outcome=outcome, maf.min=maf.min)
+}
 
 checkSelectedVariants(seqData)
 

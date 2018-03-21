@@ -66,10 +66,10 @@ nullmod <- fitNullModel(annot, outcome=outcome, covars=covars,
 ## if we need an inverse normal transform, take residuals and refit null model
 if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
     if (is.null(group.var)) {
-        rankNorm.option <- "all"
+        norm.option <- "all"
         rescale <- "none"
     } else {
-        rankNorm.option <- "by.group"        
+        norm.option <- "by.group"        
         if (config["rescale_variance"] == "varcomp") {
             rescale <- "model"
         } else if (config["rescale_variance"] == "marginal") {
@@ -78,7 +78,7 @@ if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
     }
     
     nullmod <- nullModelInvNorm(nullmod, cov.mat=grm,
-                                rankNorm.option=rankNorm.option,
+                                norm.option=norm.option,
                                 rescale=rescale)
 }
 
