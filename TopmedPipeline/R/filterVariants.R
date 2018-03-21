@@ -149,7 +149,7 @@ filterByMAC <- function(gds, sample.id=NULL, binary.outcome=NULL, mac.min=1, ver
 #' @rdname filterVariants
 #' @export
 filterByEffN <- function(gds, sample.id=NULL, binary.outcome=NULL, effN.min=1, verbose=TRUE) {
-    stopifnot(mac.min >= 0)
+    stopifnot(effN.min >= 0)
     if (effN.min <= 1) return(invisible())
     if (sum(seqGetFilter(gds)$variant.sel) == 0) return(invisible())
     
@@ -159,7 +159,7 @@ filterByEffN <- function(gds, sample.id=NULL, binary.outcome=NULL, effN.min=1, v
     } else {
         mac <- .calcBinary(gds, sample.id, binary.outcome, .calcEffN)
     }
-    maf.filt <- mac >= mac.min
+    maf.filt <- mac >= effN.min
     if (verbose) message(paste("Running on", sum(maf.filt), "variants with effN >=", effN.min))
     seqSetFilter(gds, variant.sel=maf.filt, action="intersect", verbose=verbose)
 }
