@@ -144,9 +144,9 @@
                     "pca_corr_plots":32000,
                     "pcrelate":8000,
                     "aggregate_list":6000,
-                    "assoc_single":8000,
-                    "assoc_aggregate":8000,
-                    "assoc_window":8000,
+                    "assoc_single":16000,
+                    "assoc_aggregate":16000,
+                    "assoc_window":16000,
                     "assoc_combine":8000,
                     "assoc_plots":8000
                     }
