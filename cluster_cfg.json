@@ -6,8 +6,8 @@
     "cluster_types": {
         "AWS_Batch": {
             "aws_region": "us-west-2",
-            "pipeline_path": "/projects/topmed/dev_code/analysis_pipeline",
-            "queue": "OD_opt_queue",
+            "pipeline_path": "/usr/local/analysis_pipeline",
+            "queue": "SPOT_topmed_nfs",
             "maxperf": 1,
             "job_parameters": {
                 "wd": "",
@@ -19,12 +19,11 @@
                 "at": "0"
             },
             "submit_opts": {
-                "jobdef": "TM_nomount",
+                "jobdef": "TM_master",
                 "vcpus":  1,
                 "memory": 5000,
                 "region": "us-west-2",
                 "dependsOn": [],
-                "env": [ {"name": "R_LIBS_USER", "value": "/projects/resources/gactools/R_packages/library"} ],
                 "command": []
             },
             "memory_limits": [
@@ -132,7 +131,7 @@
                 },
                 { "24K": {
                     "cleanup":12000,
-                    "null_model":36000,
+                    "null_model":64000,
                     "grm":15000,
                     "grm_combine":12000,
                     "find_unrelated":8000,
@@ -144,10 +143,10 @@
                     "pca_corr_plots":32000,
                     "pcrelate":8000,
                     "aggregate_list":6000,
-                    "assoc_single":32000,
+                    "assoc_single":48000,
                     "assoc_aggregate":32000,
                     "assoc_window":24000,
-                    "assoc_combine":8000,
+                    "assoc_combine":16000,
                     "assoc_plots":13000
                     }
                 }

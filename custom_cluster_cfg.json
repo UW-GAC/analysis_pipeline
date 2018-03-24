@@ -1,89 +1,23 @@
 {
     "name": "cluster_config",
     "version": "2",
-    "memlim_key": "skat_test",
+    "memlim_key": "24K",
     "cluster_types": {
         "AWS_Batch": {
-            "maxperf": 1,
-            "queue": "SPOT_c4_ht_grm",
+            "queue": "SPOT_topmed_1",
             "memory_limits": [
-                { "skat": {
-                    "null_model":25000,
-                    "assoc_window":17000,
-                    "assoc_combine":5000,
-                    "assoc_plots":3000
-                    }
-                },
-                { "burden": {
-                    "null_model":25000,
-                    "assoc_window":17000,
-                    "assoc_combine":5000,
-                    "assoc_plots":3000
-                    }
-                },
-                { "burden_test": {
-                    "null_model":2000,
-                    "assoc_window":2000,
-                    "assoc_combine":2000,
-                    "assoc_plots":2000
-                    }
-                },
-                { "grm": {
-                    "grm":15000,
-                    "grm_combine":12000,
-                    "cleanup":12000
-                    }
-                },
-                { "testdata": {
-                    "find_unrelated":3500,
-                    "ld_pruning":8000,
-                    "combine_variants":1000,
-                    "ibd_king":8000,
-                    "kinship_plots":8000,
-                    "pca_byrel":4000,
-                    "pca_plots":2000,
-                    "pca_corr":4000,
-                    "pca_corr_plots":8000,
-                    "pcrelate":8000,
-                    "null_model":8000,
-                    "aggregate_list":3000,
-                    "assoc_single":8000,
-                    "assoc_aggregate":8000,
-                    "assoc_window":8000,
-                    "assoc_combine":8000,
-                    "assoc_plots":8000,
-                    "grm":8000,
-                    "grm_combine":4000,
-                    "cleanup":2000
-                    }
-                },
-                { "freeze5": {
-                    "find_unrelated":3500,
-                    "ld_pruning":11000,
-                    "combine_variants":1000,
-                    "ibd_king":8000,
-                    "kinship_plots":32000,
-                    "pca_byrel":4000,
-                    "pca_plots":1000,
-                    "pca_corr":7000,
-                    "pca_corr_plots":32000,
-                    "pcrelate":8000,
-                    "null_model":36000,
-                    "aggregate_list":6000,
-                    "assoc_single":24000,
-                    "assoc_aggregate":24000,
-                    "assoc_window":17000,
-                    "assoc_combine":10000,
-                    "assoc_plots":13000,
-                    "grm":15000,
-                    "grm_combine":12000,
-                    "cleanup":12000,
-                    "vcf2gds":16000,
-                    "merge_gds":16000,
-                    "unique_variant_ids":16000
+                { "24K": {
+                    "null_model":60000,
+                    "assoc_window":40000,
+                    "assoc_combine":16000,
+                    "assoc_plots":3000,
+                    "assoc_single":40000
                     }
                 }
-            ]
-        }
+            ],
+            "retryStrategy": {
+                "attempts": 2
+            }
+          }
     }
 }
