@@ -71,9 +71,9 @@ calculateLD <- function(gdsfile, variant.id, ref.var=NULL, sample.id=NULL) {
 
 #' Write a LD file to use in a LocusZoom plot
 #'
-#' @param x data.frame with columns "variantID", "chr", "pos"
+#' @param x data.frame with columns "variant.id", "chr", "pos"
 #' @param ld vector of LD
-#' @param ref.var variantID of the reference variant
+#' @param ref.var variant.id of the reference variant
 #' @param file output file name
 #' 
 #' @importFrom dplyr "%>%" mutate_ select_
@@ -81,7 +81,7 @@ calculateLD <- function(gdsfile, variant.id, ref.var=NULL, sample.id=NULL) {
 writeLD <- function(x, ld, ref.var, file) {
     x <- x %>%
         mutate_(snp1=~paste0("chr", chr, ":", pos))
-    x$snp2 <- x$snp1[x$variantID == ref.var]
+    x$snp2 <- x$snp1[x$variant.id == ref.var]
     x$dprime <- 0
     x$rsquare <- ld
     x <- x %>%

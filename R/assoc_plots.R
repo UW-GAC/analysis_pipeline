@@ -7,7 +7,9 @@ sessionInfo()
 
 argp <- arg_parser("Association plots")
 argp <- add_argument(argp, "config", help="path to config file")
+argp <- add_argument(argp, "--version", help="pipeline version number")
 argv <- parse_args(argp)
+cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
 required <- c("assoc_file",
@@ -34,7 +36,7 @@ if (!is.na(config["known_hits_file"]) & config["assoc_type"] == "single") {
 
 if ("stat" %in% names(assoc)) {
     ## burden or single
-    lambda <- calculateLambda(assoc$stat, df=1)
+    lambda <- calculateLambda((assoc$stat)^2, df=1)
 } else {
     ## SKAT
     lambda <- calculateLambda(qchisq(assoc$pval, df=1, lower=FALSE), df=1)

@@ -8,6 +8,9 @@
 \alias{filterByPass}
 \alias{filterBySNV}
 \alias{filterByMAF}
+\alias{filterByMAC}
+\alias{filterByEffN}
+\alias{filterByRare}
 \alias{filterByPCAcorr}
 \alias{checkSelectedVariants}
 \title{Filter SeqVarGDSClass objects}
@@ -22,7 +25,16 @@ filterByPass(gds, verbose = TRUE)
 
 filterBySNV(gds, biallelic = TRUE, verbose = TRUE)
 
-filterByMAF(gds, sample.id = NULL, mac.min = NA, maf.min = NA,
+filterByMAF(gds, sample.id = NULL, binary.outcome = NULL, maf.min = 0,
+  verbose = TRUE)
+
+filterByMAC(gds, sample.id = NULL, binary.outcome = NULL, mac.min = 1,
+  verbose = TRUE)
+
+filterByEffN(gds, sample.id = NULL, binary.outcome = NULL, effN.min = 1,
+  verbose = TRUE)
+
+filterByRare(gds, sample.id = NULL, binary.outcome = NULL, af.max = 0.01,
   verbose = TRUE)
 
 filterByPCAcorr(gds, build = "hg19", verbose = TRUE)
@@ -46,11 +58,17 @@ checkSelectedVariants(gds)
 
 \item{biallelic}{Logical for whether to select only biallelic SNVs}
 
-\item{sample.id}{Samples to include in calculating MAF}
+\item{sample.id}{Samples to include in calculating allele frequency}
 
-\item{mac.min}{Minimum minor allele count (effective N) to include}
+\item{binary.outcome}{Column name for binary outcome variable, to filter on MAF in cases or controls, whichever is lower}
 
 \item{maf.min}{Minimum MAF to include}
+
+\item{mac.min}{Minimum minor allele count to include}
+
+\item{effN.min}{Minimum effective N, calculated as 2 * MAF * (1-MAF) * n.obs}
+
+\item{af.max}{Maximum alternate allele frequency to include}
 
 \item{build}{Genome build to use when identifying regions to exclude from PCA because of high correlation (HLA, LCT, inversions)}
 }

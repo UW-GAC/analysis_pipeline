@@ -1,4 +1,4 @@
-#! /usr/local/bin/python2.7
+#! /usr/bin/env python2.7
 
 """Association tests"""
 
@@ -9,6 +9,7 @@ import subprocess
 from time import localtime, strftime
 from argparse import ArgumentParser
 from copy import deepcopy
+from shutil import copyfile
 
 description = """
 Association tests
@@ -36,6 +37,9 @@ parser.add_argument("--print_only", action="store_true", default=False,
                     help="print qsub commands without submitting")
 parser.add_argument("--verbose", action="store_true", default=False,
                     help="enable verbose output to help debug")
+parser.add_argument("--version", action="version",
+                    version="TopmedPipeline "+TopmedPipeline.__version__,
+                    help="show the version number and exit")
 args = parser.parse_args()
 
 assoc_type = args.assoc_type
@@ -49,6 +53,8 @@ email = args.email
 print_only = args.print_only
 verbose = args.verbose
 
+version = "--version " + TopmedPipeline.__version__
+
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = cluster.getPipelinePath()
@@ -57,19 +63,16 @@ driver = os.path.join(pipeline, "runRscript.sh")
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots", "report"])
 
-
-# check type of association test - single-variant unrelated is handled differently
-no_pcrel = "pcrelate_file" not in configdict or configdict["pcrelate_file"] == "NA"
-no_grm = "grm_file" not in configdict or configdict["grm_file"] == "NA"
-single_unrel = assoc_type == "single" and no_pcrel and no_grm
-
-# hold is a list of submit IDs. A submit ID ia a dict:
+# hold is a list of submit IDs. A submit ID is a dict:
 #     {jobname: [jobids]}
 hold_null_agg = []
 
 # null model
-if not single_unrel:
-    job = "null_model"
+job = "null_model"
+
+# if a null model file is given in the config, skip this step
+run_null_model = "null_model_file" not in configdict
+if run_null_model:
 
     rscript = os.path.join(pipeline, "R", job + ".R")
 
@@ -79,13 +82,15 @@ if not single_unrel:
     configfile = configdict["config_prefix"] + "_" + job + ".config"
     TopmedPipeline.writeConfig(config, configfile)
 
-    submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], email=email, print_only=print_only)
+    submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], email=email, print_only=print_only)
 
     hold_null_agg.append(submitID)
-    assocScript = "assoc_" + assoc_type
-
 else:
-    assocScript = "assoc_single_unrel"
+    print("Using null model in " + configdict["null_model_file"])
+    # copy parameter file for report
+    if "null_model_params" in configdict:
+        paramfile = os.path.basename(configdict["config_prefix"]) + "_" + job + ".config.null_model.params"
+        copyfile(configdict["null_model_params"], paramfile)
 
 
 # for aggregate tests, generate variant list
@@ -99,7 +104,7 @@ if assoc_type == "aggregate":
     configfile = configdict["config_prefix"] + "_" + job + ".config"
     TopmedPipeline.writeConfig(config, configfile)
 
-    submitID = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], array_range=chromosomes, email=email, print_only=print_only)
+    submitID = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], array_range=chromosomes, email=email, print_only=print_only)
     hold_null_agg.append(submitID)
 
 
@@ -133,10 +138,16 @@ else:
 # set up config for association test
 config = deepcopy(configdict)
 config["assoc_type"] = assoc_type
-config["null_model_file"] = configdict["data_prefix"] + "_null_model.RData"
-config["phenotype_file"] = configdict["data_prefix"] + "_phenotypes.RData"
+# if we just ran the null model, use output files as input for assoc test
+# otherwise, these parameters should already be in the config
+if run_null_model:
+    config["null_model_file"] = configdict["data_prefix"] + "_null_model.RData"
+    config["phenotype_file"] = configdict["data_prefix"] + "_phenotypes.RData"
+
 if assoc_type == "aggregate":
     config["aggregate_variant_file"] = configdict["data_prefix"] + "_aggregate_list_chr .RData"
+
+assocScript = "assoc_" + assoc_type
 config["out_prefix"] = configdict["data_prefix"] + "_" + assocScript
 config["segment_file"] = segment_file
 configfile = configdict["config_prefix"] + "_" + assocScript + ".config"
@@ -155,14 +166,14 @@ hold_combine = []
 for chromosome in chrom_list:
     job_assoc = assocScript + "_chr" + chromosome
     rscript = os.path.join(pipeline, "R", assocScript + ".R")
-    args = ["-s", rscript, configfile, "--chromosome " + chromosome]
+    args = ["-s", rscript, configfile, "--chromosome " + chromosome, version]
     # no email for jobs by segment
     submitID = cluster.submitJob(job_name=job_assoc, cmd=driver, args=args, holdid=hold_null_agg, array_range=segments[chromosome], print_only=print_only)
 
     combScript = "assoc_combine"
     job_comb = combScript + "_chr" + chromosome
     rscript = os.path.join(pipeline, "R", combScript + ".R")
-    args = [rscript, configfile, "--chromosome " + chromosome]
+    args = [rscript, configfile, "--chromosome " + chromosome, version]
     hold_assoc = [submitID]
     submitID = cluster.submitJob(job_name=job_comb, cmd=driver, args=args, holdid=hold_assoc, email=email, print_only=print_only)
 
@@ -181,7 +192,7 @@ config["out_file_qq"] = configdict["plots_prefix"] + "_qq.png"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=hold_combine, email=email, print_only=print_only)
+submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=hold_combine, email=email, print_only=print_only)
 hold_plots = [submitID]
 
 # analysis report
@@ -194,7 +205,7 @@ config["out_file"] = configdict["out_prefix"] + "_analysis_report"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=hold_plots, email=email, print_only=print_only)
+submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=hold_plots, email=email, print_only=print_only)
 hold_report = [submitID]
 
 cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=hold_report, print_only=print_only)

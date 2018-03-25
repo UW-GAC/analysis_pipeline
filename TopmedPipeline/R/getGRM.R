@@ -6,6 +6,7 @@
 #'
 #' @importFrom GENESIS pcrelateMakeGRM
 #' @importFrom gdsfmt openfn.gds closefn.gds index.gdsn read.gdsn readex.gdsn
+#' @import Matrix
 #' @export
 getGRM <- function(config, sample.id) {
     if (!is.na(config["pcrelate_file"]) & !is.na(config["grm_file"])) {
@@ -27,9 +28,14 @@ getGRM <- function(config, sample.id) {
             closefn.gds(x)
         } else {
             x <- getobj(config["grm_file"])
-            colnames(x$grm) <- rownames(x$grm) <- x$sample.id
-            keep <- x$sample.id %in% sample.id
-            grm <- x$grm[keep,keep]
+            if ("grm" %in% names(x)) {
+                colnames(x$grm) <- rownames(x$grm) <- x$sample.id
+                keep <- x$sample.id %in% sample.id
+                grm <- x$grm[keep,keep]
+            } else {
+                keep <- colnames(x) %in% sample.id
+                grm <- x[keep, keep]
+            }
         }
     } else {
         grm <- NULL

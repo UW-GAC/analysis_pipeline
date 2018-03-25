@@ -1,5 +1,5 @@
-context("test spltting analyses by segment")
-library(GENESIS)
+context("test splitting analyses by segment")
+library(genesis2)
 library(gdsfmt)
 library(SeqVarTools)
 library(Biobase)
@@ -18,10 +18,10 @@ library(GenomicRanges)
 .testNullModel <- function(seqData, MM=FALSE) {
     if (MM) {
         data(grm)
-        fitNullMM(sampleData(seqData), outcome="outcome", covars="sex", covMatList=grm, verbose=FALSE)
     } else {
-        fitNullReg(sampleData(seqData), outcome="outcome", covars="sex", verbose=FALSE)
+        grm <- NULL
     }
+    fitNullModel(sampleData(seqData), outcome="outcome", covars="sex", cov.mat=grm, verbose=FALSE)
 }
 
 .testSegFile <- function(segments) {
@@ -70,7 +70,8 @@ test_that("single", {
     for (i in seq_along(segments)) {
         seqSetFilter(seqData, variant.sel=segments[i], verbose=FALSE)
         if (sum(seqGetFilter(seqData)$variant.sel) == 0) next
-        assoc <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, verbose=FALSE))
+        iterator <- SeqVarBlockIterator(seqData, verbose=FALSE)
+        assoc <- assocTestSingle(iterator, nullmod, verbose=FALSE)
         files[i] <- tempfile()
         save(assoc, file=files[i])
     }
@@ -78,8 +79,9 @@ test_that("single", {
 
     assoc <- combineAssoc(files, "single")
 
-    seqResetFilter(seqData, verbose=FALSE)
-    a <- formatAssocSingle(seqData, assocTestMM(seqData, nullmod, chromosome=1, verbose=FALSE))
+    seqSetFilterChrom(seqData, include=1, verbose=FALSE)
+    iterator <- SeqVarBlockIterator(seqData, verbose=FALSE)
+    a <- assocTestSingle(iterator, nullmod, verbose=FALSE)
     expect_equal(a, assoc)
 
     seqClose(seqData)
@@ -87,7 +89,7 @@ test_that("single", {
 })
 
 
-test_that("aggregate", {
+test_that("aggregate - GRangesList", {
     seqData <- .testData()
     nullmod <- .testNullModel(seqData)
     data(segments)
@@ -97,24 +99,65 @@ test_that("aggregate", {
     id <- which(seqGetData(seqData, "chromosome") == 1)
     pos <- seqGetData(seqData, "position")[id]
     bins <- cut(id, breaks=10)
-    varList <- lapply(levels(bins), function(x) {
+    varList <- GRangesList(lapply(levels(bins), function(x) {
         ind <- which(bins == x)
-        data.frame(variant.id=ind, chromosome=1, position=pos[ind], allele.index=1)
-    })
+        GRanges(seqnames=1, ranges=IRanges(start=pos[ind], width=1))
+    }))
     files <- character(length(segments))
     for (i in seq_along(segments)) {
         vl <- subsetBySegment(varList, i, segfile)
         if (length(vl) == 0) next
-        assoc <- assocTestSeq(seqData, nullmod, vl, verbose=FALSE)
+        iterator <- SeqVarListIterator(seqData, vl, verbose=FALSE)
+        assoc <- assocTestAggregate(iterator, nullmod, verbose=FALSE)
         files[i] <- tempfile()
         save(assoc, file=files[i])
+        seqResetFilter(seqData, verbose=FALSE)
     }
     files <- setdiff(files, "")
 
     assoc <- combineAssoc(files, "aggregate")
 
     seqResetFilter(seqData, verbose=FALSE)
-    a <- assocTestSeq(seqData, nullmod, varList, verbose=FALSE)
+    iterator <- SeqVarListIterator(seqData, varList, verbose=FALSE)
+    a <- assocTestAggregate(iterator, nullmod, verbose=FALSE)
+    expect_equal(a, assoc)
+
+    seqClose(seqData)
+    unlink(files)
+    unlink(segfile)
+})
+
+test_that("aggregate - GRanges", {
+    seqData <- .testData()
+    nullmod <- .testNullModel(seqData)
+    data(segments)
+    segfile <- .testSegFile(segments)
+    segments <- segments[seqnames(segments) == 1]
+    
+    id <- which(seqGetData(seqData, "chromosome") == 1)
+    pos <- seqGetData(seqData, "position")[id]
+    bins <- cut(id, breaks=10)
+    varList <- do.call(c, (lapply(levels(bins), function(x) {
+        ind <- which(bins == x)
+        GRanges(seqnames=1, ranges=IRanges(start=pos[ind], width=1))
+    })))
+    files <- character(length(segments))
+    for (i in seq_along(segments)) {
+        vl <- subsetBySegment(varList, i, segfile)
+        if (length(vl) == 0) next
+        iterator <- SeqVarRangeIterator(seqData, vl, verbose=FALSE)
+        assoc <- assocTestAggregate(iterator, nullmod, verbose=FALSE)
+        files[i] <- tempfile()
+        save(assoc, file=files[i])
+        seqResetFilter(seqData, verbose=FALSE)
+    }
+    files <- setdiff(files, "")
+
+    assoc <- combineAssoc(files, "aggregate")
+
+    seqResetFilter(seqData, verbose=FALSE)
+    iterator <- SeqVarRangeIterator(seqData, varList, verbose=FALSE)
+    a <- assocTestAggregate(iterator, nullmod, verbose=FALSE)
     expect_equal(a, assoc)
 
     seqClose(seqData)
@@ -140,8 +183,8 @@ test_that("window", {
     for (i in seq_along(segments)) {
         filterBySegment(seqData, i, segfile, pad.right=size*1000, verbose=FALSE)
         if (sum(seqGetFilter(seqData)$variant.sel) == 0) next
-        id <- seqGetData(seqData, "variant.id")
-        assoc <- assocTestSeqWindow(seqData, nullmod, variant.include=id, window.size=size, window.shift=shift, verbose=FALSE)
+        iterator <- SeqVarWindowIterator(seqData, windowSize=size, windowShift=shift, verbose=FALSE)
+        assoc <- assocTestAggregate(iterator, nullmod, verbose=FALSE)
         files[i] <- tempfile()
         save(assoc, file=files[i])
     }
@@ -149,8 +192,9 @@ test_that("window", {
 
     assoc <- combineAssoc(files, "window")
 
-    seqResetFilter(seqData, verbose=FALSE)
-    a <- assocTestSeqWindow(seqData, nullmod, chromosome=22, window.size=size, window.shift=shift, verbose=FALSE)
+    seqSetFilterChrom(seqData, include=22, verbose=FALSE)
+    iterator <- SeqVarWindowIterator(seqData, windowSize=size, windowShift=shift, verbose=FALSE)
+    a <- assocTestAggregate(iterator, nullmod, verbose=FALSE)
     expect_equal(a, assoc)
 
     seqClose(seqData)
@@ -159,7 +203,7 @@ test_that("window", {
 })
 
 
-test_that("build  38", {
+test_that("build 38", {
     data(chromosomes_hg38)
     n <- sample(1:23, 1)
     seg <- defineSegments(n=n, build="hg38")

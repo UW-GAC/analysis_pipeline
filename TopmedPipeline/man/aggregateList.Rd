@@ -4,30 +4,40 @@
 \alias{aggregateList}
 \alias{aggregateListByAllele}
 \alias{aggregateListByPosition}
+\alias{aggregateGRangesList}
+\alias{aggregateGRanges}
 \title{Aggregate variant lists}
 \usage{
 aggregateListByAllele(gds, variants, indexOnly = FALSE)
 
 aggregateListByPosition(gds, groups, indexOnly = FALSE)
+
+aggregateGRangesList(variants)
+
+aggregateGRanges(groups)
 }
 \arguments{
 \item{gds}{A \code{\link[SeqArray]{SeqVarGDSClass}} object}
 
-\item{variants}{A data.frame of variants with columns "group_id", "chromosome", "position", "ref", "alt".}
+\item{variants}{A data.frame of variants with columns "group_id", "chr", "pos", "ref", "alt".}
 
 \item{indexOnly}{Logical for whether to return only the "variant.id" and "allele.index" columns in the output (see Value).}
 
-\item{groups}{A data.frame of groups with column "group_id", "chromosome", "start", "end".}
+\item{groups}{A data.frame of groups with column "group_id", "chr", "start", "end".}
 }
 \value{
 A list of data frames, one for each group. A single variant may have multiple rows if multiple alternate alleles are selected. Each data frame contains the following columns:
 \item{variant.id}{Unique identifier for the variant}
-\item{chromosome}{Chromosome}
-\item{position}{Position in base pairs}
+\item{chr}{Chromosome}
+\item{pos}{Position in base pairs}
 \item{ref}{Reference allele}
 \item{nAlleles}{Total number of alleles for this variant}
 \item{allele}{Alternate allele}
 \item{allele.index}{Integer index of this allele (1=first alternate, 2=second alternate, etc.)}
+
+A GRangesList with one element per group
+
+A GRanges with one range per group
 }
 \description{
 Generate lists of variants for input to association tests
@@ -39,8 +49,8 @@ These functions produce output suitable for providing to \code{\link[GENESIS]{as
 library(SeqVarTools)
 gds <- seqOpen(seqExampleFileName())
 seqSetFilter(gds, variant.sel=seqGetData(gds, "chromosome") == 22)
-variants <- data.frame(chromosome=seqGetData(gds, "chromosome"),
-                       position=seqGetData(gds, "position"),
+variants <- data.frame(chr=seqGetData(gds, "chromosome"),
+                       pos=seqGetData(gds, "position"),
                        ref=refChar(gds),
                        alt=altChar(gds, n=1),
                        stringsAsFactors=FALSE)
@@ -48,7 +58,7 @@ variants$group_id <- sample(LETTERS[1:2], nrow(variants), replace=TRUE)
 aggregateListByAllele(gds, variants)
 
 groups <- data.frame(group_id=LETTERS[1:2],
-                     chromosome=22,
+                     chr=22,
                      start=c(16000000, 2900000), 
                      end=c(30000000, 49000000),
 		     stringsAsFactors=FALSE)

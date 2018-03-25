@@ -1,4 +1,4 @@
-#! /usr/local/bin/python2.7
+#! /usr/bin/env python2.7
 
 """LocusZoom"""
 
@@ -23,6 +23,9 @@ parser.add_argument("-e", "--email", default=None,
                     help="email address for job reporting")
 parser.add_argument("--print_only", action="store_true", default=False,
                     help="print cluster commands without submitting")
+parser.add_argument("--version", action="version",
+                    version="TopmedPipeline "+TopmedPipeline.__version__,
+                    help="show the version number and exit")
 args = parser.parse_args()
 
 configfile = args.config_file
@@ -31,6 +34,8 @@ cluster_type = args.cluster_type
 email = args.email
 print_only = args.print_only
 verbose = args.verbose
+
+version = "--version " + TopmedPipeline.__version__
 
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
@@ -49,7 +54,7 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 n = TopmedPipeline.countLines(configdict["locus_file"])
 range = "1-" + str(n-1)
 
-args = ["-s", rscript, configfile]
+args = ["-s", rscript, configfile, version]
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=args, array_range=range, email=email, print_only=print_only)
 
 

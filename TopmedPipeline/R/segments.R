@@ -101,21 +101,30 @@ getSegments <- function(file) {
 #' 
 #' Select groups of variants where the first variant in the group is in the requested segment
 #'
-#' @param varList A list of data.frames, each with columns "chromosome" and "position"
+#' @param varList A list of data.frames, each with columns "chr" and "pos" OR a GRanges or GRangesList
 #' @param segment An integer indicating which segment to select
 #' @param segment.file The name of the file describing segments
 #' @return Subset of \code{varList} where the first variant is in the segment \code{segment}
 #' @seealso \code{\link{defineSegments}}, \code{\link{writeSegmentFile}}, \code{\link{filterBySegment}}, \code{\link{aggregateList}}
 #' 
-#' @importFrom GenomicRanges GRanges findOverlaps
+#' @importFrom GenomicRanges findOverlaps GRanges
 #' @importFrom IRanges IRanges
-#' @importFrom S4Vectors queryHits
+#' @importFrom S4Vectors endoapply queryHits
+#' @importFrom methods is
 #' @export
 subsetBySegment <- function(varList, segment, segment.file) {
     # create a GRanges object containing the first variant from each item in varList
-    dat <- do.call(rbind, lapply(varList, function(x) x[1,]))
-    gr <- GRanges(seqnames=dat$chromosome,
-                  ranges=IRanges(start=dat$position, end=dat$position))
+    if (is(varList, "GRangesList")) {
+        gr <- BiocGenerics::unlist(endoapply(varList, function(x) x[1]))
+    } else if (is(varList, "GRanges")) {
+        gr <- varList
+    } else if (is.list(varList)) {
+        dat <- do.call(rbind, lapply(varList, function(x) x[1,]))
+        gr <- GRanges(seqnames=dat$chr,
+                      ranges=IRanges(start=dat$pos, end=dat$pos))
+    } else {
+        stop("varList must be a list, GRanges, or GRangesList")
+    }
     
     segments <- getSegments(segment.file)
     ind <- queryHits(findOverlaps(gr, segments[segment]))

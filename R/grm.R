@@ -7,7 +7,9 @@ sessionInfo()
 argp <- arg_parser("GRM")
 argp <- add_argument(argp, "config", help="path to config file")
 argp <- add_argument(argp, "--chromosome", help="chromosome (1-24 or X,Y)", type="character")
+argp <- add_argument(argp, "--version", help="pipeline version number")
 argv <- parse_args(argp)
+cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)
 
@@ -68,11 +70,20 @@ method <- switch(tolower(config["method"]),
                  gcta="GCTA",
                  eigmix="EIGMIX")
 
+## write to the scratch disk of each node
+outfile.tmp <- tempfile()
+message("gds temporarily located at ", outfile.tmp)
+
 snpgdsGRM(gds, sample.id=sample.id, snp.id=variant.id,
-          maf=maf.min, method=method, out.fn=outfile,
+          maf=maf.min, method=method, out.fn=outfile.tmp,
           num.thread=countThreads())
 
 seqClose(gds)
+
+## copy it
+file.copy(outfile.tmp, outfile)
+## remove the tmp file
+file.remove(outfile.tmp)
 
 # mem stats
 ms <- gc()
