@@ -43,7 +43,7 @@ verbose = args.verbose
 
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
-pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
+pipeline = cluster.getPipelinePath()
 driver = os.path.join(pipeline, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
