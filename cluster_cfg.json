@@ -84,7 +84,7 @@
                 }
             },
             "run_cmd": {
-                "cmd": "docker run --privileged uwgac/r343-topmed:devel /usr/local/analysis_pipeline/batchJob.py",
+                "cmd": "docker run --privileged uwgac/topmed-master /usr/local/analysis_pipeline/batchJob.py",
                 "params": {
                     "--rdriver": "",
                     "--rargs": "",
@@ -130,11 +130,7 @@
                     }
                 },
                 { "24K": {
-<<<<<<< HEAD
-                    "cleanup":12000,
-=======
                     "cleanup":2000,
->>>>>>> devel
                     "null_model":64000,
                     "grm":15000,
                     "grm_combine":12000,
@@ -147,19 +143,11 @@
                     "pca_corr_plots":32000,
                     "pcrelate":8000,
                     "aggregate_list":6000,
-<<<<<<< HEAD
-                    "assoc_single":48000,
-                    "assoc_aggregate":32000,
-                    "assoc_window":24000,
-                    "assoc_combine":16000,
-                    "assoc_plots":13000
-=======
                     "assoc_single":16000,
                     "assoc_aggregate":16000,
                     "assoc_window":16000,
                     "assoc_combine":8000,
                     "assoc_plots":8000
->>>>>>> devel
                     }
                 }
             ]
