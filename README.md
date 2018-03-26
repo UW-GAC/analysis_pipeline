@@ -304,6 +304,8 @@ The script [`assoc.py`](assoc.py) submits a SGE array job for each chromosome, w
 
 To run additional tests using the same null model as a previous test, add the config parameters `null_model_file` and `null_model_params`. `null_model_file` is the output file created by a previous association test run. `null_model_params` is the parameter file ending in `null_model.params` in the `report` directory for the previous association test. The parameter file is needed to generate the report for the new test.
 
+If the number of samples in the initial phenotype file was less than the total number of samples in the GDS file, also provide `phenotype_file` as the output phenotype file created along with the null model file.
+
 
 
 ## LocusZoom
