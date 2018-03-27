@@ -10,17 +10,17 @@
             "queue": "SPOT_topmed_nfs",
             "maxperf": 1,
             "job_parameters": {
-                "wd" : "",
-                "rd" : "",
-                "ra" : "",
+                "wd" : "tbd",
+                "rd" : "tbd",
+                "ra" : "tbd",
                 "lf" : "runrscript.log",
                 "bm" : "1",
                 "tmo": "60",
                 "db" : "1",
                 "po" : "0",
                 "at" : "0",
-                "mc" : "",
-                "tf" : ""
+                "mc" : "not used",
+                "tf" : "tbd"
             },
             "submit_opts": {
                 "jobdef": "TM_master",
