@@ -6,25 +6,28 @@
     "cluster_types": {
         "AWS_Batch": {
             "aws_region": "us-west-2",
-            "pipeline_path": "/projects/topmed/dev_code/analysis_pipeline",
-            "queue": "OD_opt_queue",
+            "pipeline_path": "/usr/local/analysis_pipeline",
+            "queue": "SPOT_topmed_nfs",
             "maxperf": 1,
             "job_parameters": {
-                "wd": "",
-                "dr": "/projects",
-                "db": "1",
-                "lf": "",
+                "wd" : "",
+                "rd" : "tbd",
+                "ra" : "tbd",
+                "lf" : "runrscript.log",
+                "bm" : "1",
                 "tmo": "60",
-                "mt": "mount -t nfs4 -o vers=4.1 fs-6ccd31c5.efs.us-west-2.amazonaws.com:/ /projects",
-                "at": "0"
+                "db" : "1",
+                "po" : "0",
+                "at" : "0",
+                "mc" : "not used",
+                "tf" : "tbd"
             },
             "submit_opts": {
-                "jobdef": "TM_nomount",
+                "jobdef": "TM_master",
                 "vcpus":  1,
                 "memory": 5000,
                 "region": "us-west-2",
                 "dependsOn": [],
-                "env": [ {"name": "R_LIBS_USER", "value": "/projects/resources/gactools/R_packages/library"} ],
                 "command": []
             },
             "memory_limits": [
@@ -85,7 +88,7 @@
                 }
             },
             "run_cmd": {
-                "cmd": "docker run --privileged uwgac/r343-topmed:devel /usr/local/analysis_pipeline/batchJob.py",
+                "cmd": "docker run --privileged uwgac/topmed-master /usr/local/analysis_pipeline/batchJob.py",
                 "params": {
                     "--rdriver": "",
                     "--rargs": "",

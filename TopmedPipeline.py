@@ -185,12 +185,14 @@ class Cluster(object):
     def __init__(self, cluster_file=None, verbose=False):
         self.verbose = verbose
         self.class_name = self.__class__.__name__
+        # set default pipeline path
+        self.pipelinePath = os.path.dirname(os.path.abspath(sys.argv[0]))
+
         self.openClusterCfg("./cluster_cfg.json", cluster_file, verbose)
 
     def openClusterCfg(self, stdCfgFile, optCfgFile, verbose):
         # get the standard cluster cfg
-        pipePath = os.path.dirname(os.path.abspath(sys.argv[0]))
-        self.clusterfile =  os.path.join(pipePath, "./cluster_cfg.json")
+        self.clusterfile =  os.path.join(self.pipelinePath, stdCfgFile)
         self.printVerbose("0>> openClusterCfg: Reading internal cfg file: " + self.clusterfile)
 
         with open(self.clusterfile) as cfgFileHandle:
@@ -240,6 +242,14 @@ class Cluster(object):
         else:
             self.memlim_key = "freeze5"
 
+        # update pipeline path if specified
+        key = "pipeline_path"
+        if key in self.clusterCfg:
+            self.pipelinePath = self.clusterCfg["pipeline_path"]
+
+    def getPipelinePath(self):
+        return self.pipelinePath
+
     def getClusterCfg(self):
         return self.clusterCfg
 
@@ -271,7 +281,7 @@ class AWS_Batch(Cluster):
         #user = getpass.getuser()
         wdkey = "wd"
         if wdkey not in self.jobParams or self.jobParams[wdkey] == "":
-            self.jobParams[wdkey] = os.getcwd()
+            self.jobParams[wdkey] = os.getenv('PWD')
 
         # set maxperf
         self.maxperf = True
@@ -287,8 +297,6 @@ class AWS_Batch(Cluster):
         # get the sync job options
         self.syncOpts = self.clusterCfg["sync_job"]
 
-        # analysis_pipeline path in the docker image
-        self.pipelinePath = self.clusterCfg["pipeline_path"]
         # get the queue
         self.queue = self.clusterCfg["queue"]
 
@@ -359,12 +367,8 @@ class AWS_Batch(Cluster):
         # set rdriver
         key = "--rdriver"
         if key not in runCmdOpts["params"].keys() or runCmdOpts["params"][key] == "":
-            # if use pipelinePath from cfg if defined
-            pipelinePath = os.path.dirname(os.path.abspath(cmd[0]))
             baseName = os.path.basename(cmd[0])
-            if self.pipelinePath != "":
-                pipelinePath = self.pipelinePath
-            runCmdOpts["params"][key] = os.path.join(pipelinePath, baseName)
+            runCmdOpts["params"][key] = os.path.join(self.pipelinePath, baseName)
 
         # set rargs
         key = "--rargs"
@@ -411,16 +415,16 @@ class AWS_Batch(Cluster):
         pipelinePath = self.pipelinePath
         # set the R driver and arguments (e.g., -s rcode cfg --chr cn)
         key = "rd"
-        # if pipeline path not defined in cfg, then use path from cmd
-        if pipelinePath == "":
-            pipelinePath = os.path.dirname(os.path.abspath(cmd))
         baseName = os.path.basename(cmd)
-        jobParams[key] = os.path.join(pipelinePath, baseName)
+        jobParams[key] = os.path.join(self.pipelinePath, baseName)
 
         key = "ra"
         if args is None:
             args = ["NoArgs"]
         jobParams[key] = " ".join(args)
+# trace file
+        key = "tf"
+        jobParams[key] = job_name + "_trace.log"
 
         # using time set a job id (which is for tracking; not the batch job id)
         trackID = job_name + "_" + str(int(time.time()*100))
@@ -454,8 +458,15 @@ class AWS_Batch(Cluster):
             submitHolds = []
         log_prefix = trackID
         jobParams['lf'] = log_prefix
-        submitOpts["env"].append( { "name": "JOB_ID",
-                                    "value": trackID } )
+
+        # environment variables
+        key = "env"
+        if key in submitOpts:
+            submitOpts[key].append( { "name": "JOB_ID",
+                                        "value": trackID } )
+        else:
+            submitOpts[key]=[ { "name": "JOB_ID",
+                                "value": trackID } ]
 
         # if we're doing an array job, specify arrayProperty; else just submit one job
         if not print_only:
@@ -518,17 +529,20 @@ class AWS_Batch(Cluster):
                 taskList = range( air[0], air[1]+1 )
                 noJobs = len(taskList)
                 jobName = job_name + "_" + str(noJobs)
-                submitOpts["env"].append( { "name": "FIRST_INDEX",
-                                            "value": str(taskList[0]) } )
+                if "env" in submitOpts:
+                    submitOpts["env"].append( { "name": "FIRST_INDEX",
+                                                "value": str(taskList[0]) } )
+                else:
+                    submitOpts["env"]=[ { "name": "JOB_ID",
+                                          "value": trackID } ]
                 jobParams["at"] = "1"
                 jobParams['lf'] = jobParams['lf'] + ".task"
-                submitOpts["env"].append( { "name": "FIRST_INDEX",
-                                            "value": str(taskList[0]) } )
                 print("\t\tsubmitJob: " + jobName + " is an array job - no. tasks: " + str(noJobs))
                 print("\t\tFIRST_INDEX: " + str(taskList[0]))
             else:
                 print("\tjob is a single job")
             print("\tlog file: " + jobParams['lf'])
+            print("\ttrace file: " + jobParams['tf'])
             print("\tJOB_ID: " + trackID)
             print("\tbatch queue: " + self.queue)
             print("\tjob definition: " + submitOpts["jobdef"])
