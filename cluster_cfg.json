@@ -10,7 +10,7 @@
             "queue": "SPOT_topmed_nfs",
             "maxperf": 1,
             "job_parameters": {
-                "wd" : "tbd",
+                "wd" : "",
                 "rd" : "tbd",
                 "ra" : "tbd",
                 "lf" : "runrscript.log",
