@@ -422,6 +422,9 @@ class AWS_Batch(Cluster):
         if args is None:
             args = ["NoArgs"]
         jobParams[key] = " ".join(args)
+# trace file
+        key = "tf"
+        jobParams[key] = job_name + "_trace.log"
 
         # using time set a job id (which is for tracking; not the batch job id)
         trackID = job_name + "_" + str(int(time.time()*100))
@@ -539,6 +542,7 @@ class AWS_Batch(Cluster):
             else:
                 print("\tjob is a single job")
             print("\tlog file: " + jobParams['lf'])
+            print("\ttrace file: " + jobParams['tf'])
             print("\tJOB_ID: " + trackID)
             print("\tbatch queue: " + self.queue)
             print("\tjob definition: " + submitOpts["jobdef"])
