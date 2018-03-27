@@ -285,3 +285,46 @@ test_that("omitKnownHits", {
     res <- omitKnownHits(assoc, hits, flank=1)
     expect_true(nrow(res) < nrow(assoc))
 })
+
+
+
+test_that("MAC - single", {
+    seqData <- SeqVarBlockIterator(.testData(), verbose=FALSE)
+    nullmod <- .testNullModel(seqData)
+    seqSetFilterChrom(seqData, include=1, verbose=FALSE)
+    a <- assocTestSingle(seqData, nullmod, test="Wald", verbose=FALSE)
+    a <- addMAC(a, "single")
+    expect_true("MAC" %in% names(a))
+    
+    files <- tempfile()
+    save(a, file=files)
+    assoc <- getAssoc(files, "single")
+    expect_true("MAC" %in% names(assoc))
+    
+    seqClose(seqData)
+    unlink(files)
+})
+
+
+
+test_that("MAC - window", {
+    seqData <- .testData()
+    nullmod <- .testNullModel(seqData)
+    seqSetFilterChrom(seqData, include=1, verbose=FALSE)
+    seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
+    a <- assocTestAggregate(seqData, nullmod, verbose=FALSE)
+    a <- addMAC(a, "window")
+    expect_true("MAC" %in% names(a$results))
+
+    # for variants where alt is minor allele, n.alt should be MAC
+    alt.min <- which(sapply(a$variantInfo, function(x) all(x$freq < 0.5)))
+    expect_equal(a$results$n.alt[alt.min], a$results$MAC[alt.min])
+    
+    files <- tempfile()
+    save(a, file=files)
+    assoc <- getAssoc(files, "window")
+    expect_true("MAC" %in% names(assoc))
+    
+    seqClose(seqData)
+    unlink(files)
+})

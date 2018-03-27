@@ -127,6 +127,8 @@ assoc <- assocTestAggregate(iterator, nullModel,
                             rho=rho,
                             pval.method=pval)
 
+assoc <- addMAC(assoc, "window")
+
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 
 seqClose(seqData)

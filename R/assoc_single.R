@@ -98,6 +98,8 @@ test <- switch(tolower(config["test_type"]),
 
 assoc <- assocTestSingle(iterator, nullModel, test=test)
 
+assoc <- addMAC(assoc, "single")
+
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 
 seqClose(seqData)

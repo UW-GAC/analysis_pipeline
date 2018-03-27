@@ -80,7 +80,7 @@ combineAssoc <- function(files, assoc_type, ordered=FALSE) {
 #' If a single aggregate unit contains variants from multiple chromosomes, each chromosome will have its own row in the output.
 #' 
 #' @inheritParams combineAssoc
-#' @return data.frame including standard columns ("chr", "pos", "start", "end", "stat", "pval")
+#' @return data.frame including standard columns ("chr", "pos", "start", "end", "stat", "pval", "MAC")
 #'
 #' @importFrom dplyr "%>%" bind_rows ends_with filter_ group_by_ left_join mutate_ n rename_ select_ summarise_
 #' @export
@@ -114,11 +114,12 @@ getAssoc <- function(files, assoc_type) {
     if ("pval_0" %in% names(assoc)) {
         ## SKAT
         pval.col <- if ("pval_SKATO" %in% names(assoc)) "pval_SKATO" else "pval_0"
-        assoc <- select_(assoc, "chr", "pos", "start", "end", pval.col) %>%
+        assoc <- select_(assoc, "chr", "pos", "start", "end", pval.col, ~suppressWarnings(one_of("MAC"))) %>%
             rename_(pval=pval.col)
     } else {
         ## burden or single
-        assoc <- select_(assoc, "chr", "pos", "start", "end", ~ends_with("Stat"), ~ends_with("pval"))
+        assoc <- select_(assoc, "chr", "pos", "start", "end", ~ends_with("Stat"), ~ends_with("pval"),
+                         ~suppressWarnings(one_of("MAC")))
         names(assoc)[5:6] <- c("stat", "pval")
     }
     assoc <- filter_(assoc, ~(!is.na(pval))) %>%
@@ -145,4 +146,24 @@ omitKnownHits <- function(assoc, hits, flank=500) {
                                               end=hits$pos+(flank*1000)))
     ol <- findOverlaps(assoc.gr, hits.gr)
     assoc[-queryHits(ol),]
+}
+
+
+#' Add MAC column to associtation test output
+#'
+#' @param assoc results from \code{\link{assocTestSingle}} or \code{\link{assocTestAggregate}}
+#' @param assoc_type Type of association test ("single", "aggregate", "window")
+#' @return \code{assoc} with a "MAC" column added to the results data.frame
+#'
+#' @export
+addMAC <- function(assoc, assoc_type) {
+    mac <- function(x) {
+        2 * x$n.obs * pmin(x$freq, 1-x$freq)
+    }
+    if (assoc_type == "single") {
+        assoc$MAC <- mac(assoc)
+    } else if (assoc_type %in% c("aggregate", "window")) {
+        assoc$results$MAC <- sapply(assoc$variantInfo, function(x) sum(mac(x)))
+    }
+    assoc
 }
