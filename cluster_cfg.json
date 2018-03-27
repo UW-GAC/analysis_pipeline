@@ -10,13 +10,17 @@
             "queue": "SPOT_topmed_nfs",
             "maxperf": 1,
             "job_parameters": {
-                "wd": "",
-                "dr": "/projects",
-                "db": "1",
-                "lf": "",
+                "wd" : "",
+                "rd" : "",
+                "ra" : "",
+                "lf" : "runrscript.log",
+                "bm" : "1",
                 "tmo": "60",
-                "mt": "mount -t nfs4 -o vers=4.1 fs-6ccd31c5.efs.us-west-2.amazonaws.com:/ /projects",
-                "at": "0"
+                "db" : "1",
+                "po" : "0",
+                "at" : "0",
+                "mc" : "",
+                "tf" : ""
             },
             "submit_opts": {
                 "jobdef": "TM_master",
