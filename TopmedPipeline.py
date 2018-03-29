@@ -439,7 +439,7 @@ class AWS_Batch(Cluster):
             nci = int(ncs[len(ncs)-1])
             submitOpts[key] = nci
             key2 = "env"
-            if key in submitOpts:
+            if key2 in submitOpts:
                 submitOpts[key2].append( { "name": "NSLOTS",
                                             "value": str(nci) } )
             else:
