@@ -438,8 +438,13 @@ class AWS_Batch(Cluster):
             ncs = request_cores.split("-")
             nci = int(ncs[len(ncs)-1])
             submitOpts[key] = nci
-            submitOpts["env"].append( { "name": "NSLOTS",
-                                        "value": str(nci) } )
+            key2 = "env"
+            if key in submitOpts:
+                submitOpts[key2].append( { "name": "NSLOTS",
+                                            "value": str(nci) } )
+            else:
+                submitOpts[key2]=[ { "name": "NSLOTS",
+                                    "value": str(nci) } ]
         if self.maxperf:
             submitOpts[key] = 2*submitOpts[key]
 
