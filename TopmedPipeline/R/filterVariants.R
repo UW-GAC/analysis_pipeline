@@ -131,7 +131,7 @@ filterByMAF <- function(gds, sample.id=NULL, binary.outcome=NULL, maf.min=0, ver
 #' @export
 filterByMAC <- function(gds, sample.id=NULL, binary.outcome=NULL, mac.min=1, verbose=TRUE) {
     stopifnot(mac.min >= 0)
-    if (mac.min <= 1) return(invisible())
+    if (mac.min == 0) return(invisible())
     if (sum(seqGetFilter(gds)$variant.sel) == 0) return(invisible())
     
     if (is.null(sample.id)) sample.id <- seqGetData(gds, "sample.id")
@@ -150,7 +150,7 @@ filterByMAC <- function(gds, sample.id=NULL, binary.outcome=NULL, mac.min=1, ver
 #' @export
 filterByEffN <- function(gds, sample.id=NULL, binary.outcome=NULL, effN.min=1, verbose=TRUE) {
     stopifnot(effN.min >= 0)
-    if (effN.min <= 1) return(invisible())
+    if (effN.min == 0) return(invisible())
     if (sum(seqGetFilter(gds)$variant.sel) == 0) return(invisible())
     
     if (is.null(sample.id)) sample.id <- seqGetData(gds, "sample.id")
