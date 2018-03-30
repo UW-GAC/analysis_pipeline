@@ -104,23 +104,18 @@ filterBySNV <- function(gds, biallelic=TRUE, verbose=TRUE) {
 }
 
 #' @param sample.id Samples to include in calculating allele frequency
-#' @param binary.outcome Column name for binary outcome variable, to filter on MAF in cases or controls, whichever is lower
 #' @param maf.min Minimum MAF to include
 #' @rdname filterVariants
 #'
 #' @import SeqArray
 #' @export
-filterByMAF <- function(gds, sample.id=NULL, binary.outcome=NULL, maf.min=0, verbose=TRUE) {
+filterByMAF <- function(gds, sample.id=NULL, maf.min=0, verbose=TRUE) {
     stopifnot(maf.min >= 0 & maf.min <= 0.5)
     if (maf.min == 0) return(invisible())
     if (sum(seqGetFilter(gds)$variant.sel) == 0) return(invisible())
     
     if (is.null(sample.id)) sample.id <- seqGetData(gds, "sample.id")
-    if (is.null(binary.outcome)) {
-        maf <- .calcMAF(gds, sample.id)
-    } else {
-        maf <- .calcBinary(gds, sample.id, binary.outcome, .calcMAF)
-    }
+    maf <- .calcMAF(gds, sample.id)
     maf.filt <- maf >= maf.min
     if (verbose) message(paste("Running on", sum(maf.filt), "variants with MAF >=", maf.min))
     seqSetFilter(gds, variant.sel=maf.filt, action="intersect", verbose=verbose)
@@ -129,17 +124,13 @@ filterByMAF <- function(gds, sample.id=NULL, binary.outcome=NULL, maf.min=0, ver
 #' @param mac.min Minimum minor allele count to include
 #' @rdname filterVariants
 #' @export
-filterByMAC <- function(gds, sample.id=NULL, binary.outcome=NULL, mac.min=1, verbose=TRUE) {
+filterByMAC <- function(gds, sample.id=NULL, mac.min=1, verbose=TRUE) {
     stopifnot(mac.min >= 0)
     if (mac.min == 0) return(invisible())
     if (sum(seqGetFilter(gds)$variant.sel) == 0) return(invisible())
     
     if (is.null(sample.id)) sample.id <- seqGetData(gds, "sample.id")
-    if (is.null(binary.outcome)) {
-        mac <- .calcMAC(gds, sample.id)
-    } else {
-        mac <- .calcBinary(gds, sample.id, binary.outcome, .calcMAC)
-    }
+    mac <- .calcMAC(gds, sample.id)
     maf.filt <- mac >= mac.min
     if (verbose) message(paste("Running on", sum(maf.filt), "variants with MAC >=", mac.min))
     seqSetFilter(gds, variant.sel=maf.filt, action="intersect", verbose=verbose)
@@ -148,17 +139,13 @@ filterByMAC <- function(gds, sample.id=NULL, binary.outcome=NULL, mac.min=1, ver
 #' @param effN.min Minimum effective N, calculated as 2 * MAF * (1-MAF) * n.obs
 #' @rdname filterVariants
 #' @export
-filterByEffN <- function(gds, sample.id=NULL, binary.outcome=NULL, effN.min=1, verbose=TRUE) {
+filterByEffN <- function(gds, sample.id=NULL, effN.min=1, verbose=TRUE) {
     stopifnot(effN.min >= 0)
     if (effN.min == 0) return(invisible())
     if (sum(seqGetFilter(gds)$variant.sel) == 0) return(invisible())
     
     if (is.null(sample.id)) sample.id <- seqGetData(gds, "sample.id")
-    if (is.null(binary.outcome)) {
-        mac <- .calcEffN(gds, sample.id)
-    } else {
-        mac <- .calcBinary(gds, sample.id, binary.outcome, .calcEffN)
-    }
+    mac <- .calcEffN(gds, sample.id)
     maf.filt <- mac >= effN.min
     if (verbose) message(paste("Running on", sum(maf.filt), "variants with effN >=", effN.min))
     seqSetFilter(gds, variant.sel=maf.filt, action="intersect", verbose=verbose)
@@ -178,17 +165,13 @@ filterByEffN <- function(gds, sample.id=NULL, binary.outcome=NULL, effN.min=1, v
 #' @import SeqArray
 #' @importFrom SeqVarTools alleleFrequency
 #' @export
-filterByRare <- function(gds, sample.id=NULL, binary.outcome=NULL, af.max=0.01, verbose=TRUE) {
+filterByRare <- function(gds, sample.id=NULL, af.max=0.01, verbose=TRUE) {
     stopifnot(af.max >= 0 & af.max <= 1)
     if (af.max == 1) return(invisible())
     if (sum(seqGetFilter(gds)$variant.sel) == 0) return(invisible())
     
     if (is.null(sample.id)) sample.id <- seqGetData(gds, "sample.id")
-    if (is.null(binary.outcome)) {
-        alt.freq <- .calcAltFreq(gds, sample.id)
-    } else {
-        alt.freq <- .calcBinary(gds, sample.id, binary.outcome, .calcAltFreq)
-    }
+    alt.freq <- .calcAltFreq(gds, sample.id)
     af.filt <- alt.freq > 0 & alt.freq < 1 & alt.freq <= af.max
 
     ## check frequency for multiallelic variants

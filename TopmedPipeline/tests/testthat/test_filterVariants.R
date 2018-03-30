@@ -160,23 +160,6 @@ test_that("filterByMAF", {
 })
 
 
-test_that("filterByMAF - binary", {
-    gds <- .testBinaryData()
-    seqSetFilter(gds, sample.sel=(sampleData(gds)$outcome == 1), verbose=FALSE)
-    freq.1 <- alleleFrequency(gds)
-    seqResetFilter(gds, verbose=FALSE)
-    seqSetFilter(gds, sample.sel=(sampleData(gds)$outcome == 0), verbose=FALSE)
-    freq.0 <- alleleFrequency(gds)
-    maf <- pmin(pmin(freq.0, 1-freq.0), pmin(freq.1, 1-freq.1))
-    
-    seqResetFilter(gds, verbose=FALSE)
-    filterByMAF(gds, binary.outcome="outcome", maf.min=0.1, verbose=FALSE)
-    expect_equal(sum(seqGetFilter(gds)$variant.sel), sum(maf >= 0.1))
-
-    seqClose(gds)
-})
-
-
 test_that("filterByMAC", {
     gds <- .testData()
     cnt1 <- alleleCount(gds)

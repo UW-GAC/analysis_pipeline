@@ -25,17 +25,13 @@ filterByPass(gds, verbose = TRUE)
 
 filterBySNV(gds, biallelic = TRUE, verbose = TRUE)
 
-filterByMAF(gds, sample.id = NULL, binary.outcome = NULL, maf.min = 0,
-  verbose = TRUE)
+filterByMAF(gds, sample.id = NULL, maf.min = 0, verbose = TRUE)
 
-filterByMAC(gds, sample.id = NULL, binary.outcome = NULL, mac.min = 1,
-  verbose = TRUE)
+filterByMAC(gds, sample.id = NULL, mac.min = 1, verbose = TRUE)
 
-filterByEffN(gds, sample.id = NULL, binary.outcome = NULL, effN.min = 1,
-  verbose = TRUE)
+filterByEffN(gds, sample.id = NULL, effN.min = 1, verbose = TRUE)
 
-filterByRare(gds, sample.id = NULL, binary.outcome = NULL, af.max = 0.01,
-  verbose = TRUE)
+filterByRare(gds, sample.id = NULL, af.max = 0.01, verbose = TRUE)
 
 filterByPCAcorr(gds, build = "hg19", verbose = TRUE)
 
@@ -59,8 +55,6 @@ checkSelectedVariants(gds)
 \item{biallelic}{Logical for whether to select only biallelic SNVs}
 
 \item{sample.id}{Samples to include in calculating allele frequency}
-
-\item{binary.outcome}{Column name for binary outcome variable, to filter on MAF in cases or controls, whichever is lower}
 
 \item{maf.min}{Minimum MAF to include}
 

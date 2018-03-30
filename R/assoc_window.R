@@ -92,13 +92,8 @@ if (as.logical(config["pass_only"])) {
     filterByPass(seqData)
 }
 
-if (nullModel$family$family == "binomial") {
-    outcome <- colnames(nullModel$outcome)
-} else {
-    outcome <- NULL
-}
 af.max <- as.numeric(config["alt_freq_max"])
-filterByRare(seqData, sample.id, binary.outcome=outcome, af.max=af.max)
+filterByRare(seqData, sample.id, af.max=af.max)
 
 checkSelectedVariants(seqData)
 
