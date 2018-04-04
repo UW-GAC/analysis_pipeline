@@ -442,10 +442,6 @@ class AWS_Batch(Cluster):
         if args is None:
             args = ["NoArgs"]
         jobParams[key] = " ".join(args)
-        # trace file
-        key = "tf"
-        jobParams[key] = trackID + "_trace.log"
-
 
         # check for number of cores - sge can be 1-8; or 4; etc.  In batch we'll
         # use the highest number.  e.g., if 1-8, then we'll use 8.  in AWS, vcpus
@@ -505,7 +501,7 @@ class AWS_Batch(Cluster):
         if arrayJob:
             subName = job_name + "_" + str(noJobs)
             jobParams["at"] = "1"
-            jobParams['lf'] = jobParams['lf'] + ".task"
+            jobParams['lf'] = trackID + ".task"
             self.printVerbose("\t1> submitJob: " + subName + " is an array job")
             self.printVerbose("\t1>\tNo. tasks: " + str(noJobs))
             self.printVerbose("\t1>\tFIRST_INDEX: " + str(taskList[0]))
@@ -526,9 +522,7 @@ class AWS_Batch(Cluster):
                 )
         else:
             jobParams["at"] = "0"
-            jobParams['lf'] = jobParams['lf'] + ".task"
-            log_prefix = trackID
-            jobParams['lf'] = log_prefix
+            jobParams['lf'] = trackID
             subName = job_name
             self.printVerbose("\t1> submitJob: " + subName + " is a single job")
             if not print_only:
