@@ -20,7 +20,7 @@
                 "po" : "0",
                 "at" : "0",
                 "mc" : "not used",
-                "tf" : "tbd"
+                "tf" : "1"
             },
             "submit_opts": {
                 "jobdef": "TM_master",
