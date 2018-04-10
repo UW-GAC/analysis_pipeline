@@ -408,7 +408,8 @@ class AWS_Batch(Cluster):
             print( "\t> " + str(sCmd) )
             sys.exit(2)
 
-    def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None, request_cores=None, print_only=False, **kwargs):
+    def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None,
+                  request_cores=None, print_only=False, **kwargs):
         self.printVerbose("1===== submitJob: job " + job_name + " beginning ...")
         jobParams = deepcopy(self.jobParams)
         submitOpts = deepcopy(self.submitOpts)
@@ -422,10 +423,10 @@ class AWS_Batch(Cluster):
             noJobs = len(taskList)
             key = "env"
             if key in submitOpts:
-                submitOpts["env"].append( { "name": "FIRST_INDEX",
+                submitOpts["env"].append( { "name": "SGE_TASK_ID",
                                             "value": str(taskList[0]) } )
             else:
-                submitOpts["env"] = [ { "name": "FIRST_INDEX",
+                submitOpts["env"] = [ { "name": "SGE_TASK_ID",
                                         "value": str(taskList[0]) } ]
             if noJobs > 1:
                 arrayJob = True
@@ -549,7 +550,7 @@ class AWS_Batch(Cluster):
                 print("\t\tFIRST_INDEX: " + str(taskList[0]))
             elif array_range is not None:
                 print("\tsubmitJob: " + subName + " is like array job but with 1 task: ")
-                print("\t\tFIRST_INDEX: " + str(taskList[0]))
+                print("\t\tSGE_TASK_ID: " + str(taskList[0]))
             else:
                 print("\tsubmitJob: " + subName + " is a single job")
             print("\tlog file: " + jobParams['lf'])
