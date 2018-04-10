@@ -363,31 +363,20 @@ class AWS_Batch(Cluster):
         return dependsList
 
     def runCmd(self, job_name, cmd, logfile=None):
-        runCmdOpts = deepcopy(self.runCmdOpts)
-        # set rdriver
-        key = "--rdriver"
-        if key not in runCmdOpts["params"].keys() or runCmdOpts["params"][key] == "":
-            baseName = os.path.basename(cmd[0])
-            runCmdOpts["params"][key] = os.path.join(self.pipelinePath, baseName)
-
-        # set rargs
-        key = "--rargs"
-        if key not in runCmdOpts["params"].keys() or runCmdOpts["params"][key] == "":
-            cs = " ".join(cmd[1:])
-            qcs = '"' + cs + '"'
-            runCmdOpts["params"][key] = qcs
-
-        # working directory
-        key = "--workdir"
-        if key not in runCmdOpts["params"].keys() or runCmdOpts["params"][key] == "":
-            runCmdOpts["params"][key] = self.jobParams['wd']
-
-        # convert params dict to key-value pair
-        sCmdArgs = " ".join([" ".join([key, str(val)]) for key, val in runCmdOpts["params"].items()])
-
-        # create the cmd to spawn
-        sCmd = " ".join([runCmdOpts["cmd"], sCmdArgs])
-
+        # get and set the env
+        key = "-v"
+        if key in self.clusterCfg["submit_opts"].keys():
+            vopt = self.clusterCfg["submit_opts"][key]
+            envVars = vopt.split(",")
+            for var in envVars:
+                varVal = var.split("=")
+                check = "$PATH"
+                if varVal[1].endswith(check):
+                    np = varVal[1][:-len(check)]
+                    cp = os.environ['PATH']
+                    os.environ[varVal[0]] = np + cp
+                else:
+                    os.environ[varVal[0]] = varVal[1]
         # redirect stdout/stderr
         if logfile != None:
             sout = sys.stdout
@@ -395,17 +384,16 @@ class AWS_Batch(Cluster):
             flog = open ( logfile, 'w' )
             sys.stderr = sys.stdout = flog
         # spawn
-        print("runCmd: executing " + sCmd)
-        process = subprocess.Popen(sCmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
+        print("runCmd: executing " + cmd)
+        process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=False)
         status = process.wait()
-
         # redirect stdout back
         if logfile != "":
             sys.stdout = sout
             sys.stderr = serr
         if status:
             print( "Error running job: " + job_name + " (" + str(status) + ") for command:" )
-            print( "\t> " + str(sCmd) )
+            print( "\t> " + str(cmd) )
             sys.exit(2)
 
     def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None,

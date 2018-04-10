@@ -86,15 +86,6 @@
                     "jobdef": "TM_sync",
                     "dependsOn": []
                 }
-            },
-            "run_cmd": {
-                "cmd": "docker run --privileged uwgac/topmed-master /usr/local/analysis_pipeline/ap2batch.py",
-                "params": {
-                    "--rdriver": "",
-                    "--rargs": "",
-                    "--workdir": "",
-                    "--Debug": "1"
-                }
             }
         },
         "UW_Cluster": {
