@@ -363,28 +363,15 @@ class AWS_Batch(Cluster):
         return dependsList
 
     def runCmd(self, job_name, cmd, logfile=None):
-        # get and set the env
-        key = "-v"
-        if key in self.clusterCfg["submit_opts"].keys():
-            vopt = self.clusterCfg["submit_opts"][key]
-            envVars = vopt.split(",")
-            for var in envVars:
-                varVal = var.split("=")
-                check = "$PATH"
-                if varVal[1].endswith(check):
-                    np = varVal[1][:-len(check)]
-                    cp = os.environ['PATH']
-                    os.environ[varVal[0]] = np + cp
-                else:
-                    os.environ[varVal[0]] = varVal[1]
         # redirect stdout/stderr
+        self.printVerbose("1===== runCmd: job " + job_name + " beginning ...")
         if logfile != None:
             sout = sys.stdout
             serr = sys.stderr
             flog = open ( logfile, 'w' )
             sys.stderr = sys.stdout = flog
         # spawn
-        print("runCmd: executing " + cmd)
+        self.printVerbose("1===== runCmd: executing " + cmd)
         process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=False)
         status = process.wait()
         # redirect stdout back
