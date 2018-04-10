@@ -365,14 +365,14 @@ class AWS_Batch(Cluster):
     def runCmd(self, job_name, cmd, logfile=None):
         # redirect stdout/stderr
         self.printVerbose("1===== runCmd: job " + job_name + " beginning ...")
-        self.printVerbose("1===== runCmd: cmd " + cmd)
+        self.printVerbose("1===== runCmd: cmd " + str(cmd))
         if logfile != None:
             sout = sys.stdout
             serr = sys.stderr
             flog = open ( logfile, 'w' )
             sys.stderr = sys.stdout = flog
         # spawn
-        self.printVerbose("1===== runCmd: executing " + cmd)
+        self.printVerbose("1===== runCmd: executing " + str(cmd))
         sys.stdout.flush()
         process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=False)
         status = process.wait()
