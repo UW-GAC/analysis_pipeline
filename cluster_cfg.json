@@ -86,6 +86,8 @@
                     "jobdef": "TM_sync",
                     "dependsOn": []
                 }
+            },
+            "run_cmd": {
             }
         },
         "UW_Cluster": {
