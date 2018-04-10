@@ -88,14 +88,12 @@
                 }
             },
             "run_cmd": {
-                "cmd": "docker run --privileged uwgac/topmed-master /usr/local/analysis_pipeline/batchJob.py",
+                "cmd": "docker run --privileged uwgac/topmed-master /usr/local/analysis_pipeline/ap2batch.py",
                 "params": {
                     "--rdriver": "",
                     "--rargs": "",
                     "--workdir": "",
-                    "--dataroot": "/projects",
-                    "--Debug": "1",
-                    "--mount": "\"mount -t nfs4 -o vers=4.1 fs-6ccd31c5.efs.us-west-2.amazonaws.com:/ /projects\""
+                    "--Debug": "1"
                 }
             }
         },
