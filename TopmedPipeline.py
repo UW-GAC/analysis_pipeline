@@ -373,7 +373,6 @@ class AWS_Batch(Cluster):
             sys.stderr = sys.stdout = flog
         # spawn
         self.printVerbose("1===== runCmd: executing " + str(cmd))
-        sys.stdout.flush()
         process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=False)
         status = process.wait()
         # redirect stdout back
@@ -398,15 +397,20 @@ class AWS_Batch(Cluster):
             air = [ int(i) for i in array_range.split( '-' ) ]
             taskList = range( air[0], air[len(air)-1]+1 )
             noJobs = len(taskList)
-            key = "env"
-            if key in submitOpts:
-                submitOpts["env"].append( { "name": "SGE_TASK_ID",
-                                            "value": str(taskList[0]) } )
-            else:
-                submitOpts["env"] = [ { "name": "SGE_TASK_ID",
-                                        "value": str(taskList[0]) } ]
             if noJobs > 1:
                 arrayJob = True
+                envName = "FIRST_INDEX"
+            else:
+                envName = "SGE_TASK_ID"
+            # set env variable appropriately
+            key = "env"
+            if key in submitOpts:
+                submitOpts["env"].append( { "name": envName,
+                                            "value": str(taskList[0]) } )
+            else:
+                submitOpts["env"] = [ { "name": envName,
+                                        "value": str(taskList[0]) } ]
+
 
         # using time set a job id (which is for tracking; not the batch job id)
         trackID = job_name + "_" + str(int(time.time()*100))
@@ -503,6 +507,8 @@ class AWS_Batch(Cluster):
             jobParams['lf'] = trackID
             subName = job_name
             self.printVerbose("\t1> submitJob: " + subName + " is a single job")
+            if array_range is not None:
+                self.printVerbose("\t1> SGE_TASK_ID: " + str(taskList[0]))
             if not print_only:
                 subOut = self.batchC.submit_job(
                                jobName = subName,
