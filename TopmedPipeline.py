@@ -363,56 +363,58 @@ class AWS_Batch(Cluster):
         return dependsList
 
     def runCmd(self, job_name, cmd, logfile=None):
-        runCmdOpts = deepcopy(self.runCmdOpts)
-        # set rdriver
-        key = "--rdriver"
-        if key not in runCmdOpts["params"].keys() or runCmdOpts["params"][key] == "":
-            baseName = os.path.basename(cmd[0])
-            runCmdOpts["params"][key] = os.path.join(self.pipelinePath, baseName)
-
-        # set rargs
-        key = "--rargs"
-        if key not in runCmdOpts["params"].keys() or runCmdOpts["params"][key] == "":
-            cs = " ".join(cmd[1:])
-            qcs = '"' + cs + '"'
-            runCmdOpts["params"][key] = qcs
-
-        # working directory
-        key = "--workdir"
-        if key not in runCmdOpts["params"].keys() or runCmdOpts["params"][key] == "":
-            runCmdOpts["params"][key] = self.jobParams['wd']
-
-        # convert params dict to key-value pair
-        sCmdArgs = " ".join([" ".join([key, str(val)]) for key, val in runCmdOpts["params"].items()])
-
-        # create the cmd to spawn
-        sCmd = " ".join([runCmdOpts["cmd"], sCmdArgs])
-
         # redirect stdout/stderr
+        self.printVerbose("1===== runCmd: job " + job_name + " beginning ...")
+        self.printVerbose("1===== runCmd: cmd " + str(cmd))
         if logfile != None:
             sout = sys.stdout
             serr = sys.stderr
             flog = open ( logfile, 'w' )
             sys.stderr = sys.stdout = flog
         # spawn
-        print("runCmd: executing " + sCmd)
-        process = subprocess.Popen(sCmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
+        self.printVerbose("1===== runCmd: executing " + str(cmd))
+        process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=False)
         status = process.wait()
-
         # redirect stdout back
         if logfile != "":
             sys.stdout = sout
             sys.stderr = serr
         if status:
             print( "Error running job: " + job_name + " (" + str(status) + ") for command:" )
-            print( "\t> " + str(sCmd) )
+            print( "\t> " + str(cmd) )
             sys.exit(2)
 
-    def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None, request_cores=None, print_only=False, **kwargs):
+    def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None,
+                  request_cores=None, print_only=False, **kwargs):
         self.printVerbose("1===== submitJob: job " + job_name + " beginning ...")
         jobParams = deepcopy(self.jobParams)
         submitOpts = deepcopy(self.submitOpts)
         pipelinePath = self.pipelinePath
+
+        # check if array job and > 1 task
+        arrayJob = False
+        if array_range is not None:
+            air = [ int(i) for i in array_range.split( '-' ) ]
+            taskList = range( air[0], air[len(air)-1]+1 )
+            noJobs = len(taskList)
+            if noJobs > 1:
+                arrayJob = True
+                envName = "FIRST_INDEX"
+            else:
+                envName = "SGE_TASK_ID"
+            # set env variable appropriately
+            key = "env"
+            if key in submitOpts:
+                submitOpts["env"].append( { "name": envName,
+                                            "value": str(taskList[0]) } )
+            else:
+                submitOpts["env"] = [ { "name": envName,
+                                        "value": str(taskList[0]) } ]
+
+
+        # using time set a job id (which is for tracking; not the batch job id)
+        trackID = job_name + "_" + str(int(time.time()*100))
+
         # set the R driver and arguments (e.g., -s rcode cfg --chr cn)
         key = "rd"
         baseName = os.path.basename(cmd)
@@ -422,12 +424,6 @@ class AWS_Batch(Cluster):
         if args is None:
             args = ["NoArgs"]
         jobParams[key] = " ".join(args)
-# trace file
-        key = "tf"
-        jobParams[key] = job_name + "_trace.log"
-
-        # using time set a job id (which is for tracking; not the batch job id)
-        trackID = job_name + "_" + str(int(time.time()*100))
 
         # check for number of cores - sge can be 1-8; or 4; etc.  In batch we'll
         # use the highest number.  e.g., if 1-8, then we'll use 8.  in AWS, vcpus
@@ -438,8 +434,13 @@ class AWS_Batch(Cluster):
             ncs = request_cores.split("-")
             nci = int(ncs[len(ncs)-1])
             submitOpts[key] = nci
-            submitOpts["env"].append( { "name": "NSLOTS",
-                                        "value": str(nci) } )
+            key2 = "env"
+            if key2 in submitOpts:
+                submitOpts[key2].append( { "name": "NSLOTS",
+                                           "value": str(nci) } )
+            else:
+                submitOpts[key2]=[ { "name": "NSLOTS",
+                                     "value": str(nci) } ]
         if self.maxperf:
             submitOpts[key] = 2*submitOpts[key]
 
@@ -456,14 +457,12 @@ class AWS_Batch(Cluster):
             submitHolds = holdid
         else:
             submitHolds = []
-        log_prefix = trackID
-        jobParams['lf'] = log_prefix
 
         # environment variables
         key = "env"
         if key in submitOpts:
             submitOpts[key].append( { "name": "JOB_ID",
-                                        "value": trackID } )
+                                      "value": trackID } )
         else:
             submitOpts[key]=[ { "name": "JOB_ID",
                                 "value": trackID } ]
@@ -480,67 +479,63 @@ class AWS_Batch(Cluster):
             else:
                 self.printVerbose("\t1> submitJob: " + job_name + " does not depend on other jobs" )
 
-            if array_range is not None:
-                air = [ int(i) for i in array_range.split( '-' ) ]
-                taskList = range( air[0], air[1]+1 )
-                noJobs = len(taskList)
-                subName = job_name + "_" + str(noJobs)
-                self.printVerbose("\t1> submitJob: " + subName + " is an array job - no. tasks: " + str(noJobs))
-                self.printVerbose("\t1> FIRST_INDEX: " + str(taskList[0]))
-                jobParams["at"] = "1"
-                jobParams['lf'] = jobParams['lf'] + ".task"
-                submitOpts["env"].append( { "name": "FIRST_INDEX",
-                                            "value": str(taskList[0]) } )
+        # array job or single job
+        if arrayJob:
+            subName = job_name + "_" + str(noJobs)
+            jobParams["at"] = "1"
+            jobParams['lf'] = trackID + ".task"
+            self.printVerbose("\t1> submitJob: " + subName + " is an array job")
+            self.printVerbose("\t1>\tNo. tasks: " + str(noJobs))
+            self.printVerbose("\t1>\tFIRST_INDEX: " + str(taskList[0]))
+            if not print_only:
                 subOut = self.batchC.submit_job(
-                   jobName = subName,
-                   jobQueue = self.queue,
-                   arrayProperties = { "size": noJobs },
-                   jobDefinition = submitOpts["jobdef"],
-                   parameters = jobParams,
-                   dependsOn = submitOpts["dependsOn"],
-                   containerOverrides = {
-                      "vcpus": submitOpts["vcpus"],
-                      "memory": submitOpts["memory"],
-                      "environment": submitOpts["env"]
-                   },
-                   retryStrategy = self.retryStrategy
+                               jobName = subName,
+                               jobQueue = self.queue,
+                               arrayProperties = { "size": noJobs },
+                               jobDefinition = submitOpts["jobdef"],
+                               parameters = jobParams,
+                               dependsOn = submitOpts["dependsOn"],
+                               containerOverrides = {
+                                  "vcpus": submitOpts["vcpus"],
+                                  "memory": submitOpts["memory"],
+                                  "environment": submitOpts["env"]
+                               },
+                               retryStrategy = self.retryStrategy
                 )
-            else:
-                self.printVerbose("\t1> submitJob: " + job_name + " is a single job")
-                subOut = self.batchC.submit_job(
-                   jobName = job_name,
-                   jobQueue = self.queue,
-                   jobDefinition = submitOpts["jobdef"],
-                   parameters = jobParams,
-                   dependsOn = submitOpts["dependsOn"],
-                   containerOverrides = {
-                      "vcpus": submitOpts["vcpus"],
-                      "memory": submitOpts["memory"],
-                      "environment": submitOpts["env"]
-                   },
-                   retryStrategy = self.retryStrategy
-                )
-                # return the "submit_id" which is a list of dictionaries
-            submit_id = {job_name: [subOut['jobId']]}
         else:
-            print("Job name: " + job_name)
+            jobParams["at"] = "0"
+            jobParams['lf'] = trackID
+            subName = job_name
+            self.printVerbose("\t1> submitJob: " + subName + " is a single job")
             if array_range is not None:
-                air = [ int(i) for i in array_range.split( '-' ) ]
-                taskList = range( air[0], air[1]+1 )
-                noJobs = len(taskList)
-                jobName = job_name + "_" + str(noJobs)
-                if "env" in submitOpts:
-                    submitOpts["env"].append( { "name": "FIRST_INDEX",
-                                                "value": str(taskList[0]) } )
-                else:
-                    submitOpts["env"]=[ { "name": "JOB_ID",
-                                          "value": trackID } ]
-                jobParams["at"] = "1"
-                jobParams['lf'] = jobParams['lf'] + ".task"
-                print("\t\tsubmitJob: " + jobName + " is an array job - no. tasks: " + str(noJobs))
+                self.printVerbose("\t1> SGE_TASK_ID: " + str(taskList[0]))
+            if not print_only:
+                subOut = self.batchC.submit_job(
+                               jobName = subName,
+                               jobQueue = self.queue,
+                               jobDefinition = submitOpts["jobdef"],
+                               parameters = jobParams,
+                               dependsOn = submitOpts["dependsOn"],
+                               containerOverrides = {
+                                  "vcpus": submitOpts["vcpus"],
+                                  "memory": submitOpts["memory"],
+                                  "environment": submitOpts["env"]
+                               },
+                               retryStrategy = self.retryStrategy
+                )
+        if print_only:
+            print("+++++++++  Print Only +++++++++++")
+            print("Job: " + job_name)
+            print("\tSubmit job: " + subName)
+            if arrayJob:
+                print("\tsubmitJob: " + subName + " is an array job")
+                print("\t\tNo. tasks: " + str(noJobs))
                 print("\t\tFIRST_INDEX: " + str(taskList[0]))
+            elif array_range is not None:
+                print("\tsubmitJob: " + subName + " is like array job but with 1 task: ")
+                print("\t\tSGE_TASK_ID: " + str(taskList[0]))
             else:
-                print("\tjob is a single job")
+                print("\tsubmitJob: " + subName + " is a single job")
             print("\tlog file: " + jobParams['lf'])
             print("\ttrace file: " + jobParams['tf'])
             print("\tJOB_ID: " + trackID)
@@ -550,10 +545,13 @@ class AWS_Batch(Cluster):
             print("\tjob vcpus: " + str(submitOpts["vcpus"]))
             print("\tjob env: \n\t\t" + str(submitOpts["env"]))
             print("\tjob params: \n\t\t" + str(jobParams))
-            jobid = "111-222-333-print_only-" +  job_name
+            jobid = "111-222-333-print_only-" +  subName
+            subOut = {'jobName': subName, 'jobId': jobid}
             submit_id = {job_name: [jobid]}
             print("\tsubmit_id: " + str(submit_id))
 
+        # return the "submit_id" which is a list of dictionaries
+        submit_id = {job_name: [subOut['jobId']]}
         # return the job id (either from the single job or array job)
         self.printVerbose("\t1> submitJob: " + job_name + " returning submit_id: " + str(submit_id))
 
