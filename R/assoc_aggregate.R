@@ -3,7 +3,7 @@ library(TopmedPipeline)
 library(SeqVarTools)
 library(Biobase)
 library(GenomicRanges)
-library(genesis2)
+library(GENESIS)
 sessionInfo()
 
 argp <- arg_parser("Association test - aggregate")

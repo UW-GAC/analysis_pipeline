@@ -1,7 +1,7 @@
 library(argparser)
 library(TopmedPipeline)
 library(Biobase)
-library(genesis2)
+library(GENESIS)
 library(gdsfmt)
 sessionInfo()
 

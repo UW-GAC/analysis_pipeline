@@ -1,6 +1,6 @@
 context("getAssoc tests")
 library(dplyr)
-library(genesis2)
+library(GENESIS)
 library(gdsfmt)
 library(SeqVarTools)
 library(Biobase)

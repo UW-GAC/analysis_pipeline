@@ -1,5 +1,5 @@
 context("test splitting analyses by segment")
-library(genesis2)
+library(GENESIS)
 library(gdsfmt)
 library(SeqVarTools)
 library(Biobase)

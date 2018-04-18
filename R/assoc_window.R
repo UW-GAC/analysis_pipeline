@@ -2,7 +2,7 @@ library(argparser)
 library(TopmedPipeline)
 library(SeqVarTools)
 library(Biobase)
-library(genesis2)
+library(GENESIS)
 sessionInfo()
 
 argp <- arg_parser("Association test - sliding window")

@@ -11,14 +11,12 @@ biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "argparser", "dplyr", "tidyr",
 ```
 2. Install development packages from github  
 ```{r}
-library(devtools) 
+library(devtools)
 install_github("zhengxwen/gdsfmt")
-install_github("zhengxwen/SeqArray") 
+install_github("zhengxwen/SeqArray")
 install_github("zhengxwen/SNPRelate")
-install_github("smgogarten/SeqVarTools") 
-install_github("smgogarten/GENESIS") 
-install_github("UW-GAC/genesis2_tests") 
-install_github("UW-GAC/genesis2")
+install_github("smgogarten/SeqVarTools")
+install_github("smgogarten/GENESIS")
 ```
 3. Install TopmedPipeline R package  
 ```
