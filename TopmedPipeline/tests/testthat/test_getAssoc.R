@@ -104,6 +104,29 @@ test_that("aggregate, skat", {
 })
 
 
+test_that("window, smmat", {
+    seqData <- .testData()
+    nullmod <- .testNullModel(seqData)
+    seqSetFilterChrom(seqData, include=1, verbose=FALSE)
+    seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
+    a1 <- assocTestAggregate(seqData, nullmod, test="SMMAT", verbose=FALSE)
+    seqSetFilterChrom(seqData, include=2, verbose=FALSE)
+    seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
+    a2 <- assocTestAggregate(seqData, nullmod, test="SMMAT", verbose=FALSE)
+    files <- c(tempfile(), tempfile())
+    save(a1, file=files[1])
+    save(a2, file=files[2])
+    a <- rbind(a1$results, a2$results) %>%
+        filter_(~(n.site > 0))
+
+    assoc <- getAssoc(files, "window")
+    expect_equal(assoc$pval, a$pval_SMMAT)
+
+    seqClose(seqData)
+    unlink(files)
+})
+
+
 test_that("combine single", {
     seqData <- SeqVarBlockIterator(.testData(), verbose=FALSE)
     nullmod <- .testNullModel(seqData, MM=TRUE)

@@ -116,6 +116,11 @@ getAssoc <- function(files, assoc_type) {
         pval.col <- if ("pval_SKATO" %in% names(assoc)) "pval_SKATO" else "pval_0"
         assoc <- select_(assoc, "chr", "pos", "start", "end", pval.col, ~suppressWarnings(one_of("MAC"))) %>%
             rename_(pval=pval.col)
+    } else if ("pval_SMMAT" %in% names(assoc)) {
+        ## SMMAT
+        pval.col <- "pval_SMMAT"
+        assoc <- select_(assoc, "chr", "pos", "start", "end", pval.col, ~suppressWarnings(one_of("MAC"))) %>%
+            rename_(pval=pval.col)
     } else {
         ## burden or single
         assoc <- select_(assoc, "chr", "pos", "start", "end", ~ends_with("Stat"), ~ends_with("pval"),

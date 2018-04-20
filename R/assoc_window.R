@@ -102,7 +102,8 @@ iterator <- SeqVarWindowIterator(seqData, windowSize=size, windowShift=step)
 
 test <- switch(tolower(config["test"]),
                burden="Burden",
-               skat="SKAT")
+               skat="SKAT",
+               smmat="SMMAT")
 
 test.type <- switch(tolower(config["test_type"]),
                     #firth="Firth",

@@ -17,9 +17,6 @@ config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)
 segment <- argv$segment
 
-# add parameters for:
-# user-specified weights
-
 required <- c("gds_file",
               "null_model_file",
               "phenotype_file",
@@ -117,7 +114,8 @@ if (config["aggregate_type"] == "allele") {
 
 test <- switch(tolower(config["test"]),
                burden="Burden",
-               skat="SKAT")
+               skat="SKAT",
+               smmat="SMMAT")
 
 test.type <- switch(tolower(config["test_type"]),
                     firth="Firth",
