@@ -154,7 +154,7 @@ omitKnownHits <- function(assoc, hits, flank=500) {
 }
 
 
-#' Add MAC column to associtation test output
+#' Add MAC column to association test output
 #'
 #' @param assoc results from \code{\link{assocTestSingle}} or \code{\link{assocTestAggregate}}
 #' @param assoc_type Type of association test ("single", "aggregate", "window")
@@ -163,7 +163,7 @@ omitKnownHits <- function(assoc, hits, flank=500) {
 #' @export
 addMAC <- function(assoc, assoc_type) {
     mac <- function(x) {
-        2 * x$n.obs * pmin(x$freq, 1-x$freq)
+        round(2 * x$n.obs * pmin(x$freq, 1-x$freq))
     }
     if (assoc_type == "single") {
         assoc$MAC <- mac(assoc)
