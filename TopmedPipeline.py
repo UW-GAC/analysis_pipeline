@@ -1,6 +1,6 @@
 """Utility functions for TOPMed pipeline"""
 
-__version__ = "1.99.7"
+__version__ = "1.99.8"
 
 import os
 import sys
