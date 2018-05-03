@@ -76,6 +76,7 @@ message("gds temporarily located at ", outfile.tmp)
 
 snpgdsGRM(gds, sample.id=sample.id, snp.id=variant.id,
           maf=maf.min, method=method, out.fn=outfile.tmp,
+          autosome.only=FALSE,
           num.thread=countThreads())
 
 seqClose(gds)
