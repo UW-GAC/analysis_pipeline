@@ -238,9 +238,18 @@ class Cluster(object):
                 print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
         key = "memlim_key"
         if key in clusterCfg:
-            self.memlim_key = clusterCfg["memlim_key"]
+            memlim_key = clusterCfg["memlim_key"]
         else:
-            self.memlim_key = "freeze5"
+            memlim_key = "24K"
+        key = "memory_limits"
+        if key in clusterCfg:
+            freezeMem = [ item for item in clusterCfg[key] for k in item if k == memlim_key ]
+            if len(freezeMem) == 0:
+                self.clusterCfg[key] = None
+            else:
+                self.clusterCfg[key] = freezeMem[0]
+        else:
+            self.clusterCfg[key] = None
 
         # update pipeline path if specified
         key = "pipeline_path"
@@ -253,12 +262,12 @@ class Cluster(object):
     def getClusterCfg(self):
         return self.clusterCfg
 
-    def memoryLimit(self, memLimits, job_name):
+    def memoryLimit(self, job_name):
         memlim = None
-        freezeMem = [ item for item in memLimits for k in item if k == self.memlim_key ]
-        if len(freezeMem) == 0:
+        freezeMem = self.clusterCfg["memory_limits"]
+        if freezeMem is None:
             return memlim
-        jobMem = [ v for av in freezeMem[0].values() for k,v in av.iteritems() if job_name.find(k) != -1 ]
+        jobMem = [ v for av in freezeMem.values() for k,v in av.iteritems() if job_name.find(k) != -1 ]
         if len(jobMem):
             # just find the first match to job_name
             memlim = jobMem[0]
@@ -448,7 +457,7 @@ class AWS_Batch(Cluster):
         key = "memory_limits"
         if key in self.clusterCfg.keys():
             # get the memory limits
-            memlim = super(AWS_Batch, self).memoryLimit(self.clusterCfg[key], job_name)
+            memlim = super(AWS_Batch, self).memoryLimit(job_name)
             if memlim != None:
                 submitOpts["memory"] = memlim
 
@@ -604,7 +613,7 @@ class SGE_Cluster(Cluster):
         # get memory limit option
         key = "memory_limits"
         if key in self.clusterCfg.keys():
-            memlim = super(SGE_Cluster, self).memoryLimit(self.clusterCfg[key], kwargs["job_name"])
+            memlim = super(SGE_Cluster, self).memoryLimit(kwargs["job_name"])
             if memlim != None:
                 subOpts["-l"] = "h_vmem="+str(memlim)+"M"
 
