@@ -105,7 +105,7 @@ getSegments <- function(file) {
 #' @param segment An integer indicating which segment to select
 #' @param segment.file The name of the file describing segments
 #' @return Subset of \code{varList} where the first variant is in the segment \code{segment}
-#' @seealso \code{\link{defineSegments}}, \code{\link{writeSegmentFile}}, \code{\link{filterBySegment}}, \code{\link{aggregateList}}
+#' @seealso \code{\link{defineSegments}}, \code{\link{writeSegmentFile}}, \code{\link{filterBySegment}}, \code{\link{aggregateGRanges}}
 #' 
 #' @importFrom GenomicRanges findOverlaps GRanges
 #' @importFrom IRanges IRanges

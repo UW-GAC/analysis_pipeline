@@ -124,9 +124,38 @@ aggregateListByPosition <- function(gds, groups, indexOnly=FALSE) {
 
 
 
+#' Aggregate variant lists
+#'
+#' Generate GRanges or GRangesList of variants for input to association tests
+#'
+#' These functions produce output suitable for defining a \code{\link{SeqVarRangeIterator}} or \code{\link{SeqVarListIterator}} object.
+#'
+#' @param variants A data.frame of variants with columns "group_id", "chr", "pos", "ref", "alt".
 #' @return A GRangesList with one element per group
+#' @examples
+#' library(SeqVarTools)
+#' gds <- seqOpen(seqExampleFileName())
+#' seqSetFilter(gds, variant.sel=seqGetData(gds, "chromosome") == 22)
+#' variants <- data.frame(chr=seqGetData(gds, "chromosome"),
+#'                        pos=seqGetData(gds, "position"),
+#'                        ref=refChar(gds),
+#'                        alt=altChar(gds, n=1),
+#'                        stringsAsFactors=FALSE)
+#' variants$group_id <- sample(LETTERS[1:2], nrow(variants), replace=TRUE)
+#' gr <- aggregateGRangesList(variants)
+#' iterator <- SeqVarListIterator(gds, variantRanges=gr)
 #' 
-#' @rdname aggregateList
+#' groups <- data.frame(group_id=LETTERS[1:2],
+#'                      chr=22,
+#'                      start=c(16000000, 2900000), 
+#'                      end=c(30000000, 49000000),
+#' 		     stringsAsFactors=FALSE)
+#' gr <- aggregateGRanges(groups)
+#' seqResetFilter(gds)
+#' iterator <- SeqVarRangeIterator(gds, variantRanges=gr)
+#' 
+#' seqClose(gds)
+#' @name aggregateGRanges
 #'
 #' @importFrom GenomicRanges GRanges GRangesList mcols<-
 #' @importFrom IRanges IRanges
@@ -145,9 +174,10 @@ aggregateGRangesList <- function(variants) {
 }
 
 
+#' @param groups A data.frame of groups with column "group_id", "chr", "start", "end".
 #' @return A GRanges with one range per group
 #' 
-#' @rdname aggregateList
+#' @rdname aggregateGRanges
 #'
 #' @importFrom GenomicRanges GRanges mcols<-
 #' @importFrom IRanges IRanges

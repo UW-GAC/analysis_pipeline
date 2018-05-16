@@ -4,17 +4,11 @@
 \alias{aggregateList}
 \alias{aggregateListByAllele}
 \alias{aggregateListByPosition}
-\alias{aggregateGRangesList}
-\alias{aggregateGRanges}
 \title{Aggregate variant lists}
 \usage{
 aggregateListByAllele(gds, variants, indexOnly = FALSE)
 
 aggregateListByPosition(gds, groups, indexOnly = FALSE)
-
-aggregateGRangesList(variants)
-
-aggregateGRanges(groups)
 }
 \arguments{
 \item{gds}{A \code{\link[SeqArray]{SeqVarGDSClass}} object}
@@ -34,10 +28,6 @@ A list of data frames, one for each group. A single variant may have multiple ro
 \item{nAlleles}{Total number of alleles for this variant}
 \item{allele}{Alternate allele}
 \item{allele.index}{Integer index of this allele (1=first alternate, 2=second alternate, etc.)}
-
-A GRangesList with one element per group
-
-A GRanges with one range per group
 }
 \description{
 Generate lists of variants for input to association tests

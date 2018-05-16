@@ -20,5 +20,5 @@ Subset of \code{varList} where the first variant is in the segment \code{segment
 Select groups of variants where the first variant in the group is in the requested segment
 }
 \seealso{
-\code{\link{defineSegments}}, \code{\link{writeSegmentFile}}, \code{\link{filterBySegment}}, \code{\link{aggregateList}}
+\code{\link{defineSegments}}, \code{\link{writeSegmentFile}}, \code{\link{filterBySegment}}, \code{\link{aggregateGRanges}}
 }

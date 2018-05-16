@@ -2,7 +2,7 @@
 % Please edit documentation in R/getAssoc.R
 \name{addMAC}
 \alias{addMAC}
-\title{Add MAC column to associtation test output}
+\title{Add MAC column to association test output}
 \usage{
 addMAC(assoc, assoc_type)
 }
@@ -15,5 +15,5 @@ addMAC(assoc, assoc_type)
 \code{assoc} with a "MAC" column added to the results data.frame
 }
 \description{
-Add MAC column to associtation test output
+Add MAC column to association test output
 }
