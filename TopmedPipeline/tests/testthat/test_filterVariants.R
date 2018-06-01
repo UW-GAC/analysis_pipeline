@@ -43,7 +43,7 @@ library(GenomicRanges)
 test_that("getSegments", {
     segfile <- .testSegFile()
     seg2 <- getSegments(segfile)
-    expect_equal(seg2, segments)
+    expect_equivalent(seg2, segments)
     unlink(segfile)
 })
 
@@ -61,7 +61,7 @@ test_that("subsetBySegment", {
         chr == seg.chr & pos >= seg.start & pos <= seg.end
     })
     ss <- subsetBySegment(varList, 1, segfile)
-    expect_equal(varList[exp], ss)
+    expect_equivalent(varList[exp], ss)
     
     seqClose(gds)
     unlink(segfile)

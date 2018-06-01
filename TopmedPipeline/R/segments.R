@@ -56,7 +56,8 @@ defineSegments <- function(seg.length, n, build=c("hg19", "hg38")) {
     }
 
     # create segments
-    do.call(c, lapply(gr, function(x) {
+    do.call(c, lapply(seq_along(gr), function(i) {
+        x <- gr[i]
         window.start <- seq(BiocGenerics::start(x), BiocGenerics::end(x), x$seg.length)
         GRanges(seqnames=seqnames(x), IRanges(window.start, width=x$seg.length))
     }))

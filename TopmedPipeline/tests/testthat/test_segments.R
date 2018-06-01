@@ -46,7 +46,7 @@ test_that("defineSegments", {
     n <- sample(1:23, 1)
     seg <- defineSegments(n=n, build="hg19")
     expect_true(length(seg) == 23)
-    expect_equal(seg, chromosomes_hg19)
+    expect_equivalent(seg, chromosomes_hg19)
     
     expect_error(defineSegments())
 })
@@ -56,7 +56,7 @@ test_that("read and write segment files", {
     segfile <- tempfile()
     writeSegmentFile(segments, segfile)
     seg2 <- getSegments(segfile)
-    expect_equal(segments, seg2)
+    expect_equivalent(segments, seg2)
     unlink(segfile)
 })
 
@@ -207,5 +207,5 @@ test_that("build 38", {
     data(chromosomes_hg38)
     n <- sample(1:23, 1)
     seg <- defineSegments(n=n, build="hg38")
-    expect_equal(seg, chromosomes_hg38)
+    expect_equivalent(seg, chromosomes_hg38)
 })
