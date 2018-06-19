@@ -563,10 +563,10 @@ class AWS_Batch(Cluster):
 
 class SGE_Cluster(Cluster):
 
-    def __init__(self, opt_cluster_file=None, verbose=True):
+    def __init__(self, std_cluster_file, opt_cluster_file=None, verbose=True):
         self.class_name = self.__class__.__name__
-        self.std_cluster_file = "./cluster_cfg.json"
-        super(SGE_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, verbose)
+        self.std_cluster_file = std_cluster_file
+        super(SGE_Cluster, self).__init__(std_cluster_file, opt_cluster_file, verbose)
 
     def runCmd(self, job_name, cmd, logfile=None):
         # get and set the env
