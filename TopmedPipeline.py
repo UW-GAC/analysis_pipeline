@@ -237,7 +237,7 @@ class Cluster(object):
                 print("0>>> Dump of updated cluster cfg ... \n")
                 print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
         key = "memory_limits"
-        if key not in clusterCfg:
+        if key not in self.clusterCfg:
             self.clusterCfg[key] = None
 
         # update pipeline path if specified
