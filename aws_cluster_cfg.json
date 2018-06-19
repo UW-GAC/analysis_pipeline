@@ -1,5 +1,5 @@
 {
-    "name": "UW_Cluster_config",
+    "name": "AWS_Cluster_config",
     "version": "3",
     "debug": 0,
     "memory_limits": {
@@ -31,10 +31,10 @@
                 "-cwd":"",
                 "-N":"",
                 "-j":"y",
-                "-q":"topmed.q",
+                "-q":"all.q",
                 "-S":"/bin/bash",
                 "-terse":"",
-                "-v":"R_LIBS=/projects/topmed/working_code/analysis_pipeline_genesis2/R_library:/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH,MKL_NUM_THREADS=1"
+                "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"
             },
             "parallel_env": "local"
     }

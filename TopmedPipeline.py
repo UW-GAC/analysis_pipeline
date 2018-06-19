@@ -182,13 +182,13 @@ def update(d, u):
 class Cluster(object):
     """ """
     # constructor
-    def __init__(self, cluster_file=None, verbose=False):
+    def __init__(self, std_cluster_file, opt_cluster_file=None, verbose=False):
         self.verbose = verbose
         self.class_name = self.__class__.__name__
         # set default pipeline path
         self.pipelinePath = os.path.dirname(os.path.abspath(sys.argv[0]))
 
-        self.openClusterCfg("./cluster_cfg.json", cluster_file, verbose)
+        self.openClusterCfg(std_cluster_file, opt_cluster_file, verbose)
 
     def openClusterCfg(self, stdCfgFile, optCfgFile, verbose):
         # get the standard cluster cfg
@@ -198,7 +198,7 @@ class Cluster(object):
         with open(self.clusterfile) as cfgFileHandle:
             clusterCfg= json.load(cfgFileHandle)
         # check version
-        cfgVersion = "2"
+        cfgVersion = "3"
         key = "version"
         if key in clusterCfg:
             if clusterCfg[key] != cfgVersion:
@@ -211,9 +211,9 @@ class Cluster(object):
         if key in clusterCfg:
             if clusterCfg[key] == 1:
                 debugCfg = True
-        self.clusterCfg = clusterCfg["cluster_types"][self.class_name]
+        self.clusterCfg = clusterCfg["configuration"]
         if debugCfg:
-            print("0>>> Dump of standard cluster cfg ... \n")
+            print("0>>> Dump of " + clusterCfg["name"] + " ... \n")
             print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
         if optCfgFile != None:
             self.printVerbose("0>> openClusterCfg: Reading user cfg file: " + optCfgFile)
@@ -227,28 +227,17 @@ class Cluster(object):
                            " not " + clusterCfg[key])
                     print( "\t> " + str(sCmd) )
                     sys.exit(2)
-            optCfg = clusterCfg["cluster_types"][self.class_name]
+            optCfg = clusterCfg["configuration"]
             if debugCfg:
-                print("0>>> Dump of optional cluster cfg ... \n")
+                print("0>>> Dump of " + clusterCfg["name"] + " ... \n")
                 print json.dumps(optCfg, indent=3, sort_keys=True)
             # update
             self.clusterCfg = update(self.clusterCfg, optCfg)
             if debugCfg:
                 print("0>>> Dump of updated cluster cfg ... \n")
                 print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
-        key = "memlim_key"
-        if key in clusterCfg:
-            memlim_key = clusterCfg["memlim_key"]
-        else:
-            memlim_key = "24K"
         key = "memory_limits"
-        if key in clusterCfg:
-            freezeMem = [ item for item in clusterCfg[key] for k in item if k == memlim_key ]
-            if len(freezeMem) == 0:
-                self.clusterCfg[key] = None
-            else:
-                self.clusterCfg[key] = freezeMem[0]
-        else:
+        if key not in clusterCfg:
             self.clusterCfg[key] = None
 
         # update pipeline path if specified
@@ -264,14 +253,15 @@ class Cluster(object):
 
     def memoryLimit(self, job_name):
         memlim = None
-        freezeMem = self.clusterCfg["memory_limits"]
-        if freezeMem is None:
+        memLimits = self.clusterCfg["memory_limits"]
+        if memLimits is None:
             return memlim
-        jobMem = [ v for av in freezeMem.values() for k,v in av.iteritems() if job_name.find(k) != -1 ]
+        jobMem = [ v for k,v in memLimits.iteritems() if job_name.find(k) != -1 ]
         if len(jobMem):
             # just find the first match to job_name
             memlim = jobMem[0]
-        self.printVerbose('\t>>> Memory Limit - job: ' + job_name + " mem: " + str(memlim) + "MB")
+        self.printVerbose('\t>>> Memory Limit - job: ' + job_name + " memlim: " +
+                          str(memlim) + "MB")
         return memlim
 
     def printVerbose(self, message):
@@ -281,9 +271,10 @@ class Cluster(object):
 
 class AWS_Batch(Cluster):
 
-    def __init__(self, cluster_file=None, verbose=False):
+    def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
-        super(AWS_Batch, self).__init__(cluster_file, verbose)
+        self.std_cluster_file = "./aws_batch_cfg.json"
+        super(AWS_Batch, self).__init__(self.std_cluster_file, opt_cluster_file, verbose)
 
         # get the job parameters
         self.jobParams = self.clusterCfg["job_parameters"]
@@ -569,9 +560,10 @@ class AWS_Batch(Cluster):
 
 class SGE_Cluster(Cluster):
 
-    def __init__(self, cluster_file=None, verbose=True):
+    def __init__(self, opt_cluster_file=None, verbose=True):
         self.class_name = self.__class__.__name__
-        super(SGE_Cluster, self).__init__(cluster_file, verbose)
+        self.std_cluster_file = "./cluster_cfg.json"
+        super(SGE_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, verbose)
 
     def runCmd(self, job_name, cmd, logfile=None):
         # get and set the env
@@ -672,16 +664,18 @@ class SGE_Cluster(Cluster):
 
 class UW_Cluster(SGE_Cluster):
 
-    def __init__(self, cluster_file=None, verbose=False):
+    def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
-        super(UW_Cluster, self).__init__(cluster_file, verbose)
+        self.std_cluster_file = "./cluster_cfg.json"
+        super(UW_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, verbose)
 
 
 class AWS_Cluster(SGE_Cluster):
 
-    def __init__(self, cluster_file=None, verbose=False):
+    def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
-        super(AWS_Cluster, self).__init__(cluster_file, verbose)
+        self.std_cluster_file = "./aws_cluster_cfg.json"
+        super(AWS_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, verbose)
 
     def submitJob(self, **kwargs):
         # currently, no email on aws
