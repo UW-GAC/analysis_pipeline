@@ -206,11 +206,14 @@ class Cluster(object):
                        " not " + clusterCfg[key])
                 print( "\t> " + str(sCmd) )
                 sys.exit(2)
-        key = "debug"
-        debugCfg = False
-        if key in clusterCfg:
-            if clusterCfg[key] == 1:
-                debugCfg = True
+        if self.verbose:
+            debugCfg = True
+        else:
+            key = "debug"
+            debugCfg = False
+            if key in clusterCfg:
+                if clusterCfg[key] == 1:
+                    debugCfg = True
         self.clusterCfg = clusterCfg["configuration"]
         if debugCfg:
             print("0>>> Dump of " + clusterCfg["name"] + " ... \n")
