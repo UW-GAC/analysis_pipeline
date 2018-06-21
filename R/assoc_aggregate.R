@@ -32,7 +32,7 @@ optional <- c("aggregate_type"="allele",
               "test_type"="score",
               "variant_include_file"=NA,
               "variant_weight_file"=NA,
-              "weight_user"="weight",
+              "weight_user"=NA,
               "weight_beta"="1 1")
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -57,13 +57,21 @@ annot <- getobj(config["phenotype_file"])
 # createSeqVarData object
 seqData <- SeqVarData(gds, sampleData=annot)
 
+# get aggregate list
+aggVarList <- getobj(aggfile)
+
 # get weights
 if (!is.na(config["variant_weight_file"])) {
+    # weights provided in separate file
     dat <- getobj(config["variant_weight_file"])
     weight.user <- config["weight_user"]
     stopifnot(weight.user %in% names(dat))
     seqData <- addVariantData(seqData, dat)
     rm(dat)
+} else if (!is.na(config["weight_user"])) {
+    # weights provided in aggregate file
+    weight.user <- config["weight_user"]
+    stopifnot(weight.user %in% names(mcols(aggVarList[[1]])))
 } else {
     weight.user <- NULL
 }
@@ -73,9 +81,6 @@ nullModel <- getobj(config["null_model_file"])
 
 # get samples included in null model
 sample.id <- nullModel$sample.id
-
-# get aggregate list
-aggVarList <- getobj(aggfile)
 
 # keep units that start in the requested segment
 if (!is.na(segment)) {
