@@ -2,6 +2,7 @@ library(argparser)
 library(TopmedPipeline)
 library(SeqVarTools)
 library(SNPRelate)
+library(gdsfmt)
 sessionInfo()
 
 argp <- arg_parser("Correlation of variants with PCs")
@@ -16,7 +17,7 @@ chr <- intToChr(argv$chromosome)
 required <- c("gds_file",
               "pca_file")
 optional <- c("n_pcs"=20,
-              "out_file"="pca_corr.RData",
+              "out_file"="pca_corr.gds",
               "variant_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -56,15 +57,21 @@ message("Using ", length(variant.id), " variants")
 pca <- getobj(config["pca_file"])
 n_pcs <- min(as.integer(config["n_pcs"]), length(pca$sample.id))
 nt <- countThreads()
-pca.corr <- snpgdsPCACorr(pca, gdsobj=gds, snp.id=variant.id, eig.which=1:n_pcs, num.thread=nt)
+snpgdsPCACorr(pca, gdsobj=gds, snp.id=variant.id, eig.which=1:n_pcs,
+              num.thread=nt, outgds=outfile)
 
 ## add chromosome and position to output
 seqSetFilter(gds, variant.id=variant.id)
-pca.corr$chromosome <- seqGetData(gds, "chromosome")
-pca.corr$position <- seqGetData(gds, "position")
-save(pca.corr, file=outfile)
-
+chromosome <- seqGetData(gds, "chromosome")
+position <- seqGetData(gds, "position")
 seqClose(gds)
+
+pca.corr <- openfn.gds(outfile, readonly=FALSE)
+add.gdsn(pca.corr, "chromosome", chromosome, compress="LZMA_RA")
+add.gdsn(pca.corr, "position", position, compress="LZMA_RA")
+closefn.gds(pca.corr)
+cleanup.gds(outfile)
+
 
 # mem stats
 ms <- gc()
