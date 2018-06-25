@@ -31,6 +31,8 @@ parser.add_argument("--cluster_type", default="UW_Cluster",
                     help="type of compute cluster environment [default %(default)s]")
 parser.add_argument("--cluster_file", default=None,
                     help="json file containing cluster options")
+parser.add_argument("-n", "--ncores", default="1-8",
+                    help="number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4) [default %(default)s]")
 parser.add_argument("-e", "--email", default=None,
                     help="email address for job reporting")
 parser.add_argument("--print_only", action="store_true", default=False,
@@ -49,6 +51,7 @@ segment_length = args.segment_length
 n_segments = args.n_segments
 cluster_file = args.cluster_file
 cluster_type = args.cluster_type
+ncores = args.ncores
 email = args.email
 print_only = args.print_only
 verbose = args.verbose
@@ -82,7 +85,7 @@ if run_null_model:
     configfile = configdict["config_prefix"] + "_" + job + ".config"
     TopmedPipeline.writeConfig(config, configfile)
 
-    submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], email=email, print_only=print_only)
+    submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], request_cores=ncores, email=email, print_only=print_only)
 
     hold_null_agg.append(submitID)
 else:
