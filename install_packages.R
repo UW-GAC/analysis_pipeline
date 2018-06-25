@@ -11,6 +11,7 @@ biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "argparser", "dplyr", "tidyr",
 devtools::install_github("zhengxwen/gdsfmt", dependencies=FALSE)
 devtools::install_github("zhengxwen/SeqArray", dependencies=FALSE)
 devtools::install_github("zhengxwen/SNPRelate", dependencies=FALSE)
+devtools::install_github("smgogarten/GWASTools", dependencies=FALSE)
 devtools::install_github("smgogarten/SeqVarTools", dependencies=FALSE)
 devtools::install_github("smgogarten/GENESIS", dependencies=FALSE)
 
