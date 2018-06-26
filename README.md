@@ -18,7 +18,7 @@ install_github("smgogarten/GENESIS", ref="v2.11.5", dependencies=FALSE)
 ```
 3. Install TopmedPipeline R package  
 ```
-R CMD INSTALL TopmedPipeline
+install("TopmedPipeline", dependencies=FALSE)
 ```
 
 ## Basic outline
