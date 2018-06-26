@@ -16,13 +16,10 @@ config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)
 segment <- argv$segment
 
-# add parameters for:
-# user-specified weights
-
 required <- c("gds_file",
               "null_model_file",
               "phenotype_file")
-optional <- c("alt_freq_range"="0 1",
+optional <- c("alt_freq_max"=1,
               "out_prefix"="assoc_window",
               "pass_only"=TRUE,
               "pval_skat"="kuonen",
@@ -31,6 +28,8 @@ optional <- c("alt_freq_range"="0 1",
               "test"="burden",
               "test_type"="score",
               "variant_include_file"=NA,
+              "variant_weight_file"=NA,
+              "weight_user"="weight",
               "weight_beta"="1 1",
               "window_size"=50,
               "window_step"=20)
@@ -49,68 +48,82 @@ if (!is.na(chr)) {
 
 gds <- seqOpen(gdsfile)
 
-# get null model
-nullModel <- getobj(config["null_model_file"])
-
-# get samples included in null model
-sample.id <- nullModel$scanID
-
-size <- as.numeric(config["window_size"])
-step <- as.numeric(config["window_step"])
-
-if (!is.na(segment)) {
-    ## pad each segment by window size to be sure we get all possible windows
-    filterBySegment(gds, segment, config["segment_file"], pad.right=size*1000)
-}
-
-if (!is.na(varfile)) {
-    filterByFile(gds, varfile)
-}
-
-## if we have a chromosome indicator but only one gds file, select chromosome
-if (!is.na(chr) && !bychrfile) {
-    filterByChrom(gds, chr)
-}
-
-if (as.logical(config["pass_only"])) {
-    filterByPass(gds)
-}
-
-checkSelectedVariants(gds)
-variant.id <- seqGetData(gds, "variant.id")
-seqResetFilter(gds, verbose=FALSE)
-
-
 # get phenotypes
 annot <- getobj(config["phenotype_file"])
 
 # createSeqVarData object
 seqData <- SeqVarData(gds, sampleData=annot)
 
+# get weights
+if (!is.na(config["variant_weight_file"])) {
+    dat <- getobj(config["variant_weight_file"])
+    weight.user <- config["weight_user"]
+    stopifnot(weight.user %in% names(dat))
+    seqData <- addVariantData(seqData, dat)
+    rm(dat)
+} else {
+    weight.user <- NULL
+}
+
+# get null model
+nullModel <- getobj(config["null_model_file"])
+
+# get samples included in null model
+sample.id <- nullModel$sample.id
+
+size <- as.numeric(config["window_size"])*1000
+step <- as.numeric(config["window_step"])*1000
+
+if (!is.na(segment)) {
+    ## pad each segment by window size to be sure we get all possible windows
+    filterBySegment(seqData, segment, config["segment_file"], pad.right=size)
+}
+
+if (!is.na(varfile)) {
+    filterByFile(seqData, varfile)
+}
+
+## if we have a chromosome indicator but only one gds file, select chromosome
+if (!is.na(chr) && !bychrfile) {
+    filterByChrom(seqData, chr)
+}
+
+if (as.logical(config["pass_only"])) {
+    filterByPass(seqData)
+}
+
+af.max <- as.numeric(config["alt_freq_max"])
+filterByRare(seqData, sample.id, af.max=af.max)
+
+checkSelectedVariants(seqData)
+
+
+iterator <- SeqVarWindowIterator(seqData, windowSize=size, windowShift=step)
+
 test <- switch(tolower(config["test"]),
                burden="Burden",
-               skat="SKAT")
+               skat="SKAT",
+               smmat="SMMAT")
 
 test.type <- switch(tolower(config["test_type"]),
-                    firth="Firth",
+                    #firth="Firth",
                     score="Score",
                     wald="Wald")
 
-af.range <- as.numeric(strsplit(config["alt_freq_range"], " ", fixed=TRUE)[[1]])
-weights <- as.numeric(strsplit(config["weight_beta"], " ", fixed=TRUE)[[1]])
+weight.beta <- as.numeric(strsplit(config["weight_beta"], " ", fixed=TRUE)[[1]])
 rho <- as.numeric(strsplit(config["rho"], " ", fixed=TRUE)[[1]])
 pval <- tolower(config["pval_skat"])
 
-assoc <- assocTestSeqWindow(seqData, nullModel,
+assoc <- assocTestAggregate(iterator, nullModel,
+                            AF.max=af.max,
+                            weight.beta=weight.beta,
+                            weight.user=weight.user,
                             test=test,
                             burden.test=test.type,
-                            AF.range=af.range,
-                            weight.beta=weights,
                             rho=rho,
-                            pval.method=pval,
-                            variant.include=variant.id,
-                            window.size=size,
-                            window.shift=step)
+                            pval.method=pval)
+
+assoc <- addMAC(assoc, "window")
 
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 

@@ -6,7 +6,16 @@ library(GenomicRanges)
 .testData <- function() {
     showfile.gds(closeall=TRUE, verbose=FALSE)
     gdsfile <- seqExampleFileName("gds")
-    gds <- seqOpen(gdsfile)
+    seqOpen(gdsfile)
+}
+
+.testBinaryData <- function() {
+    gds <- .testData()
+    samp <- seqGetData(gds, "sample.id")
+    annot <- AnnotatedDataFrame(data.frame(sample.id=samp,
+                                           outcome=rbinom(length(samp), 1, 0.3),
+                                           stringsAsFactors=FALSE))
+    SeqVarData(gds, annot)
 }
 
 .testSegFile <- function() {
@@ -34,7 +43,7 @@ library(GenomicRanges)
 test_that("getSegments", {
     segfile <- .testSegFile()
     seg2 <- getSegments(segfile)
-    expect_equal(seg2, segments)
+    expect_equivalent(seg2, segments)
     unlink(segfile)
 })
 
@@ -52,7 +61,7 @@ test_that("subsetBySegment", {
         chr == seg.chr & pos >= seg.start & pos <= seg.end
     })
     ss <- subsetBySegment(varList, 1, segfile)
-    expect_equal(varList[exp], ss)
+    expect_equivalent(varList[exp], ss)
     
     seqClose(gds)
     unlink(segfile)
@@ -139,14 +148,42 @@ test_that("filterByMAF", {
     gds <- .testData()
     freq <- seqAlleleFreq(gds)
     maf <- pmin(freq, 1-freq)
-    filterByMAF(gds, mac.min=NA, maf.min=0.1, verbose=FALSE)
+    filterByMAF(gds, maf.min=0.1, verbose=FALSE)
     expect_equal(sum(seqGetFilter(gds)$variant.sel), sum(maf >= 0.1))
 
     seqResetFilter(gds, verbose=FALSE)
     seqSetFilter(gds, variant.sel=1:10, verbose=FALSE)
-    filterByMAF(gds, mac.min=NA, maf.min=0.1, verbose=FALSE)
+    filterByMAF(gds, maf.min=0.1, verbose=FALSE)
     expect_equal(sum(seqGetFilter(gds)$variant.sel), sum(maf[1:10] >= 0.1))
 
+    seqClose(gds)
+})
+
+
+test_that("filterByMAC", {
+    gds <- .testData()
+    cnt1 <- alleleCount(gds)
+    cnt2 <- alleleCount(gds, n=1)
+    cnt <- pmin(cnt1, cnt2)
+    x <- .calcMAC(gds, sample.id=NULL)
+    expect_equal(x, cnt)
+    filterByMAC(gds, mac.min=5, verbose=FALSE)
+    expect_equal(sum(seqGetFilter(gds)$variant.sel), sum(cnt >= 5))
+
+    seqClose(gds)
+})
+
+
+test_that("minAltFreq", {
+    f <- list(c(1,0.5,0.2), c(1,0,0), c(1,0.1,0,1))
+    expect_equal(.minAltFreq(f), c(0.2,NA,0.1))
+})
+
+test_that("filterByRare", {
+    gds <- .testData()
+    freq <- seqAlleleFreq(gds, ref.allele=1)
+    filterByRare(gds, af.max=0.1, verbose=FALSE)
+    expect_equal(sum(seqGetFilter(gds)$variant.sel), sum(freq > 0 & freq <= 0.1))
     seqClose(gds)
 })
 

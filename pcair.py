@@ -49,7 +49,7 @@ version = "--version " + TopmedPipeline.__version__
 
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
-pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
+pipeline = cluster.getPipelinePath()
 driver = os.path.join(pipeline, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
@@ -135,7 +135,7 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
 config["pca_file"] = configdict["data_prefix"] + "_pcair_unrel.RData"
-config["out_file"] = configdict["data_prefix"] + "_pcair_corr_chr .RData"
+config["out_file"] = configdict["data_prefix"] + "_pcair_corr_chr .gds"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
@@ -149,7 +149,7 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
 config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
-config["corr_file"] = configdict["data_prefix"] + "_pcair_corr_chr .RData"
+config["corr_file"] = configdict["data_prefix"] + "_pcair_corr_chr .gds"
 config["out_prefix"] = configdict["plots_prefix"] + "_pcair_corr"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)

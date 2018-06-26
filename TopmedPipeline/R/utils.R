@@ -85,16 +85,6 @@ calculateLambda <- function(stat, df) {
 }
 
 
-#' Inverse normal transform
-#'
-#' @param x Vector of values to transform
-#' @return Vector with transformed values of \code{x}
-#'
-#' @importFrom stats qnorm
-#' @export
-rankNorm <- function(x) qnorm((rank(x) - 0.5)/length(x))
-
-
 #' Integer chromosome code to character
 #'
 #' @param chr Integer chromosome code

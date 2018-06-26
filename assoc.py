@@ -9,6 +9,7 @@ import subprocess
 from time import localtime, strftime
 from argparse import ArgumentParser
 from copy import deepcopy
+from shutil import copyfile
 
 description = """
 Association tests
@@ -30,6 +31,8 @@ parser.add_argument("--cluster_type", default="UW_Cluster",
                     help="type of compute cluster environment [default %(default)s]")
 parser.add_argument("--cluster_file", default=None,
                     help="json file containing cluster options")
+parser.add_argument("-n", "--ncores", default="1-8",
+                    help="number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4) [default %(default)s]")
 parser.add_argument("-e", "--email", default=None,
                     help="email address for job reporting")
 parser.add_argument("--print_only", action="store_true", default=False,
@@ -48,6 +51,7 @@ segment_length = args.segment_length
 n_segments = args.n_segments
 cluster_file = args.cluster_file
 cluster_type = args.cluster_type
+ncores = args.ncores
 email = args.email
 print_only = args.print_only
 verbose = args.verbose
@@ -56,25 +60,22 @@ version = "--version " + TopmedPipeline.__version__
 
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
-pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
+pipeline = cluster.getPipelinePath()
 driver = os.path.join(pipeline, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots", "report"])
 
-
-# check type of association test - single-variant unrelated is handled differently
-no_pcrel = "pcrelate_file" not in configdict or configdict["pcrelate_file"] == "NA"
-no_grm = "grm_file" not in configdict or configdict["grm_file"] == "NA"
-single_unrel = assoc_type == "single" and no_pcrel and no_grm
-
-# hold is a list of submit IDs. A submit ID ia a dict:
+# hold is a list of submit IDs. A submit ID is a dict:
 #     {jobname: [jobids]}
 hold_null_agg = []
 
 # null model
-if not single_unrel:
-    job = "null_model"
+job = "null_model"
+
+# if a null model file is given in the config, skip this step
+run_null_model = "null_model_file" not in configdict
+if run_null_model:
 
     rscript = os.path.join(pipeline, "R", job + ".R")
 
@@ -84,13 +85,15 @@ if not single_unrel:
     configfile = configdict["config_prefix"] + "_" + job + ".config"
     TopmedPipeline.writeConfig(config, configfile)
 
-    submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], email=email, print_only=print_only)
+    submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], request_cores=ncores, email=email, print_only=print_only)
 
     hold_null_agg.append(submitID)
-    assocScript = "assoc_" + assoc_type
-
 else:
-    assocScript = "assoc_single_unrel"
+    print("Using null model in " + configdict["null_model_file"])
+    # copy parameter file for report
+    if "null_model_params" in configdict:
+        paramfile = os.path.basename(configdict["config_prefix"]) + "_" + job + ".config.null_model.params"
+        copyfile(configdict["null_model_params"], paramfile)
 
 
 # for aggregate tests, generate variant list
@@ -110,7 +113,7 @@ if assoc_type == "aggregate":
 
 # define segments
 if segment_length == default_segment_length and n_segments is None:
-    build = configdict.setdefault("genome_build", "hg19")
+    build = configdict.setdefault("genome_build", "hg38")
     segment_file = os.path.join(pipeline, "segments_" + build + ".txt")
     print("Using default segment file for build " + build + " with segment_length " + default_segment_length + " kb")
 else:
@@ -138,11 +141,16 @@ else:
 # set up config for association test
 config = deepcopy(configdict)
 config["assoc_type"] = assoc_type
-config["null_model_file"] = configdict["data_prefix"] + "_null_model.RData"
-if not single_unrel:
+# if we just ran the null model, use output files as input for assoc test
+# otherwise, these parameters should already be in the config
+if run_null_model:
+    config["null_model_file"] = configdict["data_prefix"] + "_null_model.RData"
     config["phenotype_file"] = configdict["data_prefix"] + "_phenotypes.RData"
+
 if assoc_type == "aggregate":
     config["aggregate_variant_file"] = configdict["data_prefix"] + "_aggregate_list_chr .RData"
+
+assocScript = "assoc_" + assoc_type
 config["out_prefix"] = configdict["data_prefix"] + "_" + assocScript
 config["segment_file"] = segment_file
 configfile = configdict["config_prefix"] + "_" + assocScript + ".config"

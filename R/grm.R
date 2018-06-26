@@ -15,7 +15,7 @@ chr <- intToChr(argv$chromosome)
 
 required <- c("gds_file")
 optional <- c("exclude_pca_corr"=TRUE,
-              "genome_build"="hg19",
+              "genome_build"="hg38",
               "maf_threshold"=0.001,
               "method"="gcta",
               "out_file"="grm.RData",
@@ -76,6 +76,7 @@ message("gds temporarily located at ", outfile.tmp)
 
 snpgdsGRM(gds, sample.id=sample.id, snp.id=variant.id,
           maf=maf.min, method=method, out.fn=outfile.tmp,
+          autosome.only=FALSE,
           num.thread=countThreads())
 
 seqClose(gds)

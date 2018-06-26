@@ -12,7 +12,7 @@ getGRM(config, sample.id)
 \item{sample.id}{Vector of samples to include}
 }
 \value{
-GRM or kinship matrix. \code{NULL} if both pcrelate_file and grm_file are \code{NA}.
+List of GRMs or kinship matrices. \code{NULL} if both pcrelate_file and grm_file are \code{NA}.
 }
 \description{
 Load a GRM or kinship matrix

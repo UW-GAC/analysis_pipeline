@@ -7,9 +7,16 @@ We recommend building R with [Intel MKL](https://software.intel.com/en-us/intel-
 1. Install R packages and dependencies from Bioconductor  
 ```{r}
 source("https://bioconductor.org/biocLite.R")
-biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "argparser", "dplyr", "tidyr", "ggplot2", "GGally", "rmarkdown"))
+biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "argparser", "dplyr", "tidyr", "ggplot2", "GGally", "rmarkdown", "devtools", "Matrix"))
 ```
-2. Install TopmedPipeline R package  
+2. Install packages from github  
+```{r}
+library(devtools) 
+install_github("smgogarten/GWASTools", ref="v1.27.1", dependencies=FALSE)
+install_github("smgogarten/SeqVarTools", ref="v1.19.2", dependencies=FALSE)
+install_github("smgogarten/GENESIS", ref="v2.11.5", dependencies=FALSE)
+```
+3. Install TopmedPipeline R package  
 ```
 R CMD INSTALL TopmedPipeline
 ```
@@ -81,7 +88,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning.
 	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
-	`genome_build` | `hg19` | Genome build, used to define correlation regions.
+	`genome_build` | `hg38` | Genome build, used to define correlation regions.
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
@@ -111,7 +118,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning. 
 	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions). 
-	`genome_build` | `hg19` | Genome build, used to define correlation regions.
+	`genome_build` | `hg38` | Genome build, used to define correlation regions.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
 	`n_pcs` | `20` | Number of PCs to return.
 	`n_pair` | `6` | Number of PCs in include in the pairs plot.
@@ -158,7 +165,7 @@ config parameter | default value | description
 `method` | `gcta` | Method used to compute GRM. Options are `gcta` and `eigmix`.
 `maf_threshold` | `0.001` | Minimum MAF for variants used.
 `exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
-`genome_build` | `hg19` | Genome build, used to define correlation regions.
+`genome_build` | `hg38` | Genome build, used to define correlation regions.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include.
 `variant_include_file` | `NA` | RData file with vector of variant.id to consider.
 
@@ -180,10 +187,10 @@ When combining samples from groups with different variances for a trait (e.g., s
 3. For all samples together:
     1. Fit null mixed model using transformed residuals as outcome
         - Allow heterogeneous variance by `group_var`
-        - Include covariates and PCs as fixed effects (if `resid_covars = TRUE`)
+        - Include covariates and PCs as fixed effects
         - Include kinship as random effect
 
-For single-variant tests, the effect estimate is for the reference allele. For aggregate and sliding window tests, the effect estimate is for the alternate alelle, and multiple alternate alelles for a single variant are treated separately.
+The effect estimate is for the alternate alelle, and multiple alternate alelles for a single variant are treated separately.
 
 Association tests have an additional level of parallelization: by segment within chromosome. The R scripts take an optional `"--segment"` (or `"-s"`) argument. The python script `assoc.py` uses the environment variable `SGE_TASK_ID` to submit jobs by segment for each chromosome. By default each segment is 10 Mb in length, but this may be changed by using the arguments `"--segment_length"` or `"--n_segments"`. Note that `"--n_segments"` defines the number of segments for the entire genome, so using this argument with selected chromosomes may result in fewer segments than you expect (and the minimum is one segment per chromosome).
 
@@ -203,12 +210,12 @@ config parameter | default value | description
 `group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
 `inverse_normal` | `TRUE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately.
 `rescale_variance` | `marginal` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Controls whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform. Options are `marginal`, `varcomp`, or `none`.
-`resid_covars` | `TRUE` | Applies only if `inverse_normal` is `TRUE`. Logical for whether covariates should be included in the second null model using the residuals as the outcome variable.
 `n_pcs` | `3` | Number of PCs to include as covariates.
 `conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` and `variant.id`. The alternate allele dosage of these variants will be included as covariates in the analysis.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 `variant_include_file` | `NA` | RData file with vector of variant.id to include.
-`genome_build` | `hg19` | Genome build for the genotypes in the GDS file (`hg19` or `hg38`). Used to divide the genome into segments for parallel processing.
+`pass_only` | `TRUE` | `TRUE` to select only variants with FILTER=PASS.
+`genome_build` | `hg38` | Genome build for the genotypes in the GDS file (`hg19` or `hg38`). Used to divide the genome into segments for parallel processing.
 `thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 
 
@@ -226,8 +233,7 @@ config parameter | default value | description
 --- | --- | ---
 `mac_threshold` | `5` | Minimum minor allele count for variants to include in test. Use a higher threshold when outcome is binary.
 `maf_threshold` | `0.001` | Minimum minor allele frequency for variants to include in test. Only used if `mac_threshold` is `NA`.
-`pass_only` | `TRUE` | `TRUE` to select only variants with FILTER=PASS.
-`test_type` | `score` | Type of test to perform. If samples are related (mixed model), options are `score` and `wald` if `binary` is `FALSE`, `score` only if `binary` is `TRUE`.  For unrelated samples (`pcrelate_file` is `NA`), options are `linear` (Wald test) if `binary` is `FALSE`, `logistic` (Wald test) or `firth` if `binary` is `TRUE`.
+`test_type` | `score` | Type of test to perform. If samples are related (mixed model), options are `score` and `wald` if `binary` is `FALSE`, `score` only if `binary` is `TRUE`.
 `known_hits_file` | `NA` | RData file with data.frame containing columns `chr` and `pos`. If provided, 1 Mb regions surrounding each variant listed will be omitted from the QQ and manhattan plots.
 
 
@@ -235,12 +241,14 @@ config parameter | default value | description
 
 config parameter | default value | description
 --- | --- | ---
-`alt_freq_range` | `"0 1"` | Range of alternate allele frequencies to consider, quoted and separated by spaces.
-`test` | `burden` | Test to perform. Options are `burden` or `skat`.
-`test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` and `firth` if `binary` is `TRUE`. `firth` is only valid if samples are unrelated (`pcrelate_file` is `NA`).
+`alt_freq_max` | `1` | Maximum alternate allele frequency to consider.
+`test` | `burden` | Test to perform. Options are `burden`, `skat`, or `smmat`.
+`test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` if `binary` is `TRUE`.
 `pval_skat` | `kuonen` | Method used to calculate p-values if `test` is `skat`. Options are `kuonen` (uses saddlepoint method), `davies` (uses numerical integration), and `liu` (uses a moment matching approximation).
 `rho` | `0` | A numeric value (or quoted, space-delimited list of numeric values) in [0,1] specifying the rho parameter when `test` is `skat`. `0` is a standard SKAT test, `1` is a score burden test, and multiple values is a SKAT-O test.
-`weight_beta` | `"1 1"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"1 1"` is flat weights, `"0.5 0.5"` is proportional to the Madsen-Browning weights, and `"1 25"` gives the Wu weights.
+`variant_weight_file` | `NA` | RData file with data frame defining variant weights. Columns should contain either `variant.id` or all of (`chr`, `pos`, `ref`, `alt`).
+`weight_user` | `NA` | Name of column in `variant_weight_file` or `variant_group_file` (see aggregate test, below) containing the weight for each variant.
+`weight_beta` | `"1 1"` | Parameters of the Beta distribution used to determine variant weights, quoted and space-delimited. `"1 1"` is flat weights, `"0.5 0.5"` is proportional to the Madsen-Browning weights, and `"1 25"` gives the Wu weights. This parameter is ignored if `weight_user` is provided.
 
 
 ### Aggregate
@@ -257,7 +265,7 @@ config parameter | default value | description
 config parameter | default value | description
 --- | --- | ---
 `aggregate_type` | `allele` | Type of aggregate grouping. Options are to select variants by `allele` (unique variants) or `position` (regions of interest).
-`variant_group_file` | | RData file with data frame defining aggregate groups. If `aggregate_type` is `allele`, columns should be `group_id`, `chromosome`, `position`, `ref`, `alt`. If `aggregate_type` is `position`, columns should be `group_id`, `chromosome`, `start`, `end`.
+`variant_group_file` | | RData file with data frame defining aggregate groups. If `aggregate_type` is `allele`, columns should be `group_id`, `chr`, `pos`, `ref`, `alt`. If `aggregate_type` is `position`, columns should be `group_id`, `chr`, `start`, `end`.
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. Variants used will be the intersection of this set and variants defined by `variant_group_file`.
 
 
@@ -288,12 +296,19 @@ The segment file created at the start of each association test contains the chro
 The script [`assoc.py`](assoc.py) submits a SGE array job for each chromosome, where the SGE task id is the row number of the segment in the segments file. If a segment has no requested variants, its job will exit without error. After all segments are complete, they are combined into a single file for each chromosome and the temporary per-segment output files are deleted.
 
 
+### Multiple tests with the same null model
+
+To run additional tests using the same null model as a previous test, add the config parameters `null_model_file` and `null_model_params`. `null_model_file` is the output file created by a previous association test run. `null_model_params` is the parameter file ending in `null_model.params` in the `report` directory for the previous association test. The parameter file is needed to generate the report for the new test.
+
+If the number of samples in the initial phenotype file was less than the total number of samples in the GDS file, also provide `phenotype_file` as the output phenotype file created along with the null model file.
+
+
 
 ## LocusZoom
 
 LocusZoom plots are created with the [LocusZoom standalone software](https://github.com/UW-GAC/locuszoom-standalone).
 
-Loci to plot are specified in the `locus_file`, with chromosome `chr` and either `variantID` (to specify the reference variant) or `start end` (to indicate a region to plot, in which case the variant with the smallest p-value will be the reference. Population (`pop`) is either `TOPMED` or one of the 1000 Genomes populations (`hg19`:`AFR`, `AMR`, `ASN`, `EUR`; `hg38`: `AFR`, `AMR`, `EUR`, `EAS`, `SAS`). If `pop = TOPMED`, LD is computed from the TOPMed data using the sample set in `ld_sample_include`.
+Loci to plot are specified in the `locus_file`, with chromosome `chr` and either `variant.id` (to specify the reference variant) or `start end` (to indicate a region to plot, in which case the variant with the smallest p-value will be the reference. Population (`pop`) is either `TOPMED` or one of the 1000 Genomes populations (`hg19`:`AFR`, `AMR`, `ASN`, `EUR`; `hg38`: `AFR`, `AMR`, `EUR`, `EAS`, `SAS`). If `pop = TOPMED`, LD is computed from the TOPMed data using the sample set in `ld_sample_include`.
 
 Regions from sliding window or aggregate tests with p-values below a certain threshold can be displayed in a separate track. 
 
@@ -304,11 +319,11 @@ config parameter | default value | description
 --- | --- | ---
 `out_prefix` | | Prefix for files created by this script.
 `assoc_file` | | File with single-variant association test results. Include a space to insert chromosome.
-`locus_file` | | Text file with columns `chr`, `pop` and either `variantID` (for `locus_type=variant`) or `start`, `end` (for `locus_type=region`)
+`locus_file` | | Text file with columns `chr`, `pop` and either `variant.id` (for `locus_type=variant`) or `start`, `end` (for `locus_type=region`)
 `locus_type` | `variant` | Type of region to plot (`variant` with flanking region, or `region`)
 `flanking_region` | `500` | Flanking region in kb
 `gds_file` | `NA` | GDS file to use for calculating LD. Include a space to insert chromosome. 
-`genome_build` | `hg19` | Genome build (`hg19` or `hg38`).
+`genome_build` | `hg38` | Genome build (`hg19` or `hg38`).
 `ld_sample_include` | `NA` | RData file with vector of sample.id to include when calculating LD.
 `track_file` | `NA` | File with aggregate or window association test results. Regions will be displayed in a track in the LocusZoom plot. Include a space to insert chromosome.
 `track_file_type` | `window` | Type of association regions in `track_file` (`window` or `aggregate`).
