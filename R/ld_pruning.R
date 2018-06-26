@@ -15,7 +15,7 @@ chr <- intToChr(argv$chromosome)
 
 required <- c("gds_file")
 optional <- c("exclude_pca_corr"=TRUE,
-              "genome_build"="hg19",
+              "genome_build"="hg38",
               "ld_r_threshold"=0.32,
               "ld_win_size"=10,
               "maf_threshold"=0.01,

@@ -14,7 +14,7 @@ seg.length <- argv$segment_length * 1000
 n <- argv$n_segments
 
 required <- c()
-optional <- c("genome_build"="hg19",
+optional <- c("genome_build"="hg38",
               "out_file"="segments.txt")
 config <- setConfigDefaults(config, required, optional)
 print(config)

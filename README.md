@@ -90,7 +90,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning.
 	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
-	`genome_build` | `hg19` | Genome build, used to define correlation regions.
+	`genome_build` | `hg38` | Genome build, used to define correlation regions.
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
@@ -120,7 +120,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning. 
 	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions). 
-	`genome_build` | `hg19` | Genome build, used to define correlation regions.
+	`genome_build` | `hg38` | Genome build, used to define correlation regions.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
 	`n_pcs` | `20` | Number of PCs to return.
 	`n_pair` | `6` | Number of PCs in include in the pairs plot.
@@ -167,7 +167,7 @@ config parameter | default value | description
 `method` | `gcta` | Method used to compute GRM. Options are `gcta` and `eigmix`.
 `maf_threshold` | `0.001` | Minimum MAF for variants used.
 `exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
-`genome_build` | `hg19` | Genome build, used to define correlation regions.
+`genome_build` | `hg38` | Genome build, used to define correlation regions.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include.
 `variant_include_file` | `NA` | RData file with vector of variant.id to consider.
 
@@ -217,7 +217,7 @@ config parameter | default value | description
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 `variant_include_file` | `NA` | RData file with vector of variant.id to include.
 `pass_only` | `TRUE` | `TRUE` to select only variants with FILTER=PASS.
-`genome_build` | `hg19` | Genome build for the genotypes in the GDS file (`hg19` or `hg38`). Used to divide the genome into segments for parallel processing.
+`genome_build` | `hg38` | Genome build for the genotypes in the GDS file (`hg19` or `hg38`). Used to divide the genome into segments for parallel processing.
 `thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 
 
@@ -325,7 +325,7 @@ config parameter | default value | description
 `locus_type` | `variant` | Type of region to plot (`variant` with flanking region, or `region`)
 `flanking_region` | `500` | Flanking region in kb
 `gds_file` | `NA` | GDS file to use for calculating LD. Include a space to insert chromosome. 
-`genome_build` | `hg19` | Genome build (`hg19` or `hg38`).
+`genome_build` | `hg38` | Genome build (`hg19` or `hg38`).
 `ld_sample_include` | `NA` | RData file with vector of sample.id to include when calculating LD.
 `track_file` | `NA` | File with aggregate or window association test results. Regions will be displayed in a track in the LocusZoom plot. Include a space to insert chromosome.
 `track_file_type` | `window` | Type of association regions in `track_file` (`window` or `aggregate`).

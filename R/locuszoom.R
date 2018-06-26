@@ -17,7 +17,7 @@ required <- c("assoc_file",
               "locus_file")
 optional <- c("flanking_region"=500,
               "gds_file"=NA,
-              "genome_build"="hg19",
+              "genome_build"="hg38",
               "ld_sample_include"=NA,
               "locus_type"="variant",
               "out_prefix"="locuszoom",

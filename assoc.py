@@ -113,7 +113,7 @@ if assoc_type == "aggregate":
 
 # define segments
 if segment_length == default_segment_length and n_segments is None:
-    build = configdict.setdefault("genome_build", "hg19")
+    build = configdict.setdefault("genome_build", "hg38")
     segment_file = os.path.join(pipeline, "segments_" + build + ".txt")
     print("Using default segment file for build " + build + " with segment_length " + default_segment_length + " kb")
 else:
