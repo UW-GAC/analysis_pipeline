@@ -6,7 +6,7 @@ args <- commandArgs(trailingOnly=TRUE)
 .libPaths(args[1])
 
 source("https://bioconductor.org/biocLite.R")
-biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "argparser", "dplyr", "tidyr", "ggplot2", "GGally", "rmarkdown", "Matrix", "devtools"))
+biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "Matrix", "argparser", "dplyr", "tidyr", "ggplot2", "GGally", "rmarkdown", "devtools"))
 
 devtools::install_github("zhengxwen/gdsfmt", dependencies=FALSE)
 devtools::install_github("zhengxwen/SeqArray", dependencies=FALSE)
