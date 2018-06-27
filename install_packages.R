@@ -9,11 +9,11 @@ source("https://bioconductor.org/biocLite.R")
 biocLite(c("SeqVarTools", "SNPRelate", "GENESIS",
            "survey", "CompQuadForm",
            "dplyr", "tidyr", "ggplot2", "GGally",
-           "argparser", "rmarkdown", "devtools"),
+           "argparser", "rmarkdown"),
          ask=FALSE)
 
-devtools::install_url("https://github.com/smgogarten/GWASTools/archive/v1.27.1.tar.gz")
-devtools::install_url("https://github.com/smgogarten/SeqVarTools/archive/v1.19.2.tar.gz")
-devtools::install_url("https://github.com/smgogarten/GENESIS/archive/v2.11.5.tar.gz")
+install.packages("https://github.com/smgogarten/GWASTools/archive/v1.27.1.tar.gz", repos=NULL)
+install.packages("https://github.com/smgogarten/SeqVarTools/archive/v1.19.2.tar.gz", repos=NULL)
+install.packages("https://github.com/smgogarten/GENESIS/archive/v2.11.5.tar.gz", repos=NULL)
 
-devtools::install("TopmedPipeline", dependencies=FALSE)
+install.packages("TopmedPipeline", repos=NULL, type="source")
