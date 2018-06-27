@@ -12,11 +12,8 @@ biocLite(c("SeqVarTools", "SNPRelate", "GENESIS",
            "argparser", "rmarkdown", "devtools"),
          ask=FALSE)
 
-devtools::install_git("git://github.com/r-lib/devtools.git")
-library(git2r)
-library(devtools)
-install_git("git://github.com/smgogarten/GWASTools.git", branch="v1.27.1", dependencies=FALSE)
-install_git("git://github.com/smgogarten/SeqVarTools.git", branch="v1.19.2", dependencies=FALSE)
-install_git("git://github.com/smgogarten/GENESIS.git", branch="v2.11.5", dependencies=FALSE)
+devtools::install_url("https://github.com/smgogarten/GWASTools/archive/v1.27.1.tar.gz")
+devtools::install_url("https://github.com/smgogarten/SeqVarTools/archive/v1.19.2.tar.gz")
+devtools::install_url("https://github.com/smgogarten/GENESIS/archive/v2.11.5.tar.gz")
 
-install("TopmedPipeline", dependencies=FALSE)
+devtools::install("TopmedPipeline", dependencies=FALSE)

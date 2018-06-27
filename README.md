@@ -7,7 +7,7 @@ We recommend building R with [Intel MKL](https://software.intel.com/en-us/intel-
 1. Install R packages and dependencies from Bioconductor  
 ```{r}
 source("https://bioconductor.org/biocLite.R")
-biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "argparser", "dplyr", "tidyr", "ggplot2", "GGally", "rmarkdown", "devtools", "Matrix"))
+biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "argparser", "dplyr", "tidyr", "ggplot2", "GGally", "rmarkdown", "devtools"))
 ```
 2. Install packages from github  
 ```{r}
