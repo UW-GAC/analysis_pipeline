@@ -4,22 +4,7 @@
 
 We recommend building R with [Intel MKL](https://software.intel.com/en-us/intel-mkl) for improved performance in PC-Relate and association tests.
 
-1. Install R packages and dependencies from Bioconductor  
-```{r}
-source("https://bioconductor.org/biocLite.R")
-biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "argparser", "dplyr", "tidyr", "ggplot2", "GGally", "rmarkdown", "devtools"))
-```
-2. Install packages from github  
-```{r}
-library(devtools) 
-install_github("smgogarten/GWASTools", ref="v1.27.1", upgrade_dependencies=FALSE)
-install_github("smgogarten/SeqVarTools", ref="v1.19.2", upgrade_dependencies=FALSE)
-install_github("smgogarten/GENESIS", ref="v2.11.5", upgrade_dependencies=FALSE)
-```
-3. Install TopmedPipeline R package  
-```
-install("TopmedPipeline", upgrade_dependencies=FALSE)
-```
+Run the `install_packages.R` script to install required R packages.
 
 ## Basic outline
 
