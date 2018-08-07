@@ -34,7 +34,7 @@
             "-q":"topmed.q",
             "-S":"/bin/bash",
             "-terse":"",
-            "-v":"R_LIBS=/projects/topmed/working_code/analysis_pipeline_genesis2/R_library:/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH,MKL_NUM_THREADS=1"
+            "-v":"R_LIBS=/projects/topmed/working_code/analysis_pipeline/R_library,PATH=/projects/resources/software/apps/bin:$PATH,MKL_NUM_THREADS=1"
         },
         "parallel_env": "local"
     }
