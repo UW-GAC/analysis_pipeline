@@ -43,6 +43,8 @@ argument  | default value | description
 1. `vcf2gds.R`
 2. `merge_gds.R`
 3. `unique_variant_ids.R`
+4. `check_gds.R`
+5. `check_merged_gds.R`
 
 config parameter | default value | description
 --- | --- | ---
