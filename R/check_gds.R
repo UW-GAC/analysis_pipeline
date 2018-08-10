@@ -14,7 +14,7 @@ config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)
 
 required <- c("vcf_file", "gds_file")
-optional <- c(format="GT")
+optional <- c("sample_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -33,10 +33,19 @@ cmd_gds2vcf <- "
 suppressPackageStartupMessages(library(SeqArray))
 f <- seqOpen('%s')
 on.exit(seqClose(f))
+%s
 seqGDS2VCF(f, stdout(), info.var=character(), fmt.var=character(), verbose=FALSE)
 "
+if (!is.na(config["sample_file"])) {
+    keep_str <- sprintf("
+sample.id <- readLines('%s')
+seqSetFilter(f, sample.id=sample.id)
+", config["sample_file"])
+} else {
+    keep_str <- ""
+}
 tmpRscript <- tempfile()
-writeLines(sprintf(cmd_gds2vcf, gdsfile), tmpRscript)
+writeLines(sprintf(cmd_gds2vcf, gdsfile, keep_str), tmpRscript)
 cmd_gds <- sprintf("Rscript --vanilla %s", tmpRscript)
 f1 <- pipe(cmd_gds, "rt")
 message("    open: ", basename(gdsfile), "\n")

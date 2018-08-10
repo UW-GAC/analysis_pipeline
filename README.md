@@ -316,3 +316,17 @@ config parameter | default value | description
 `track_file_type` | `window` | Type of association regions in `track_file` (`window` or `aggregate`).
 `track_label` | `""` | Label to display to the right of the track in the plot.
 `track_threshold` | `5e-8` | P-value threshold for selecting regions to display.
+
+
+
+## Subset VCF by sample
+
+`vcf_subset.py`
+
+config parameter | default value | description
+--- | --- | ---
+`out_prefix` | | Prefix for files created by this script.
+`sample_file` | | Text file with samples to include (one per line).
+`vcf_file` | | Name of the input VCF (or BCF) file. Include a space to insert chromosome number.
+`out_file` | | Name of output VCF file (should end in ".vcf.gz"). Include a space to insert chromosome number.
+`gds_file` | | Name of GDS file used to check genotypes. Include a space to insert chromosome number.
