@@ -74,6 +74,12 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 jobid_chk = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid], array_range=chromosomes, email=email, print_only=print_only)
 
 
+# do we have more than one chromosome? if not, skip merge
+if len(TopmedPipeline.chromosomeRangeToList(chromosomes)) == 1:
+    print("Only one chromosome selected; skipping merge")
+    sys.exit(0)
+    
+
 job = "merge_gds"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
