@@ -15,6 +15,6 @@ devtools::install_git("git://github.com/zhengxwen/SeqArray", dependencies=FALSE)
 devtools::install_git("git://github.com/zhengxwen/SNPRelate", dependencies=FALSE)
 devtools::install_git("git://github.com/smgogarten/GWASTools", dependencies=FALSE)
 devtools::install_git("git://github.com/smgogarten/SeqVarTools", dependencies=FALSE)
-devtools::install_git("git://github.com/smgogarten/GENESIS", dependencies=FALSE)
+devtools::install_git("git://github.com/UW-GAC/GENESIS", dependencies=FALSE)
 
 devtools::install("TopmedPipeline", dependencies=FALSE)
