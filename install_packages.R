@@ -12,8 +12,8 @@ biocLite(c("SeqVarTools", "SNPRelate", "GENESIS",
            "argparser", "rmarkdown"),
          ask=FALSE)
 
-install.packages("https://github.com/smgogarten/GWASTools/archive/v1.27.1.tar.gz", repos=NULL)
-install.packages("https://github.com/smgogarten/SeqVarTools/archive/v1.19.2.tar.gz", repos=NULL)
-install.packages("https://github.com/smgogarten/GENESIS/archive/v2.11.5.tar.gz", repos=NULL)
+install.packages("https://github.com/UW-GAC/GWASTools/archive/v1.27.1.tar.gz", repos=NULL)
+install.packages("https://github.com/UW-GAC/SeqVarTools/archive/v1.19.2.tar.gz", repos=NULL)
+install.packages("https://github.com/UW-GAC/GENESIS/archive/v2.11.6.tar.gz", repos=NULL)
 
 install.packages("TopmedPipeline", repos=NULL, type="source")
