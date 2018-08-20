@@ -149,7 +149,7 @@ config parameter | default value | description
 --- | --- | ---
 `out_prefix` | | Prefix for files created by this script. 
 `gds_file` | | GDS file. Include a space to insert chromosome.
-`method` | `gcta` | Method used to compute GRM. Options are `gcta` and `eigmix`.
+`method` | `GCTA` | Method used to compute GRM. Options are `GCTA`, `EIGMIX`, and `IndivBeta`.
 `maf_threshold` | `0.001` | Minimum MAF for variants used.
 `exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
 `genome_build` | `hg38` | Genome build, used to define correlation regions.
