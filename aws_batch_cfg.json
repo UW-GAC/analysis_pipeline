@@ -1,6 +1,6 @@
 {
     "name": "AWS_Batch_config",
-    "version": "3",
+    "version": "3.1",
     "debug": 0,
     "configuration": {
         "memory_limits": {
@@ -26,7 +26,7 @@
     	    "pca_plots":2000,
     	    "pcrelate":8000
         },
-        "aws_region": "us-west-2",
+        "aws_profile": "default",
         "pipeline_path": "/usr/local/analysis_pipeline",
         "queue": "SPOT_topmed_nfs",
         "maxperf": 0,
@@ -47,7 +47,6 @@
             "jobdef": "TM_master",
             "vcpus":  1,
             "memory": 5000,
-            "region": "us-west-2",
             "dependsOn": [],
             "command": []
         },
