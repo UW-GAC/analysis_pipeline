@@ -4,25 +4,7 @@
 
 We recommend building R with [Intel MKL](https://software.intel.com/en-us/intel-mkl) for improved performance in PC-Relate and association tests.
 
-1. Install R packages and dependencies from Bioconductor  
-```{r}
-source("https://bioconductor.org/biocLite.R")
-biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "Matrix", "argparser", "dplyr", "tidyr", "ggplot2", "GGally", "rmarkdown", "devtools"))
-```
-2. Install development packages from github  
-```{r}
-library(devtools)
-install_github("zhengxwen/gdsfmt", dependencies=FALSE)
-install_github("zhengxwen/SeqArray", dependencies=FALSE)
-install_github("zhengxwen/SNPRelate", dependencies=FALSE) 
-install_github("smgogarten/GWASTools", dependencies=FALSE)
-install_github("smgogarten/SeqVarTools", dependencies=FALSE)
-install_github("smgogarten/GENESIS", dependencies=FALSE)
-```
-3. Install TopmedPipeline R package  
-```
-install("TopmedPipeline", dependencies=FALSE)
-```
+Run the `install_packages.R` script to install required R packages.
 
 ## Basic outline
 
@@ -61,6 +43,8 @@ argument  | default value | description
 1. `vcf2gds.R`
 2. `merge_gds.R`
 3. `unique_variant_ids.R`
+4. `check_gds.R`
+5. `check_merged_gds.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -165,7 +149,7 @@ config parameter | default value | description
 --- | --- | ---
 `out_prefix` | | Prefix for files created by this script. 
 `gds_file` | | GDS file. Include a space to insert chromosome.
-`method` | `gcta` | Method used to compute GRM. Options are `gcta` and `eigmix`.
+`method` | `GCTA` | Method used to compute GRM. Options are `GCTA`, `EIGMIX`, and `IndivBeta`.
 `maf_threshold` | `0.001` | Minimum MAF for variants used.
 `exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
 `genome_build` | `hg38` | Genome build, used to define correlation regions.
@@ -332,3 +316,17 @@ config parameter | default value | description
 `track_file_type` | `window` | Type of association regions in `track_file` (`window` or `aggregate`).
 `track_label` | `""` | Label to display to the right of the track in the plot.
 `track_threshold` | `5e-8` | P-value threshold for selecting regions to display.
+
+
+
+## Subset VCF by sample
+
+`vcf_subset.py`
+
+config parameter | default value | description
+--- | --- | ---
+`out_prefix` | | Prefix for files created by this script.
+`sample_file` | | Text file with samples to include (one per line).
+`vcf_file` | | Name of the input VCF (or BCF) file. Include a space to insert chromosome number.
+`out_file` | | Name of output VCF file (should end in ".vcf.gz"). Include a space to insert chromosome number.
+`gds_file` | | Name of GDS file used to check genotypes. Include a space to insert chromosome number.

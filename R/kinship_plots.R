@@ -38,7 +38,7 @@ kin.type <- tolower(config["kinship_method"])
 kin.thresh <- as.numeric(config["kinship_threshold"])
 if (kin.type == "king") {
     king <- getobj(config["kinship_file"])
-    samp.sel <- king$sample.id %in% sample.id
+    samp.sel <- if (is.null(sample.id)) NULL else king$sample.id %in% sample.id
     kinship <- snpgdsIBDSelection(king, kinship.cutoff=kin.thresh, samp.sel=samp.sel)
     xvar <- "IBS0"
 } else if (kin.type == "pcrelate") {

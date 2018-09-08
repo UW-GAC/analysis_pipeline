@@ -67,6 +67,19 @@ if os.path.splitext(configdict["vcf_file"])[1] == ".bcf":
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], array_range=chromosomes, request_cores=ncores, email=email, print_only=print_only)
 
 
+job = "check_gds"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+jobid_chk = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid], array_range=chromosomes, email=email, print_only=print_only)
+
+
+# do we have more than one chromosome? if not, skip merge
+if len(TopmedPipeline.chromosomeRangeToList(chromosomes)) == 1:
+    print("Only one chromosome selected; skipping merge")
+    sys.exit(0)
+    
+
 job = "merge_gds"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
@@ -83,6 +96,13 @@ job = "unique_variant_ids"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
+
+
+job = "check_merged_gds"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid], array_range=chromosomes, email=email, print_only=print_only)
 
 
 cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=[jobid], print_only=print_only)

@@ -68,7 +68,8 @@ maf.min <- as.numeric(config["maf_threshold"])
 
 method <- switch(tolower(config["method"]),
                  gcta="GCTA",
-                 eigmix="EIGMIX")
+                 eigmix="EIGMIX",
+                 indivbeta="IndivBeta")
 
 ## write to the scratch disk of each node
 outfile.tmp <- tempfile()

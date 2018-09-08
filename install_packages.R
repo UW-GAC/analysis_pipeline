@@ -3,16 +3,18 @@
 # argument to script is path to R library for install
 
 args <- commandArgs(trailingOnly=TRUE)
-.libPaths(args[1])
+if (length(args) > 0) .libPaths(args[1])
 
 source("https://bioconductor.org/biocLite.R")
-biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "Matrix", "argparser", "dplyr", "tidyr", "ggplot2", "GGally", "rmarkdown", "devtools"))
+biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "survey", "CompQuadForm",
+           "argparser", "ggplot2", "GGally", "rmarkdown", "devtools"),
+         ask=FALSE)
 
-devtools::install_github("zhengxwen/gdsfmt", dependencies=FALSE)
-devtools::install_github("zhengxwen/SeqArray", dependencies=FALSE)
-devtools::install_github("zhengxwen/SNPRelate", dependencies=FALSE)
-devtools::install_github("smgogarten/GWASTools", dependencies=FALSE)
-devtools::install_github("smgogarten/SeqVarTools", dependencies=FALSE)
-devtools::install_github("smgogarten/GENESIS", dependencies=FALSE)
+devtools::install_git("git://github.com/zhengxwen/gdsfmt", dependencies=FALSE)
+devtools::install_git("git://github.com/zhengxwen/SeqArray", dependencies=FALSE)
+devtools::install_git("git://github.com/zhengxwen/SNPRelate", dependencies=FALSE)
+devtools::install_git("git://github.com/smgogarten/GWASTools", dependencies=FALSE)
+devtools::install_git("git://github.com/smgogarten/SeqVarTools", dependencies=FALSE)
+devtools::install_git("git://github.com/UW-GAC/GENESIS", dependencies=FALSE)
 
 devtools::install("TopmedPipeline", dependencies=FALSE)
