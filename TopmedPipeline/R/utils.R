@@ -112,3 +112,20 @@ constructFilename <- function(prefix, chromosome=NA, segment=NA) {
     seg <- if (is.na(segment)) "" else paste0("_seg", segment)
     paste0(prefix, chr, seg, ".RData")
 }
+
+
+#' Write each element of a list to a GDS node
+#'
+#' @param x a list
+#' @param file character string with filename of GDS file to create
+#' 
+#' @importFrom gdsfmt createfn.gds add.gdsn closefn.gds
+#' 
+#' @export
+list2gds <- function(x, file) {
+    gds <- createfn.gds(file)
+    for (v in names(x)) {
+        add.gdsn(gds, v, x[[v]], compress="LZMA_RA")
+    }
+    closefn.gds(gds)
+}
