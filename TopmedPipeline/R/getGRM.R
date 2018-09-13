@@ -59,9 +59,14 @@ getKinship <- function(config, sample.id) {
 #' @importFrom GENESIS pcrelateMakeGRM
 #' @noRd
 .readPCR <- function(f, sample.id, scaleKin=2) {
-    pcr <- openfn.gds(f)
-    grm <- pcrelateMakeGRM(pcr, scan.include=sample.id, scaleKin=scaleKin)
-    closefn.gds(pcr)
+    if (tools::file_ext(f) == "gds") {
+        pcr <- openfn.gds(f)
+        grm <- pcrelateMakeGRM(pcr, scan.include=sample.id, scaleKin=scaleKin)
+        closefn.gds(pcr)
+    } else {
+        pcr <- getobj(f)
+        grm <- pcrelateMakeGRM(pcr, scan.include=sample.id, scaleKin=scaleKin)
+    }
     grm
 }
 
