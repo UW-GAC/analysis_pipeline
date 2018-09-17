@@ -21,3 +21,18 @@ test_that("list2gds", {
     gdsfmt::closefn.gds(gds)
     unlink(f)
 })
+
+test_that("gds2ibdobj", {
+    gds <- seqOpen(seqExampleFileName())
+    ibd <- SNPRelate::snpgdsIBDKING(gds, verbose=FALSE)
+    gdsfile <- tempfile()
+    list2gds(ibd, gdsfile)
+    ibd2 <- gds2ibdobj(gdsfile)
+    expect_equal(ibd, ibd2)
+
+    samp.sel <- sort(sample(seq_along(ibd$sample.id), 10))
+    sel <- SNPRelate::snpgdsIBDSelection(ibd, samp.sel=samp.sel)
+    ibd2.sel <- gds2ibdobj(gdsfile, sample.id=ibd2$sample.id[samp.sel])
+    sel2 <- SNPRelate::snpgdsIBDSelection(ibd2.sel)
+    expect_equal(sel, sel2)
+})
