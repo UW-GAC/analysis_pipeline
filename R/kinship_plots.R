@@ -91,7 +91,7 @@ p <- ggplot(kinship.study, aes_string(xvar, "kinship")) +
     facet_wrap(~study) +
     ylab("kinship estimate") +
     theme_bw()
-p <- ggsave(config["out_file_study"], plot=p, width=7, height=7)
+ggsave(config["out_file_study"], plot=p, width=7, height=7)
 
 kinship.cross <- kinship %>%
     filter(study1 != study2)
