@@ -203,8 +203,10 @@ class Cluster(object):
             if clusterCfg[key] != cfg_version:
                 print( "Error: version of : " + stdCfgFile + " should be " + cfg_version +
                        " not " + clusterCfg[key])
-                print( "\t> " + str(sCmd) )
                 sys.exit(2)
+        else:
+            print( "Error: version missing in " + stdCfgFile )
+            sys.exit(2)
         if self.verbose:
             debugCfg = True
         else:
@@ -227,7 +229,6 @@ class Cluster(object):
                 if clusterCfg[key] != cfg_version:
                     print( "Error: version of : " + optCfgFile + " should be " + cfg_version +
                            " not " + clusterCfg[key])
-                    print( "\t> " + str(sCmd) )
                     sys.exit(2)
             optCfg = clusterCfg["configuration"]
             if debugCfg:
