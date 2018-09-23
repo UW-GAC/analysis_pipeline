@@ -190,7 +190,7 @@ class Cluster(object):
 
         self.openClusterCfg(std_cluster_file, opt_cluster_file, cfg_version, verbose)
 
-    def openClusterCfg(self, stdCfgFile, optCfgFile, verbose):
+    def openClusterCfg(self, stdCfgFile, optCfgFile, cfg_version, verbose):
         # get the standard cluster cfg
         self.clusterfile =  os.path.join(self.pipelinePath, stdCfgFile)
         self.printVerbose("0>> openClusterCfg: Reading internal cfg file: " + self.clusterfile)
@@ -305,8 +305,12 @@ class AWS_Batch(Cluster):
         self.queue = self.clusterCfg["queue"]
 
         # create the batch client
-        session = boto3.Session(profile = self.clusterCfg("aws_profile"))
-        self.batchC = session.client('batch')
+        try:
+            session = boto3.Session(profile_name = self.clusterCfg["aws_profile"])
+            self.batchC = session.client('batch')
+        except Exception as e:
+            pError('boto3 session or client exception ' + str(e))
+            sys.exit(2)
 
         # retryStrategy
         self.retryStrategy = self.clusterCfg["retryStrategy"]
@@ -493,20 +497,24 @@ class AWS_Batch(Cluster):
             self.printVerbose("\t1>\tNo. tasks: " + str(noJobs))
             self.printVerbose("\t1>\tFIRST_INDEX: " + str(taskList[0]))
             if not print_only:
-                subOut = self.batchC.submit_job(
-                               jobName = subName,
-                               jobQueue = self.queue,
-                               arrayProperties = { "size": noJobs },
-                               jobDefinition = submitOpts["jobdef"],
-                               parameters = jobParams,
-                               dependsOn = submitOpts["dependsOn"],
-                               containerOverrides = {
-                                  "vcpus": submitOpts["vcpus"],
-                                  "memory": submitOpts["memory"],
-                                  "environment": submitOpts["env"]
-                               },
-                               retryStrategy = self.retryStrategy
-                )
+                try:
+                    subOut = self.batchC.submit_job(
+                                   jobName = subName,
+                                   jobQueue = self.queue,
+                                   arrayProperties = { "size": noJobs },
+                                   jobDefinition = submitOpts["jobdef"],
+                                   parameters = jobParams,
+                                   dependsOn = submitOpts["dependsOn"],
+                                   containerOverrides = {
+                                      "vcpus": submitOpts["vcpus"],
+                                      "memory": submitOpts["memory"],
+                                      "environment": submitOpts["env"]
+                                   },
+                                   retryStrategy = self.retryStrategy
+                    )
+                except Exception as e:
+                    pError('boto3 session or client exception ' + str(e))
+                    sys.exit(2)
         else:
             jobParams["at"] = "0"
             jobParams['lf'] = trackID
@@ -515,19 +523,23 @@ class AWS_Batch(Cluster):
             if array_range is not None:
                 self.printVerbose("\t1> SGE_TASK_ID: " + str(taskList[0]))
             if not print_only:
-                subOut = self.batchC.submit_job(
-                               jobName = subName,
-                               jobQueue = self.queue,
-                               jobDefinition = submitOpts["jobdef"],
-                               parameters = jobParams,
-                               dependsOn = submitOpts["dependsOn"],
-                               containerOverrides = {
-                                  "vcpus": submitOpts["vcpus"],
-                                  "memory": submitOpts["memory"],
-                                  "environment": submitOpts["env"]
-                               },
-                               retryStrategy = self.retryStrategy
-                )
+                try:
+                    subOut = self.batchC.submit_job(
+                                   jobName = subName,
+                                   jobQueue = self.queue,
+                                   jobDefinition = submitOpts["jobdef"],
+                                   parameters = jobParams,
+                                   dependsOn = submitOpts["dependsOn"],
+                                   containerOverrides = {
+                                      "vcpus": submitOpts["vcpus"],
+                                      "memory": submitOpts["memory"],
+                                      "environment": submitOpts["env"]
+                                   },
+                                   retryStrategy = self.retryStrategy
+                    )
+                except Exception as e:
+                    pError('boto3 session or client exception ' + str(e))
+                    sys.exit(2)
         if print_only:
             print("+++++++++  Print Only +++++++++++")
             print("Job: " + job_name)
