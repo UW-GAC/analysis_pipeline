@@ -1,5 +1,5 @@
 Package: TopmedPipeline
-Version: 2.1.0
+Version: 2.1.1
 Type: Package
 Title: Utilities for the TOPMed pipeline
 Description: Utilities for the TOPMed pipeline.
@@ -9,7 +9,7 @@ Depends:
 Imports: methods, stats, tools, utils, Matrix, dplyr, lazyeval, rmarkdown,
 	 Biobase, BiocGenerics, gdsfmt, GenomicRanges,
 	 IRanges, S4Vectors, SeqArray, SeqVarTools, GENESIS
-Suggests: roxygen2, testthat, GWASTools, dbplyr
+Suggests: roxygen2, testthat, GWASTools, SNPRelate, dbplyr
 License: Artistic-2.0
 LazyLoad: no
 RoxygenNote: 6.0.1

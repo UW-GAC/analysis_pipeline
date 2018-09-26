@@ -87,7 +87,7 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
 config["variant_include_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
-config["out_file"] = configdict["data_prefix"] + "_ibd_king.RData"
+config["out_file"] = configdict["data_prefix"] + "_ibd_king.gds"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
@@ -99,7 +99,7 @@ job = "kinship_plots"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["kinship_file"] = configdict["data_prefix"] + "_ibd_king.RData"
+config["kinship_file"] = configdict["data_prefix"] + "_ibd_king.gds"
 config["kinship_method"] = "king"
 config["out_file_all"] = configdict["plots_prefix"] + "_kinship_all.pdf"
 config["out_file_cross"] = configdict["plots_prefix"] + "_kinship_cross.pdf"
