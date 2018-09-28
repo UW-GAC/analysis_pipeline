@@ -706,7 +706,7 @@ class AWS_Cluster(SGE_Cluster):
 class ClusterFactory(object):
 
     @staticmethod
-    def createCluster(cluster_type, cluster_file, verbose):
+    def createCluster(cluster_type, cluster_file=None, verbose=False):
         allSubClasses = getAllSubclasses(Cluster)
         for subclass in allSubClasses:
             if subclass.__name__ == cluster_type:
