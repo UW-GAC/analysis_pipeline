@@ -5,9 +5,9 @@
 \alias{getKinship}
 \title{Load a GRM or kinship matrix}
 \usage{
-getGRM(config, sample.id)
+getGRM(config, sample.id = NULL)
 
-getKinship(config, sample.id)
+getKinship(config, sample.id = NULL)
 }
 \arguments{
 \item{config}{Config object (named vector) with params "pcrelate_file", "grm_file" or "king_file"}
