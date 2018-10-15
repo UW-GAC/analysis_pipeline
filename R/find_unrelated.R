@@ -21,35 +21,34 @@ optional <- c("kinship_method"="king",
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
-## always use king estimates for ancestry divergence
-king <- getobj(config["king_file"])
-divMat <- king$kinship
-colnames(divMat) <- rownames(divMat) <- king$sample.id
-
 if (!is.na(config["sample_include_file"])) {
-    sample.id <- as.character(getobj(config["sample_include_file"]))
-    ind <- colnames(divMat) %in% sample.id
-    divMat <- divMat[ind, ind]
+    sample.id <- getobj(config["sample_include_file"])
+    message("Using ", length(sample.id), " samples")
+} else {
+    sample.id <- NULL
+    message("Using all samples")
 }
-message("Using ", nrow(divMat), " samples")
 
-## select type of kinship estimates to use (king or pcrelate)
+# always use king estimates for ancestry divergence
+# getKinship returns a list
+divMat <- getKinship(config["king_file"], sample.id)[[1]]
+
+# select type of kinship estimates to use (king or pcrelate)
 kin.type <- tolower(config["kinship_method"])
 if (kin.type == "king") {
     kinMat <- divMat
 } else if (kin.type == "pcrelate") {
-    pcr <- openfn.gds(config["pcrelate_file"])
-    kinMat <- pcrelateMakeGRM(pcr, scan.include=colnames(divMat), scaleKin=1)
-    closefn.gds(pcr)
+    kinMat <- getKinship(config["pcrelate"], sample.id)[[1]]
 } else {
     stop("kinship method should be 'king' or 'pcrelate'")
 }
 message("Using ", kin.type, " kinship estimates")
 
 # divide into related and unrelated set
-kin.thresh <- as.numeric(config["kinship_threshold"])
-part <- pcairPartition(kinMat=kinMat, kin.thresh=kin.thresh,
-                       divMat=divMat, div.thresh=-kin.thresh)
+kin_thresh <- as.numeric(config["kinship_threshold"])
+part <- pcairPartition(kinobj=kinMat, kin.thresh=kin_thresh,
+                       divobj=divMat, div.thresh=-kin_thresh,
+                       sample.include=sample.id)
 
 rels <- part$rels
 unrels <- part$unrels
