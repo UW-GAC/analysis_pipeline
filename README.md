@@ -85,12 +85,14 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 
     `pcair.py`
     1. `find_unrelated.R`
-    2. `ld_pruning.R`
-    3. `combine_variants.R`
+    2. `ld_pruning.R` (optional with `--ld_pruning`)
+    3. `combine_variants.R` (optional  with `--ld_pruning`)
     4. `pca_byrel.R`
 	5. `pca_plots.R`
 	6. `pca_corr.R`
 	7. `pca_corr_plots.R`
+
+	The LD pruning step is run if the argument `--ld_pruning` is provided; otherwise, set `variant_include_file` to a pre-existing set of pruned variants (such as those from running `king.py` above).
 
     config parameter | default value | description
     --- | --- | ---
@@ -106,7 +108,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning. 
 	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions). 
 	`genome_build` | `hg38` | Genome build, used to define correlation regions.
-	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
+	`variant_include_file` | `NA` | RData file with vector of variant.id to use.
 	`n_pcs` | `20` | Number of PCs to return.
 	`n_pair` | `6` | Number of PCs in include in the pairs plot.
 	`n_perpage` | `4` | Number of PC-variant correlation plots to stack in a single page. The number of png files generated will be `ceiling(n_pcs/n_perpage)`.
@@ -131,8 +133,6 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
-
-4. Repeat steps 2-3, using new kinship estimates for PC-AiR
 
 
 ### GRM
