@@ -98,10 +98,10 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
     --- | --- | ---
     `out_prefix` | | Prefix for files created by this script.
     `gds_file` | | GDS file with all chromosomes.
-	`king_file` | | RData file with kinship coefficients created by `king.py`.
-	`kinship_method` | `king` | Type of kinship estimates to use for finding unrelated set. Options are `king` or `pcrelate`.
+	`king_file` | | RData or GDS file with kinship coefficients created by `king.py`. Used for ancestry divergence, and optionally for kinship if `kinship_file` is not specified.
+	`kinship_file` | `NA` | File containing kinship matrix to use for defining the unrelated sample set. Multiple formats are accepted, including GDS or RData from `king.py` or `pcrelate.py`, or an RData file containing a Matrix object.
+	`kinship_method` | `king` | Type of kinship estimates contained in `kinship_file`. Options are `king` or `pcrelate`.
 	`kinship_threshold` | `0.04419417` | Minimum kinship estimate to use for assigning relatives (default is `2^(-9/2)` or 3rd degree relatives).
-	`pcrelate_file` | `NA` | GDS file created by `pcrelate.py`. Only used if `kinship_method` is `pcrelate`.
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 	`ld_r_threshold` | `0.32` | `r` threshold for LD pruning. Default is `r^2 = 0.1`.
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
