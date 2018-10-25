@@ -61,11 +61,11 @@ getKinship <- function(config, sample.id=NULL) {
 .readPCR <- function(f, sample.id, scaleKin=2) {
     if (tools::file_ext(f) == "gds") {
         pcr <- openfn.gds(f)
-        grm <- GENESIS:::pcrelateMakeGRM1(pcr, scan.include=sample.id, scaleKin=scaleKin)
+        grm <- pcrelateMakeGRM(pcr, scan.include=sample.id, scaleKin=scaleKin)
         closefn.gds(pcr)
     } else {
         pcr <- getobj(f)
-        grm <- GENESIS:::pcrelateMakeGRM1(pcr, scan.include=sample.id, scaleKin=scaleKin)
+        grm <- pcrelateMakeGRM(pcr, scan.include=sample.id, scaleKin=scaleKin)
     }
     grm
 }
@@ -85,12 +85,10 @@ getKinship <- function(config, sample.id=NULL) {
     } else {
         x <- getobj(f)
         if (matrix.name %in% names(x)) {
-            samp <- x$sample.id
-            x <- x[[matrix.name]]
-            colnames(x) <- rownames(x) <- samp
+            colnames(x[[matrix.name]]) <- rownames(x[[matrix.name]]) <- x$sample.id
             if (!is.null(sample.id)) {
-                keep <- samp %in% sample.id
-                grm <- x[keep,keep]
+                keep <- x$sample.id %in% sample.id
+                grm <- x[[matrix.name]][keep,keep]
             } else {
                 grm <- x
             }
