@@ -24,7 +24,8 @@
     	    "pca_corr":8000,
     	    "pca_corr_plots":32000,
     	    "pca_plots":2000,
-    	    "pcrelate":8000
+    	    "pcrelate":8000,
+            "vcf2gds":8000
         },
         "submit_cmd": "qsub",
         "submit_opts": {
