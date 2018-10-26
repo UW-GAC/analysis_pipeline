@@ -555,6 +555,8 @@ class AWS_Batch(Cluster):
                 print("\tsubmitJob: " + subName + " is a single job")
             print("\tlog file: " + jobParams['lf'])
             print("\ttrace file: " + jobParams['tf'])
+            print("\tAnalysis driver: " + jobParams['rd'])
+            print("\tAnalysis driver parameters: " + jobParams['ra'])
             print("\tJOB_ID: " + trackID)
             print("\tbatch queue: " + self.queue)
             print("\tjob definition: " + submitOpts["jobdef"])
