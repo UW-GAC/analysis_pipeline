@@ -50,13 +50,16 @@ if (config["locus_type"] == "variant") {
     flank <- as.numeric(config["flanking_region"]) * 1000
     var.pos <- assoc$pos[assoc$variant.id == variant]
     start <- var.pos - flank
+    if (start < 1) start <- 1
     end <- var.pos + flank
     
     lz.name <- paste0("chr", var.chr, ":", var.pos)
     ld.region <- paste0("--refsnp \"", lz.name, "\"", " --flank ", config["flanking_region"], "kb")
     prefix <- paste0(config["out_prefix"], "_var", variant, "_ld_", pop)
-    maf <- assoc$MAF[assoc$variant.id == variant]
-    title <- paste(lz.name, "- MAF:", formatC(maf, digits=3))
+    freq <- assoc$freq[assoc$variant.id == variant]
+    maf <- min(freq, 1-freq)
+    mac <- assoc$MAC[assoc$variant.id == variant]
+    title <- paste(lz.name, "- MAF:", formatC(maf, digits=3), "- MAC:", mac)
     
 } else if (config["locus_type"] == "region") {
     stopifnot(all(c("start", "end") %in% names(locus)))

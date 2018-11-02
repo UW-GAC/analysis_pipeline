@@ -43,6 +43,8 @@ argument  | default value | description
 1. `vcf2gds.R`
 2. `merge_gds.R`
 3. `unique_variant_ids.R`
+4. `check_gds.R`
+5. `check_merged_gds.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -83,28 +85,30 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 
     `pcair.py`
     1. `find_unrelated.R`
-    2. `ld_pruning.R`
-    3. `combine_variants.R`
+    2. `ld_pruning.R` (optional with `--ld_pruning`)
+    3. `combine_variants.R` (optional  with `--ld_pruning`)
     4. `pca_byrel.R`
 	5. `pca_plots.R`
 	6. `pca_corr.R`
 	7. `pca_corr_plots.R`
 
+	The LD pruning step is run if the argument `--ld_pruning` is provided; otherwise, set `variant_include_file` to a pre-existing set of pruned variants (such as those from running `king.py` above).
+
     config parameter | default value | description
     --- | --- | ---
     `out_prefix` | | Prefix for files created by this script.
     `gds_file` | | GDS file with all chromosomes.
-	`king_file` | | RData file with kinship coefficients created by `king.py`.
-	`kinship_method` | `king` | Type of kinship estimates to use for finding unrelated set. Options are `king` or `pcrelate`.
+	`king_file` | | RData or GDS file with kinship coefficients created by `king.py`. Used for ancestry divergence, and optionally for kinship if `kinship_file` is not specified.
+	`kinship_file` | `NA` | File containing kinship matrix to use for defining the unrelated sample set. Multiple formats are accepted, including GDS or RData from `king.py` or `pcrelate.py`, or an RData file containing a Matrix object.
+	`kinship_method` | `king` | Type of kinship estimates contained in `kinship_file`. Options are `king` or `pcrelate`.
 	`kinship_threshold` | `0.04419417` | Minimum kinship estimate to use for assigning relatives (default is `2^(-9/2)` or 3rd degree relatives).
-	`pcrelate_file` | `NA` | GDS file created by `pcrelate.py`. Only used if `kinship_method` is `pcrelate`.
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 	`ld_r_threshold` | `0.32` | `r` threshold for LD pruning. Default is `r^2 = 0.1`.
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning. 
 	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions). 
 	`genome_build` | `hg38` | Genome build, used to define correlation regions.
-	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
+	`variant_include_file` | `NA` | RData file with vector of variant.id to use.
 	`n_pcs` | `20` | Number of PCs to return.
 	`n_pair` | `6` | Number of PCs in include in the pairs plot.
 	`n_perpage` | `4` | Number of PC-variant correlation plots to stack in a single page. The number of png files generated will be `ceiling(n_pcs/n_perpage)`.
@@ -130,8 +134,6 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
 
-4. Repeat steps 2-3, using new kinship estimates for PC-AiR
-
 
 ### GRM
 
@@ -147,7 +149,7 @@ config parameter | default value | description
 --- | --- | ---
 `out_prefix` | | Prefix for files created by this script. 
 `gds_file` | | GDS file. Include a space to insert chromosome.
-`method` | `gcta` | Method used to compute GRM. Options are `gcta` and `eigmix`.
+`method` | `GCTA` | Method used to compute GRM. Options are `GCTA`, `EIGMIX`, and `IndivBeta`.
 `maf_threshold` | `0.001` | Minimum MAF for variants used.
 `exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
 `genome_build` | `hg38` | Genome build, used to define correlation regions.
@@ -195,7 +197,7 @@ config parameter | default value | description
 `group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
 `inverse_normal` | `TRUE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately.
 `rescale_variance` | `marginal` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Controls whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform. Options are `marginal`, `varcomp`, or `none`.
-`n_pcs` | `3` | Number of PCs to include as covariates.
+`n_pcs` | `0` | Number of PCs to include as covariates.
 `conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` and `variant.id`. The alternate allele dosage of these variants will be included as covariates in the analysis.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 `variant_include_file` | `NA` | RData file with vector of variant.id to include.
@@ -314,3 +316,17 @@ config parameter | default value | description
 `track_file_type` | `window` | Type of association regions in `track_file` (`window` or `aggregate`).
 `track_label` | `""` | Label to display to the right of the track in the plot.
 `track_threshold` | `5e-8` | P-value threshold for selecting regions to display.
+
+
+
+## Subset VCF by sample
+
+`vcf_subset.py`
+
+config parameter | default value | description
+--- | --- | ---
+`out_prefix` | | Prefix for files created by this script.
+`sample_file` | | Text file with samples to include (one per line).
+`vcf_file` | | Name of the input VCF (or BCF) file. Include a space to insert chromosome number.
+`out_file` | | Name of output VCF file (should end in ".vcf.gz"). Include a space to insert chromosome number.
+`gds_file` | | Name of GDS file used to check genotypes. Include a space to insert chromosome number.

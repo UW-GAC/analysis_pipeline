@@ -1,6 +1,6 @@
 """Utility functions for TOPMed pipeline"""
 
-__version__ = "2.0.1"
+__version__ = "2.2.0"
 
 import os
 import sys
@@ -37,8 +37,14 @@ def readConfig(file):
     f = open(file, 'r')
     reader = csv.reader(f, delimiter=' ', quotechar='"', skipinitialspace=True)
     for line in reader:
+        if len(line) == 0:
+            continue
+        
         if line[0][0] == "#":
             continue
+
+        if len(line) == 1:
+            sys.exit("Error reading config file " + file + ":\nNo value for parameter '" + line[0] + "' in line " + str(reader.line_num))
 
         if len(line) > 2:
             if line[2] == '':
@@ -182,15 +188,15 @@ def update(d, u):
 class Cluster(object):
     """ """
     # constructor
-    def __init__(self, std_cluster_file, opt_cluster_file=None, verbose=False):
+    def __init__(self, std_cluster_file, opt_cluster_file=None, cfg_version="3", verbose=False):
         self.verbose = verbose
         self.class_name = self.__class__.__name__
         # set default pipeline path
         self.pipelinePath = os.path.dirname(os.path.abspath(sys.argv[0]))
 
-        self.openClusterCfg(std_cluster_file, opt_cluster_file, verbose)
+        self.openClusterCfg(std_cluster_file, opt_cluster_file, cfg_version, verbose)
 
-    def openClusterCfg(self, stdCfgFile, optCfgFile, verbose):
+    def openClusterCfg(self, stdCfgFile, optCfgFile, cfg_version, verbose):
         # get the standard cluster cfg
         self.clusterfile =  os.path.join(self.pipelinePath, stdCfgFile)
         self.printVerbose("0>> openClusterCfg: Reading internal cfg file: " + self.clusterfile)
@@ -198,14 +204,15 @@ class Cluster(object):
         with open(self.clusterfile) as cfgFileHandle:
             clusterCfg= json.load(cfgFileHandle)
         # check version
-        cfgVersion = "3"
         key = "version"
         if key in clusterCfg:
-            if clusterCfg[key] != cfgVersion:
-                print( "Error: version of : " + stdCfgFile + " should be " + cfgVersion +
+            if clusterCfg[key] != cfg_version:
+                print( "Error: version of : " + stdCfgFile + " should be " + cfg_version +
                        " not " + clusterCfg[key])
-                print( "\t> " + str(sCmd) )
                 sys.exit(2)
+        else:
+            print( "Error: version missing in " + stdCfgFile )
+            sys.exit(2)
         if self.verbose:
             debugCfg = True
         else:
@@ -225,10 +232,9 @@ class Cluster(object):
                 clusterCfg = json.load(cfgFileHandle)
             key = "version"
             if key in clusterCfg:
-                if clusterCfg[key] != cfgVersion:
-                    print( "Error: version of : " + optCfgFile + " should be " + cfgVersion +
+                if clusterCfg[key] != cfg_version:
+                    print( "Error: version of : " + optCfgFile + " should be " + cfg_version +
                            " not " + clusterCfg[key])
-                    print( "\t> " + str(sCmd) )
                     sys.exit(2)
             optCfg = clusterCfg["configuration"]
             if debugCfg:
@@ -277,7 +283,8 @@ class AWS_Batch(Cluster):
     def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
         self.std_cluster_file = "./aws_batch_cfg.json"
-        super(AWS_Batch, self).__init__(self.std_cluster_file, opt_cluster_file, verbose)
+        cfgVersion = "3.1"
+        super(AWS_Batch, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
 
         # get the job parameters
         self.jobParams = self.clusterCfg["job_parameters"]
@@ -304,7 +311,12 @@ class AWS_Batch(Cluster):
         self.queue = self.clusterCfg["queue"]
 
         # create the batch client
-        self.batchC = boto3.client('batch',region_name=self.clusterCfg["aws_region"])
+        try:
+            session = boto3.Session(profile_name = self.clusterCfg["aws_profile"])
+            self.batchC = session.client('batch')
+        except Exception as e:
+            pError('boto3 session or client exception ' + str(e))
+            sys.exit(2)
 
         # retryStrategy
         self.retryStrategy = self.clusterCfg["retryStrategy"]
@@ -481,6 +493,8 @@ class AWS_Batch(Cluster):
                 self.printVerbose("\t1> submitJob: " + job_name + " depends on " + self.getIDsAndNames(submitHolds)['jobnames'])
             else:
                 self.printVerbose("\t1> submitJob: " + job_name + " does not depend on other jobs" )
+            self.printVerbose("\t1> Analysis driver: " + jobParams['rd'])
+            self.printVerbose("\t1> Analysis driver parameters: " + jobParams['ra'])
 
         # array job or single job
         if arrayJob:
@@ -491,20 +505,24 @@ class AWS_Batch(Cluster):
             self.printVerbose("\t1>\tNo. tasks: " + str(noJobs))
             self.printVerbose("\t1>\tFIRST_INDEX: " + str(taskList[0]))
             if not print_only:
-                subOut = self.batchC.submit_job(
-                               jobName = subName,
-                               jobQueue = self.queue,
-                               arrayProperties = { "size": noJobs },
-                               jobDefinition = submitOpts["jobdef"],
-                               parameters = jobParams,
-                               dependsOn = submitOpts["dependsOn"],
-                               containerOverrides = {
-                                  "vcpus": submitOpts["vcpus"],
-                                  "memory": submitOpts["memory"],
-                                  "environment": submitOpts["env"]
-                               },
-                               retryStrategy = self.retryStrategy
-                )
+                try:
+                    subOut = self.batchC.submit_job(
+                                   jobName = subName,
+                                   jobQueue = self.queue,
+                                   arrayProperties = { "size": noJobs },
+                                   jobDefinition = submitOpts["jobdef"],
+                                   parameters = jobParams,
+                                   dependsOn = submitOpts["dependsOn"],
+                                   containerOverrides = {
+                                      "vcpus": submitOpts["vcpus"],
+                                      "memory": submitOpts["memory"],
+                                      "environment": submitOpts["env"]
+                                   },
+                                   retryStrategy = self.retryStrategy
+                    )
+                except Exception as e:
+                    pError('boto3 session or client exception ' + str(e))
+                    sys.exit(2)
         else:
             jobParams["at"] = "0"
             jobParams['lf'] = trackID
@@ -513,19 +531,23 @@ class AWS_Batch(Cluster):
             if array_range is not None:
                 self.printVerbose("\t1> SGE_TASK_ID: " + str(taskList[0]))
             if not print_only:
-                subOut = self.batchC.submit_job(
-                               jobName = subName,
-                               jobQueue = self.queue,
-                               jobDefinition = submitOpts["jobdef"],
-                               parameters = jobParams,
-                               dependsOn = submitOpts["dependsOn"],
-                               containerOverrides = {
-                                  "vcpus": submitOpts["vcpus"],
-                                  "memory": submitOpts["memory"],
-                                  "environment": submitOpts["env"]
-                               },
-                               retryStrategy = self.retryStrategy
-                )
+                try:
+                    subOut = self.batchC.submit_job(
+                                   jobName = subName,
+                                   jobQueue = self.queue,
+                                   jobDefinition = submitOpts["jobdef"],
+                                   parameters = jobParams,
+                                   dependsOn = submitOpts["dependsOn"],
+                                   containerOverrides = {
+                                      "vcpus": submitOpts["vcpus"],
+                                      "memory": submitOpts["memory"],
+                                      "environment": submitOpts["env"]
+                                   },
+                                   retryStrategy = self.retryStrategy
+                    )
+                except Exception as e:
+                    pError('boto3 session or client exception ' + str(e))
+                    sys.exit(2)
         if print_only:
             print("+++++++++  Print Only +++++++++++")
             print("Job: " + job_name)
@@ -541,6 +563,8 @@ class AWS_Batch(Cluster):
                 print("\tsubmitJob: " + subName + " is a single job")
             print("\tlog file: " + jobParams['lf'])
             print("\ttrace file: " + jobParams['tf'])
+            print("\tAnalysis driver: " + jobParams['rd'])
+            print("\tAnalysis driver parameters: " + jobParams['ra'])
             print("\tJOB_ID: " + trackID)
             print("\tbatch queue: " + self.queue)
             print("\tjob definition: " + submitOpts["jobdef"])
@@ -563,10 +587,10 @@ class AWS_Batch(Cluster):
 
 class SGE_Cluster(Cluster):
 
-    def __init__(self, std_cluster_file, opt_cluster_file=None, verbose=True):
+    def __init__(self, std_cluster_file, opt_cluster_file=None, cfg_version="3", verbose=True):
         self.class_name = self.__class__.__name__
         self.std_cluster_file = std_cluster_file
-        super(SGE_Cluster, self).__init__(std_cluster_file, opt_cluster_file, verbose)
+        super(SGE_Cluster, self).__init__(std_cluster_file, opt_cluster_file, cfg_version, verbose)
 
     def runCmd(self, job_name, cmd, logfile=None):
         # get and set the env
@@ -670,7 +694,8 @@ class UW_Cluster(SGE_Cluster):
     def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
         self.std_cluster_file = "./cluster_cfg.json"
-        super(UW_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, verbose)
+        cfgVersion="3"
+        super(UW_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
 
 
 class AWS_Cluster(SGE_Cluster):
@@ -678,7 +703,8 @@ class AWS_Cluster(SGE_Cluster):
     def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
         self.std_cluster_file = "./aws_cluster_cfg.json"
-        super(AWS_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, verbose)
+        cfgVersion="3"
+        super(AWS_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
 
     def submitJob(self, **kwargs):
         # currently, no email on aws
@@ -690,7 +716,7 @@ class AWS_Cluster(SGE_Cluster):
 class ClusterFactory(object):
 
     @staticmethod
-    def createCluster(cluster_type, cluster_file, verbose):
+    def createCluster(cluster_type, cluster_file=None, verbose=False):
         allSubClasses = getAllSubclasses(Cluster)
         for subclass in allSubClasses:
             if subclass.__name__ == cluster_type:

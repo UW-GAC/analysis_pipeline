@@ -13,7 +13,8 @@ config <- readConfig(argv$config)
 
 required <- c("gds_file",
               "variant_include_file")
-optional <- c("out_file"="ibd_king.RData",
+optional <- c("out_file"="ibd_king.gds",
+              #"out_file"="ibd_king.RData",
               "sample_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -34,7 +35,8 @@ message("Using ", length(variant.id), " variants")
 ibd <- snpgdsIBDKING(gds, sample.id=sample.id, snp.id=variant.id,
                      num.thread=countThreads())
 
-save(ibd, file=config["out_file"])
+#save(ibd, file=config["out_file"])
+list2gds(ibd, config["out_file"])
 
 seqClose(gds)
 

@@ -17,6 +17,8 @@ PCA with the following steps:
 
 parser = ArgumentParser(description=description)
 parser.add_argument("config_file", help="configuration file")
+parser.add_argument("--ld_pruning", action="store_true", default=False,
+                    help="run LD pruning of variants prior to PCA")
 parser.add_argument("-c", "--chromosomes", default="1-22",
                     help="range of chromosomes [default %(default)s]")
 parser.add_argument("--cluster_type", default="UW_Cluster",
@@ -37,6 +39,7 @@ parser.add_argument("--version", action="version",
 args = parser.parse_args()
 
 configfile = args.config_file
+ld = args.ld_pruning
 chromosomes = args.chromosomes
 cluster_file = args.cluster_file
 cluster_type = args.cluster_type
@@ -69,31 +72,32 @@ TopmedPipeline.writeConfig(config, configfile)
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], email=email, print_only=print_only)
 
 
-job = "ld_pruning"
+if ld:
+    job = "ld_pruning"
 
-rscript = os.path.join(pipeline, "R", job + ".R")
+    rscript = os.path.join(pipeline, "R", job + ".R")
 
-config = deepcopy(configdict)
-config["sample_include_file"] = configdict["data_prefix"] + "_unrelated.RData"
-config["out_file"] = configdict["data_prefix"] + "_pruned_variants_chr .RData"
-configfile = configdict["config_prefix"] + "_" + job + ".config"
-TopmedPipeline.writeConfig(config, configfile)
+    config = deepcopy(configdict)
+    config["sample_include_file"] = configdict["data_prefix"] + "_unrelated.RData"
+    config["out_file"] = configdict["data_prefix"] + "_pruned_variants_chr .RData"
+    configfile = configdict["config_prefix"] + "_" + job + ".config"
+    TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid], array_range=chromosomes, email=email, print_only=print_only)
+    jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid], array_range=chromosomes, email=email, print_only=print_only)
 
 
-job = "combine_variants"
+    job = "combine_variants"
 
-rscript = os.path.join(pipeline, "R", job + ".R")
+    rscript = os.path.join(pipeline, "R", job + ".R")
 
-config = dict()
-config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
-config["in_file"] = configdict["data_prefix"] + "_pruned_variants_chr .RData"
-config["out_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
-configfile = configdict["config_prefix"] + "_" + job + ".config"
-TopmedPipeline.writeConfig(config, configfile)
+    config = dict()
+    config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
+    config["in_file"] = configdict["data_prefix"] + "_pruned_variants_chr .RData"
+    config["out_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
+    configfile = configdict["config_prefix"] + "_" + job + ".config"
+    TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
+    jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
 
 
 job = "pca_byrel"
@@ -103,7 +107,8 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 config = deepcopy(configdict)
 config["related_file"] = configdict["data_prefix"] + "_related.RData"
 config["unrelated_file"] = configdict["data_prefix"] + "_unrelated.RData"
-config["variant_include_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
+if ld:
+    config["variant_include_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
 config["out_file"] = configdict["data_prefix"] + "_pcair.RData"
 config["out_file_unrel"] = configdict["data_prefix"] + "_pcair_unrel.RData"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
