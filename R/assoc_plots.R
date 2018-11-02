@@ -77,7 +77,7 @@ cmap <- setNames(rep_len(brewer.pal(8, "Dark2"), length(chr)), chr)
 # significance level
 if (config["assoc_type"] == "single") {
     ## genome-wide significance
-    signif <- 5e-8
+    signif <- c(5e-8, 5e-9, 1e-9)
 } else {
     ## bonferroni
     signif <- 0.05/nrow(assoc)
