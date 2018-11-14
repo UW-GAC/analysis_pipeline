@@ -36,12 +36,17 @@ if (!is.na(config["sample_include_file"])) {
 ## select type of kinship estimates to use (king or pcrelate)
 kin.type <- tolower(config["kinship_method"])
 kin.thresh <- as.numeric(config["kinship_threshold"])
-if (kin.type == "king") {
-    ## king <- getobj(config["kinship_file"])
-    ## samp.sel <- if (is.null(sample.id)) NULL else king$sample.id %in% sample.id
-    ## kinship <- snpgdsIBDSelection(king, kinship.cutoff=kin.thresh, samp.sel=samp.sel)
-    king <- gds2ibdobj(config["kinship_file"], sample.id=sample.id)
-    kinship <- snpgdsIBDSelection(king, kinship.cutoff=kin.thresh)
+if (kin.type == "king_ibdseg") {
+    #king <- readr::
+} else if (kin.type == "king") {
+    if (tools::file_ext(f) == "gds") {
+        king <- gds2ibdobj(config["kinship_file"], sample.id=sample.id)
+        kinship <- snpgdsIBDSelection(king, kinship.cutoff=kin.thresh)
+    } else {
+        king <- getobj(config["kinship_file"])
+        samp.sel <- if (is.null(sample.id)) NULL else king$sample.id %in% sample.id
+        kinship <- snpgdsIBDSelection(king, kinship.cutoff=kin.thresh, samp.sel=samp.sel)
+    }
     xvar <- "IBS0"
 } else if (kin.type == "pcrelate") {
     pcr <- openfn.gds(config["kinship_file"])
