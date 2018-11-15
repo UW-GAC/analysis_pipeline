@@ -33,6 +33,20 @@ if (!is.na(config["sample_include_file"])) {
     sample.id <- NULL
 }
 
+## ## Some code to plot king ibdseg results with hexbins:
+## dat <- fread('/projects/topmed/research/relatedness/analysts/caitlin/data/freeze5_round2pcairvars_allSamps_allChrs.seg')
+## dat <- dat[, k0 := 1 - IBD1Seg - IBD2Seg]
+
+## p <- ggplot(dat, aes(k0, 0.5*PropIBD)) +
+##         geom_abline(intercept = 0.25, slope = -0.25) + 
+##         geom_hex(aes(fill = log10(..count..)), bins = 100) +
+##         scale_fill_gradientn(values = rescale(c(log10(1),log10(10),log10(1000000))), colours = c('black','steelblue','pink')) + 
+##         geom_hline(yintercept = 2^(-c(3,5,7,9,11)/2), linetype = 'dashed', size = 0.3) + 
+##         scale_y_continuous(breaks = c(2^(-c(2,4,6,8,10)/2),0), labels = round(c(2^(-c(2,4,6,8,10)/2),0), 3)) +
+##         scale_x_continuous(breaks = seq(from = 0, to = 1, by = 0.25)) +
+##         xlab('KING ibdseg k0') + ylab('KING ibdseg Kinship') + 
+##         theme(panel.grid.minor = element_blank())
+
 ## select type of kinship estimates to use (king or pcrelate)
 kin.type <- tolower(config["kinship_method"])
 kin.thresh <- as.numeric(config["kinship_threshold"])
