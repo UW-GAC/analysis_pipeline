@@ -1,5 +1,7 @@
 """Utility functions for TOPMed pipeline"""
 
+__version__ = "2.2.0"
+
 import os
 import sys
 import csv
@@ -35,8 +37,14 @@ def readConfig(file):
     f = open(file, 'r')
     reader = csv.reader(f, delimiter=' ', quotechar='"', skipinitialspace=True)
     for line in reader:
+        if len(line) == 0:
+            continue
+        
         if line[0][0] == "#":
             continue
+
+        if len(line) == 1:
+            sys.exit("Error reading config file " + file + ":\nNo value for parameter '" + line[0] + "' in line " + str(reader.line_num))
 
         if len(line) > 2:
             if line[2] == '':
@@ -180,52 +188,89 @@ def update(d, u):
 class Cluster(object):
     """ """
     # constructor
-    def __init__(self, cluster_file=None, verbose=False):
+    def __init__(self, std_cluster_file, opt_cluster_file=None, cfg_version="3", verbose=False):
         self.verbose = verbose
         self.class_name = self.__class__.__name__
-        self.openClusterCfg("./cluster_cfg.json", cluster_file, verbose)
+        # set default pipeline path
+        self.pipelinePath = os.path.dirname(os.path.abspath(sys.argv[0]))
 
-    def openClusterCfg(self, stdCfgFile, optCfgFile, verbose):
+        self.openClusterCfg(std_cluster_file, opt_cluster_file, cfg_version, verbose)
+
+    def openClusterCfg(self, stdCfgFile, optCfgFile, cfg_version, verbose):
         # get the standard cluster cfg
-        pipePath = os.path.dirname(os.path.abspath(sys.argv[0]))
-        self.clusterfile =  os.path.join(pipePath, "./cluster_cfg.json")
+        self.clusterfile =  os.path.join(self.pipelinePath, stdCfgFile)
         self.printVerbose("0>> openClusterCfg: Reading internal cfg file: " + self.clusterfile)
 
         with open(self.clusterfile) as cfgFileHandle:
             clusterCfg= json.load(cfgFileHandle)
-        key = "debug"
-        debugCfg = False
+        # check version
+        key = "version"
         if key in clusterCfg:
-            if clusterCfg[key] == 1:
-                debugCfg = True
-        self.clusterCfg = clusterCfg["cluster_types"][self.class_name]
+            if clusterCfg[key] != cfg_version:
+                print( "Error: version of : " + stdCfgFile + " should be " + cfg_version +
+                       " not " + clusterCfg[key])
+                sys.exit(2)
+        else:
+            print( "Error: version missing in " + stdCfgFile )
+            sys.exit(2)
+        if self.verbose:
+            debugCfg = True
+        else:
+            key = "debug"
+            debugCfg = False
+            if key in clusterCfg:
+                if clusterCfg[key] == 1:
+                    debugCfg = True
+        self.clusterCfg = clusterCfg["configuration"]
         if debugCfg:
-            print("0>>> Dump of standard cluster cfg ... \n")
+            print("0>>> Dump of " + clusterCfg["name"] + " ... \n")
             print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
         if optCfgFile != None:
-            self.printVerbose("0>> openClusterCfg: Reading user cfg file: " + self.clusterfile)
+            self.printVerbose("0>> openClusterCfg: Reading user cfg file: " + optCfgFile)
 
             with open(optCfgFile) as cfgFileHandle:
                 clusterCfg = json.load(cfgFileHandle)
-            optCfg = clusterCfg["cluster_types"][self.class_name]
+            key = "version"
+            if key in clusterCfg:
+                if clusterCfg[key] != cfg_version:
+                    print( "Error: version of : " + optCfgFile + " should be " + cfg_version +
+                           " not " + clusterCfg[key])
+                    sys.exit(2)
+            optCfg = clusterCfg["configuration"]
             if debugCfg:
-                print("0>>> Dump of optional cluster cfg ... \n")
+                print("0>>> Dump of " + clusterCfg["name"] + " ... \n")
                 print json.dumps(optCfg, indent=3, sort_keys=True)
             # update
             self.clusterCfg = update(self.clusterCfg, optCfg)
             if debugCfg:
                 print("0>>> Dump of updated cluster cfg ... \n")
                 print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
+        key = "memory_limits"
+        if key not in self.clusterCfg:
+            self.clusterCfg[key] = None
+
+        # update pipeline path if specified
+        key = "pipeline_path"
+        if key in self.clusterCfg:
+            self.pipelinePath = self.clusterCfg["pipeline_path"]
+
+    def getPipelinePath(self):
+        return self.pipelinePath
 
     def getClusterCfg(self):
         return self.clusterCfg
 
-    def memoryLimit(self, memLimits, job_name):
+    def memoryLimit(self, job_name):
         memlim = None
-        a =[ akey for akey in memLimits.keys() if job_name.startswith( akey ) ]
-        if len(a):
+        memLimits = self.clusterCfg["memory_limits"]
+        if memLimits is None:
+            return memlim
+        jobMem = [ v for k,v in memLimits.iteritems() if job_name.find(k) != -1 ]
+        if len(jobMem):
             # just find the first match to job_name
-            memlim = memLimits[a[0]]
+            memlim = jobMem[0]
+        self.printVerbose('\t>>> Memory Limit - job: ' + job_name + " memlim: " +
+                          str(memlim) + "MB")
         return memlim
 
     def printVerbose(self, message):
@@ -235,16 +280,23 @@ class Cluster(object):
 
 class AWS_Batch(Cluster):
 
-    def __init__(self, cluster_file=None, verbose=False):
+    def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
-        super(AWS_Batch, self).__init__(cluster_file, verbose)
+        self.std_cluster_file = "./aws_batch_cfg.json"
+        cfgVersion = "3.1"
+        super(AWS_Batch, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
 
         # get the job parameters
         self.jobParams = self.clusterCfg["job_parameters"]
         #user = getpass.getuser()
         wdkey = "wd"
         if wdkey not in self.jobParams or self.jobParams[wdkey] == "":
-            self.jobParams[wdkey] = os.getcwd()
+            self.jobParams[wdkey] = os.getenv('PWD')
+
+        # set maxperf
+        self.maxperf = True
+        if self.clusterCfg["maxperf"] == 0:
+            self.maxperf = False
 
         # get the submit options
         self.submitOpts = self.clusterCfg["submit_opts"]
@@ -255,13 +307,19 @@ class AWS_Batch(Cluster):
         # get the sync job options
         self.syncOpts = self.clusterCfg["sync_job"]
 
-        # analysis_pipeline path in the docker image
-        self.pipelinePath = self.clusterCfg["pipeline_path"]
         # get the queue
         self.queue = self.clusterCfg["queue"]
 
         # create the batch client
-        self.batchC = boto3.client('batch',region_name=self.clusterCfg["aws_region"])
+        try:
+            session = boto3.Session(profile_name = self.clusterCfg["aws_profile"])
+            self.batchC = session.client('batch')
+        except Exception as e:
+            pError('boto3 session or client exception ' + str(e))
+            sys.exit(2)
+
+        # retryStrategy
+        self.retryStrategy = self.clusterCfg["retryStrategy"]
 
     def getIDsAndNames(self, submitHolds):
         # for the submit holds, return a dictionary of all job names in a single string
@@ -320,86 +378,92 @@ class AWS_Batch(Cluster):
         return dependsList
 
     def runCmd(self, job_name, cmd, logfile=None):
-        runCmdOpts = deepcopy(self.runCmdOpts)
-        # set rdriver
-        key = "--rdriver"
-        if key not in runCmdOpts["params"].keys() or runCmdOpts["params"][key] == "":
-            # if use pipelinePath from cfg if defined
-            pipelinePath = os.path.dirname(os.path.abspath(cmd[0]))
-            baseName = os.path.basename(cmd[0])
-            if self.pipelinePath != "":
-                pipelinePath = self.pipelinePath
-            runCmdOpts["params"][key] = os.path.join(pipelinePath, baseName)
-
-        # set rargs
-        key = "--rargs"
-        if key not in runCmdOpts["params"].keys() or runCmdOpts["params"][key] == "":
-            cs = " ".join(cmd[1:])
-            qcs = '"' + cs + '"'
-            runCmdOpts["params"][key] = qcs
-
-        # working directory
-        key = "--workdir"
-        if key not in runCmdOpts["params"].keys() or runCmdOpts["params"][key] == "":
-            runCmdOpts["params"][key] = self.jobParams['wd']
-
-        # convert params dict to key-value pair
-        sCmdArgs = " ".join([" ".join([key, str(val)]) for key, val in runCmdOpts["params"].items()])
-
-        # create the cmd to spawn
-        sCmd = " ".join([runCmdOpts["cmd"], sCmdArgs])
-
         # redirect stdout/stderr
+        self.printVerbose("1===== runCmd: job " + job_name + " beginning ...")
+        self.printVerbose("1===== runCmd: cmd " + str(cmd))
         if logfile != None:
             sout = sys.stdout
             serr = sys.stderr
             flog = open ( logfile, 'w' )
             sys.stderr = sys.stdout = flog
         # spawn
-        print("runCmd: executing " + sCmd)
-        process = subprocess.Popen(sCmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
+        self.printVerbose("1===== runCmd: executing " + str(cmd))
+        process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=False)
         status = process.wait()
-
         # redirect stdout back
         if logfile != "":
             sys.stdout = sout
             sys.stderr = serr
         if status:
             print( "Error running job: " + job_name + " (" + str(status) + ") for command:" )
-            print( "\t> " + str(sCmd) )
+            print( "\t> " + str(cmd) )
             sys.exit(2)
 
-    def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None, request_cores=None, print_only=False, **kwargs):
+    def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None,
+                  request_cores=None, print_only=False, **kwargs):
         self.printVerbose("1===== submitJob: job " + job_name + " beginning ...")
         jobParams = deepcopy(self.jobParams)
         submitOpts = deepcopy(self.submitOpts)
         pipelinePath = self.pipelinePath
+
+        # check if array job and > 1 task
+        arrayJob = False
+        if array_range is not None:
+            air = [ int(i) for i in array_range.split( '-' ) ]
+            taskList = range( air[0], air[len(air)-1]+1 )
+            noJobs = len(taskList)
+            if noJobs > 1:
+                arrayJob = True
+                envName = "FIRST_INDEX"
+            else:
+                envName = "SGE_TASK_ID"
+            # set env variable appropriately
+            key = "env"
+            if key in submitOpts:
+                submitOpts["env"].append( { "name": envName,
+                                            "value": str(taskList[0]) } )
+            else:
+                submitOpts["env"] = [ { "name": envName,
+                                        "value": str(taskList[0]) } ]
+
+
+        # using time set a job id (which is for tracking; not the batch job id)
+        trackID = job_name + "_" + str(int(time.time()*100))
+
         # set the R driver and arguments (e.g., -s rcode cfg --chr cn)
         key = "rd"
-        # if pipeline path not defined in cfg, then use path from cmd
-        if pipelinePath == "":
-            pipelinePath = os.path.dirname(os.path.abspath(cmd))
         baseName = os.path.basename(cmd)
-        jobParams[key] = os.path.join(pipelinePath, baseName)
+        jobParams[key] = os.path.join(self.pipelinePath, baseName)
 
         key = "ra"
         if args is None:
             args = ["NoArgs"]
         jobParams[key] = " ".join(args)
 
-        # using time set a job id (which is for tracking; not the batch job id)
-        trackID = job_name + "_" + str(int(time.time()*100))
-
-        # check for number of cores (1 core = 2 vcpus)
+        # check for number of cores - sge can be 1-8; or 4; etc.  In batch we'll
+        # use the highest number.  e.g., if 1-8, then we'll use 8.  in AWS, vcpus
+        # is the number of physical + hyper-threaded cores.  to max performance
+        # (at an increase cost) allocate 2 vcpus for each core.
         key = "vcpus"
         if request_cores is not None:
-            submitOpts[key] = 2*request_cores
+            ncs = request_cores.split("-")
+            nci = int(ncs[len(ncs)-1])
+            submitOpts[key] = nci
+            key2 = "env"
+            if key2 in submitOpts:
+                submitOpts[key2].append( { "name": "NSLOTS",
+                                           "value": str(nci) } )
+            else:
+                submitOpts[key2]=[ { "name": "NSLOTS",
+                                     "value": str(nci) } ]
+        if self.maxperf:
+            submitOpts[key] = 2*submitOpts[key]
 
         # get memory limit option
         key = "memory_limits"
         if key in self.clusterCfg.keys():
             # get the memory limits
-            memlim = super(AWS_Batch, self).memoryLimit(self.clusterCfg[key], job_name)
+            memlim = super(AWS_Batch, self).memoryLimit(job_name)
             if memlim != None:
                 submitOpts["memory"] = memlim
 
@@ -408,10 +472,15 @@ class AWS_Batch(Cluster):
             submitHolds = holdid
         else:
             submitHolds = []
-        log_prefix = trackID
-        jobParams['lf'] = log_prefix
-        submitOpts["env"].append( { "name": "JOB_ID",
-                                    "value": trackID } )
+
+        # environment variables
+        key = "env"
+        if key in submitOpts:
+            submitOpts[key].append( { "name": "JOB_ID",
+                                      "value": trackID } )
+        else:
+            submitOpts[key]=[ { "name": "JOB_ID",
+                                "value": trackID } ]
 
         # if we're doing an array job, specify arrayProperty; else just submit one job
         if not print_only:
@@ -424,65 +493,78 @@ class AWS_Batch(Cluster):
                 self.printVerbose("\t1> submitJob: " + job_name + " depends on " + self.getIDsAndNames(submitHolds)['jobnames'])
             else:
                 self.printVerbose("\t1> submitJob: " + job_name + " does not depend on other jobs" )
+            self.printVerbose("\t1> Analysis driver: " + jobParams['rd'])
+            self.printVerbose("\t1> Analysis driver parameters: " + jobParams['ra'])
 
-            if array_range is not None:
-                air = [ int(i) for i in array_range.split( '-' ) ]
-                taskList = range( air[0], air[1]+1 )
-                noJobs = len(taskList)
-                subName = job_name + "_" + str(noJobs)
-                self.printVerbose("\t1> submitJob: " + subName + " is an array job - no. tasks: " + str(noJobs))
-                self.printVerbose("\t1> FIRST_INDEX: " + str(taskList[0]))
-                jobParams["at"] = "1"
-                jobParams['lf'] = jobParams['lf'] + ".task"
-                submitOpts["env"].append( { "name": "FIRST_INDEX",
-                                            "value": str(taskList[0]) } )
-                subOut = self.batchC.submit_job(
-                   jobName = subName,
-                   jobQueue = self.queue,
-                   arrayProperties = { "size": noJobs },
-                   jobDefinition = submitOpts["jobdef"],
-                   parameters = jobParams,
-                   dependsOn = submitOpts["dependsOn"],
-                   containerOverrides = {
-                      "vcpus": submitOpts["vcpus"],
-                      "memory": submitOpts["memory"],
-                      "environment": submitOpts["env"]
-                   }
-                )
-            else:
-                self.printVerbose("\t1> submitJob: " + job_name + " is a single job")
-                subOut = self.batchC.submit_job(
-                   jobName = job_name,
-                   jobQueue = self.queue,
-                   jobDefinition = submitOpts["jobdef"],
-                   parameters = jobParams,
-                   dependsOn = submitOpts["dependsOn"],
-                   containerOverrides = {
-                      "vcpus": submitOpts["vcpus"],
-                      "memory": submitOpts["memory"],
-                      "environment": submitOpts["env"]
-                   }
-                )
-                # return the "submit_id" which is a list of dictionaries
-            submit_id = {job_name: [subOut['jobId']]}
+        # array job or single job
+        if arrayJob:
+            subName = job_name + "_" + str(noJobs)
+            jobParams["at"] = "1"
+            jobParams['lf'] = trackID + ".task"
+            self.printVerbose("\t1> submitJob: " + subName + " is an array job")
+            self.printVerbose("\t1>\tNo. tasks: " + str(noJobs))
+            self.printVerbose("\t1>\tFIRST_INDEX: " + str(taskList[0]))
+            if not print_only:
+                try:
+                    subOut = self.batchC.submit_job(
+                                   jobName = subName,
+                                   jobQueue = self.queue,
+                                   arrayProperties = { "size": noJobs },
+                                   jobDefinition = submitOpts["jobdef"],
+                                   parameters = jobParams,
+                                   dependsOn = submitOpts["dependsOn"],
+                                   containerOverrides = {
+                                      "vcpus": submitOpts["vcpus"],
+                                      "memory": submitOpts["memory"],
+                                      "environment": submitOpts["env"]
+                                   },
+                                   retryStrategy = self.retryStrategy
+                    )
+                except Exception as e:
+                    pError('boto3 session or client exception ' + str(e))
+                    sys.exit(2)
         else:
-            print("Job name: " + job_name)
+            jobParams["at"] = "0"
+            jobParams['lf'] = trackID
+            subName = job_name
+            self.printVerbose("\t1> submitJob: " + subName + " is a single job")
             if array_range is not None:
-                air = [ int(i) for i in array_range.split( '-' ) ]
-                taskList = range( air[0], air[1]+1 )
-                noJobs = len(taskList)
-                jobName = job_name + "_" + str(noJobs)
-                submitOpts["env"].append( { "name": "FIRST_INDEX",
-                                            "value": str(taskList[0]) } )
-                jobParams["at"] = "1"
-                jobParams['lf'] = jobParams['lf'] + ".task"
-                submitOpts["env"].append( { "name": "FIRST_INDEX",
-                                            "value": str(taskList[0]) } )
-                print("\t\tsubmitJob: " + jobName + " is an array job - no. tasks: " + str(noJobs))
+                self.printVerbose("\t1> SGE_TASK_ID: " + str(taskList[0]))
+            if not print_only:
+                try:
+                    subOut = self.batchC.submit_job(
+                                   jobName = subName,
+                                   jobQueue = self.queue,
+                                   jobDefinition = submitOpts["jobdef"],
+                                   parameters = jobParams,
+                                   dependsOn = submitOpts["dependsOn"],
+                                   containerOverrides = {
+                                      "vcpus": submitOpts["vcpus"],
+                                      "memory": submitOpts["memory"],
+                                      "environment": submitOpts["env"]
+                                   },
+                                   retryStrategy = self.retryStrategy
+                    )
+                except Exception as e:
+                    pError('boto3 session or client exception ' + str(e))
+                    sys.exit(2)
+        if print_only:
+            print("+++++++++  Print Only +++++++++++")
+            print("Job: " + job_name)
+            print("\tSubmit job: " + subName)
+            if arrayJob:
+                print("\tsubmitJob: " + subName + " is an array job")
+                print("\t\tNo. tasks: " + str(noJobs))
                 print("\t\tFIRST_INDEX: " + str(taskList[0]))
+            elif array_range is not None:
+                print("\tsubmitJob: " + subName + " is like array job but with 1 task: ")
+                print("\t\tSGE_TASK_ID: " + str(taskList[0]))
             else:
-                print("\tjob is a single job")
+                print("\tsubmitJob: " + subName + " is a single job")
             print("\tlog file: " + jobParams['lf'])
+            print("\ttrace file: " + jobParams['tf'])
+            print("\tAnalysis driver: " + jobParams['rd'])
+            print("\tAnalysis driver parameters: " + jobParams['ra'])
             print("\tJOB_ID: " + trackID)
             print("\tbatch queue: " + self.queue)
             print("\tjob definition: " + submitOpts["jobdef"])
@@ -490,10 +572,13 @@ class AWS_Batch(Cluster):
             print("\tjob vcpus: " + str(submitOpts["vcpus"]))
             print("\tjob env: \n\t\t" + str(submitOpts["env"]))
             print("\tjob params: \n\t\t" + str(jobParams))
-            jobid = "111-222-333-print_only-" +  job_name
+            jobid = "111-222-333-print_only-" +  subName
+            subOut = {'jobName': subName, 'jobId': jobid}
             submit_id = {job_name: [jobid]}
             print("\tsubmit_id: " + str(submit_id))
 
+        # return the "submit_id" which is a list of dictionaries
+        submit_id = {job_name: [subOut['jobId']]}
         # return the job id (either from the single job or array job)
         self.printVerbose("\t1> submitJob: " + job_name + " returning submit_id: " + str(submit_id))
 
@@ -502,9 +587,10 @@ class AWS_Batch(Cluster):
 
 class SGE_Cluster(Cluster):
 
-    def __init__(self, cluster_file=None, verbose=True):
+    def __init__(self, std_cluster_file, opt_cluster_file=None, cfg_version="3", verbose=True):
         self.class_name = self.__class__.__name__
-        super(SGE_Cluster, self).__init__(cluster_file, verbose)
+        self.std_cluster_file = std_cluster_file
+        super(SGE_Cluster, self).__init__(std_cluster_file, opt_cluster_file, cfg_version, verbose)
 
     def runCmd(self, job_name, cmd, logfile=None):
         # get and set the env
@@ -546,9 +632,9 @@ class SGE_Cluster(Cluster):
         # get memory limit option
         key = "memory_limits"
         if key in self.clusterCfg.keys():
-            memlim = super(SGE_Cluster, self).memoryLimit(self.clusterCfg[key], kwargs["job_name"])
+            memlim = super(SGE_Cluster, self).memoryLimit(kwargs["job_name"])
             if memlim != None:
-                subOpts["-l"] = "h_vmem="+str(memlim)+"G"
+                subOpts["-l"] = "h_vmem="+str(memlim)+"M"
 
         jobid = self.executeJobCmd(subOpts, **kwargs)
         return jobid
@@ -605,16 +691,20 @@ class SGE_Cluster(Cluster):
 
 class UW_Cluster(SGE_Cluster):
 
-    def __init__(self, cluster_file=None, verbose=False):
+    def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
-        super(UW_Cluster, self).__init__(cluster_file, verbose)
+        self.std_cluster_file = "./cluster_cfg.json"
+        cfgVersion="3"
+        super(UW_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
 
 
 class AWS_Cluster(SGE_Cluster):
 
-    def __init__(self, cluster_file=None, verbose=False):
+    def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
-        super(AWS_Cluster, self).__init__(cluster_file, verbose)
+        self.std_cluster_file = "./aws_cluster_cfg.json"
+        cfgVersion="3"
+        super(AWS_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
 
     def submitJob(self, **kwargs):
         # currently, no email on aws
@@ -626,7 +716,7 @@ class AWS_Cluster(SGE_Cluster):
 class ClusterFactory(object):
 
     @staticmethod
-    def createCluster(cluster_type, cluster_file, verbose):
+    def createCluster(cluster_type, cluster_file=None, verbose=False):
         allSubClasses = getAllSubclasses(Cluster)
         for subclass in allSubClasses:
             if subclass.__name__ == cluster_type:

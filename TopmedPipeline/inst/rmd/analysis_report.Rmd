@@ -34,8 +34,6 @@ params <- lapply(setNames(files, scripts), readConfig)
 
 ```{r}
 config <- params$null_model
-# unrelated analyses have no null model
-if (is.null(config)) config <- params$assoc_single
 phen <- getPhenotypes(config)
 outcome <- phen$outcome
 covars <- phen$covars

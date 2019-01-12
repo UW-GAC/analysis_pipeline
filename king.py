@@ -1,4 +1,4 @@
-#! /usr/local/bin/python2.7
+#! /usr/bin/env python2.7
 
 """Identity By Descent"""
 
@@ -30,6 +30,9 @@ parser.add_argument("-e", "--email", default=None,
                     help="email address for job reporting")
 parser.add_argument("--print_only", action="store_true", default=False,
                     help="print qsub commands without submitting")
+parser.add_argument("--version", action="version",
+                    version="TopmedPipeline "+TopmedPipeline.__version__,
+                    help="show the version number and exit")
 args = parser.parse_args()
 
 configfile = args.config_file
@@ -41,9 +44,11 @@ email = args.email
 print_only = args.print_only
 verbose = args.verbose
 
+version = "--version " + TopmedPipeline.__version__
+
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
-pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
+pipeline = cluster.getPipelinePath()
 driver = os.path.join(pipeline, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
@@ -59,7 +64,7 @@ config["out_file"] = configdict["data_prefix"] + "_pruned_variants_chr .RData"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], array_range=chromosomes, email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], array_range=chromosomes, email=email, print_only=print_only)
 
 
 job = "combine_variants"
@@ -73,7 +78,7 @@ config["out_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile], holdid=jobid, email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
 
 
 job = "ibd_king"
@@ -82,11 +87,11 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
 config["variant_include_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
-config["out_file"] = configdict["data_prefix"] + "_ibd_king.RData"
+config["out_file"] = configdict["data_prefix"] + "_ibd_king.gds"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=jobid, request_cores=ncores, email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], request_cores=ncores, email=email, print_only=print_only)
 
 
 job = "kinship_plots"
@@ -94,7 +99,7 @@ job = "kinship_plots"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["kinship_file"] = configdict["data_prefix"] + "_ibd_king.RData"
+config["kinship_file"] = configdict["data_prefix"] + "_ibd_king.gds"
 config["kinship_method"] = "king"
 config["out_file_all"] = configdict["plots_prefix"] + "_kinship_all.pdf"
 config["out_file_cross"] = configdict["plots_prefix"] + "_kinship_cross.pdf"
@@ -102,7 +107,7 @@ config["out_file_study"] = configdict["plots_prefix"] + "_kinship_study.pdf"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile], holdid=jobid, email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
 
 
-cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=jobid, print_only=print_only)
+cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=[jobid], print_only=print_only)

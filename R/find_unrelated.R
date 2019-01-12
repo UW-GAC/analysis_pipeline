@@ -6,48 +6,54 @@ sessionInfo()
 
 argp <- arg_parser("Partition samples into related and unrelated sets")
 argp <- add_argument(argp, "config", help="path to config file")
+argp <- add_argument(argp, "--version", help="pipeline version number")
 argv <- parse_args(argp)
+cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
 required <- c("king_file")
-optional <- c("kinship_method"="king",
+optional <- c("kinship_file"=NA,
+              "kinship_method"="king",
               "kinship_threshold"=0.04419417, # 2^(-9/2), 3rd degree
               "out_related_file"="related.RData",
               "out_unrelated_file"="unrelated.RData",
-              "pcrelate_file"=NA,
+              #"pcrelate_file"=NA,
               "sample_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
-## always use king estimates for ancestry divergence
-king <- getobj(config["king_file"])
-divMat <- king$kinship
-colnames(divMat) <- rownames(divMat) <- king$sample.id
-
 if (!is.na(config["sample_include_file"])) {
-    sample.id <- as.character(getobj(config["sample_include_file"]))
-    ind <- colnames(divMat) %in% sample.id
-    divMat <- divMat[ind, ind]
-}
-message("Using ", nrow(divMat), " samples")
-
-## select type of kinship estimates to use (king or pcrelate)
-kin.type <- tolower(config["kinship_method"])
-if (kin.type == "king") {
-    kinMat <- divMat
-} else if (kin.type == "pcrelate") {
-    pcr <- openfn.gds(config["pcrelate_file"])
-    kinMat <- pcrelateMakeGRM(pcr, scan.include=colnames(divMat), scaleKin=1)
-    closefn.gds(pcr)
+    sample.id <- getobj(config["sample_include_file"])
+    message("Using ", length(sample.id), " samples")
 } else {
-    stop("kinship method should be 'king' or 'pcrelate'")
+    sample.id <- NULL
+    message("Using all samples")
+}
+
+# always use king estimates for ancestry divergence
+# getKinship returns a list
+divMat <- getKinship(config["king_file"], sample.id)[[1]]
+
+# select type of kinship estimates to use (king or pcrelate)
+kin.type <- tolower(config["kinship_method"])
+if (is.na(config["kinship_file"])) {
+    kinMat <- divMat
+} else {
+    if (kin.type == "king") {
+        cfg <- setNames(config["kinship_file"], "king_file")
+    } else if (kin.type == "pcrelate") {
+        cfg <- setNames(config["kinship_file"], "pcrelate_file")
+        kinMat <- getKinship(cfg, sample.id)[[1]]
+    }
+    kinMat <- getKinship(cfg, sample.id)[[1]]
 }
 message("Using ", kin.type, " kinship estimates")
 
 # divide into related and unrelated set
-kin.thresh <- as.numeric(config["kinship_threshold"])
-part <- pcairPartition(kinMat=kinMat, kin.thresh=kin.thresh,
-                       divMat=divMat, div.thresh=-kin.thresh)
+kin_thresh <- as.numeric(config["kinship_threshold"])
+part <- pcairPartition(kinobj=kinMat, kin.thresh=kin_thresh,
+                       divobj=divMat, div.thresh=-kin_thresh,
+                       sample.include=sample.id)
 
 rels <- part$rels
 unrels <- part$unrels

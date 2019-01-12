@@ -2,18 +2,26 @@
 % Please edit documentation in R/getGRM.R
 \name{getGRM}
 \alias{getGRM}
+\alias{getKinship}
 \title{Load a GRM or kinship matrix}
 \usage{
-getGRM(config, sample.id)
+getGRM(config, sample.id = NULL)
+
+getKinship(config, sample.id = NULL)
 }
 \arguments{
-\item{config}{Config object (named vector) with params "pcrelate_file", "grm_file"}
+\item{config}{Config object (named vector) with params "pcrelate_file", "grm_file" or "king_file"}
 
 \item{sample.id}{Vector of samples to include}
 }
 \value{
-GRM or kinship matrix. \code{NULL} if both pcrelate_file and grm_file are \code{NA}.
+List of GRMs or kinship matrices. \code{NULL} if all file names in config are \code{NA}.
 }
 \description{
 Load a GRM or kinship matrix
+}
+\details{
+getGRM returns a Genetic Relationship Matrix from a pcrelate or grm file.
+
+getKinship returns a kinship matrix from a pcrelate or king file.
 }

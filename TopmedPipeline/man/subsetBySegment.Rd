@@ -7,7 +7,7 @@
 subsetBySegment(varList, segment, segment.file)
 }
 \arguments{
-\item{varList}{A list of data.frames, each with columns "chromosome" and "position"}
+\item{varList}{A list of data.frames, each with columns "chr" and "pos" OR a GRanges or GRangesList}
 
 \item{segment}{An integer indicating which segment to select}
 
@@ -20,5 +20,5 @@ Subset of \code{varList} where the first variant is in the segment \code{segment
 Select groups of variants where the first variant in the group is in the requested segment
 }
 \seealso{
-\code{\link{defineSegments}}, \code{\link{writeSegmentFile}}, \code{\link{filterBySegment}}, \code{\link{aggregateList}}
+\code{\link{defineSegments}}, \code{\link{writeSegmentFile}}, \code{\link{filterBySegment}}, \code{\link{aggregateGRanges}}
 }

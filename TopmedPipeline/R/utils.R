@@ -85,16 +85,6 @@ calculateLambda <- function(stat, df) {
 }
 
 
-#' Inverse normal transform
-#'
-#' @param x Vector of values to transform
-#' @return Vector with transformed values of \code{x}
-#'
-#' @importFrom stats qnorm
-#' @export
-rankNorm <- function(x) qnorm((rank(x) - 0.5)/length(x))
-
-
 #' Integer chromosome code to character
 #'
 #' @param chr Integer chromosome code
@@ -121,4 +111,50 @@ constructFilename <- function(prefix, chromosome=NA, segment=NA) {
     chr <- if (is.na(chromosome)) "" else paste0("_chr", chromosome)
     seg <- if (is.na(segment)) "" else paste0("_seg", segment)
     paste0(prefix, chr, seg, ".RData")
+}
+
+
+#' Write each element of a list to a GDS node
+#'
+#' @param x a list
+#' @param file character string with filename of GDS file to create
+#' 
+#' @importFrom gdsfmt createfn.gds add.gdsn closefn.gds
+#' 
+#' @export
+list2gds <- function(x, file) {
+    gds <- createfn.gds(file)
+    for (v in names(x)) {
+        add.gdsn(gds, v, x[[v]], compress="LZMA_RA")
+    }
+    closefn.gds(gds)
+}
+
+
+#' Read an ibdobj from a GDS file
+#'
+#' @param file filename of GDS file
+#' @param sample.id vector of sample.id
+#' 
+#' @importFrom gdsfmt openfn.gds closefn.gds index.gdsn read.gdsn readex.gdsn
+#' 
+#' @export
+gds2ibdobj <- function(file, sample.id=NULL) {
+    f <- openfn.gds(file)
+    samp <- read.gdsn(index.gdsn(f, "sample.id"))
+    if (!is.null(sample.id)) {
+        samp.sel <- samp %in% sample.id
+        sample.id <- samp[samp.sel]
+    } else {
+        samp.sel <- NULL
+        sample.id <- samp
+    }
+    rv <- list(sample.id=sample.id,
+               snp.id=read.gdsn(index.gdsn(f, "snp.id")),
+               afreq=read.gdsn(index.gdsn(f, "afreq")),
+               IBS0=readex.gdsn(index.gdsn(f, "IBS0"), sel=list(samp.sel, samp.sel)),
+               kinship=readex.gdsn(index.gdsn(f, "kinship"), sel=list(samp.sel, samp.sel)))
+    closefn.gds(f)
+    class(rv) <- "snpgdsIBDClass"
+    return(rv)
 }

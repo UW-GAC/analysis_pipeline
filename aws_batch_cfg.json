@@ -1,0 +1,70 @@
+{
+    "name": "AWS_Batch_config",
+    "version": "3.1",
+    "debug": 0,
+    "configuration": {
+        "memory_limits": {
+    	    "aggregate_list":2000,
+    	    "assoc_aggregate":16000,
+    	    "assoc_combine":6000,
+    	    "assoc_plots":24000,
+    	    "assoc_report":2000,
+    	    "assoc_single":8000,
+    	    "assoc_window":20000,
+    	    "cleanup":8000,
+    	    "combine_variants":8000,
+    	    "find_unrelated":8000,
+    	    "grm":20000,
+    	    "grm_combine":4000,
+    	    "ibd_king":8000,
+    	    "kinship_plots":8000,
+    	    "ld_pruning":51000,
+    	    "null_model":51000,
+    	    "pca_byrel":8000,
+    	    "pca_corr":8000,
+    	    "pca_corr_plots":32000,
+    	    "pca_plots":2000,
+    	    "pcrelate":8000,
+            "vcf2gds":8000
+        },
+        "aws_profile": "default",
+        "pipeline_path": "/usr/local/analysis_pipeline",
+        "queue": "SPOT_general",
+        "maxperf": 0,
+        "job_parameters": {
+            "wd" : "",
+            "rd" : "tbd",
+            "ra" : "tbd",
+            "lf" : "runrscript.log",
+            "bm" : "1",
+            "tmo": "60",
+            "db" : "1",
+            "po" : "0",
+            "at" : "0",
+            "mc" : "not used",
+            "tf" : "1"
+        },
+        "submit_opts": {
+            "jobdef": "TM_master",
+            "vcpus":  1,
+            "memory": 5000,
+            "dependsOn": [],
+            "command": []
+        },
+        "retryStrategy": {
+            "attempts": 2
+        },
+        "sync_job": {
+            "parameters": {
+                "msg": "Dependent jobs completed\n",
+                "jids": ""
+            },
+            "submit_opts": {
+                "jobdef": "TM_sync",
+                "dependsOn": []
+            }
+        },
+        "run_cmd": {
+        }
+    }
+}

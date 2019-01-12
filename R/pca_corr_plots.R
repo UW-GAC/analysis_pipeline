@@ -1,5 +1,6 @@
 library(argparser)
 library(TopmedPipeline)
+library(gdsfmt)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -8,7 +9,9 @@ sessionInfo()
 
 argp <- arg_parser("PCA correlation plots")
 argp <- add_argument(argp, "config", help="path to config file")
+argp <- add_argument(argp, "--version", help="pipeline version number")
 argv <- parse_args(argp)
+cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
 required <- c("corr_file")
@@ -24,14 +27,18 @@ chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 files <- sapply(chr, function(c) insertChromString(config["corr_file"], c, "corr_file"))
 
 corr <- do.call(rbind, lapply(unname(files), function(f) {
-    c <- getobj(f)
-    dat <- data.frame(t(c$snpcorr))
+    c <- openfn.gds(f)
+    dat <- t(read.gdsn(index.gdsn(c, "correlation")))
     n_pcs <- min(as.integer(config["n_pcs"]), ncol(dat))
     dat <- dat[,1:n_pcs]
-    names(dat) <- paste0("PC", 1:n_pcs)
     missing <- rowSums(is.na(dat)) == n_pcs # monomorphic variants
-    dat <- cbind(dat, chr=c$chromosome, pos=c$position, stringsAsFactors=FALSE)
     dat <- dat[!missing,]
+    colnames(dat) <- paste0("PC", 1:n_pcs)
+    dat <- data.frame(dat,
+                      chr=readex.gdsn(index.gdsn(c, "chromosome"), sel=!missing),
+                      pos=readex.gdsn(index.gdsn(c, "position"), sel=!missing),
+                      stringsAsFactors=FALSE)
+    closefn.gds(c)
 
     ## transform to data frame with PC as column
     dat <- dat %>%

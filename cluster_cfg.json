@@ -1,114 +1,42 @@
 {
-    "name": "cluster_config",
-    "version": "1",
+    "name": "UW_Cluster_config",
+    "version": "3",
     "debug": 0,
-    "cluster_types": {
-        "AWS_Batch": {
-            "aws_region": "us-west-2",
-            "pipeline_path": "/projects/topmed/dev_code/analysis_pipeline",
-            "queue": "Optimal_topmed",
-            "job_parameters": {
-                "wd": "",
-                "dr": "/projects",
-                "db": "1",
-                "lf": "",
-                "tmo": "60",
-                "mt": "mount -t nfs4 -o vers=4.1 fs-6ccd31c5.efs.us-west-2.amazonaws.com:/ /projects",
-                "at": "0"
-            },
-            "submit_opts": {
-                "jobdef": "topmed_arrays",
-                "vcpus":  2,
-                "memory": 5000,
-                "region": "us-west-2",
-                "dependsOn": [],
-                "env": [ {"name": "R_LIBS_USER", "value": "/projects/resources/gactools/R_packages/library"} ],
-                "command": []
-            },
-            "memory_limits": {
-                "find_unrelated":3500,
-                "ld_pruning":11000,
-                "combine_variants":1000,
-                "pca_byrel":4000,
-                "pca_plots":1000,
-                "pca_corr":7000,
-                "pca_corr_plots":32000,
-                "pcrelate":8000,
-                "null_model":36000,
-                "aggregate_list":6000,
-                "assoc_single":24000,
-                "assoc_aggregate":24000,
-                "assoc_window":17000,
-                "assoc_combine":2000,
-                "assoc_plots":13000
-            },
-            "sync_job": {
-                "parameters": {
-                    "msg": "Dependent jobs completed\n",
-                    "jids": ""
-                },
-                "submit_opts": {
-                    "jobdef": "topmed_sync",
-                    "dependsOn": []
-                }
-            },
-            "run_cmd": {
-                "cmd": "docker run --privileged uwgac/r343-topmed:devel /usr/local/analysis_pipeline/batchJob.py",
-                "params": {
-                    "--rdriver": "",
-                    "--rargs": "",
-                    "--workdir": "",
-                    "--dataroot": "/projects",
-                    "--Debug": "1",
-                    "--mount": "\"mount -t nfs4 -o vers=4.1 fs-6ccd31c5.efs.us-west-2.amazonaws.com:/ /projects\""
-                }
-            }
+    "configuration": {
+        "memory_limits": {
+    	    "aggregate_list":2000,
+    	    "assoc_aggregate":16000,
+    	    "assoc_combine":6000,
+    	    "assoc_plots":24000,
+    	    "assoc_report":2000,
+    	    "assoc_single":8000,
+    	    "assoc_window":20000,
+    	    "cleanup":1000,
+    	    "combine_variants":8000,
+    	    "find_unrelated":8000,
+    	    "grm":15000,
+    	    "grm_combine":4000,
+    	    "ibd_king":8000,
+    	    "kinship_plots":8000,
+    	    "ld_pruning":12000,
+    	    "null_model":32000,
+    	    "pca_byrel":8000,
+    	    "pca_corr":8000,
+    	    "pca_corr_plots":32000,
+    	    "pca_plots":2000,
+    	    "pcrelate":8000,
+            "vcf2gds":8000
         },
-        "UW_Cluster": {
-            "submit_cmd": "qsub",
-            "submit_opts": {
-                "-cwd":"",
-                "-N":"",
-                "-j":"y",
-                "-q":"olga.q",
-                "-S":"/bin/bash",
-                "-terse":"",
-                "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"
-            },
-            "parallel_env": "local",
-            "memory_limits": {
-
-            }
+        "submit_cmd": "qsub",
+        "submit_opts": {
+            "-cwd":"",
+            "-N":"",
+            "-j":"y",
+            "-q":"topmed.q",
+            "-S":"/bin/sh",
+            "-terse":"",
+            "-v":"R_LIBS=/projects/topmed/working_code/analysis_pipeline/R_library,PATH=/projects/resources/software/apps/bin:$PATH,MKL_NUM_THREADS=1"
         },
-        "AWS_Cluster": {
-            "submit_cmd": "qsub",
-            "submit_opts": {
-                "-cwd":"",
-                "-N":"",
-                "-j":"y",
-                "-q":"all.q",
-                "-S":"/bin/bash",
-                "-terse":"",
-                "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"
-            },
-            "parallel_env": "local",
-            "memory_limits": {
-                "find_unrelated":3.5,
-                "ld_pruning":11000,
-                "combine_variants":1000,
-                "pca_byrel":4000,
-                "pca_plots":1000,
-                "pca_corr":7000,
-                "pca_corr_plots":32000,
-                "pcrelate":8000,
-                "null_model":36000,
-                "aggregate_list":6000,
-                "assoc_single":24000,
-                "assoc_aggregate":24000,
-                "assoc_window":24000,
-                "assoc_combine":6000,
-                "assoc_plots":4000
-            }
-        }
+        "parallel_env": "local"
     }
 }

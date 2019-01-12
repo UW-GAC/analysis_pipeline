@@ -10,7 +10,9 @@ sessionInfo()
 
 argp <- arg_parser("Kinship plots")
 argp <- add_argument(argp, "config", help="path to config file")
+argp <- add_argument(argp, "--version", help="pipeline version number")
 argv <- parse_args(argp)
+cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
 required <- c("kinship_file")
@@ -35,9 +37,11 @@ if (!is.na(config["sample_include_file"])) {
 kin.type <- tolower(config["kinship_method"])
 kin.thresh <- as.numeric(config["kinship_threshold"])
 if (kin.type == "king") {
-    king <- getobj(config["kinship_file"])
-    samp.sel <- king$sample.id %in% sample.id
-    kinship <- snpgdsIBDSelection(king, kinship.cutoff=kin.thresh, samp.sel=samp.sel)
+    ## king <- getobj(config["kinship_file"])
+    ## samp.sel <- if (is.null(sample.id)) NULL else king$sample.id %in% sample.id
+    ## kinship <- snpgdsIBDSelection(king, kinship.cutoff=kin.thresh, samp.sel=samp.sel)
+    king <- gds2ibdobj(config["kinship_file"], sample.id=sample.id)
+    kinship <- snpgdsIBDSelection(king, kinship.cutoff=kin.thresh)
     xvar <- "IBS0"
 } else if (kin.type == "pcrelate") {
     pcr <- openfn.gds(config["kinship_file"])
@@ -87,7 +91,7 @@ p <- ggplot(kinship.study, aes_string(xvar, "kinship")) +
     facet_wrap(~study) +
     ylab("kinship estimate") +
     theme_bw()
-p <- ggsave(config["out_file_study"], plot=p, width=7, height=7)
+ggsave(config["out_file_study"], plot=p, width=7, height=7)
 
 kinship.cross <- kinship %>%
     filter(study1 != study2)
