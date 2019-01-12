@@ -1,6 +1,6 @@
 """Utility functions for TOPMed pipeline"""
 
-__version__ = "2.1.3"
+__version__ = "2.2.0"
 
 import os
 import sys
@@ -37,8 +37,14 @@ def readConfig(file):
     f = open(file, 'r')
     reader = csv.reader(f, delimiter=' ', quotechar='"', skipinitialspace=True)
     for line in reader:
+        if len(line) == 0:
+            continue
+        
         if line[0][0] == "#":
             continue
+
+        if len(line) == 1:
+            sys.exit("Error reading config file " + file + ":\nNo value for parameter '" + line[0] + "' in line " + str(reader.line_num))
 
         if len(line) > 2:
             if line[2] == '':

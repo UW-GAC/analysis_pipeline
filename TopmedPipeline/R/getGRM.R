@@ -11,7 +11,7 @@
 #' @return List of GRMs or kinship matrices. \code{NULL} if all file names in config are \code{NA}.
 #'
 #' @export
-getGRM <- function(config, sample.id) {
+getGRM <- function(config, sample.id=NULL) {
     if (!is.na(config["pcrelate_file"]) & !is.na(config["grm_file"])) {
         stop("Only one of pcrelate_file and grm_file may be specified")
     }
@@ -33,7 +33,7 @@ getGRM <- function(config, sample.id) {
 #' @rdname getGRM
 #'
 #' @export
-getKinship <- function(config, sample.id) {
+getKinship <- function(config, sample.id=NULL) {
     if (!is.na(config["pcrelate_file"]) & !is.na(config["king_file"])) {
         stop("Only one of pcrelate_file and king_file may be specified")
     }
@@ -77,6 +77,7 @@ getKinship <- function(config, sample.id) {
     if (tools::file_ext(f) == "gds") {
         x <- openfn.gds(f)
         samp <- read.gdsn(index.gdsn(x, "sample.id"))
+        if (is.null(sample.id)) sample.id <- samp
         sel <- samp %in% sample.id
         grm <- readex.gdsn(index.gdsn(x, matrix.name), sel=list(sel,sel))
         colnames(grm) <- rownames(grm) <- samp[sel]
@@ -85,11 +86,19 @@ getKinship <- function(config, sample.id) {
         x <- getobj(f)
         if (matrix.name %in% names(x)) {
             colnames(x[[matrix.name]]) <- rownames(x[[matrix.name]]) <- x$sample.id
-            keep <- x$sample.id %in% sample.id
-            grm <- x[[matrix.name]][keep,keep]
+            if (!is.null(sample.id)) {
+                keep <- x$sample.id %in% sample.id
+                grm <- x[[matrix.name]][keep,keep]
+            } else {
+                grm <- x
+            }
         } else {
-            keep <- colnames(x) %in% sample.id
-            grm <- x[keep, keep]
+            if (!is.null(sample.id)) {
+                keep <- colnames(x) %in% sample.id
+                grm <- x[keep, keep]
+            } else {
+                grm <- x
+            }
         }
     }
     grm

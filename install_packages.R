@@ -5,16 +5,10 @@
 args <- commandArgs(trailingOnly=TRUE)
 if (length(args) > 0) .libPaths(args[1])
 
-source("https://bioconductor.org/biocLite.R")
-biocLite(c("SeqVarTools", "SNPRelate", "GENESIS", "survey", "CompQuadForm",
-           "argparser", "ggplot2", "GGally", "rmarkdown", "devtools"),
-         ask=FALSE)
+install.packages(c("BiocManager", "remotes"), repos="https://cloud.r-project.org")
 
-devtools::install_git("git://github.com/zhengxwen/gdsfmt", dependencies=FALSE)
-devtools::install_git("git://github.com/zhengxwen/SeqArray", dependencies=FALSE)
-devtools::install_git("git://github.com/zhengxwen/SNPRelate", dependencies=FALSE)
-devtools::install_git("git://github.com/smgogarten/GWASTools", dependencies=FALSE)
-devtools::install_git("git://github.com/smgogarten/SeqVarTools", dependencies=FALSE)
-devtools::install_git("git://github.com/UW-GAC/GENESIS", dependencies=FALSE)
+BiocManager::install(c("SeqVarTools", "SNPRelate", "GENESIS", "survey", "CompQuadForm",
+                       "argparser", "ggplot2", "GGally", "rmarkdown"),
+                     ask=FALSE)
 
-devtools::install("TopmedPipeline", dependencies=FALSE)
+remotes::install_local("TopmedPipeline", dependencies=FALSE)
