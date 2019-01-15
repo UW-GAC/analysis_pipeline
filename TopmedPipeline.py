@@ -1,6 +1,6 @@
 """Utility functions for TOPMed pipeline"""
 
-__version__ = "2.2.0"
+__version__ = "2.2.1"
 
 import os
 import sys
@@ -39,7 +39,7 @@ def readConfig(file):
     for line in reader:
         if len(line) == 0:
             continue
-        
+
         if line[0][0] == "#":
             continue
 
@@ -315,7 +315,7 @@ class AWS_Batch(Cluster):
             session = boto3.Session(profile_name = self.clusterCfg["aws_profile"])
             self.batchC = session.client('batch')
         except Exception as e:
-            pError('boto3 session or client exception ' + str(e))
+            print('boto3 session or client exception ' + str(e))
             sys.exit(2)
 
         # retryStrategy
@@ -521,7 +521,7 @@ class AWS_Batch(Cluster):
                                    retryStrategy = self.retryStrategy
                     )
                 except Exception as e:
-                    pError('boto3 session or client exception ' + str(e))
+                    print('boto3 session or client exception ' + str(e))
                     sys.exit(2)
         else:
             jobParams["at"] = "0"
@@ -546,7 +546,7 @@ class AWS_Batch(Cluster):
                                    retryStrategy = self.retryStrategy
                     )
                 except Exception as e:
-                    pError('boto3 session or client exception ' + str(e))
+                    print('boto3 session or client exception ' + str(e))
                     sys.exit(2)
         if print_only:
             print("+++++++++  Print Only +++++++++++")
