@@ -123,7 +123,7 @@ test <- switch(tolower(config["test"]),
                smmat="SMMAT",
                fastskat="fastSKAT",
                fastsmmat="fastSMMAT",
-               skat-o="SKAT-O")
+               skato="SKATO")
 
 test.type <- switch(tolower(config["test_type"]),
                     firth="Firth",
