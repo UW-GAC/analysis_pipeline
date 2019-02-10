@@ -7,7 +7,8 @@ try:
     import cecontext
 except ImportError:
     print ("AWS batch not supported.")
-
+stime = 2
+sloops = 30
 def createEnv(batchC_a, queue_a, pricing_a, instancetypes_a, cename_a, tag_a, profile_a, verbose=False):
     # delete the queue if it exists
     if verbose:
@@ -35,10 +36,9 @@ def deleteQueue(batchC, queue):
         # delete the queue
         # since update_job_queue is async and there are no "waiters" for batch
         # we'll need to loop and sleep
-        stime = 5
-        status = True
         msg = ""
-        for ctr in range(10):
+        for ctr in range(sloops):
+            status = True
             time.sleep(stime)
             try:
                 batchC.delete_job_queue(jobQueue = queue)
@@ -58,10 +58,9 @@ def deleteCE(batchC, cename):
     response = batchC.describe_compute_environments(computeEnvironments=[cename])
     if len(response['computeEnvironments']) > 0:
         # disable
-        stime = 5
-        status = True
         msg = ""
-        for ctr in range(10):
+        for ctr in range(sloops):
+            status = True
             time.sleep(stime)
             try:
                 batchC.update_compute_environment(computeEnvironment = cename,
@@ -76,7 +75,8 @@ def deleteCE(batchC, cename):
             sys.exit(2)
 
         # delete the ce
-        for ctr in range(10):
+        for ctr in range(sloops):
+            status = True
             time.sleep(stime)
             try:
                 batchC.delete_compute_environment(computeEnvironment = cename)
@@ -90,10 +90,9 @@ def deleteCE(batchC, cename):
             sys.exit(2)
 
 def createQueue(batchC, queue, cename):
-    stime = 5
-    status = True
     msg = ""
-    for ctr in range(10):
+    for ctr in range(sloops):
+        status = True
         time.sleep(stime)
         try:
             batchC.create_job_queue(jobQueueName = queue,
@@ -112,6 +111,21 @@ def createQueue(batchC, queue, cename):
     if not status:
         print("createQueue: Error " + msg)
         sys.exit(2)
+    # wait for queue to be ready
+    for ctr in range(sloops):
+        status = True
+        time.sleep(stime)
+        try:
+            response = batchC.describe_job_queues(jobQueues = [queue])
+        except Exception as e:
+            status = False
+            msg = str(e)
+        if status:
+            break
+    if not status:
+        print("createQueue - waiting for queue to complete: Error  " + msg)
+        sys.exit(2)
+
 
 def createCE(batchC, pricing_a, instancetypes_a, cename_a, tag_a, profile_a):
     # get the ce attributes from json file
