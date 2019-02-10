@@ -1,6 +1,6 @@
 """Utility functions for TOPMed pipeline"""
 
-__version__ = "2.3.1"
+__version__ = "2.3.1r"
 
 import os
 import sys
@@ -12,9 +12,11 @@ import time
 import json
 import math
 import collections
+from datetime import datetime, timedelta
 
 try:
     import boto3
+    import batchInit
 except ImportError:
     print ("AWS batch not supported.")
 
@@ -193,8 +195,52 @@ class Cluster(object):
         self.class_name = self.__class__.__name__
         # set default pipeline path
         self.pipelinePath = os.path.dirname(os.path.abspath(sys.argv[0]))
+        # set analysis name
 
         self.openClusterCfg(std_cluster_file, opt_cluster_file, cfg_version, verbose)
+
+    def analysisInit(self, print_only=False):
+        # get analysis name
+        self.analysis = os.path.splitext(os.path.basename(os.path.abspath(sys.argv[0])))[0]
+        # get user name
+        self.username = getpass.getuser()
+        # ascii time
+        self.analysisStart=time.asctime()
+        # sec time
+        dt_ref = datetime(1970,1,1)
+        tFmt = '%a %b %d %H:%M:%S %Y'
+        dt_start = datetime.strptime(self.analysisStart, tFmt)
+        self.analysisStartSec = str((dt_start - dt_ref).total_seconds())
+        # tag for analysis log file name
+        self.analysisTag = str(int(time.time()*100))
+        # analysis log file
+        self.analysisLogFile = self.analysis + "_" + self.username + \
+                                "_" + self.analysisTag + ".log"
+        if print_only:
+            # print out Info
+            print("+++++++++  Print Only +++++++++++")
+            print("Analysis: " + self.analysis)
+            print("Analysis log file: " + self.analysisLogFile)
+            print(self.analysis + " start time: " + self.analysisStart)
+        else:
+            # open file and output start time
+            self.printVerbose("Creating analysis log file: " + self.analysisLogFile)
+            with open(self.analysisLogFile, "w") as afile:
+                afile.write("Analysis: " + self.analysis + "\n")
+                afile.write("Version: " + __version__ + "\n")
+                afile.write("Start time: " + self.analysisStart + "\n")
+
+    def getAnalysisName(self):
+        return self.analysis
+
+    def getAnalysisLog(self):
+        return self.analysisLogFile
+
+    def getAnalysisStart(self):
+        return self.analysisStart
+
+    def getAnalysisStartSec(self):
+        return self.analysisStartSec
 
     def openClusterCfg(self, stdCfgFile, optCfgFile, cfg_version, verbose):
         # get the standard cluster cfg
@@ -283,7 +329,7 @@ class AWS_Batch(Cluster):
     def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
         self.std_cluster_file = "./aws_batch_cfg.json"
-        cfgVersion = "3.1"
+        cfgVersion = "3.2"
         super(AWS_Batch, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
 
         # get the job parameters
@@ -321,6 +367,46 @@ class AWS_Batch(Cluster):
         # retryStrategy
         self.retryStrategy = self.clusterCfg["retryStrategy"]
 
+    def analysisInit(self, print_only=False):
+        # base init first
+        super(AWS_Batch, self).analysisInit(print_only)
+        profile = self.clusterCfg["aws_profile"]
+        # create an aws tag for costs
+        self.awstag = self.analysis + "_" + self.username + "_" + self.analysisTag
+        # create ce name
+        ceName = self.username + "_" + self.clusterCfg["pricing"] + "_ce"
+        print("Creating batch env ...")
+        # if print_only
+        if print_only:
+            print("+++++++++  Print Only +++++++++++")
+            print("aws tag: " + self.awstag)
+            print("aws profile: " + profile)
+            print("Creating batch queue: " + self.clusterCfg["queue"])
+            print("Creating batch ce: " + ceName)
+            print("Check AWS batch queue to verify ...")
+        else:
+            with open(self.analysisLogFile, "a") as afile:
+                afile.write("AWS tag: " + self.awstag + "\n")
+        # set default instance types
+        instanceTypes = "m5.2xlarge,m5.4xlarge,m5.12xlarge,c5.2xlarge,c5.4xlarge,c5.9xlarge,r5.2xlarge,r5.4xlarge"
+        if len(self.clusterCfg["batch_instances"]) > 0:
+            instanceTypes = self.clusterCfg["batch_instances"]
+        # init batch by creating ce and queue based on batch pricing
+        self.printVerbose("AWS tag: " + self.awstag)
+        self.printVerbose("AWS profile: " + profile)
+        self.printVerbose("batch queue: " + self.clusterCfg["queue"])
+        self.printVerbose("batch pricing: " + self.clusterCfg["pricing"])
+        self.printVerbose("instance types: " + instanceTypes)
+        self.printVerbose("compute environment name: " + ceName)
+        self.printVerbose("aws profile: " + profile)
+        batchInit.createEnv(self.batchC,
+                            self.clusterCfg["queue"],
+                            self.clusterCfg["pricing"],
+                            instanceTypes,
+                            ceName,
+                            self.awstag,
+                            profile,
+                            self.verbose)
     def getIDsAndNames(self, submitHolds):
         # for the submit holds, return a dictionary of all job names in a single string
         # and a list of all job ids
