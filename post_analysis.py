@@ -31,12 +31,11 @@ with open(logfile, "a") as afile:
     afile.write(analysis + " elapse time(hrs): " + str(td_hrs) + "\n")
 
 # cleanup
-
 for file in os.listdir('.'):
     if fnmatch.fnmatch(file, '*.log') or fnmatch.fnmatch(file,'*.trace') or \
        fnmatch.fnmatch(file, '*.o*') or fnmatch.fnmatch(file,'*.po*'):
             os.rename('./'+file,'./log/'+file)
     if fnmatch.fnmatch(file, '*report.*')  or fnmatch.fnmatch(file,'*.params'):
-        os.rename(./'+file,'./report/'+file)
+        os.rename('./'+file,'./report/'+file)
     if fnmatch.fnmatch(file, '*.pdf'):
-        os.rename(./'+file,'./plots/'+file)
+        os.rename('./'+file,'./plots/'+file)
