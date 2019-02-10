@@ -10,6 +10,7 @@ from time import localtime, strftime
 from argparse import ArgumentParser
 from copy import deepcopy
 from shutil import copyfile
+from datetime import datetime, timedelta
 
 description = """
 Association tests
@@ -66,6 +67,8 @@ driver = os.path.join(pipeline, "runRscript.sh")
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots", "report"])
 
+# analysis init
+cluster.analysisInit(print_only=print_only)
 # hold is a list of submit IDs. A submit ID is a dict:
 #     {jobname: [jobids]}
 hold_null_agg = []
@@ -211,4 +214,12 @@ TopmedPipeline.writeConfig(config, configfile)
 submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=hold_plots, email=email, print_only=print_only)
 hold_report = [submitID]
 
-cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=hold_report, print_only=print_only)
+# post analysis
+job = "post_analysis"
+jobpy = job + ".py"
+pcmd=os.path.join(pipeline, jobpy)
+argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
+           "-s", cluster.getAnalysisStartSec()]
+pdriver=os.path.join(pipeline, "run_python.sh")
+cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
+                  holdid=hold_report, print_only=print_only)
