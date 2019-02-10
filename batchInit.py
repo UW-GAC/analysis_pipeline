@@ -115,8 +115,7 @@ def createQueue(batchC, queue, cename):
 
 def createCE(batchC, pricing_a, instancetypes_a, cename_a, tag_a, profile_a):
     # get the ce attributes from json file
-    ctxfile = "cecontext.json"
-    cectx = cecontext.cecontext(ctx_file = ctxfile)
+    cectx = cecontext.cecontext()
     # get all the ce resources based on accnt ctxt
     ce_resources = cectx.allceresources(profile_a)
     if ce_resources == None:

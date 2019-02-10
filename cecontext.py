@@ -4,13 +4,14 @@ import sys
 
 class cecontext(object):
     def __init__(self,ctx_file=None, ctx_version="1.0", verbose = False):
-        self.verbose = verbose
-        self.ctx_file = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),
-                                     "cecontext.json")
-        if self.verbose:
-            print(">>>cecontext: ctx file is: " + self.ctx_file)
         if ctx_file != None:
             self.ctx_file = ctx_file
+        else:
+            self.ctx_file = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),
+                                         "cecontext.json")
+        self.verbose = verbose
+        if self.verbose:
+            print(">>>cecontext: ctx file is: " + self.ctx_file)
         # open the json ctx file
         with open(self.ctx_file) as cfh:
             ctxinfo = json.load(cfh)
