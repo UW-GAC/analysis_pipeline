@@ -214,7 +214,7 @@ class Cluster(object):
         # tag for analysis log file name
         self.analysisTag = str(int(time.time()*100))
         # analysis log file
-        self.analysisLogFile = self.analysis + "_" + self.username + \
+        self.analysisLogFile = "analysis_" + self.analysis + "_" + self.username + \
                                 "_" + self.analysisTag + ".log"
         if print_only:
             # print out Info
@@ -229,6 +229,11 @@ class Cluster(object):
                 afile.write("Analysis: " + self.analysis + "\n")
                 afile.write("Version: " + __version__ + "\n")
                 afile.write("Start time: " + self.analysisStart + "\n")
+
+    def analysisLog(self, message):
+        # append a message to the analysis log file
+        with open(self.analysisLogFile, "a") as afile:
+            afile.write("Message: " + message + "\n")
 
     def getAnalysisName(self):
         return self.analysis
@@ -407,6 +412,7 @@ class AWS_Batch(Cluster):
                             self.awstag,
                             profile,
                             self.verbose)
+
     def getIDsAndNames(self, submitHolds):
         # for the submit holds, return a dictionary of all job names in a single string
         # and a list of all job ids
@@ -487,6 +493,7 @@ class AWS_Batch(Cluster):
 
     def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None,
                   request_cores=None, print_only=False, **kwargs):
+        lmsg = "Job: " + job_name
         self.printVerbose("1===== submitJob: job " + job_name + " beginning ...")
         jobParams = deepcopy(self.jobParams)
         submitOpts = deepcopy(self.submitOpts)
@@ -494,6 +501,7 @@ class AWS_Batch(Cluster):
 
         # check if array job and > 1 task
         arrayJob = False
+        lmsg_array = "no"
         if array_range is not None:
             air = [ int(i) for i in array_range.split( '-' ) ]
             taskList = range( air[0], air[len(air)-1]+1 )
@@ -511,6 +519,8 @@ class AWS_Batch(Cluster):
             else:
                 submitOpts["env"] = [ { "name": envName,
                                         "value": str(taskList[0]) } ]
+            lmsg_array = str(noJobs)
+        lmsg = lmsg + " / array: " + lmsg_array
 
 
         # using time set a job id (which is for tracking; not the batch job id)
@@ -531,6 +541,7 @@ class AWS_Batch(Cluster):
         # is the number of physical + hyper-threaded cores.  to max performance
         # (at an increase cost) allocate 2 vcpus for each core.
         key = "vcpus"
+        lmsg_vcpus = "1"
         if request_cores is not None:
             ncs = request_cores.split("-")
             nci = int(ncs[len(ncs)-1])
@@ -542,16 +553,21 @@ class AWS_Batch(Cluster):
             else:
                 submitOpts[key2]=[ { "name": "NSLOTS",
                                      "value": str(nci) } ]
+            lmsg_vcpus = str(nci)
         if self.maxperf:
             submitOpts[key] = 2*submitOpts[key]
+        lmsg = lmsg + " / cores: " + lmsg_vcpus
 
         # get memory limit option
         key = "memory_limits"
+        lmsg_mem = "not provided"
         if key in self.clusterCfg.keys():
             # get the memory limits
             memlim = super(AWS_Batch, self).memoryLimit(job_name)
             if memlim != None:
                 submitOpts["memory"] = memlim
+            lmsg_mem = str(memlim)
+        lmsg = lmsg + " / mem: " + lmsg_mem
 
         # holdid is a previous submit_id dict {job_name: [job_Ids]}
         if holdid is not None:
@@ -581,6 +597,7 @@ class AWS_Batch(Cluster):
                 self.printVerbose("\t1> submitJob: " + job_name + " does not depend on other jobs" )
             self.printVerbose("\t1> Analysis driver: " + jobParams['rd'])
             self.printVerbose("\t1> Analysis driver parameters: " + jobParams['ra'])
+            super(AWS_Batch, self).analyisLog(lmsg)
 
         # array job or single job
         if arrayJob:
@@ -728,6 +745,7 @@ class SGE_Cluster(Cluster):
     def executeJobCmd(self, submitOpts, **kwargs):
         # update sge opts
         submitOpts["-N"] = kwargs["job_name"]
+        lmsg = "Job: " + kwargs["job_name"]
 
         key = "holdid"
         if key in kwargs and kwargs["holdid"] != []:
@@ -736,12 +754,18 @@ class SGE_Cluster(Cluster):
             submitOpts["-hold_jid"] =  ",".join(kwargs["holdid"])
 
         key = "array_range"
+        lmsg_array = "no"
         if key in kwargs:
             submitOpts["-t"] = kwargs["array_range"]
+            lmsg_array = kwargs["array_range"]
+        lmsg = lmsg + " / array: " + lmsg_array
 
         key = "request_cores"
+        lmsg_cores = "1"
         if key in kwargs and kwargs[key] != None and kwargs[key] != "1":
             submitOpts["-pe"] = self.clusterCfg["parallel_env"] + " " + kwargs["request_cores"]
+            lmsg_cores = kwargs["request_cores"]
+        lmsg = lmsg + " / cores: " + lmsg_cores
 
         key = "email"
         if key in kwargs and kwargs[key] != None:
@@ -763,6 +787,7 @@ class SGE_Cluster(Cluster):
             print sub_cmd
             return "000000"
         self.printVerbose("executeJobCmd subprocess/sub_cmd " + sub_cmd)
+        super(SGE_Cluster, self).analysisLog(lmsg)
         process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE)
         pipe = process.stdout
         sub_out = pipe.readline()
