@@ -600,7 +600,7 @@ class AWS_Batch(Cluster):
                 self.printVerbose("\t1> submitJob: " + job_name + " does not depend on other jobs" )
             self.printVerbose("\t1> Analysis driver: " + jobParams['rd'])
             self.printVerbose("\t1> Analysis driver parameters: " + jobParams['ra'])
-            super(AWS_Batch, self).analyisLog(lmsg)
+            super(AWS_Batch, self).analysisLog(lmsg)
 
         # array job or single job
         if arrayJob:
