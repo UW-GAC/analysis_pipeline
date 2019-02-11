@@ -205,7 +205,9 @@ class Cluster(object):
         # get user name
         self.username = getpass.getuser()
         # ascii time
-        self.analysisStart=time.asctime()
+        self.analysisStart = time.asctime()
+        # command line
+        self.analysisCmd = " ".join(sys.argv[:])
         # sec time
         dt_ref = datetime(1970,1,1)
         tFmt = '%a %b %d %H:%M:%S %Y'
@@ -227,6 +229,7 @@ class Cluster(object):
             self.printVerbose("Creating analysis log file: " + self.analysisLogFile)
             with open(self.analysisLogFile, "w") as afile:
                 afile.write("Analysis: " + self.analysis + "\n")
+                afile.write("Cmd: " + self.analysisCmd + "\n")
                 afile.write("Version: " + __version__ + "\n")
                 afile.write("Start time: " + self.analysisStart + "\n")
 
