@@ -30,6 +30,7 @@
     	    "pcrelate":8000,
             "vcf2gds":8000
         },
+        "autogen_ce": "No",
         "aws_profile": "uw",
         "pricing": "SPOT",
         "batch_instances": "",

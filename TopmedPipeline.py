@@ -284,12 +284,6 @@ class Cluster(object):
 
             with open(optCfgFile) as cfgFileHandle:
                 clusterCfg = json.load(cfgFileHandle)
-            key = "version"
-            if key in clusterCfg:
-                if clusterCfg[key] != cfg_version:
-                    print( "Error: version of : " + optCfgFile + " should be " + cfg_version +
-                           " not " + clusterCfg[key])
-                    sys.exit(2)
             optCfg = clusterCfg["configuration"]
             if debugCfg:
                 print("0>>> Dump of " + clusterCfg["name"] + " ... \n")
@@ -379,42 +373,67 @@ class AWS_Batch(Cluster):
         # base init first
         super(AWS_Batch, self).analysisInit(print_only)
         profile = self.clusterCfg["aws_profile"]
-        # create an aws tag for costs
-        self.awstag = self.analysis + "_" + self.username + "_" + self.analysisTag
-        # create ce name
-        ceName = self.username + "_" + self.clusterCfg["pricing"] + "_ce"
-        print("Creating batch env ...")
-        # if print_only
-        if print_only:
-            print("+++++++++  Print Only +++++++++++")
-            print("aws tag: " + self.awstag)
-            print("aws profile: " + profile)
-            print("Creating batch queue: " + self.clusterCfg["queue"])
-            print("Creating batch ce: " + ceName)
-            print("Check AWS batch queue to verify ...")
+        # autogen (for auto generation of queue and ce)
+        self.autogen_ce = False
+        if self.clusterCfg["autogen_ce"].lower() == "yes":
+            self.autogen_ce = True
+        if self.autogen_ce:
+            # pricing
+            pricing = self.clusterCfg["pricing"]
+            # create an aws tag for costs
+            self.awstag = self.analysis + "_" self.username + "_" + self.analysisTag
+            # create ce name
+            ceName = "ag_ce" + "_" + pricing + "_" + self.analysis + "_" + self.username
+            # create costing queue name
+            awsqueue = "ag_queue" + "_" + pricing + "_" + self.analysis + "_" + self.username
+            self.clusterCfg["queue"] = awsqueue
+            print("Creating batch env ...")
+            # if print_only
+            if print_only:
+                print("+++++++++  Print Only +++++++++++")
+                print("AWS autogen: " + str(self.autogen_ce))
+                print("AWS tag: " + self.awstag)
+                print("AWS profile: " + profile)
+                print("AWS batch queue: " + self.clusterCfg["queue"])
+                print("AWS batch ce: " + ceName)
+                print("Check AWS batch queue to verify ...")
+            else:
+                with open(self.analysisLogFile, "a") as afile:
+                    afile.write("AWS profile: " + profile + "\n")
+                    afile.write("AWS batch queue: " + self.clusterCfg["queue"] + "\n")
+                    afile.write("AWS batch ce: " + ceName + "\n")
+                    afile.write("AWS tag: " + self.awstag + "\n")
+            # set default instance types
+            instanceTypes = "m5.2xlarge,m5.4xlarge,m5.12xlarge,c5.2xlarge,c5.4xlarge,c5.9xlarge,r5.2xlarge,r5.4xlarge"
+            if len(self.clusterCfg["batch_instances"]) > 0:
+                instanceTypes = self.clusterCfg["batch_instances"]
+            # init batch by creating ce and queue based on batch pricing
+            if not print_only:
+                self.printVerbose("AWS tag: " + self.awstag)
+                self.printVerbose("AWS profile: " + profile)
+                self.printVerbose("batch queue: " + self.clusterCfg["queue"])
+                self.printVerbose("batch pricing: " + self.clusterCfg["pricing"])
+                self.printVerbose("instance types: " + instanceTypes)
+                self.printVerbose("compute environment name: " + ceName)
+                self.printVerbose("aws profile: " + profile)
+            batchInit.createEnv(self.batchC,
+                                self.clusterCfg["queue"],
+                                self.clusterCfg["pricing"],
+                                instanceTypes,
+                                ceName,
+                                self.awstag,
+                                profile,
+                                self.verbose)
         else:
-            with open(self.analysisLogFile, "a") as afile:
-                afile.write("AWS tag: " + self.awstag + "\n")
-        # set default instance types
-        instanceTypes = "m5.2xlarge,m5.4xlarge,m5.12xlarge,c5.2xlarge,c5.4xlarge,c5.9xlarge,r5.2xlarge,r5.4xlarge"
-        if len(self.clusterCfg["batch_instances"]) > 0:
-            instanceTypes = self.clusterCfg["batch_instances"]
-        # init batch by creating ce and queue based on batch pricing
-        self.printVerbose("AWS tag: " + self.awstag)
-        self.printVerbose("AWS profile: " + profile)
-        self.printVerbose("batch queue: " + self.clusterCfg["queue"])
-        self.printVerbose("batch pricing: " + self.clusterCfg["pricing"])
-        self.printVerbose("instance types: " + instanceTypes)
-        self.printVerbose("compute environment name: " + ceName)
-        self.printVerbose("aws profile: " + profile)
-        batchInit.createEnv(self.batchC,
-                            self.clusterCfg["queue"],
-                            self.clusterCfg["pricing"],
-                            instanceTypes,
-                            ceName,
-                            self.awstag,
-                            profile,
-                            self.verbose)
+            if print_only:
+                print("+++++++++  Print Only +++++++++++")
+                print("aws autogen: " + str(self.autogen_ce))
+                print("aws profile: " + profile)
+                print("batch queue: " + self.clusterCfg["queue"])
+            else:
+                with open(self.analysisLogFile, "a") as afile:
+                    afile.write("AWS profile: " + profile + "\n")
+                    afile.write("AWS batch queue: " + self.clusterCfg["queue"] + "\n")
 
     def getIDsAndNames(self, submitHolds):
         # for the submit holds, return a dictionary of all job names in a single string
