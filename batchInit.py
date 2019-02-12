@@ -133,9 +133,7 @@ def createQueue(batchC, queue, cename, verbose):
     sTime = 2
     while True:
         response = batchC.describe_job_queues(jobQueues = [queue])
-        if len(response['jobQueues']) > 0:
-            break
-        if response['jobQueues'][0]['status'] == 'VALID':
+        if (len(response['jobQueues']) > 0 and response['jobQueues'][0]['status']) == 'VALID':
             break
         time.sleep(sTime)
         timeW += sTime
