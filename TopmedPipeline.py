@@ -417,7 +417,7 @@ class AWS_Batch(Cluster):
                 self.printVerbose("compute environment name: " + ceName)
                 self.printVerbose("aws profile: " + profile)
             batchInit.createEnv(self.batchC,
-                                self.clusterCfg["queue"],
+                                self.queue,
                                 self.clusterCfg["pricing"],
                                 instanceTypes,
                                 ceName,
