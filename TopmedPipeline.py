@@ -381,12 +381,12 @@ class AWS_Batch(Cluster):
             # pricing
             pricing = self.clusterCfg["pricing"]
             # create an aws tag for costs
-            self.awstag = self.analysis + "_" self.username + "_" + self.analysisTag
+            self.awstag = self.analysis + "_" + self.username + "_" + self.analysisTag
             # create ce name
             ceName = "ag_ce" + "_" + pricing + "_" + self.analysis + "_" + self.username
             # create costing queue name
             awsqueue = "ag_queue" + "_" + pricing + "_" + self.analysis + "_" + self.username
-            self.clusterCfg["queue"] = awsqueue
+            self.queue = awsqueue
             print("Creating batch env ...")
             # if print_only
             if print_only:
@@ -394,13 +394,13 @@ class AWS_Batch(Cluster):
                 print("AWS autogen: " + str(self.autogen_ce))
                 print("AWS tag: " + self.awstag)
                 print("AWS profile: " + profile)
-                print("AWS batch queue: " + self.clusterCfg["queue"])
+                print("AWS batch queue: " + self.queue)
                 print("AWS batch ce: " + ceName)
                 print("Check AWS batch queue to verify ...")
             else:
                 with open(self.analysisLogFile, "a") as afile:
                     afile.write("AWS profile: " + profile + "\n")
-                    afile.write("AWS batch queue: " + self.clusterCfg["queue"] + "\n")
+                    afile.write("AWS batch queue: " + self.queue + "\n")
                     afile.write("AWS batch ce: " + ceName + "\n")
                     afile.write("AWS tag: " + self.awstag + "\n")
             # set default instance types
@@ -411,7 +411,7 @@ class AWS_Batch(Cluster):
             if not print_only:
                 self.printVerbose("AWS tag: " + self.awstag)
                 self.printVerbose("AWS profile: " + profile)
-                self.printVerbose("batch queue: " + self.clusterCfg["queue"])
+                self.printVerbose("batch queue: " + self.queue)
                 self.printVerbose("batch pricing: " + self.clusterCfg["pricing"])
                 self.printVerbose("instance types: " + instanceTypes)
                 self.printVerbose("compute environment name: " + ceName)
@@ -429,11 +429,11 @@ class AWS_Batch(Cluster):
                 print("+++++++++  Print Only +++++++++++")
                 print("aws autogen: " + str(self.autogen_ce))
                 print("aws profile: " + profile)
-                print("batch queue: " + self.clusterCfg["queue"])
+                print("batch queue: " + self.queue)
             else:
                 with open(self.analysisLogFile, "a") as afile:
                     afile.write("AWS profile: " + profile + "\n")
-                    afile.write("AWS batch queue: " + self.clusterCfg["queue"] + "\n")
+                    afile.write("AWS batch queue: " + self.queue + "\n")
 
     def getIDsAndNames(self, submitHolds):
         # for the submit holds, return a dictionary of all job names in a single string
