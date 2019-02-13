@@ -546,7 +546,7 @@ class AWS_Batch(Cluster):
 
 
         # using time set a job id (which is for tracking; not the batch job id)
-        trackID = job_name + "_" + str(int(time.time()*100))
+        trackID = job_name + "_" + self.analysisTag
 
         # set the R driver and arguments (e.g., -s rcode cfg --chr cn)
         key = "rd"
