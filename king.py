@@ -54,6 +54,8 @@ driver = os.path.join(pipeline, "runRscript.sh")
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots"])
 
+# analysis init
+cluster.analysisInit(print_only=print_only)
 
 job = "ld_pruning"
 
@@ -109,5 +111,12 @@ TopmedPipeline.writeConfig(config, configfile)
 
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
 
-
-cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=[jobid], print_only=print_only)
+# post analysis
+job = "post_analysis"
+jobpy = job + ".py"
+pcmd=os.path.join(pipeline, jobpy)
+argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
+           "-s", cluster.getAnalysisStartSec()]
+pdriver=os.path.join(pipeline, "run_python.sh")
+cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
+                  holdid=[jobid]], print_only=print_only)

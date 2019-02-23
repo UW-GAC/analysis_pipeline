@@ -55,6 +55,8 @@ driver = os.path.join(pipeline, "runRscript.sh")
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "log"])
 
+# analysis init
+cluster.analysisInit(print_only=print_only)
 
 job = "vcf2gds"
 
@@ -78,7 +80,7 @@ jobid_chk = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, con
 if len(TopmedPipeline.chromosomeRangeToList(chromosomes)) == 1:
     print("Only one chromosome selected; skipping merge")
     sys.exit(0)
-    
+
 
 job = "merge_gds"
 
@@ -104,5 +106,12 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid], array_range=chromosomes, email=email, print_only=print_only)
 
-
-cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=[jobid], print_only=print_only)
+# post analysis
+job = "post_analysis"
+jobpy = job + ".py"
+pcmd=os.path.join(pipeline, jobpy)
+argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
+           "-s", cluster.getAnalysisStartSec()]
+pdriver=os.path.join(pipeline, "run_python.sh")
+cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
+                  holdid=[jobid], print_only=print_only)
