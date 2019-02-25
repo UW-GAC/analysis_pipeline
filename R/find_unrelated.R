@@ -15,6 +15,7 @@ required <- c("king_file")
 optional <- c("kinship_file"=NA,
               "kinship_method"="king",
               "kinship_threshold"=0.04419417, # 2^(-9/2), 3rd degree
+              "divergence_threshold"=-0.04419417, # 2^(-9/2), 3rd degree
               "out_related_file"="related.RData",
               "out_unrelated_file"="unrelated.RData",
               #"pcrelate_file"=NA,
@@ -51,8 +52,9 @@ message("Using ", kin.type, " kinship estimates")
 
 # divide into related and unrelated set
 kin_thresh <- as.numeric(config["kinship_threshold"])
+div_thresh <- as.numeric(config["divergence_threshold"])
 part <- pcairPartition(kinobj=kinMat, kin.thresh=kin_thresh,
-                       divobj=divMat, div.thresh=-kin_thresh,
+                       divobj=divMat, div.thresh=div_thresh,
                        sample.include=sample.id)
 
 rels <- part$rels

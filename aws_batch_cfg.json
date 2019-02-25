@@ -1,6 +1,6 @@
 {
     "name": "AWS_Batch_config",
-    "version": "3.1",
+    "version": "3.2",
     "debug": 0,
     "configuration": {
         "memory_limits": {
@@ -19,6 +19,9 @@
     	    "ibd_king":8000,
     	    "kinship_plots":8000,
     	    "ld_pruning":51000,
+            "merge_gds":12000,
+            "unique_variants":16000,
+            "check_merged":16000,
     	    "null_model":51000,
     	    "pca_byrel":8000,
     	    "pca_corr":8000,
@@ -27,7 +30,10 @@
     	    "pcrelate":8000,
             "vcf2gds":8000
         },
-        "aws_profile": "default",
+        "autogen_ce": "No",
+        "aws_profile": "uw",
+        "pricing": "SPOT",
+        "batch_instances": "",
         "pipeline_path": "/usr/local/analysis_pipeline",
         "queue": "SPOT_general",
         "maxperf": 0,
