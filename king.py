@@ -119,4 +119,4 @@ argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog()
            "-s", cluster.getAnalysisStartSec()]
 pdriver=os.path.join(pipeline, "run_python.sh")
 cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
-                  holdid=[jobid]], print_only=print_only)
+                  holdid=[jobid], print_only=print_only)
