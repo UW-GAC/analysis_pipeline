@@ -54,6 +54,9 @@ driver = os.path.join(pipeline, "runRscript.sh")
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots"])
 
+# analysis init
+cluster.analysisInit(print_only=print_only)
+
 
 job = "gds2bed"
 
@@ -62,8 +65,27 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], email=email, print_only=print_only)
 
 
-## run plink --make-bed
 ## this swaps alleles to make KING --ibdseg happy about reading the file
+job = "plink_make-bed"
+
+bedprefix = configdict["bed_file"]
+#arglist = ["--bfile", bedprefix, "--make-bed", "--out", "data/tmp"]
+arglist = ["--bfile", bedprefix, "--make-bed", "--out", bedprefix]
+
+job_cmd = cluster.clusterCfg["submit_cmd"]
+subOpts = deepcopy(cluster.clusterCfg["submit_opts"])
+subOpts["-b"] = "y"
+jobid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name=job, cmd="plink", args=arglist, holdid=[jobid], email=email, print_only=print_only)
+tmpid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name="rm_tmp_files", cmd="rm", args=[bedprefix + ".*~"], holdid=[jobid], email=email, print_only=print_only)
+
+## overwrite original BED
+# job = "rename_files"
+# outF = open("log/tmp.sh", "w")
+# outF.write("#! /bin/bash\n")
+# for ext in [".bed", ".bim", ".fam"]:
+#     outF.write("mv tmp" + ext + " " + bedprefix + ext + "\n")
+# outF.close()
+# jobid = cluster.submitJob(job_name=job, cmd="log/tmp.sh", email=email, print_only=print_only)
 
 
 job = "king_ibdseg"
@@ -72,9 +94,9 @@ bedfile = configdict["bed_file"] + ".bed"
 outprefix = configdict["data_prefix"] + "_king"
 arglist = ["-b", bedfile, "--lessmem", "--ibdseg", "--prefix", outprefix]
 
-job_cmd = cluster.clusterCfg["submit_cmd"]
-subOpts = deepcopy(cluster.clusterCfg["submit_opts"])
-subOpts["-b"] = "y"
+# job_cmd = cluster.clusterCfg["submit_cmd"]
+# subOpts = deepcopy(cluster.clusterCfg["submit_opts"])
+# subOpts["-b"] = "y"
 jobid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name=job, cmd="king", args=arglist, holdid=[jobid], email=email, print_only=print_only)
 
 
@@ -106,4 +128,12 @@ jobid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name=job, cmd="king"
 # jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
 
 
-cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=[jobid], print_only=print_only)
+# post analysis
+job = "post_analysis"
+jobpy = job + ".py"
+pcmd=os.path.join(pipeline, jobpy)
+argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
+           "-s", cluster.getAnalysisStartSec()]
+pdriver=os.path.join(pipeline, "run_python.sh")
+cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
+                  holdid=[jobid], print_only=print_only)
