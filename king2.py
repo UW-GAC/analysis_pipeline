@@ -69,63 +69,104 @@ jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, v
 job = "plink_make-bed"
 
 bedprefix = configdict["bed_file"]
-#arglist = ["--bfile", bedprefix, "--make-bed", "--out", "data/tmp"]
 arglist = ["--bfile", bedprefix, "--make-bed", "--out", bedprefix]
 
 job_cmd = cluster.clusterCfg["submit_cmd"]
 subOpts = deepcopy(cluster.clusterCfg["submit_opts"])
 subOpts["-b"] = "y"
-jobid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name=job, cmd="plink", args=arglist, holdid=[jobid], email=email, print_only=print_only)
+plinkid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name=job, cmd="plink", args=arglist, holdid=[jobid], email=email, print_only=print_only)
+
+## when input and output files have same name, plink renames input with "~"
 tmpid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name="rm_tmp_files", cmd="rm", args=[bedprefix + ".*~"], holdid=[jobid], email=email, print_only=print_only)
 
-## overwrite original BED
-# job = "rename_files"
-# outF = open("log/tmp.sh", "w")
-# outF.write("#! /bin/bash\n")
-# for ext in [".bed", ".bim", ".fam"]:
-#     outF.write("mv tmp" + ext + " " + bedprefix + ext + "\n")
-# outF.close()
-# jobid = cluster.submitJob(job_name=job, cmd="log/tmp.sh", email=email, print_only=print_only)
 
 
 job = "king_ibdseg"
 
 bedfile = configdict["bed_file"] + ".bed"
-outprefix = configdict["data_prefix"] + "_king"
+outprefix = configdict["data_prefix"] + "_king_ibdseg"
 arglist = ["-b", bedfile, "--lessmem", "--ibdseg", "--prefix", outprefix]
 
 # job_cmd = cluster.clusterCfg["submit_cmd"]
 # subOpts = deepcopy(cluster.clusterCfg["submit_opts"])
 # subOpts["-b"] = "y"
-jobid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name=job, cmd="king", args=arglist, holdid=[jobid], email=email, print_only=print_only)
+segid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name=job, cmd="king", args=arglist, holdid=[plinkid], email=email, print_only=print_only)
+
+
+## modify kinship_plots to use hexbin instead of geom_point
+## option to read text file with king ibdseg output
+job = "kinship_plots"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+config = deepcopy(configdict)
+config["kinship_file"] = configdict["data_prefix"] + "_king_ibdseg.seg"
+config["kinship_method"] = "king_ibdseg"
+config["out_file_all"] = configdict["plots_prefix"] + "_king_ibdseg_kinship_all.pdf"
+config["out_file_cross"] = configdict["plots_prefix"] + "_king_ibdseg_kinship_cross.pdf"
+config["out_file_study"] = configdict["plots_prefix"] + "_king_ibdseg_kinship_study.pdf"
+configfile = configdict["config_prefix"] + "_" + job + "_ibdseg.config"
+TopmedPipeline.writeConfig(config, configfile)
+
+segplotid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[segid], email=email, print_only=print_only)
 
 
 ## format ibdseg results with kingToMatrix
 ## set sample.include to all samples so every sample is represented in output sparse matrix
 ## set threshold to 2^(-13/2) (5th deg)
 
+job = "king_to_matrix"
 
-## run ibd_king R script on GDS file
+rscript = os.path.join(pipeline, "R", job + ".R")
 
-## modify kinship_plots to use hexbin instead of geom_point
-## option to read text file with king ibdseg output
+config = deepcopy(configdict)
+config["king_file"] = configdict["data_prefix"] + "_king_ibdseg.seg"
+config["out_file"] = configdict["data_prefix"] + "_king_ibdseg_Matrix.RData"
+configfile = configdict["config_prefix"] + "_" + job + "_ibdseg.config"
+TopmedPipeline.writeConfig(config, configfile)
+
+segmatid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[segid], email=email, print_only=print_only)
 
 
 
-# job = "kinship_plots"
+job = "king_related"
 
-# rscript = os.path.join(pipeline, "R", job + ".R")
+#bedfile = configdict["bed_file"] + ".bed"
+outprefix = configdict["data_prefix"] + "_king_related"
+arglist = ["-b", bedfile, "--lessmem", "--related", "--prefix", outprefix]
 
-# config = deepcopy(configdict)
-# config["kinship_file"] = configdict["data_prefix"] + "_ibd_king.gds"
-# config["kinship_method"] = "king"
-# config["out_file_all"] = configdict["plots_prefix"] + "_kinship_all.pdf"
-# config["out_file_cross"] = configdict["plots_prefix"] + "_kinship_cross.pdf"
-# config["out_file_study"] = configdict["plots_prefix"] + "_kinship_study.pdf"
-# configfile = configdict["config_prefix"] + "_" + job + ".config"
-# TopmedPipeline.writeConfig(config, configfile)
+kinid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name=job, cmd="king", args=arglist, holdid=[plinkid], email=email, print_only=print_only)
 
-# jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
+
+job = "kinship_plots"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+config = deepcopy(configdict)
+config["kinship_file"] = configdict["data_prefix"] + "_king_related.kin"
+config["kinship_method"] = "king_related"
+config["out_file_all"] = configdict["plots_prefix"] + "_king_related_kinship_all.pdf"
+config["out_file_cross"] = configdict["plots_prefix"] + "_king_related_kinship_cross.pdf"
+config["out_file_study"] = configdict["plots_prefix"] + "_king_related_kinship_study.pdf"
+configfile = configdict["config_prefix"] + "_" + job + "_related.config"
+TopmedPipeline.writeConfig(config, configfile)
+
+kinplotid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[segid], email=email, print_only=print_only)
+
+
+job = "king_to_matrix"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+config = deepcopy(configdict)
+config["king_file"] = configdict["data_prefix"] + "_king_related.kin"
+config["kinship_threshold"] = "NA" # for divergence, make dense matrix
+config["out_file"] = configdict["data_prefix"] + "_king_related_Matrix.RData"
+configfile = configdict["config_prefix"] + "_" + job + "_related.config"
+TopmedPipeline.writeConfig(config, configfile)
+
+kinmatid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[kinid], email=email, print_only=print_only)
+
 
 
 # post analysis
@@ -135,5 +176,6 @@ pcmd=os.path.join(pipeline, jobpy)
 argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
 pdriver=os.path.join(pipeline, "run_python.sh")
+holdlist = [segplotid, segmatid, kinplotid, kinmatid]
 cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
-                  holdid=[jobid], print_only=print_only)
+                  holdid=holdlist, print_only=print_only)

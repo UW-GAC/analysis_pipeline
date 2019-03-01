@@ -4,8 +4,10 @@ library(SNPRelate)
 library(GENESIS)
 library(gdsfmt)
 library(Biobase)
+library(readr)
 library(dplyr)
 library(ggplot2)
+library(hexbin)
 sessionInfo()
 
 argp <- arg_parser("Kinship plots")
@@ -51,7 +53,13 @@ if (!is.na(config["sample_include_file"])) {
 kin.type <- tolower(config["kinship_method"])
 kin.thresh <- as.numeric(config["kinship_threshold"])
 if (kin.type == "king_ibdseg") {
-    #king <- readr::
+    kinship <- read_tsv(config["kinship_file"], col_types="-c-c--nnn-") %>%
+        mutate(IBS0=(1 - IBD1Seg - IBD2Seg), kinship=0.5*PropIBD)
+    xvar <- "IBS0"
+} else if (kin.type == "king_related") {
+    kinship <- read_tsv(config["kinship_file"], col_types="-cc----n--n-----") %>%
+        rename(kinship=Kinship)
+    xvar <- "IBS0"
 } else if (kin.type == "king") {
     if (tools::file_ext(f) == "gds") {
         king <- gds2ibdobj(config["kinship_file"], sample.id=sample.id)
@@ -76,10 +84,12 @@ if (kin.type == "king_ibdseg") {
 message("Plotting ", kin.type, " kinship estimates")
 
 p <- ggplot(kinship, aes_string(xvar, "kinship")) +
-    geom_hline(yintercept=2^(-seq(3,9,2)/2), linetype="dashed", color="grey") +
-    geom_point(alpha=0.5) +
-    ylab("kinship estimate") +
-    theme_bw()
+    geom_hline(yintercept=2^(-seq(3,11,2)/2), linetype="dashed", color="grey") +
+    ## geom_point(alpha=0.5) +
+    ## theme_bw()
+    geom_hex(aes(fill = log10(..count..)), bins = 100) +
+    ylab("kinship estimate")
+
 ggsave(config["out_file_all"], plot=p, width=6, height=6)
 
 
@@ -105,20 +115,23 @@ kinship.study <- kinship %>%
     select(-study2)
 
 p <- ggplot(kinship.study, aes_string(xvar, "kinship")) +
-    geom_hline(yintercept=2^(-seq(3,9,2)/2), linetype='dashed', color="grey") +
-    geom_point(alpha=0.5) +
+    geom_hline(yintercept=2^(-seq(3,11,2)/2), linetype='dashed', color="grey") +
+    ## geom_point(alpha=0.5) +
+    ## theme_bw()
     facet_wrap(~study) +
-    ylab("kinship estimate") +
-    theme_bw()
+    geom_hex(aes(fill = log10(..count..)), bins = 100) +
+    ylab("kinship estimate")
+
 ggsave(config["out_file_study"], plot=p, width=7, height=7)
 
 kinship.cross <- kinship %>%
     filter(study1 != study2)
 
 # only make the plot if there are some cross-study kinship pairs
+# leave this one as geom_point instead of hexbin - color-code by study, and not many points
 if (nrow(kinship.cross) > 0){
   p <- ggplot(kinship.cross, aes_string(xvar, "kinship", color="study2")) +
-    geom_hline(yintercept=2^(-seq(3,9,2)/2), linetype='dashed', color="grey") +
+    geom_hline(yintercept=2^(-seq(3,11,2)/2), linetype='dashed', color="grey") +
     geom_point() +
     facet_wrap(~study1, drop=FALSE) +
     ylab("kinship estimate") +
