@@ -12,8 +12,9 @@ config <- readConfig(argv$config)
 
 required <- c("king_file")
 optional <- c("kinship_threshold"=0.01104854, # 2^(-13/2), 5th degree
-              "out_file"="king_Matrix.RData",
-              "sample_include_file"=NA)
+              "out_prefix"="king_Matrix",
+              "sample_include_file"=NA,
+              "write_gds"=FALSE)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -33,4 +34,10 @@ mat <- kingToMatrix(king=config["king_file"],
                     sample.include=sample.id,
                     thresh=kin.thresh)
 
-save(mat, file=config["out_file"])
+save(mat, file=paste0(config["out_prefix"], ".RData"))
+
+if (as.logical(config["write_gds"])) {
+    matlist <- list(sample.id=rownames(mat), kinship=as.matrix(mat))
+    rm(mat)
+    list2gds(matlist, paste0(config["out_prefix"], ".gds"))
+}
