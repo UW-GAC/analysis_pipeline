@@ -1,6 +1,6 @@
 library(argparser)
 library(TopmedPipeline)
-library(SeqVarTools)
+library(Biobase)
 library(GENESIS)
 sessionInfo()
 
@@ -13,13 +13,15 @@ config <- readConfig(argv$config)
 
 required <- c("king_file")
 optional <- c("kinship_file"=NA,
-              "kinship_method"="king",
+              #"kinship_method"="king",
               "kinship_threshold"=0.04419417, # 2^(-9/2), 3rd degree
               "divergence_threshold"=-0.04419417, # 2^(-9/2), 3rd degree
               "out_related_file"="related.RData",
               "out_unrelated_file"="unrelated.RData",
               #"pcrelate_file"=NA,
-              "sample_include_file"=NA)
+              "phenotype_file"=NA,
+              "sample_include_file"=NA,
+              "study"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -32,30 +34,61 @@ if (!is.na(config["sample_include_file"])) {
 }
 
 # always use king estimates for ancestry divergence
-# getKinship returns a list
-divMat <- getKinship(config["king_file"], sample.id)[[1]]
+divMat <- kinobj(config["king_file"])
 
 # select type of kinship estimates to use (king or pcrelate)
-kin.type <- tolower(config["kinship_method"])
+#kin.type <- tolower(config["kinship_method"])
 if (is.na(config["kinship_file"])) {
     kinMat <- divMat
 } else {
-    if (kin.type == "king") {
-        cfg <- setNames(config["kinship_file"], "king_file")
-    } else if (kin.type == "pcrelate") {
-        cfg <- setNames(config["kinship_file"], "pcrelate_file")
-        kinMat <- getKinship(cfg, sample.id)[[1]]
-    }
-    kinMat <- getKinship(cfg, sample.id)[[1]]
+    kinMat <- kinobj(config["kinship_file"])
 }
-message("Using ", kin.type, " kinship estimates")
+#message("Using ", kin.type, " kinship estimates")
 
-# divide into related and unrelated set
 kin_thresh <- as.numeric(config["kinship_threshold"])
 div_thresh <- as.numeric(config["divergence_threshold"])
+
+## for each study, find median kinship coefficient
+## if median KC > 0, run find_unrelated on that study only, with threshold of 2^(-9/2) + median KC
+if (!is.na(config["study"]) & !is.na(config["phenotype_file"])) {
+    # could replace this with a read.gdsn command, but unlikely we will need it
+    if (is(kinMat, "gds.class")) stop("can't compute median kinship by study on GDS object")
+    message("Computing median kinship by study")
+    
+    study <- config["study"]
+    annot <- getobj(config["phenotype_file"])
+    stopifnot(study %in% varLabels(annot))
+    annot <- pData(annot)[,c("sample.id", study)]
+    names(annot)[2] <- "study"
+    if (!is.null(sample.id)) {
+        annot <- annot[annot$sample.id %in% sample.id,]
+    }
+    studies <- unique(annot$study)
+    study.partition <- list()
+    for (s in studies) {
+        ids <- annot$sample.id[annot$study %in% s]
+        ind <- rownames(kinMat) %in% ids
+        medKC <- medianKinship(kinMat[ind,ind])
+        if (medKC > 0) {
+            message("Median kinship for ", study, " is ", medKC, ".\n",
+                    "Finding unrelated set separately.")
+            study.partition[[s]] <- pcairPartition(kinobj=kinMat, kin.thresh=(kin_thresh + medKC),
+                                                   divobj=divMat, div.thresh=div_thresh,
+                                                   sample.include=ids)
+        }
+    }
+}
+
+## combine unrelated samples from individual studies
+# will be NULL if list is empty
+study.unrel <- unlist(lapply(study.partition, function(x) x$unrels), use.names=FALSE)
+
+
+## run pcairPartition on everyone, forcing list of per-study unrel into unrelated set
 part <- pcairPartition(kinobj=kinMat, kin.thresh=kin_thresh,
                        divobj=divMat, div.thresh=div_thresh,
-                       sample.include=sample.id)
+                       sample.include=sample.id,
+                       unrel.set=study.unrel)
 
 rels <- part$rels
 unrels <- part$unrels

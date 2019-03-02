@@ -62,12 +62,6 @@ configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data"
 cluster.analysisInit(print_only=print_only)
 
 
-## for each study, find median kinship coefficient
-## if median KC > 0, run find_unrelated on that study only, with threshold of 2^(-9/2) + median KC
-## combine unrelated samples from individual studies
-## run pcairPartition on everyone, forcing list of per-study unrel into unrelated set
-
-
 job = "find_unrelated"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
