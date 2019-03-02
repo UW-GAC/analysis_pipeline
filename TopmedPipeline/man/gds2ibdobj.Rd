@@ -11,6 +11,9 @@ gds2ibdobj(file, sample.id = NULL)
 
 \item{sample.id}{vector of sample.id}
 }
+\value{
+Object of type "snpgdsIBDClass"
+}
 \description{
 Read an ibdobj from a GDS file
 }

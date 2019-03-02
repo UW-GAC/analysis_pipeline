@@ -135,6 +135,7 @@ list2gds <- function(x, file) {
 #'
 #' @param file filename of GDS file
 #' @param sample.id vector of sample.id
+#' @return Object of type "snpgdsIBDClass"
 #' 
 #' @importFrom gdsfmt openfn.gds closefn.gds index.gdsn read.gdsn readex.gdsn
 #' 
@@ -157,4 +158,33 @@ gds2ibdobj <- function(file, sample.id=NULL) {
     closefn.gds(f)
     class(rv) <- "snpgdsIBDClass"
     return(rv)
+}
+
+
+#' Return a kinship object for use in pcairPartition
+#' 
+#' @param file filename with kinship object (.gds or .RData)
+#' @return If file is a GDS file, a GDS object providing a file connection. Otherwise, the R object stored in file.
+#' 
+#' @importFrom gdsfmt openfn.gds
+#' 
+#' @export
+kinobj <- function(file) {
+    if (tools::file_ext(file) == "gds") {
+        x <- openfn.gds(file)
+    } else {
+        x <- getobj(file)
+    }
+    x
+}
+
+
+#' Return the median kinship value from a matrix
+#'
+#' @param mat A kinship matrix
+#' @return The median kinship value
+#' 
+#' @export
+medianKinship <- function(mat) {
+    median(mat[lower.tri(mat)])
 }
