@@ -10,8 +10,9 @@ from copy import deepcopy
 
 description = """
 Identity by Descent with the following steps:
-1) Select SNPs with LD pruning
-2) IBD calculations with KING-robust
+1) Convert GDS to BED for use with KING
+2) KING --ibdseg to get initial kinship estimates
+3) KING --related to get divergence matrix
 """
 
 parser = ArgumentParser(description=description)

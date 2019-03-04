@@ -11,7 +11,7 @@ from copy import deepcopy
 description = """
 PCA with the following steps:
 1) Find unrelated sample set
-2) Select SNPs with LD pruning using unrelated samples
+2) (optional) Select SNPs with LD pruning using unrelated samples
 3) PCA (using unrelated set, then project relatives)
 4) SNV-PC correlation
 """

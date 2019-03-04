@@ -6,6 +6,13 @@ We recommend building R with [Intel MKL](https://software.intel.com/en-us/intel-
 
 Run the `install_packages.R` script to install required R packages.
 
+Additional software
+- [bcftools](http://www.htslib.org/download/)
+- [PLINK](https://www.cog-genomics.org/plink2/)
+- [KING](http://people.virginia.edu/~wc9c/KING/Download.htm)
+- [LocusZoom](https://github.com/UW-GAC/locuszoom-standalone)
+
+
 ## Basic outline
 
 Each script in the `R` directory takes a config file with parameters. Look at the beginning of each script for parameter lists. Some parameters are required; others are optional with default values.
@@ -36,6 +43,7 @@ argument  | default value | description
 `--version` | | show the version number and exit
 `-h, --help` | | print help message and exit
 
+
 ## Conversion to GDS
 
 `vcf2gds.py`
@@ -59,18 +67,18 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 
 ## Relatedness and Population structure
 
-1. [KING-robust](http://www.ncbi.nlm.nih.gov/pubmed/20926424) to get initial kinship estimates
+1. LD pruning to select variants
 
-    `king.py`
+    `ld_pruning.py`
     1. `ld_pruning.R`
     2. `combine_variants.R`
-    3. `ibd_king.R`
-	4. `kinship_plots.R`
+	3. `subset_gds.R`
 
     config parameter | default value | description
     --- | --- | ---
     `out_prefix` | | Prefix for files created by this script.
     `gds_file` | | GDS file with all chromosomes.
+	`autosome_only` | `TRUE` | Only include autosomes in LD pruning.
 	`ld_r_threshold` | `0.32` | `r` threshold for LD pruning. Default is `r^2 = 0.1`.
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning.
@@ -78,10 +86,30 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`genome_build` | `hg38` | Genome build, used to define correlation regions.
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
+
+2. [KING](http://www.ncbi.nlm.nih.gov/pubmed/20926424) to get initial kinship estimates
+
+    `king.py`
+    1. `gds2bed.R`
+	2. `plink --make-bed`
+	3. `king --ibdseg`
+	    - `kinship_plots.R`
+	    - `king_to_matrix.R`
+	4. `king --related`
+	    - `kinship_plots.R`
+	    - `king_to_matrix.R`
+
+    config parameter | default value | description
+    --- | --- | ---
+    `out_prefix` | | Prefix for files created by this script.
+    `gds_file` | | GDS file with only LD pruned variants, all chromosomes. 
+	`bed_file` | | Output BED file.
+	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
+	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
 
-2. [PC-AiR](http://www.ncbi.nlm.nih.gov/pubmed/25810074) to select an informative set of unrelated samples, do PCA on unrelated, project into relatives
+3. [PC-AiR](http://www.ncbi.nlm.nih.gov/pubmed/25810074) to select an informative set of unrelated samples, do PCA on unrelated, project into relatives
 
     `pcair.py`
     1. `find_unrelated.R`
@@ -89,19 +117,22 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
     3. `combine_variants.R` (optional  with `--ld_pruning`)
     4. `pca_byrel.R`
 	5. `pca_plots.R`
-	6. `pca_corr.R`
-	7. `pca_corr_plots.R`
+	6. `pca_corr_vars.R`
+	7. `pca_corr.R`
+	8. `pca_corr_plots.R`
 
-	The LD pruning step is run if the argument `--ld_pruning` is provided; otherwise, set `variant_include_file` to a pre-existing set of pruned variants (such as those from running `king.py` above).
+	The LD pruning step is run if the argument `--ld_pruning` is provided; otherwise, use a GDS file with a subset of pruned variants, or set `variant_include_file` to a pre-existing set of pruned variants (such as those from running `ld_pruning.py` above).
 
     config parameter | default value | description
     --- | --- | ---
-    `out_prefix` | | Prefix for files created by this script.
-    `gds_file` | | GDS file with all chromosomes.
+    `out_prefix` | | Prefix for files created by this script. 
+    `gds_file` | | GDS file with all chromosomes. Recommended to use a subset of variants.
+	`full_gds_file` | | GDS file with all variants. Include a space to insert chromosome.
 	`king_file` | | RData or GDS file with kinship coefficients created by `king.py`. Used for ancestry divergence, and optionally for kinship if `kinship_file` is not specified.
 	`kinship_file` | `NA` | File containing kinship matrix to use for defining the unrelated sample set. Multiple formats are accepted, including GDS or RData from `king.py` or `pcrelate.py`, or an RData file containing a Matrix object.
 	`kinship_method` | `king` | Type of kinship estimates contained in `kinship_file`. Options are `king` or `pcrelate`.
-	`kinship_threshold` | `0.04419417` | Minimum kinship estimate to use for assigning relatives (default is `2^(-9/2)` or 3rd degree relatives).
+	`kinship_threshold` | `0.04419417` | Minimum kinship estimate to use for assigning relatives (default is `2^(-9/2)` or 3rd degree relatives). 
+	`divergence_threshold` | `-0.04419417` | Minimum kinship estimate to use for ancestry divergence (default is `-2^(-9/2)`).
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 	`ld_r_threshold` | `0.32` | `r` threshold for LD pruning. Default is `r^2 = 0.1`.
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
@@ -111,12 +142,13 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`variant_include_file` | `NA` | RData file with vector of variant.id to use.
 	`n_pcs` | `20` | Number of PCs to return.
 	`n_pair` | `6` | Number of PCs in include in the pairs plot.
+	`n_corr_vars` | `10e6` | Number of variants to sample across the genome for PC-variant correlation plots.
 	`n_perpage` | `4` | Number of PC-variant correlation plots to stack in a single page. The number of png files generated will be `ceiling(n_pcs/n_perpage)`.
 	`thin` | `TRUE` | Logical for whether to thin points in the PC-variant correlation plots.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for color-coding PCA plots by group.
 	`group` | `NA` | Name of column in `phenotype_file` containing group variable.
 
-3. [PC-Relate](http://www.ncbi.nlm.nih.gov/pubmed/26748516) to estimate kinship coefficients adjusted for population structure and admixture using PCs
+4. [PC-Relate](http://www.ncbi.nlm.nih.gov/pubmed/26748516) to estimate kinship coefficients adjusted for population structure and admixture using PCs
 
     `pcrelate.py`
     1. `pcrelate.R`
