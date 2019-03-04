@@ -37,7 +37,7 @@ gds <- seqOpen(config["gds_file"])
 filterByPass(gds)
 filterBySNV(gds)
 
-variant.id <- seqGetData(gds, "variant.id")
+vars <- seqGetData(gds, "variant.id")
 
 seqClose(gds)
 
@@ -46,8 +46,9 @@ segments <- read.table(config["segment_file"], header=TRUE, stringsAsFactors=FAL
 prop <- sum(segments$chromosome == chr)/nrow(segments)
 nvars <- round(as.integer(config["n_corr_vars"]) * prop)
 
-idx <- sample(1:length(variant.id), nvars)
-vars <- variant.id[idx]
+if (length(vars) > nvars) {
+    vars <- sort(sample(vars, nvars))
+}
 message("selected ", length(vars), " variants")
 
 ## add pruned variants
