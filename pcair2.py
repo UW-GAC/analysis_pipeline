@@ -13,6 +13,7 @@ PCA with the following steps:
 1) Find unrelated sample set
 2) Select SNPs with LD pruning using unrelated samples
 3) PCA (using unrelated set, then project relatives)
+4) SNV-PC correlation
 """
 
 parser = ArgumentParser(description=description)
@@ -146,6 +147,22 @@ jobsPlots.append(jobid)
 ## want to run pca_corr on more variants than in LD pruned set, but not all variants
 ## select a random set of ~10% of variants, where numbers are proportional by chromosome
 ## will need to include full GDS files in config as well as LD pruned. could be per-chromosome.
+job = "pca_corr_vars"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+config = deepcopy(configdict)
+build = configdict.setdefault("genome_build", "hg38")
+config["segment_file"] = os.path.join(pipeline, "segments_" + build + ".txt")
+config["gds_file"] = configdict["full_gds_file"]
+if ld:
+    config["variant_include_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
+config["out_file"] = configdict["data_prefix"] + "_pcair_corr_variants_chr .RData"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
+
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid_pca], array_range=chromosomes, email=email, print_only=print_only)
+
 
 job = "pca_corr"
 
@@ -153,12 +170,13 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
 config["pca_file"] = configdict["data_prefix"] + "_pcair_unrel.RData"
+config["variant_include_file"] = configdict["data_prefix"] + "_pcair_corr_variants_chr .RData"
 config["out_file"] = configdict["data_prefix"] + "_pcair_corr_chr .gds"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 # single core only
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid_pca], array_range=chromosomes, email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid], array_range=chromosomes, email=email, print_only=print_only)
 
 
 job = "pca_corr_plots"
