@@ -372,6 +372,9 @@ class AWS_Batch(Cluster):
     def analysisInit(self, print_only=False):
         # base init first
         super(AWS_Batch, self).analysisInit(print_only)
+        # jobinfo file name
+        self.jiFileName = self.analysis + "_jobinfo.txt"
+        # analysis log file and autogen stuff
         profile = self.clusterCfg["aws_profile"]
         # autogen (for auto generation of queue and ce)
         self.autogen_ce = False
@@ -706,6 +709,9 @@ class AWS_Batch(Cluster):
         submit_id = {job_name: [subOut['jobId']]}
         # return the job id (either from the single job or array job)
         self.printVerbose("\t1> submitJob: " + job_name + " returning submit_id: " + str(submit_id))
+        if not print_only:
+            with open(self.jiFileName, "a") as jifile:
+                jifile.write("jobName: " + job_name + " jobQueue: " + self.queue + " jobId: " + subOut['jobId'] + "\n")
 
         return submit_id
 
