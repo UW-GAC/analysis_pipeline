@@ -64,11 +64,16 @@
         "maxvCpus": 5000,
         "desiredvCpus": 0,
         "instanceTypes": [
+            "m5.2xlarge",
+            "m5.4xlarge",
+            "m5.12xlarge",
             "c5.xlarge",
             "c5.2xlarge",
             "c5.4xlarge",
             "c5.9xlarge",
-            "r4.4xlarge"
+            "r4.4xlarge",
+            "r5.2xlarge",
+            "r5.12xlarge"
         ]
     }
 }
