@@ -30,9 +30,9 @@
     	    "pcrelate":8000,
             "vcf2gds":8000
         },
-        "autogen_ce": "No",
+        "autogen_ce": "Yes",
         "aws_profile": "uw",
-        "pricing": "SPOT",
+        "pricing": "EC2",
         "batch_instances": "",
         "pipeline_path": "/usr/local/analysis_pipeline",
         "queue": "SPOT_general",
