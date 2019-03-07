@@ -51,7 +51,7 @@
             "tf" : "1"
         },
         "submit_opts": {
-            "jobdef": "TM_master",
+            "jobdef": "TM_roybranch",
             "vcpus":  1,
             "memory": 5000,
             "dependsOn": [],
