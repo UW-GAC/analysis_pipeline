@@ -11,7 +11,10 @@ BiocManager::install(c("SeqVarTools", "SNPRelate", "GENESIS", "survey", "CompQua
                        "argparser", "ggplot2", "GGally", "rmarkdown"),
                      ask=FALSE)
 
-# bug fix for SeqArray
 remotes::install_git("git://github.com/zhengxwen/SeqArray", dependencies=FALSE)
+remotes::install_git("git://github.com/smgogarten/GWASTools", dependencies=FALSE)
+remotes::install_git("git://github.com/smgogarten/SeqVarTools", dependencies=FALSE)
+remotes::install_git("git://github.com/UW-GAC/GENESIS", dependencies=FALSE)
+
 
 remotes::install_local("TopmedPipeline", dependencies=FALSE)
