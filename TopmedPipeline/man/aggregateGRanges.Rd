@@ -3,7 +3,6 @@
 \name{aggregateGRanges}
 \alias{aggregateGRanges}
 \alias{aggregateGRangesList}
-\alias{aggregateGRanges}
 \title{Aggregate variant lists}
 \usage{
 aggregateGRangesList(variants)

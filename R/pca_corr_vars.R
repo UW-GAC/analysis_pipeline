@@ -1,11 +1,9 @@
 library(argparser)
 library(TopmedPipeline)
 library(SeqVarTools)
-library(SNPRelate)
-library(gdsfmt)
 sessionInfo()
 
-argp <- arg_parser("Correlation of variants with PCs")
+argp <- arg_parser("Select variants for correlation with PCs")
 argp <- add_argument(argp, "config", help="path to config file")
 argp <- add_argument(argp, "--chromosome", help="chromosome (1-24 or X,Y)", type="character")
 argp <- add_argument(argp, "--version", help="pipeline version number")
@@ -15,9 +13,9 @@ config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)
 
 required <- c("gds_file",
-              "pca_file")
-optional <- c("n_pcs"=20,
-              "out_file"="pca_corr.gds",
+              "segment_file")
+optional <- c("n_corr_vars"=10e6,
+              "out_file"="pca_corr_variants.RData",
               "variant_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -36,39 +34,32 @@ if (!is.na(chr)) {
 
 gds <- seqOpen(config["gds_file"])
 
-## if we have a chromosome indicator but only one gds file, select chromosome
-if (!is.na(chr) && !bychrfile) {
-    filterByChrom(gds, chr)
-}
+filterByPass(gds)
+filterBySNV(gds)
 
-if (!is.na(varfile)) {
-    filterByFile(gds, varfile)
-} else {
-    filterByPass(gds)
-    filterBySNV(gds)
-}
+vars <- seqGetData(gds, "variant.id")
 
-variant.id <- seqGetData(gds, "variant.id")
-message("Using ", length(variant.id), " variants")
-
-pca <- getobj(config["pca_file"])
-n_pcs <- min(as.integer(config["n_pcs"]), length(pca$sample.id))
-nt <- countThreads()
-snpgdsPCACorr(pca, gdsobj=gds, snp.id=variant.id, eig.which=1:n_pcs,
-              num.thread=nt, outgds=outfile)
-
-## add chromosome and position to output
-seqSetFilter(gds, variant.id=variant.id)
-chromosome <- seqGetData(gds, "chromosome")
-position <- seqGetData(gds, "position")
 seqClose(gds)
 
-pca.corr <- openfn.gds(outfile, readonly=FALSE)
-add.gdsn(pca.corr, "chromosome", chromosome, compress="LZMA_RA")
-add.gdsn(pca.corr, "position", position, compress="LZMA_RA")
-closefn.gds(pca.corr)
-cleanup.gds(outfile)
+## get number of variants with same proportion of this chromosome in genome
+segments <- read.table(config["segment_file"], header=TRUE, stringsAsFactors=FALSE)
+prop <- sum(segments$chromosome == chr)/nrow(segments)
+nvars <- round(as.integer(config["n_corr_vars"]) * prop)
 
+if (length(vars) > nvars) {
+    vars <- sort(sample(vars, nvars))
+}
+message("selected ", length(vars), " variants")
+
+## add pruned variants
+if (!is.na(varfile)) {
+    pruned <- getobj(varfile)
+    vars <- sort(unique(c(vars, pruned)))
+}
+message(length(vars), " total variants")
+
+
+save(vars, file=outfile)
 
 # mem stats
 ms <- gc()

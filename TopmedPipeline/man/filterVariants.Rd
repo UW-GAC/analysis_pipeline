@@ -15,7 +15,8 @@
 \alias{checkSelectedVariants}
 \title{Filter SeqVarGDSClass objects}
 \usage{
-filterBySegment(gds, segment, segment.file, pad.right = 0, verbose = TRUE)
+filterBySegment(gds, segment, segment.file, pad.right = 0,
+  verbose = TRUE)
 
 filterByFile(gds, idfile, verbose = TRUE)
 
