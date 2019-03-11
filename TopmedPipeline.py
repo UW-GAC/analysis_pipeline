@@ -407,7 +407,7 @@ class AWS_Batch(Cluster):
                     afile.write("AWS batch ce: " + ceName + "\n")
                     afile.write("AWS tag: " + self.awstag + "\n")
             # set default instance types
-            instanceTypes = "m5.2xlarge,m5.4xlarge,m5.12xlarge,c5.2xlarge,c5.4xlarge,c5.9xlarge,r5.2xlarge,r5.4xlarge"
+            instanceTypes = None
             if len(self.clusterCfg["batch_instances"]) > 0:
                 instanceTypes = self.clusterCfg["batch_instances"]
             # init batch by creating ce and queue based on batch pricing
@@ -416,7 +416,7 @@ class AWS_Batch(Cluster):
                 self.printVerbose("AWS profile: " + profile)
                 self.printVerbose("batch queue: " + self.queue)
                 self.printVerbose("batch pricing: " + self.clusterCfg["pricing"])
-                self.printVerbose("instance types: " + instanceTypes)
+                self.printVerbose("instance types: " + str(instanceTypes))
                 self.printVerbose("compute environment name: " + ceName)
                 self.printVerbose("aws profile: " + profile)
             batchInit.createEnv(self.batchC,
