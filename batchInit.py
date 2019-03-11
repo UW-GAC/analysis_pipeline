@@ -211,7 +211,10 @@ def createCE(batchC, pricing_a, instancetypes_a, cename_a, tag_a, profile_a, ver
     if ce_resources == None:
         print("Invalid aws profile " + profile_a + " [" + str(cectx.accntnames()) + "]")
         sys.exit(2)
-    ce_resources['instanceTypes'] = instancetypes_a.replace(' ','').split(',')
+    if instancetypes_a != None:
+        ce_resources['instanceTypes'] = instancetypes_a.replace(' ','').split(',')
+    if verbose:
+        pDebug("instance types: " + str(ce_resources['instanceTypes']))
     ce_resources['type'] = pricing_a
     # service role
     ce_servicerole = cectx.accntservice(profile_a)
