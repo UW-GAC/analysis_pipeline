@@ -70,14 +70,14 @@ if (kin.type == "king_ibdseg") {
         kinship <- snpgdsIBDSelection(king, kinship.cutoff=kin.thresh, samp.sel=samp.sel)
     }
     xvar <- "IBS0"
+    rm(king)
 } else if (kin.type == "pcrelate") {
-    pcr <- openfn.gds(config["kinship_file"])
-    kinship <- pcrelateReadKinship(pcr, kin.thresh=kin.thresh, scan.include=sample.id)
-    closefn.gds(pcr)
-    kinship <- kinship %>%
+    pcr <- getobj(config["kinship_file"])
+    kinship <- pcr$kinBtwn %>%
         rename(kinship=kin) %>%
         select(ID1, ID2, k0, kinship)
     xvar <- "k0"
+    rm(pcr)
 } else {
     stop("kinship method should be 'king' or 'pcrelate'")
 }
@@ -124,8 +124,10 @@ p <- ggplot(kinship.study, aes_string(xvar, "kinship")) +
 
 ggsave(config["out_file_study"], plot=p, width=7, height=7)
 
+# use kinship_threshold here (not used for hexbin plots)
 kinship.cross <- kinship %>%
-    filter(study1 != study2)
+    filter(study1 != study2) %>%
+    filter(kinship > kin.thresh)
 
 # only make the plot if there are some cross-study kinship pairs
 # leave this one as geom_point instead of hexbin - color-code by study, and not many points
