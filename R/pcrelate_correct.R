@@ -11,7 +11,7 @@ cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
 required <- c("pcrelate_prefix")
-optional <- c("kinship_threshold"=0.01104854, # 2^(-13/2), 5th degree
+optional <- c("sparse_threshold"=0.01104854, # 2^(-13/2), 5th degree
               "n_sample_blocks"=1)
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -20,7 +20,7 @@ nsampblock <- as.integer(config["n_sample_blocks"])
 
 kinSelf <- NULL
 kinBtwn <- NULL
-kin.thresh <- as.numeric(config["kinship_threshold"])
+kin.thresh <- as.numeric(config["sparse_threshold"])
 
 ### correct IBD results and combine
 # i know the order seems weird, but this should make sure all the correct data is loaded when needed

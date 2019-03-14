@@ -165,8 +165,8 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`n_sample_blocks` | `1` | Number of blocks to divide samples into for parallel computation. Adjust depending on computer memory and number of samples in the analysis.
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
 	`variant_block_size` | `1024` | Number of variants to read in a single block.
-	`variant_include_file` | `NA` | RData file with LD pruned variant.id created by `pcair.py`. 
-	`kinship_threshold` | `0.01104854` | Minimum kinship to use for creating the sparse matrix (default is `2^(-13/2)` or 5th degree relatives). A block diagonal matrix will be created such that any pair of samples with a kinship greater than the threshold is in the same block, and pairwise kinship between blocks is 0. 
+	`variant_include_file` | `NA` | RData file with LD pruned variant.id created by `pcair.py`.
+	`sparse_threshold` | `0.01104854` | Minimum kinship to use for creating the sparse matrix (default is `2^(-13/2)` or 5th degree relatives). A block diagonal matrix will be created such that any pair of samples with a kinship greater than the threshold is in the same block, and pairwise kinship between blocks is 0. 
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
 
