@@ -14,6 +14,7 @@ PC-Relate with the following steps:
 2) Calculate kinship in all sample blocks in parallel
 3) Correct kinship estimates
 """
+
 parser = ArgumentParser(description=description)
 parser.add_argument("config_file", help="configuration file")
 parser.add_argument("--cluster_type", default="UW_Cluster",

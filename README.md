@@ -151,18 +151,22 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 4. [PC-Relate](http://www.ncbi.nlm.nih.gov/pubmed/26748516) to estimate kinship coefficients adjusted for population structure and admixture using PCs
 
     `pcrelate.py`
-    1. `pcrelate.R`
-	2. `kinship_plots.R`
+    1. `pcrelate_beta.R`
+	2. `pcrelate.R`
+	3. `pcrelate_correct.R`
+	4. `kinship_plots.R`
 
     config parameter | default value | description
     --- | --- | ---
     `out_prefix` | | Prefix for files created by this script.
     `gds_file` | | GDS file with all chromosomes.
 	`pca_file` | | RData file with PCA results created by `pcair.py`.
-	`variant_include_file` | | RData file with LD pruned variant.id created by `pcair.py`.
-	`n_pcs` | `3` | Number of PCs to use in adjusting for ancestry.
-	`sample_block_size` | `10000` | Maximum number of samples to read in a single block. Adjust depending on computer memory and number of samples in the analysis.
-	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
+	`n_pcs` | `3` | Number of PCs to use in adjusting for ancestry. 
+	`n_sample_blocks` | `1` | Number of blocks to divide samples into for parallel computation. Adjust depending on computer memory and number of samples in the analysis.
+	`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
+	`variant_block_size` | `1024` | Number of variants to read in a single block.
+	`variant_include_file` | `NA` | RData file with LD pruned variant.id created by `pcair.py`. 
+	`kinship_threshold` | `0.01104854` | Minimum kinship to use for creating the sparse matrix (default is `2^(-13/2)` or 5th degree relatives). A block diagonal matrix will be created such that any pair of samples with a kinship greater than the threshold is in the same block, and pairwise kinship between blocks is 0. 
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
 
@@ -232,7 +236,8 @@ config parameter | default value | description
 `n_pcs` | `0` | Number of PCs to include as covariates.
 `conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` and `variant.id`. The alternate allele dosage of these variants will be included as covariates in the analysis.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
-`variant_include_file` | `NA` | RData file with vector of variant.id to include.
+`variant_include_file` | `NA` | RData file with vector of variant.id to include. 
+`variant_block_size` | `1024` | Number of variants to read in a single block.
 `pass_only` | `TRUE` | `TRUE` to select only variants with FILTER=PASS.
 `genome_build` | `hg38` | Genome build for the genotypes in the GDS file (`hg19` or `hg38`). Used to divide the genome into segments for parallel processing.
 `thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
