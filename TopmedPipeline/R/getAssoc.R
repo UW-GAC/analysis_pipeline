@@ -156,7 +156,7 @@ omitKnownHits <- function(assoc, hits, flank=500) {
 
 #' Add MAC column to association test output
 #'
-#' @param assoc results from \code{\link{assocTestSingle}} or \code{\link{assocTestAggregate}}
+#' @param assoc results from \code{\link[GENESIS]{assocTestSingle}} or \code{\link[GENESIS]{assocTestAggregate}}
 #' @param assoc_type Type of association test ("single", "aggregate", "window")
 #' @return \code{assoc} with a "MAC" column added to the results data.frame
 #'

@@ -125,7 +125,9 @@ constructFilename <- function(prefix, chromosome=NA, segment=NA) {
 list2gds <- function(x, file) {
     gds <- createfn.gds(file)
     for (v in names(x)) {
-        add.gdsn(gds, v, x[[v]], compress="LZMA_RA")
+        if (!is.null(x[[v]])) {
+            add.gdsn(gds, v, x[[v]], compress="LZMA_RA")
+        }
     }
     closefn.gds(gds)
 }
@@ -152,7 +154,7 @@ gds2ibdobj <- function(file, sample.id=NULL) {
     }
     rv <- list(sample.id=sample.id,
                snp.id=read.gdsn(index.gdsn(f, "snp.id")),
-               afreq=read.gdsn(index.gdsn(f, "afreq")),
+               #afreq=read.gdsn(index.gdsn(f, "afreq")),
                IBS0=readex.gdsn(index.gdsn(f, "IBS0"), sel=list(samp.sel, samp.sel)),
                kinship=readex.gdsn(index.gdsn(f, "kinship"), sel=list(samp.sel, samp.sel)))
     closefn.gds(f)
