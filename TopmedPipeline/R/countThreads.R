@@ -8,6 +8,5 @@ countThreads <- function() {
     nThreads <- ifelse(is.na(strtoi(nSlots) >= 1), 1, strtoi(nSlots))
     if (nThreads == 0) nThreads <- 1
     message(paste("Running with", nThreads,"thread(s)."))
-    Sys.setenv(MKL_NUM_THREADS=nThreads)
     nThreads
 }

@@ -1,5 +1,8 @@
 #! /bin/bash
 
+# set MKL_NUM_THREADS to match number of available cores
+export MKL_NUM_THREADS=$NSLOTS
+
 while getopts ":cs" opt; do
   case $opt in
     c)

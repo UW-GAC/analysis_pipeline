@@ -34,7 +34,7 @@ print(config)
 writeConfig(config, paste0(basename(argv$config), ".null_model.params"))
 
 # get the number of threads available
-# this also sets MKL_NUM_THREADS, which should speed up matrix calculations if we are running parallel MKL
+# this should speed up matrix calculations if we are running parallel MKL
 countThreads()
 
 # get phenotypes
