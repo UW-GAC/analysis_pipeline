@@ -199,19 +199,16 @@ Association tests are done with a mixed model if a kinship matrix (`pcrelate_fil
 
 When combining samples from groups with different variances for a trait (e.g., study or ancestry group), it is recommended to allow the null model to fit heterogeneous variances by group using the parameter `group_var`. The default pipeline options will then result in the following procedure:
 
-1. For all samples together:
-    1. Fit null mixed model with outcome variable
-	    - Allow heterogeneous variance by `group_var`
-        - Include covariates and PCs as fixed effects
-        - Include kinship as random effect
-2. For each group separately:
-    1. Inverse normal transform marginal residuals (if `inverse_normal = TRUE`)
-    2. Rescale variance to match original (if `rescale_variance = "marginal"` or `"varcomp"`)
-3. For all samples together:
-    1. Fit null mixed model using transformed residuals as outcome
-        - Allow heterogeneous variance by `group_var`
-        - Include covariates and PCs as fixed effects
-        - Include kinship as random effect
+1. Fit null mixed model with outcome variable
+    - Allow heterogeneous variance by `group_var`
+    - Include covariates and PCs as fixed effects
+    - Include kinship as random effect
+2. Inverse normal transform marginal residuals (if `inverse_normal = TRUE`)
+3. Rescale variance to match original (if `rescale_variance = "marginal"` or `"varcomp"`)
+4. Fit null mixed model using transformed residuals as outcome
+    - Allow heterogeneous variance by `group_var`
+    - Include covariates and PCs as fixed effects
+    - Include kinship as random effect
 
 The effect estimate is for the alternate alelle, and multiple alternate alelles for a single variant are treated separately.
 
@@ -231,8 +228,9 @@ config parameter | default value | description
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
 `group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
-`inverse_normal` | `TRUE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately.
-`rescale_variance` | `marginal` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Controls whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform. Options are `marginal`, `varcomp`, or `none`.
+`inverse_normal` | `TRUE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
+`norm_bygroup` | `FALSE` | If `TRUE` and `group_var` is provided, the inverse normal transform is done on each group separately.
+`rescale_variance` | `marginal` | Applies only if `inverse_normal` is `TRUE`. Controls whether to rescale the variance after inverse-normal transform, restoring it to the original variance before the transform. Options are `marginal`, `varcomp`, or `none`.
 `n_pcs` | `0` | Number of PCs to include as covariates.
 `conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` and `variant.id`. The alternate allele dosage of these variants will be included as covariates in the analysis.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
