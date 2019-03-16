@@ -18,6 +18,7 @@ chromosomes_hg38
 Start and end positions of each chromosome
 }
 \examples{
+\dontrun{
 library(dplyr)
 db <- src_mysql(dbname="hg19", host="genome-mysql.cse.ucsc.edu", user="genome")
 chromInfo <- tbl(db, "chromInfo")
@@ -32,5 +33,6 @@ dat <- select(chromInfo, chrom, size) \%>\%
 library(GenomicRanges)
 chromosomes_hg19 <- GRanges(seqnames=dat$chrom,
                             ranges=IRanges(start=1, end=dat$size))
+}
 }
 \keyword{datasets}

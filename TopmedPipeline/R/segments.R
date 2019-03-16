@@ -3,6 +3,7 @@
 #' @format \code{\link[GenomicRanges]{GRanges}} object
 #' @source UCSC Genome Browser
 #' @examples
+#' \dontrun{
 #' library(dplyr)
 #' db <- src_mysql(dbname="hg19", host="genome-mysql.cse.ucsc.edu", user="genome")
 #' chromInfo <- tbl(db, "chromInfo")
@@ -17,6 +18,7 @@
 #' library(GenomicRanges)
 #' chromosomes_hg19 <- GRanges(seqnames=dat$chrom,
 #'                             ranges=IRanges(start=1, end=dat$size))
+#' }
 "chromosomes_hg19"
 
 #' @rdname chromosomes_hg19

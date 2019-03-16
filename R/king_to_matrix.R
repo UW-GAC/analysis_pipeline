@@ -37,7 +37,5 @@ mat <- kingToMatrix(king=config["king_file"],
 save(mat, file=paste0(config["out_prefix"], ".RData"))
 
 if (as.logical(config["write_gds"])) {
-    matlist <- list(sample.id=rownames(mat), kinship=as.matrix(mat))
-    rm(mat)
-    list2gds(matlist, paste0(config["out_prefix"], ".gds"))
+    mat2gds(mat, paste0(config["out_prefix"], ".gds"))
 }

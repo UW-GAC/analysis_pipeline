@@ -7,7 +7,7 @@
 addMAC(assoc, assoc_type)
 }
 \arguments{
-\item{assoc}{results from \code{\link{assocTestSingle}} or \code{\link{assocTestAggregate}}}
+\item{assoc}{results from \code{\link[GENESIS]{assocTestSingle}} or \code{\link[GENESIS]{assocTestAggregate}}}
 
 \item{assoc_type}{Type of association test ("single", "aggregate", "window")}
 }

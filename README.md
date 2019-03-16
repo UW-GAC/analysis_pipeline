@@ -151,18 +151,22 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 4. [PC-Relate](http://www.ncbi.nlm.nih.gov/pubmed/26748516) to estimate kinship coefficients adjusted for population structure and admixture using PCs
 
     `pcrelate.py`
-    1. `pcrelate.R`
-	2. `kinship_plots.R`
+    1. `pcrelate_beta.R`
+	2. `pcrelate.R`
+	3. `pcrelate_correct.R`
+	4. `kinship_plots.R`
 
     config parameter | default value | description
     --- | --- | ---
     `out_prefix` | | Prefix for files created by this script.
     `gds_file` | | GDS file with all chromosomes.
 	`pca_file` | | RData file with PCA results created by `pcair.py`.
-	`variant_include_file` | | RData file with LD pruned variant.id created by `pcair.py`.
-	`n_pcs` | `3` | Number of PCs to use in adjusting for ancestry.
-	`sample_block_size` | `10000` | Maximum number of samples to read in a single block. Adjust depending on computer memory and number of samples in the analysis.
-	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
+	`n_pcs` | `3` | Number of PCs to use in adjusting for ancestry. 
+	`n_sample_blocks` | `1` | Number of blocks to divide samples into for parallel computation. Adjust depending on computer memory and number of samples in the analysis.
+	`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
+	`variant_block_size` | `1024` | Number of variants to read in a single block.
+	`variant_include_file` | `NA` | RData file with LD pruned variant.id created by `pcair.py`.
+	`sparse_threshold` | `0.01104854` | Minimum kinship to use for creating the sparse matrix (default is `2^(-13/2)` or 5th degree relatives). A block diagonal matrix will be created such that any pair of samples with a kinship greater than the threshold is in the same block, and pairwise kinship between blocks is 0. 
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
 
@@ -195,19 +199,16 @@ Association tests are done with a mixed model if a kinship matrix (`pcrelate_fil
 
 When combining samples from groups with different variances for a trait (e.g., study or ancestry group), it is recommended to allow the null model to fit heterogeneous variances by group using the parameter `group_var`. The default pipeline options will then result in the following procedure:
 
-1. For all samples together:
-    1. Fit null mixed model with outcome variable
-	    - Allow heterogeneous variance by `group_var`
-        - Include covariates and PCs as fixed effects
-        - Include kinship as random effect
-2. For each group separately:
-    1. Inverse normal transform marginal residuals (if `inverse_normal = TRUE`)
-    2. Rescale variance to match original (if `rescale_variance = "marginal"` or `"varcomp"`)
-3. For all samples together:
-    1. Fit null mixed model using transformed residuals as outcome
-        - Allow heterogeneous variance by `group_var`
-        - Include covariates and PCs as fixed effects
-        - Include kinship as random effect
+1. Fit null mixed model with outcome variable
+    - Allow heterogeneous variance by `group_var`
+    - Include covariates and PCs as fixed effects
+    - Include kinship as random effect
+2. Inverse normal transform marginal residuals (if `inverse_normal = TRUE`)
+3. Rescale variance to match original (if `rescale_variance = "marginal"` or `"varcomp"`)
+4. Fit null mixed model using transformed residuals as outcome
+    - Allow heterogeneous variance by `group_var`
+    - Include covariates and PCs as fixed effects
+    - Include kinship as random effect
 
 The effect estimate is for the alternate alelle, and multiple alternate alelles for a single variant are treated separately.
 
@@ -220,19 +221,21 @@ config parameter | default value | description
 `out_prefix` | | Prefix for files created by this script.
 `gds_file` | | GDS file. Include a space to insert chromosome.
 `pca_file` | `NA` | RData file with PCA results created by `pcair.py`.
-`pcrelate_file` | `NA` | GDS file created by `pcrelate.py`. 
-`grm_file` | `NA` | RData file with GRM created by `grm.py`.
+`pcrelate_file` | `NA` | RData file with 2*kinship created by `pcrelate.py`. 
+`grm_file` | `NA` | GDS file with GRM created by `grm.py`.
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes.
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
 `group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
-`inverse_normal` | `TRUE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable. If `group_var` is provided, the transform is done on each group separately.
-`rescale_variance` | `marginal` | Applies only if `inverse_normal` is `TRUE` and `group_var` is provided. Controls whether to rescale the variance for each group after inverse-normal transform, restoring it to the original variance before the transform. Options are `marginal`, `varcomp`, or `none`.
+`inverse_normal` | `TRUE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
+`norm_bygroup` | `FALSE` | If `TRUE` and `group_var` is provided, the inverse normal transform is done on each group separately.
+`rescale_variance` | `marginal` | Applies only if `inverse_normal` is `TRUE`. Controls whether to rescale the variance after inverse-normal transform, restoring it to the original variance before the transform. Options are `marginal`, `varcomp`, or `none`.
 `n_pcs` | `0` | Number of PCs to include as covariates.
 `conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` and `variant.id`. The alternate allele dosage of these variants will be included as covariates in the analysis.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
-`variant_include_file` | `NA` | RData file with vector of variant.id to include.
+`variant_include_file` | `NA` | RData file with vector of variant.id to include. 
+`variant_block_size` | `1024` | Number of variants to read in a single block.
 `pass_only` | `TRUE` | `TRUE` to select only variants with FILTER=PASS.
 `genome_build` | `hg38` | Genome build for the genotypes in the GDS file (`hg19` or `hg38`). Used to divide the genome into segments for parallel processing.
 `thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
