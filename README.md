@@ -85,7 +85,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
 	`genome_build` | `hg38` | Genome build, used to define correlation regions.
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
-	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
+	`variant_include_file` | `NA` | RData file with vector of variant.id to include.
 
 2. [KING](http://www.ncbi.nlm.nih.gov/pubmed/20926424) to get initial kinship estimates
 
@@ -105,7 +105,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
     `gds_file` | | GDS file with only LD pruned variants, all chromosomes. 
 	`bed_file` | | Output BED file.
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
-	`variant_include_file` | `NA` | RData file with vector of variant.id to consider for LD pruning.
+	`variant_include_file` | `NA` | RData file with vector of variant.id to include.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
 
@@ -138,8 +138,8 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
 	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning. 
 	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions). 
-	`genome_build` | `hg38` | Genome build, used to define correlation regions.
-	`variant_include_file` | `NA` | RData file with vector of variant.id to use.
+	`genome_build` | `hg38` | Genome build, used to define correlation regions. 
+	`variant_include_file` | `NA` | RData file with vector of variant.id to include.
 	`n_pcs` | `20` | Number of PCs to return.
 	`n_pair` | `6` | Number of PCs in include in the pairs plot.
 	`n_corr_vars` | `10e6` | Number of variants to sample across the genome for PC-variant correlation plots.
@@ -164,8 +164,8 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	`n_pcs` | `3` | Number of PCs to use in adjusting for ancestry. 
 	`n_sample_blocks` | `1` | Number of blocks to divide samples into for parallel computation. Adjust depending on computer memory and number of samples in the analysis.
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
-	`variant_block_size` | `1024` | Number of variants to read in a single block.
-	`variant_include_file` | `NA` | RData file with LD pruned variant.id created by `pcair.py`.
+	`variant_block_size` | `1024` | Number of variants to read in a single block. 
+	`variant_include_file` | `NA` | RData file with vector of variant.id to include.
 	`sparse_threshold` | `0.01104854` | Minimum kinship to use for creating the sparse matrix (default is `2^(-13/2)` or 5th degree relatives). A block diagonal matrix will be created such that any pair of samples with a kinship greater than the threshold is in the same block, and pairwise kinship between blocks is 0. 
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
@@ -190,7 +190,7 @@ config parameter | default value | description
 `exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
 `genome_build` | `hg38` | Genome build, used to define correlation regions.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include.
-`variant_include_file` | `NA` | RData file with vector of variant.id to consider.
+`variant_include_file` | `NA` | RData file with vector of variant.id to include.
 
 
 ## Association testing
