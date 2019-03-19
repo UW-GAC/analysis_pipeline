@@ -32,7 +32,7 @@ if (!is.na(chr)) {
     varfile <- insertChromString(varfile, chr)
 }
 
-gds <- seqOpen(config["gds_file"])
+gds <- seqOpen(gdsfile)
 
 filterByPass(gds)
 filterBySNV(gds)
