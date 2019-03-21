@@ -10,7 +10,7 @@ argv <- parse_args(argp)
 cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
-required <- c("gds_file", "merged_gds_file")
+required <- c("gds_file")
 optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X")
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -22,34 +22,28 @@ chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 gds.files <- sapply(chr, function(c) insertChromString(gdsfile, c, "gds_file"))
 gds.list <- lapply(gds.files, seqOpen, readonly=FALSE)
 
-read.var <- function(gds) {
-    data.frame(variant.id=seqGetData(gds, "variant.id"),
-               chromosome=seqGetData(gds, "chromosome"),
-               position=seqGetData(gds, "position"),
-               stringsAsFactors=FALSE)
+
+## get total number of variants
+var.length <- sapply(gds.list, function(x) {
+    objdesp.gdsn(index.gdsn(x, "variant.id"))$dim
+})
+seqClose(gds.list[[1]])
+
+id.new <- list(1:var.length[1])
+for (c in 2:length(chr)) {
+    id.prev <- id.new[[c-1]]
+    last.id <- id.prev[length(id.prev)]
+    id.new[[c]] <- (last.id + 1):(last.id + var.length[c])
+    stopifnot(length(id.new[[c]]) == var.length[c])
 }
 
-var <- do.call(rbind, lapply(gds.list, function(x) read.var(x)))
-
-gds.comb.file <- config["merged_gds_file"]
-gds.comb <- seqOpen(gds.comb.file)
-comb.var <- read.var(gds.comb)
-seqClose(gds.comb)
-
-stopifnot(all.equal(var$chromosome, comb.var$chromosome))
-stopifnot(all.equal(var$position, comb.var$position))
-
-var$variant.id.new <- comb.var$variant.id
-
-for (c in chr) {
-    id.old <- var$variant.id[var$chromosome == c]
-    id.new <- var$variant.id.new[var$chromosome == c]
-    if (identical(id.old, id.new)) next
-
+for (c in 2:length(chr)) {
     node <- index.gdsn(gds.list[[c]], "variant.id")
-    compress <- objdesp.gdsn(node)$compress
+    desc <- objdesp.gdsn(node)
+    stopifnot(desc$dim == length(id.new[[c]]))
+    compress <- desc$compress
     compression.gdsn(node, "")
-    write.gdsn(node, id.new)
+    write.gdsn(node, id.new[[c]])
     compression.gdsn(node, compress)
     seqClose(gds.list[[c]])
 }
