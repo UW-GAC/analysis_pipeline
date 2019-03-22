@@ -46,38 +46,42 @@ argument  | default value | description
 
 ## Conversion to GDS
 
+Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-genotype FORMAT fields. (BCF files may be used instead of VCF if [bcftools](https://samtools.github.io/bcftools/bcftools.html) is installed.) Step 2 ensures that each variant has a unique integer ID across the genome, so the variant.id field in per-chromosome files and combined files are consistent. Step 3 checks that genotypes are consistent between the converted and original files. Step 4 (optional) combines the per-chromosome files into a single GDS file. It is recommended to skip this merge and instead use the GDS file output by `ld_pruning.py` for relatedness and population strucuture analyses that require all chromosomes in a single file.
+
 `vcf2gds.py`
 
 1. `vcf2gds.R`
-2. `merge_gds.R`
-3. `unique_variant_ids.R`
-4. `check_gds.R`
-5. `check_merged_gds.R`
+2. `unique_variant_ids.R`
+3. `check_gds.R`
+4. `merge_gds.R` (optional with `--merge`)
+5. `check_merged_gds.R` (optional with `--merge`)
 
 config parameter | default value | description
 --- | --- | ---
 `out_prefix` | | Prefix for files created by this script.
 `vcf_file` | | Input VCF file. Include a space to insert chromosome.
 `gds_file` | | Output GDS file. Include a space to insert chromosome.
-`merged_gds_file` | | Merged genotype-only GDS file containing all chromosomes.
+`merged_gds_file` | `NA` | Merged genotype-only GDS file containing all chromosomes.
 `format` | `GT` | FORMAT fields from the VCF to convert to GDS. Default is genotypes only.
-
-Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-genotype FORMAT fields. (BCF files may be used instead of VCF if [bcftools](https://samtools.github.io/bcftools/bcftools.html) is installed.) Step 2 combines these files into a single GDS file, which is needed for whole-genome analyses such as relatedness and population structure. The single-chromosome files are still preferred for analyses run in parallel by chromosome. Step 3 ensures that each variant has a unique integer ID across the genome, so the variant.id field in the per-chromosome files and the combined file are consistent.
 
 
 ## Relatedness and Population structure
+
+The first step in evalulating relatedness and population structure is to select a subset of variants with LD pruning and create a GDS file containing only these variants. KING is used to get initial estimates of kinship for close relatives (using the "IBDSeg" methed) and a full matrix of population divergence estimates for all sample pairs (using the "robust" method). These two matrices are used by PC-AiR to identify a set of unrelated samples, run Principal Component Analysis on unrelated samples, and project relatives. Finally, PC-Relate estimates kinship accounting for population structure.
 
 1. LD pruning to select variants
 
     `ld_pruning.py`
     1. `ld_pruning.R`
-    2. `combine_variants.R`
-	3. `subset_gds.R`
+	2. `subset_gds.R`
+	3. `merge_gds.R`
+	4. `check_merged_gds.R`
 
     config parameter | default value | description
     --- | --- | ---
     `out_prefix` | | Prefix for files created by this script.
-    `gds_file` | | GDS file with all chromosomes.
+	`gds_file` | | GDS file. Include a space to insert chromosome. 
+	`subset_gds_file` | | Output GDS file, to contain only LD pruned variants from all chromosomes.
 	`autosome_only` | `TRUE` | Only include autosomes in LD pruning.
 	`ld_r_threshold` | `0.32` | `r` threshold for LD pruning. Default is `r^2 = 0.1`.
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
@@ -102,7 +106,7 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
     config parameter | default value | description
     --- | --- | ---
     `out_prefix` | | Prefix for files created by this script.
-    `gds_file` | | GDS file with only LD pruned variants, all chromosomes. 
+    `gds_file` | | GDS file with only LD pruned variants, all chromosomes.
 	`bed_file` | | Output BED file.
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to include.
@@ -121,12 +125,12 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 	7. `pca_corr.R`
 	8. `pca_corr_plots.R`
 
-	The LD pruning step is run if the argument `--ld_pruning` is provided; otherwise, use a GDS file with a subset of pruned variants, or set `variant_include_file` to a pre-existing set of pruned variants (such as those from running `ld_pruning.py` above).
+	The LD pruning step is run if the argument `--ld_pruning` is provided; otherwise, use a GDS file with a subset of pruned variants, or set `variant_include_file` to a pre-existing set of pruned variants.
 
     config parameter | default value | description
     --- | --- | ---
     `out_prefix` | | Prefix for files created by this script. 
-    `gds_file` | | GDS file with all chromosomes. Recommended to use a subset of variants.
+    `gds_file` | | GDS file with only LD pruned variants, all chromosomes.
 	`full_gds_file` | | GDS file with all variants. Include a space to insert chromosome.
 	`king_file` | | RData or GDS file with kinship coefficients created by `king.py`. Used for ancestry divergence, and optionally for kinship if `kinship_file` is not specified.
 	`kinship_file` | `NA` | File containing kinship matrix to use for defining the unrelated sample set. Multiple formats are accepted, including GDS or RData from `king.py` or `pcrelate.py`, or an RData file containing a Matrix object.
@@ -158,8 +162,8 @@ Step 1 converts VCF files (one per chromosome) into GDS files, discarding non-ge
 
     config parameter | default value | description
     --- | --- | ---
-    `out_prefix` | | Prefix for files created by this script.
-    `gds_file` | | GDS file with all chromosomes.
+    `out_prefix` | | Prefix for files created by this script. 
+    `gds_file` | | GDS file with only LD pruned variants, all chromosomes.
 	`pca_file` | | RData file with PCA results created by `pcair.py`.
 	`n_pcs` | `3` | Number of PCs to use in adjusting for ancestry. 
 	`n_sample_blocks` | `1` | Number of blocks to divide samples into for parallel computation. Adjust depending on computer memory and number of samples in the analysis.
@@ -357,6 +361,8 @@ config parameter | default value | description
 ## Subset VCF by sample
 
 `vcf_subset.py`
+1. `vcf_subset.sh`
+2. `check_gds.R`
 
 config parameter | default value | description
 --- | --- | ---
