@@ -373,7 +373,7 @@ class AWS_Batch(Cluster):
         # base init first
         super(AWS_Batch, self).analysisInit(print_only)
         # jobinfo file name
-        self.jiFileName = self.analysis + "_jobinfo.txt"
+        self.jiFileName = self.analysis + "_" + self.analysisTag + "_jobinfo.txt"
         # analysis log file and autogen stuff
         profile = self.clusterCfg["aws_profile"]
         # autogen (for auto generation of queue and ce)
