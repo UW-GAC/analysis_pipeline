@@ -77,11 +77,13 @@ if (!is.na(config["study"]) & !is.na(config["phenotype_file"])) {
                                                    sample.include=ids)
         }
     }
+    
+    ## combine unrelated samples from individual studies
+    # will be NULL if list is empty
+    study.unrel <- unlist(lapply(study.partition, function(x) x$unrels), use.names=FALSE)
+} else {
+    study.unrel <- NULL
 }
-
-## combine unrelated samples from individual studies
-# will be NULL if list is empty
-study.unrel <- unlist(lapply(study.partition, function(x) x$unrels), use.names=FALSE)
 
 
 ## run pcairPartition on everyone, forcing list of per-study unrel into unrelated set

@@ -68,31 +68,46 @@ TopmedPipeline.writeConfig(config, configfile)
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], array_range=chromosomes, email=email, print_only=print_only)
 
 
-job = "combine_variants"
-
-rscript = os.path.join(pipeline, "R", job + ".R")
-
-config = dict()
-config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
-config["in_file"] = configdict["data_prefix"] + "_pruned_variants_chr .RData"
-config["out_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
-configfile = configdict["config_prefix"] + "_" + job + ".config"
-TopmedPipeline.writeConfig(config, configfile)
-
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
-
-
 job = "subset_gds"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["variant_include_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
+config["subset_gds_file"] = configdict["subset_gds_file"] + ".chr .tmp"
+config["variant_include_file"] = configdict["data_prefix"] + "_pruned_variants_chr .RData"
 config["sample_include_file"] = "NA"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], array_range=chromosomes, holdid=[jobid], email=email, print_only=print_only)
+
+
+job = "merge_gds"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+config = deepcopy(configdict)
+config["gds_file"] = configdict["subset_gds_file"] + ".chr .tmp"
+config["merged_gds_file"] = configdict["subset_gds_file"]
+config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
+configfile = configdict["config_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
+
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
+
+
+job = "check_merged_gds"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid], array_range=chromosomes, email=email, print_only=print_only)
+
+
+# remove temporary files (per-chr subset)
+job_cmd = cluster.clusterCfg["submit_cmd"]
+subOpts = deepcopy(cluster.clusterCfg["submit_opts"])
+subOpts["-b"] = "y"
+tmpid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name="rm_tmp_files", cmd="rm", args=[configdict["subset_gds_file"] + ".chr*.tmp"], holdid=[jobid], email=email, print_only=print_only)
 
 
 # post analysis
