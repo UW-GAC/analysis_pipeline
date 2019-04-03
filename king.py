@@ -60,6 +60,11 @@ job = "gds2bed"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
 
+# include all samples in BED
+config = deepcopy(configdict)
+config["sample_include_file"] = "NA"
+configfile = configdict["config_prefix"] + "_" + job + "_gds2bed.config"
+TopmedPipeline.writeConfig(config, configfile)
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], email=email, print_only=print_only)
 
 
@@ -162,7 +167,7 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
 config["king_file"] = kingfile
-config["kinship_threshold"] = "NA" # for divergence, make dense matrix
+config["sparse_threshold"] = "NA" # for divergence, make dense matrix
 config["out_prefix"] = configdict["data_prefix"] + "_king_related_Matrix"
 config["write_gds"] = "TRUE"
 configfile = configdict["config_prefix"] + "_" + job + "_related.config"

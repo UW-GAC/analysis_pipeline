@@ -94,51 +94,55 @@ ggsave(config["out_file_all"], plot=p, width=6, height=6)
 
 
 ## plot separately by study
-if (is.na(config["phenotype_file"]) | is.na(config["study"])) q("no")
-study <- config["study"]
-message("Plotting by study variable ", study)
+if (!is.na(config["phenotype_file"]) & !is.na(config["study"])) {
+    study <- config["study"]
+    message("Plotting by study variable ", study)
 
-annot <- getobj(config["phenotype_file"])
-stopifnot(study %in% varLabels(annot))
-annot <- pData(annot) %>%
-    select_("sample.id", study)
+    annot <- getobj(config["phenotype_file"])
+    stopifnot(study %in% varLabels(annot))
+    annot <- pData(annot) %>%
+        select_("sample.id", study)
 
-kinship <- kinship %>%
-    left_join(annot, by=c(ID1="sample.id")) %>%
-    rename_(study1=study) %>%
-    left_join(annot, by=c(ID2="sample.id")) %>%
-    rename_(study2=study)
+    kinship <- kinship %>%
+        left_join(annot, by=c(ID1="sample.id")) %>%
+        rename_(study1=study) %>%
+        left_join(annot, by=c(ID2="sample.id")) %>%
+        rename_(study2=study)
 
-kinship.study <- kinship %>%
-    filter(study1 == study2) %>%
-    rename(study=study1) %>%
-    select(-study2)
+    kinship.study <- kinship %>%
+        filter(study1 == study2) %>%
+        rename(study=study1) %>%
+        select(-study2)
 
-p <- ggplot(kinship.study, aes_string(xvar, "kinship")) +
-    geom_hline(yintercept=2^(-seq(3,11,2)/2), linetype='dashed', color="grey") +
-    ## geom_point(alpha=0.5) +
-    ## theme_bw()
-    facet_wrap(~study) +
-    geom_hex(aes(fill = log10(..count..)), bins = 100) +
-    ylab("kinship estimate")
+    p <- ggplot(kinship.study, aes_string(xvar, "kinship")) +
+        geom_hline(yintercept=2^(-seq(3,11,2)/2), linetype='dashed', color="grey") +
+        ## geom_point(alpha=0.5) +
+        ## theme_bw()
+        facet_wrap(~study) +
+        geom_hex(aes(fill = log10(..count..)), bins = 100) +
+        ylab("kinship estimate")
 
-ggsave(config["out_file_study"], plot=p, width=7, height=7)
+    ggsave(config["out_file_study"], plot=p, width=7, height=7)
 
-# use kinship_threshold here (not used for hexbin plots)
-kinship.cross <- kinship %>%
-    filter(study1 != study2) %>%
-    filter(kinship > kin.thresh)
+    ## don't plot cross-study for king --related
+    if (kin.type != "king_related") {
+        # only plot cross-study relatives >= Deg2
+        kinship.cross <- kinship %>%
+            filter(study1 != study2) %>%
+            filter(kinship > 2^(-7/2))
 
-# only make the plot if there are some cross-study kinship pairs
-# leave this one as geom_point instead of hexbin - color-code by study, and not many points
-if (nrow(kinship.cross) > 0){
-  p <- ggplot(kinship.cross, aes_string(xvar, "kinship", color="study2")) +
-    geom_hline(yintercept=2^(-seq(3,11,2)/2), linetype='dashed', color="grey") +
-    geom_point() +
-    facet_wrap(~study1, drop=FALSE) +
-    ylab("kinship estimate") +
-    theme_bw()
-  ggsave(config["out_file_cross"], plot=p, width=8, height=7)
+        # only make the plot if there are some cross-study kinship pairs
+        # leave this one as geom_point instead of hexbin - color-code by study, and not many points
+        if (nrow(kinship.cross) > 0){
+            p <- ggplot(kinship.cross, aes_string(xvar, "kinship", color="study2")) +
+                geom_hline(yintercept=2^(-seq(3,11,2)/2), linetype='dashed', color="grey") +
+                geom_point() +
+                facet_wrap(~study1, drop=FALSE) +
+                ylab("kinship estimate") +
+                theme_bw()
+            ggsave(config["out_file_cross"], plot=p, width=8, height=7)
+        }
+    }
 }
 
 # mem stats
