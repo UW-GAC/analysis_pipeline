@@ -242,8 +242,11 @@ config parameter | default value | description
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. 
 `variant_block_size` | `1024` | Number of variants to read in a single block.
 `pass_only` | `TRUE` | `TRUE` to select only variants with FILTER=PASS.
-`genome_build` | `hg38` | Genome build for the genotypes in the GDS file (`hg19` or `hg38`). Used to divide the genome into segments for parallel processing.
-`thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
+`genome_build` | `hg38` | Genome build for the genotypes in the GDS file (`hg19` or `hg38`). Used to divide the genome into segments for parallel processing. 
+`plot_mac_threshold` | `NA` | Minimum minor allele count for variants or aggregate units to include in plots (if different from threshold used to run tests; see `mac_threshold` below).
+`thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots. 
+`thin_nbins` | `10` | Number of bins to use for thinning.
+`thin_npoints` | `10000` | Number of points in each bin after thinning.
 
 
 ### Single-variant
