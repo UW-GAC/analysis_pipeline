@@ -44,6 +44,6 @@ if (!is.na(varfile)) {
 }
 
 seqSetFilter(gds, sample.id=sample.id, variant.id=variant.id)
-seqExport(gds, outfile)
+seqExport(gds, outfile, fmt.var=character(), info.var=character())
 
 seqClose(gds)
