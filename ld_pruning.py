@@ -1,6 +1,6 @@
 #! /usr/bin/env python2.7
 
-"""Identity By Descent"""
+"""LD Pruning"""
 
 import TopmedPipeline
 import sys

@@ -85,7 +85,8 @@ The first step in evalulating relatedness and population structure is to select 
 	`autosome_only` | `TRUE` | Only include autosomes in LD pruning.
 	`ld_r_threshold` | `0.32` | `r` threshold for LD pruning. Default is `r^2 = 0.1`.
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
-	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning.
+	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning. 
+	`missing_threshold` | `0.01` | Maximum missing call rate for variants used in LD pruning.
 	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
 	`genome_build` | `hg38` | Genome build, used to define correlation regions.
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include.

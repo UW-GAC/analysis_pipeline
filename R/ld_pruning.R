@@ -20,6 +20,7 @@ optional <- c("autosome_only"=TRUE,
               "ld_r_threshold"=0.32,
               "ld_win_size"=10,
               "maf_threshold"=0.01,
+              "missing_threshold"=0.01,
               "out_file"="pruned_variants.RData",
               "sample_include_file"=NA,
               "variant_include_file"=NA)
@@ -69,12 +70,13 @@ message("Using ", length(variant.id), " variants")
 auto.only <- as.logical(config["autosome_only"])
 if (chr %in% "X" & auto.only) stop("Set autosome_only=FALSE to prune X chrom variants")
 maf <- as.numeric(config["maf_threshold"])
+miss <- as.numeric(config["missing_threshold"])
 r <- as.numeric(config["ld_r_threshold"])
 win <- as.numeric(config["ld_win_size"]) * 1e6
 
 set.seed(100) # make pruned SNPs reproducible
 snpset <- snpgdsLDpruning(gds, sample.id=sample.id, snp.id=variant.id,
-                          autosome.only=auto.only, maf=maf,
+                          autosome.only=auto.only, maf=maf, missing.rate=miss,
                           method="corr", slide.max.bp=win, ld.threshold=r,
                           num.thread=countThreads())
 
