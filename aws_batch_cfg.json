@@ -30,12 +30,12 @@
     	    "pcrelate":8000,
             "vcf2gds":8000
         },
-        "autogen_ce": "Yes",
-        "aws_profile": "uw",
+        "autogen_ce": "No",
+        "aws_profile": "nhlbi_compute",
         "pricing": "EC2",
         "batch_instances": "",
         "pipeline_path": "/usr/local/analysis_pipeline",
-        "queue": "SPOT_general",
+        "queue": "topmed_general_od",
         "maxperf": 0,
         "job_parameters": {
             "wd" : "",
@@ -58,7 +58,7 @@
             "command": []
         },
         "retryStrategy": {
-            "attempts": 2
+            "attempts": 1
         },
         "sync_job": {
             "parameters": {

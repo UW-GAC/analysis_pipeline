@@ -373,7 +373,7 @@ class AWS_Batch(Cluster):
         # base init first
         super(AWS_Batch, self).analysisInit(print_only)
         # jobinfo file name
-        self.jiFileName = self.analysis + "_jobinfo.txt"
+        self.jiFileName = self.analysis + "_" + self.analysisTag + "_jobinfo.txt"
         # analysis log file and autogen stuff
         profile = self.clusterCfg["aws_profile"]
         # autogen (for auto generation of queue and ce)
@@ -760,12 +760,6 @@ class SGE_Cluster(Cluster):
         subOpts = deepcopy(self.clusterCfg["submit_opts"])
         # set the job cmd
         kwargs["job_cmd"] = self.clusterCfg["submit_cmd"]
-        # get memory limit option
-        key = "memory_limits"
-        if key in self.clusterCfg.keys():
-            memlim = super(SGE_Cluster, self).memoryLimit(kwargs["job_name"])
-            if memlim != None:
-                subOpts["-l"] = "h_vmem="+str(memlim)+"M"
 
         jobid = self.executeJobCmd(subOpts, **kwargs)
         return jobid
@@ -790,10 +784,27 @@ class SGE_Cluster(Cluster):
 
         key = "request_cores"
         lmsg_cores = "1"
+        memcoreFactor = 1.
         if key in kwargs and kwargs[key] != None and kwargs[key] != "1":
-            submitOpts["-pe"] = self.clusterCfg["parallel_env"] + " " + kwargs["request_cores"]
-            lmsg_cores = kwargs["request_cores"]
+            # adjust memcoreFactor if a specific no. of cores is passed (i.e., no "-")
+            reqCores = kwargs["request_cores"]
+            if not "-" in reqCores:
+                memcoreFactor = float(reqCores)
+            submitOpts["-pe"] = self.clusterCfg["parallel_env"] + " " + reqCores
+            lmsg_cores = reqCores
         lmsg = lmsg + " / cores: " + lmsg_cores
+
+        # get memory limit option (adjust based on specifying a specific number of cores)
+        key = "memory_limits"
+        lmsg_mem = "not provided"
+        if key in self.clusterCfg.keys():
+            memlim = super(SGE_Cluster, self).memoryLimit(kwargs["job_name"])
+            if memlim != None:
+                memlim = memlim/memcoreFactor
+                submitOpts["-l"] = "h_vmem="+str(memlim)+"M"
+                lmsg_mem = str(memlim)
+        lmsg = lmsg + " / memlim: " + lmsg_mem
+
 
         key = "email"
         if key in kwargs and kwargs[key] != None:
