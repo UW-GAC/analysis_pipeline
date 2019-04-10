@@ -31,6 +31,8 @@ arrayData <- SeqVarData(array.gds, sampleData=array.annot)
 
 seq.gds <- seqOpen(config["seq_gds_file"])
 seq.annot <- getobj(config["seq_annot_file"])
+## allow subset GDS
+seq.annot <- seq.annot[match(seqGetData(seq.gds, "sample.id"), seq.annot$sample.id),]
 seqData <- SeqVarData(seq.gds, sampleData=seq.annot)
 
 # selected variants as granges

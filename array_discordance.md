@@ -28,7 +28,7 @@ If we have an alternate array source, modify the above code so as to end up with
 
 7. If we have an alternate array source, check the overlap between fingerprints and the subset file with `array_fingerprint_overlap.R`. If the number of overlapping variants is much less than 10,000, the code will supplement with a randomly selected set of variants that overlap between the sequence and array data, then combine these variants and the fingerprint variants in a GRanges object.
 8. In the following steps, use a config file that sets `granges_include_file` to `dbgap_fp_ranges.hg38.RData`, or to the alternate include file defined in the previous step.
-9. Run duplicate discordance with `array_disc.py --n N <config>` where N is the number of sample blocks to run in parallel.
+9. Run duplicate discordance with `array_disc.py -n N <config>` where N is the number of sample blocks to run in parallel.
 
     config parameter | default value | description
     --- | --- | ---
@@ -39,4 +39,4 @@ If we have an alternate array source, modify the above code so as to end up with
 	`seq_annot_file` | | Path to sequencing sample annotation file.
     `study` | | Study name 
 
-10. If any samples were discordant, save an RData file with a vector of those sample ids. Check them against all other array samples with `qsub -t 1-N -N match_samples runRscript.sh -s match_sample.R <config>` where N is the number of samples to match.
+10. If any samples were discordant, save an RData file with a vector of those sample ids. Check them against all other array samples with `qsub -t 1-N -N match_samples runRscript.sh -s array_match_sample.R <config>` where N is the number of samples to match.
