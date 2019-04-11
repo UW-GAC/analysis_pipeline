@@ -21,6 +21,7 @@ If we have an alternate array source, modify the above code so as to end up with
     `out_prefix` | | Prefix for files created by this script.
     `array_gds_file` | | Path to array GDS file. 
     `seq_gds_file` | | Path to sequencing GDS file. 
+	`seq_annot_file` | | Path to sequencing sample annotation file.
     `subset_gds_file` | | Path to output file.
     `study` | | Study name 
     `maf_threshold` | `0.05` | Minimum MAF for sequence variants to include
@@ -37,6 +38,9 @@ If we have an alternate array source, modify the above code so as to end up with
 	`array_annot_file` | | Path to array sample annotation file.
     `seq_gds_file` | | Path to sequencing GDS file (same as `subset_gds_file` above).
 	`seq_annot_file` | | Path to sequencing sample annotation file.
-    `study` | | Study name 
+    `study` | | Study name
+	`granges_include_file` | `NA` | RData file with GRanges defining subset of variants.
+	`sample_include_file` | `NA` | RData file with sample.id to include, if different from all samples in `study`.
+	`variant_include_file` | `NA` | RData file with variants to include (result will be the intersection with `granges_include_file`)
 
 10. If any samples were discordant, save an RData file with a vector of those sample ids. Check them against all other array samples with `qsub -t 1-N -N match_samples runRscript.sh -s array_match_sample.R <config>` where N is the number of samples to match.
