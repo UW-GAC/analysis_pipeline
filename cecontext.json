@@ -1,0 +1,79 @@
+{
+    "name": "cecontext",
+    "version": "1.0",
+    "type": "MANAGED",
+    "state": "ENABLED",
+    "accnt_ctx": {
+        "uw" : {
+            "resources": {
+                "type": "SPOT",
+                "spotIamFleetRole": "arn:aws:iam::988956399400:role/AmazonEC2SpotFleetRole",
+                "bidPercentage": 100,
+                "subnets": [
+                    "subnet-41a8bd37",
+                    "subnet-78672220",
+                    "subnet-75f10312"
+                ],
+                "imageId": "ami-0fc1d403a072ccff9",
+                "securityGroupIds": [
+                  "sg-c74b44be"
+                ],
+                "ec2KeyPair": "topmed_admin",
+                "instanceRole": "ecsInstanceRole",
+                "tags": {
+                  "Name": "SPOT_topmed_uw",
+                  "Mode": "test",
+                  "Analysis": "not set"
+                }
+            },
+            "serviceRole": "arn:aws:iam::988956399400:role/AWSBatchServiceRole",
+            "profile": "uw"
+        },
+        "nhlbi_compute" : {
+            "resources": {
+                "type": "SPOT",
+                "spotIamFleetRole": "arn:aws:iam::591206506624:role/AmazonEC2SpotFleetRole",
+                "bidPercentage": 100,
+                "subnets": [
+                    "subnet-7740c42b",
+                    "subnet-98912aff",
+                    "subnet-b7bf3999",
+                    "subnet-c29dd688",
+                    "subnet-77559a49",
+                    "subnet-b383febc"
+                ],
+                "imageId": "ami-0af1ce2bb2660c80c",
+                "securityGroupIds": [
+                  "sg-0c55c688c623f3289",
+                  "sg-00af1b80523077c41"
+                ],
+                "ec2KeyPair": "topmed_admin",
+                "instanceRole": "ecsInstanceRole",
+                "tags": {
+                  "Name": "SPOT_topmed_nhlbi",
+                  "Mode": "test",
+                  "Analysis": "not set"
+                }
+            },
+            "serviceRole": "arn:aws:iam::591206506624:role/AWSBatchServiceRole",
+            "profile": "nhlbi_compute"
+        }
+    },
+    "resources": {
+        "minvCpus": 0,
+        "maxvCpus": 5000,
+        "desiredvCpus": 0,
+        "instanceTypes": [
+            "m5.2xlarge",
+            "m5.4xlarge",
+            "m5.12xlarge",
+            "c5.xlarge",
+            "c5.2xlarge",
+            "c5.4xlarge",
+            "c5.9xlarge",
+            "r4.4xlarge",
+            "r5.2xlarge",
+            "r5.12xlarge"
+        ]
+    }
+}

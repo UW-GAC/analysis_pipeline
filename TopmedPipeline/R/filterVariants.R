@@ -179,7 +179,9 @@ filterByRare <- function(gds, sample.id=NULL, af.max=0.01, verbose=TRUE) {
     multi <- which(n > 2)
     if (length(multi) > 0) {
         seqSetFilter(gds, variant.sel=multi, action="push+intersect", verbose=FALSE)
-        alt.freq <- alleleFrequency(gds, n=NULL)
+        # alleleFrequency requires selecting only one allele, so use seqAlleleFreq
+        # this means we are skipping sex correction for multiallelic variants
+        alt.freq <- seqAlleleFreq(gds, ref.allele=NULL)
         min.freq <- .minAltFreq(alt.freq)
         multi.filt <- !is.na(min.freq) & min.freq <= af.max
         af.filt[multi] <- af.filt[multi] | multi.filt

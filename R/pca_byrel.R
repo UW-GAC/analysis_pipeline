@@ -13,12 +13,12 @@ config <- readConfig(argv$config)
 
 required <- c("gds_file",
               "related_file",
-              "unrelated_file",
-              "variant_include_file")
+              "unrelated_file")
 optional <- c("n_pcs"=20,
               "out_file"="pca.RData",
               "out_file_unrel"="pca_unrel.RData",
-              "sample_include_file"=NA)
+              "sample_include_file"=NA,
+              "variant_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -34,8 +34,12 @@ if (!is.na(config["sample_include_file"])) {
 }
 message("Using ", length(unrels), " unrelated and ", length(rels), " related samples")
 
-variant.id <- getobj(config["variant_include_file"])
-message("Using ", length(variant.id), " variants")
+if (!is.na(config["variant_include_file"])) {
+    variant.id <- getobj(config["variant_include_file"])
+    message("Using ", length(variant.id), " variants")
+} else {
+    variant.id <- NULL
+}
 
 # number of PCs to return
 n_pcs <- min(as.integer(config["n_pcs"]), length(unrels))

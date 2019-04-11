@@ -24,6 +24,7 @@ optional <- c("gds_file"=NA, # required for conditional variants
               "group_var"=NA,
               "inverse_normal"=TRUE,
               "n_pcs"=0,
+              "norm_bygroup"=FALSE,
               "out_file"="null_model.RData",
               "out_phenotype_file"="phenotypes.RData",
               "rescale_variance"="marginal",
@@ -33,7 +34,7 @@ print(config)
 writeConfig(config, paste0(basename(argv$config), ".null_model.params"))
 
 # get the number of threads available
-# this also sets MKL_NUM_THREADS, which should speed up matrix calculations if we are running parallel MKL
+# this should speed up matrix calculations if we are running parallel MKL
 countThreads()
 
 # get phenotypes
@@ -69,16 +70,17 @@ nullmod <- fitNullModel(annot, outcome=outcome, covars=covars,
 
 ## if we need an inverse normal transform, take residuals and refit null model
 if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
-    if (is.null(group.var)) {
-        norm.option <- "all"
-        rescale <- "none"
+    if (as.logical(config["norm_bygroup"]) & !is.null(group.var)) {
+        norm.option <- "by.group"  
     } else {
-        norm.option <- "by.group"        
-        if (config["rescale_variance"] == "varcomp") {
-            rescale <- "model"
-        } else if (config["rescale_variance"] == "marginal") {
-            rescale <- "residSD"
-        }
+        norm.option <- "all"
+    }
+    if (config["rescale_variance"] == "varcomp") {
+        rescale <- "model"
+    } else if (config["rescale_variance"] == "marginal") {
+        rescale <- "residSD"
+    } else {
+        rescale <- "none"
     }
     
     nullmod <- nullModelInvNorm(nullmod, cov.mat=grm,

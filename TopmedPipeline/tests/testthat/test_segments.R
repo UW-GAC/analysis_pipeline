@@ -82,7 +82,7 @@ test_that("single", {
     seqSetFilterChrom(seqData, include=1, verbose=FALSE)
     iterator <- SeqVarBlockIterator(seqData, verbose=FALSE)
     a <- assocTestSingle(iterator, nullmod, verbose=FALSE)
-    expect_equal(a, assoc)
+    expect_equivalent(a, assoc)
 
     seqClose(seqData)
     unlink(files)
