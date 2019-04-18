@@ -63,7 +63,7 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 # include all samples in BED
 config = deepcopy(configdict)
 config["sample_include_file"] = "NA"
-configfile = configdict["config_prefix"] + "_" + job + "_gds2bed.config"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], email=email, print_only=print_only)
 
@@ -100,6 +100,11 @@ segid = cluster.executeJobCmd(kingOpts, job_cmd=job_cmd, job_name=job, cmd="king
 kingfile = outprefix + ".seg"
 
 
+# gzip output
+segid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name="gzip", cmd="gzip", args=[kingfile], holdid=[segid], email=email, print_only=print_only)
+kingfile = kingfile + ".gz"
+
+
 job = "kinship_plots"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
@@ -129,10 +134,6 @@ TopmedPipeline.writeConfig(config, configfile)
 segmatid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[segid], email=email, print_only=print_only)
 
 
-# gzip output
-segid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name="gzip", cmd="gzip", args=[kingfile], holdid=[segplotid, segmatid], email=email, print_only=print_only)
-
-
 
 job = "king_related"
 
@@ -143,6 +144,11 @@ arglist = ["-b", bedfile, "--cpus", ncores, "--related", "--prefix", outprefix]
 kinid = cluster.executeJobCmd(kingOpts, job_cmd=job_cmd, job_name=job, cmd="king", args=arglist, holdid=[plinkid], email=email, print_only=print_only)
 
 kingfile = outprefix + ".kin"
+
+
+# gzip output
+kinid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name="gzip", cmd="gzip", args=[kingfile], holdid=[kinid], email=email, print_only=print_only)
+kingfile = kingfile + ".gz"
 
 
 job = "kinship_plots"
@@ -176,10 +182,6 @@ TopmedPipeline.writeConfig(config, configfile)
 kinmatid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[kinid], email=email, print_only=print_only)
 
 
-# gzip output
-kinid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name="gzip", cmd="gzip", args=[kingfile], holdid=[kinplotid, kinmatid], email=email, print_only=print_only)
-
-
 
 # post analysis
 job = "post_analysis"
@@ -188,6 +190,6 @@ pcmd=os.path.join(pipeline, jobpy)
 argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
 pdriver=os.path.join(pipeline, "run_python.sh")
-holdlist = [segid, kinid]
+holdlist = [segplotid, segmatid, kinplotid, kinmatid]
 cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
                   holdid=holdlist, print_only=print_only)
