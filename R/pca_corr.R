@@ -16,7 +16,7 @@ chr <- intToChr(argv$chromosome)
 
 required <- c("gds_file",
               "pca_file")
-optional <- c("n_pcs"=20,
+optional <- c("n_pcs"=32,
               "out_file"="pca_corr.gds",
               "variant_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
