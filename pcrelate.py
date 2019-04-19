@@ -76,8 +76,11 @@ TopmedPipeline.writeConfig(config, configfile)
 
 # define sample blocks
 n_blocks = int(configdict.setdefault("n_sample_blocks", "1"))
-blocks = [(i,j) for i in range(1, n_blocks+1) for j in range(i, n_blocks+1)]
-block_range = "1-" + str(len(blocks))
+if n_blocks > 1:
+    blocks = [(i,j) for i in range(1, n_blocks+1) for j in range(i, n_blocks+1)]
+    block_range = "1-" + str(len(blocks))
+else:
+    block_range = "1"
 
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-s", rscript, configfile, version], holdid=[jobid], array_range=block_range, email=email, print_only=print_only)
 
