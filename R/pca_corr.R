@@ -34,7 +34,7 @@ if (!is.na(chr)) {
     varfile <- insertChromString(varfile, chr)
 }
 
-gds <- seqOpen(config["gds_file"])
+gds <- seqOpen(gdsfile)
 
 ## if we have a chromosome indicator but only one gds file, select chromosome
 if (!is.na(chr) && !bychrfile) {
