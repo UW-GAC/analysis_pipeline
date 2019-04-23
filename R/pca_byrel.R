@@ -14,7 +14,7 @@ config <- readConfig(argv$config)
 required <- c("gds_file",
               "related_file",
               "unrelated_file")
-optional <- c("n_pcs"=20,
+optional <- c("n_pcs"=32,
               "out_file"="pca.RData",
               "out_file_unrel"="pca_unrel.RData",
               "sample_include_file"=NA,

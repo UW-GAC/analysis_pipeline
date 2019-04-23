@@ -53,21 +53,26 @@ iterator <- SeqVarBlockIterator(seqData, variantBlock=block.size)
 # create sample blocks
 #nsampblock <- ceiling(length(sample.include)/sample.block.size)
 nsampblock <- as.integer(config["n_sample_blocks"])
-samp.blocks <- unname(split(sample.include, cut(1:length(sample.include), nsampblock)))
+if (nsampblock > 1) {
+    samp.blocks <- unname(split(sample.include, cut(1:length(sample.include), nsampblock)))
 
-# map segment number to sample block numbers
-## jobs <- list()
-## s <- 1
-## for (i in 1:nsampblock) {
-##     for (j in i:nsampblock) {
-##         jobs[[s]] <- c(i,j)
-##         s <- s + 1
-##     }
-## }
-jobs <- c(combn(1:nsampblock, 2, simplify=FALSE),
-          lapply(1:nsampblock, function(x) c(x,x)))
-i <- jobs[[segment]][1]
-j <- jobs[[segment]][2]
+    # map segment number to sample block numbers
+    ## jobs <- list()
+    ## s <- 1
+    ## for (i in 1:nsampblock) {
+    ##     for (j in i:nsampblock) {
+    ##         jobs[[s]] <- c(i,j)
+    ##         s <- s + 1
+    ##     }
+    ## }
+    jobs <- c(combn(1:nsampblock, 2, simplify=FALSE),
+              lapply(1:nsampblock, function(x) c(x,x)))
+    i <- jobs[[segment]][1]
+    j <- jobs[[segment]][2]
+} else {
+    samp.blocks <- list(sample.include)
+    i <- j <- 1
+}
 
 out <- pcrelateSampBlock(iterator,
                          betaobj=beta,

@@ -146,7 +146,7 @@ The first step in evalulating relatedness and population structure is to select 
 	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions). 
 	`genome_build` | `hg38` | Genome build, used to define correlation regions. 
 	`variant_include_file` | `NA` | RData file with vector of variant.id to include.
-	`n_pcs` | `20` | Number of PCs to return.
+	`n_pcs` | `32` | Number of PCs to return.
 	`n_pair` | `6` | Number of PCs in include in the pairs plot.
 	`n_corr_vars` | `10e6` | Number of variants to sample across the genome for PC-variant correlation plots.
 	`n_perpage` | `4` | Number of PC-variant correlation plots to stack in a single page. The number of png files generated will be `ceiling(n_pcs/n_perpage)`.

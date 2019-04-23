@@ -169,6 +169,7 @@ job = "pca_corr"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
+config["gds_file"] = configdict["full_gds_file"]
 config["pca_file"] = configdict["data_prefix"] + "_pcair_unrel.RData"
 config["variant_include_file"] = configdict["data_prefix"] + "_pcair_corr_variants_chr .RData"
 config["out_file"] = configdict["data_prefix"] + "_pcair_corr_chr .gds"

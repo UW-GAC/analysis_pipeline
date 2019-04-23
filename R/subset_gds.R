@@ -24,7 +24,7 @@ gdsfile <- config["gds_file"]
 outfile <- config["subset_gds_file"]
 varfile <- config["variant_include_file"]
 if (!is.na(chr)) {
-    gdsfile <- insertChromString(gdsfile, chr, err="gds_file")
+    gdsfile <- insertChromString(gdsfile, chr)
     outfile <- insertChromString(outfile, chr, err="subset_gds_file")
     varfile <- insertChromString(varfile, chr)
 }

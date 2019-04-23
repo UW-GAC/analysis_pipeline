@@ -8,7 +8,7 @@ if (length(args) > 0) .libPaths(args[1])
 install.packages(c("BiocManager", "remotes"), repos="https://cloud.r-project.org")
 
 BiocManager::install(c("SeqVarTools", "SNPRelate", "GENESIS", "survey", "CompQuadForm",
-                       "argparser", "ggplot2", "GGally", "hexbin", "rmarkdown"),
+                       "argparser", "ggplot2", "GGally", "hexbin", "R.utils", "rmarkdown"),
                      ask=FALSE)
 
 
