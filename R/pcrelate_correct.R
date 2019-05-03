@@ -62,3 +62,7 @@ rm(kinBtwn, kinSelf); gc()
 # save sparse kinship matrix
 km <- pcrelateToMatrix(pcrelobj, thresh = 2*kin.thresh, scaleKin = 2)
 save(km, file=paste0(config["pcrelate_prefix"], "_pcrelate_Matrix.RData"))
+
+# mem stats
+ms <- gc()
+cat(">>> Max memory: ", ms[1,6]+ms[2,6], " MB\n")
