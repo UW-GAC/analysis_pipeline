@@ -14,7 +14,7 @@ required <- c("king_file")
 optional <- c("sparse_threshold"=0.01104854, # 2^(-13/2), 5th degree
               "out_prefix"="king_Matrix",
               "sample_include_file"=NA,
-              "write_gds"=FALSE)
+              "kinship_method"="king_ibdseg")
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -30,12 +30,20 @@ if (!is.na(config["sparse_threshold"])) {
     kin.thresh <- NULL
 }
 
+kin.type <- tolower(config["kinship_method"])
+if (kin.type == "king_ibdseg") {
+    estimator <- "PropIBD"
+} else {
+    estimator <- "Kinship"
+}
+
 mat <- kingToMatrix(king=config["king_file"],
+                    estimator=estimator,
                     sample.include=sample.id,
                     thresh=kin.thresh)
 
-if (as.logical(config["write_gds"])) {
-    mat2gds(mat, paste0(config["out_prefix"], ".gds"))
-} else {
+if (kin.type == "king_ibdseg") {
     save(mat, file=paste0(config["out_prefix"], ".RData"))
+} else {
+    mat2gds(mat, paste0(config["out_prefix"], ".gds"))
 }

@@ -127,6 +127,7 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
 config["king_file"] = kingfile
+config["kinship_method"] = "king_ibdseg"
 config["out_prefix"] = configdict["data_prefix"] + "_king_ibdseg_Matrix"
 configfile = configdict["config_prefix"] + "_" + job + "_ibdseg.config"
 TopmedPipeline.writeConfig(config, configfile)
@@ -173,6 +174,7 @@ rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
 config["king_file"] = kingfile
+config["kinship_method"] = "king_related"
 config["sparse_threshold"] = "NA" # for divergence, make dense matrix
 config["out_prefix"] = configdict["data_prefix"] + "_king_related_Matrix"
 config["write_gds"] = "TRUE"
