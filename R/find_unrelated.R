@@ -70,7 +70,7 @@ if (!is.na(config["study"]) & !is.na(config["phenotype_file"])) {
         ind <- rownames(kinMat) %in% ids
         medKC <- medianKinship(kinMat[ind,ind])
         if (medKC > 0) {
-            message("Median kinship for ", study, " is ", medKC, ".\n",
+            message("Median kinship for ", s, " is ", medKC, ".\n",
                     "Finding unrelated set separately.")
             study.partition[[s]] <- pcairPartition(kinobj=kinMat, kin.thresh=(kin_thresh + medKC),
                                                    divobj=divMat, div.thresh=div_thresh,
