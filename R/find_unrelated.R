@@ -75,6 +75,7 @@ if (!is.na(config["study"]) & !is.na(config["phenotype_file"])) {
             study.partition[[s]] <- pcairPartition(kinobj=kinMat, kin.thresh=(kin_thresh + medKC),
                                                    divobj=divMat, div.thresh=div_thresh,
                                                    sample.include=ids)
+            message("Found ", length(study.partition[[s]]$unrels), " unrelated and ", length(study.partition[[s]]$rels), " related samples")
         }
     }
     
