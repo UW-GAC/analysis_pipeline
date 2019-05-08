@@ -32,8 +32,10 @@ files <- sapply(chr, function(c) insertChromString(config["assoc_file"], c, "ass
 assoc <- getAssoc(files, config["assoc_type"])
 
 ## change p-value from 0 to very small number for extreme test statistics
-extreme <- abs(assoc$stat) > 38.5
-if (any(extreme)) assoc$pval[extreme] <- 5e-324
+if ("stat" %in% names(assoc)) {
+    extreme <- abs(assoc$stat) > 38.5
+    if (any(extreme)) assoc$pval[extreme] <- 5e-324
+}
 
 ## filter plot by MAC?
 if (!is.na(config["plot_mac_threshold"])) {
