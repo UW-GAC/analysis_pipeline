@@ -31,11 +31,20 @@ with open(logfile, "a") as afile:
     afile.write(analysis + " elapse time(hrs): " + str(td_hrs) + "\n")
 
 # cleanup
+errcnt = 0
 for file in os.listdir('.'):
-    if fnmatch.fnmatch(file, '*.log') or fnmatch.fnmatch(file,'*.trace') or \
-       fnmatch.fnmatch(file, '*.o*') or fnmatch.fnmatch(file,'*.po*'):
-            os.rename('./'+file,'./log/'+file)
-    if fnmatch.fnmatch(file, '*report.*')  or fnmatch.fnmatch(file,'*.params'):
-        os.rename('./'+file,'./report/'+file)
-    if fnmatch.fnmatch(file, '*.pdf'):
-        os.rename('./'+file,'./plots/'+file)
+    try:
+        if fnmatch.fnmatch(file, '*.log') or fnmatch.fnmatch(file,'*.trace') or \
+           fnmatch.fnmatch(file, '*.o*') or fnmatch.fnmatch(file,'*.po*'):
+                os.rename('./'+file,'./log/'+file)
+        if fnmatch.fnmatch(file, '*report.*')  or fnmatch.fnmatch(file,'*.params'):
+            os.rename('./'+file,'./report/'+file)
+        if fnmatch.fnmatch(file, '*.pdf'):
+            os.rename('./'+file,'./plots/'+file)
+    except Exception as e:
+        print('Error moving file ' + file + " (" + str(e) + ")")
+        errcnt += 1
+        continue
+if errcnt:
+    print("post_analysis encountered " + str(errcnt) + " errors.")
+    sys.exit(2)
