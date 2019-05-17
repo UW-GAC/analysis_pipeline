@@ -11,15 +11,10 @@ BiocManager::install(c("SeqVarTools", "SNPRelate", "GENESIS", "survey", "CompQua
                        "argparser", "ggplot2", "GGally", "hexbin", "R.utils", "rmarkdown"),
                      ask=FALSE)
 
-
-#remotes::install_git("git://github.com/zhengxwen/SeqArray.git", dependencies=FALSE)
-#remotes::install_github("zhengxwen/SeqArray",  ref="31b9556", dependencies=FALSE)
-download.file("https://github.com/zhengxwen/SeqArray/archive/31b955666380fe1f92b5e2f2f56789a358c2cb77.zip",
-              destfile="SeqArray.zip", method="libcurl")
-system("unzip SeqArray.zip")
-install.packages("SeqArray-31b955666380fe1f92b5e2f2f56789a358c2cb77", repos=NULL, type="source")
+remotes::install_git("git://github.com/zhengxwen/gdsfmt.git", ref="v1.20.0", dependencies=FALSE)
+remotes::install_git("git://github.com/zhengxwen/SeqArray.git", ref="v1.24.0", dependencies=FALSE)
 remotes::install_git("git://github.com/smgogarten/GWASTools.git", dependencies=FALSE)
 remotes::install_git("git://github.com/smgogarten/SeqVarTools.git", dependencies=FALSE)
-remotes::install_git("git://github.com/UW-GAC/GENESIS.git", dependencies=FALSE)
+remotes::install_git("git://github.com/UW-GAC/GENESIS.git", ref="v2.15.1", dependencies=FALSE)
 
 remotes::install_local("TopmedPipeline", dependencies=FALSE)
