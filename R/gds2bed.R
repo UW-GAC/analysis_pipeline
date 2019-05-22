@@ -20,7 +20,7 @@ print(config)
 gds <- seqOpen(config["gds_file"])
 
 if (!is.na(config["variant_include_file"])) {
-    filterByFile(seqData, config["variant_include_file"])
+    filterByFile(gds, config["variant_include_file"])
 }
 
 if (!is.na(config["sample_include_file"])) {
