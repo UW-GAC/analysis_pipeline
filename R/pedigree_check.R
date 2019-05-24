@@ -33,7 +33,7 @@ if (!is.na(config["sample_include_file"])) {
     ids <- getobj(config["sample_include_file"])
     annot <- filter(annot, sample.id %in% ids)
 } else {
-    ids <- NULL
+    ids <- annot$sample.id
 }
 
 ## read ibd file
