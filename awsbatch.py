@@ -284,7 +284,7 @@ def submitjob(a_submitParams):
         if array_range != None:
             scmd += " --array " + array_range
         if request_cores != None:
-            scmd += " -n " + str(request_cores)
+            scmd += " --nocores " + str(request_cores)
         if maxmem != None:
             scmd += " --maxmem " + maxmem
         if queue != None:
@@ -443,18 +443,12 @@ def submitInteractive():
     parser.add_argument("--apath", help = "analysis pipeline path [default: " + defApath + "]")
     parser.add_argument("-b", "--basecmd", help = "Base command for analysis [default: " + defBaseCmd + "]")
 
-    parser.add_argument("-c", "--cluster_file",
-                         help = "custom batch config file [default: None]")
-    parser.add_argument("--arrayrange",
-                         help = "job array range (e.g., 1-22) [default: None]")
-    parser.add_argument("-n", "--nocores",
-                         help = "Number of cores [default: single core]")
-    parser.add_argument("-M", "--maxmem",
-                         help = "Maximum memory (MB) [default: specified in config file]")
-    parser.add_argument("-q", "--queue",
-                         help = "batch queue [default: specified in config file]")
-    parser.add_argument("-P", "--profile",
-                         help = "AWS profile [default: specified in batch config file]")
+    parser.add_argument("--cluster_file", help = "custom batch config file [default: None]")
+    parser.add_argument("--arrayrange", help = "job array range (e.g., 1-22) [default: None]")
+    parser.add_argument("--nocores", help = "Number of cores [default: single core]")
+    parser.add_argument("-M", "--maxmem", help = "Maximum memory (MB) [default: specified in config file]")
+    parser.add_argument("-q", "--queue",  help = "batch queue [default: specified in config file]")
+    parser.add_argument("-P", "--profile", help = "AWS profile [default: specified in batch config file]")
 
     parser.add_argument("-V", "--verbose", action="store_true", default = False,
                          help = "Turn on verbose output [default: False]")
