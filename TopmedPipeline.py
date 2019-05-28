@@ -401,6 +401,7 @@ class AWS_Batch(Cluster):
                 print("AWS profile: " + profile)
                 print("AWS batch queue: " + self.queue)
                 print("AWS batch ce: " + ceName)
+                print("AWS job def: " + self.submitOpts["jobdef"])
                 print("Check AWS batch queue to verify ...")
             else:
                 with open(self.analysisLogFile, "a") as afile:
@@ -418,6 +419,7 @@ class AWS_Batch(Cluster):
                 self.printVerbose("AWS profile: " + profile)
                 self.printVerbose("batch queue: " + self.queue)
                 self.printVerbose("batch pricing: " + self.clusterCfg["pricing"])
+                self.printVerbose("AWS job def: " + self.submitOpts["jobdef"])
                 self.printVerbose("instance types: " + str(instanceTypes))
                 self.printVerbose("compute environment name: " + ceName)
                 self.printVerbose("aws profile: " + profile)
@@ -432,12 +434,16 @@ class AWS_Batch(Cluster):
         else:
             if print_only:
                 print("+++++++++  Print Only +++++++++++")
-                print("aws autogen: " + str(self.autogen_ce))
-                print("aws profile: " + profile)
-                print("batch queue: " + self.queue)
+                print("AWS profile: " + profile)
+                print("AWS job def: " + self.submitOpts["jobdef"])
+                print("AWS batch queue: " + self.queue)
             else:
+                self.printVerbose("AWS profile: " + profile)
+                self.printVerbose("AWS job def: " + self.submitOpts["jobdef"])
+                self.printVerbose("AWS batch queue: " + self.queue)
                 with open(self.analysisLogFile, "a") as afile:
                     afile.write("AWS profile: " + profile + "\n")
+                    afile.write("AWS job def: " + self.submitOpts["jobdef"] + "\n")
                     afile.write("AWS batch queue: " + self.queue + "\n")
 
     def getIDsAndNames(self, submitHolds):
