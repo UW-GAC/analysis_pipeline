@@ -131,7 +131,7 @@ def submitjob(a_submitParams):
     # job name
     job_name = a_submitParams["jobname"]
     if job_name == None:
-        pError("job_name has not be specified not been specified.")
+        pError("job_name has not been specified.")
         sys.exit(2)
     lmsg = "Job: " + job_name
 
