@@ -126,6 +126,66 @@ def getClusterCfg(a_stdcfg, a_optcfg, a_cfgversion):
                 print json.dumps(clusterconfig, indent=3, sort_keys=True)
     return clusterconfig
 
+def getIDsAndNames(submitHolds):
+    # for the submit holds, return a dictionary of all job names in a single string
+    # and a list of all job ids
+    nlist = [name for d in submitHolds for name in d]
+    maxLen = 1
+    if len(nlist) > maxLen:
+        nlist = nlist[:maxLen]
+    jobnames = "_".join(nlist) + "_more"
+    jobids = [id for d in submitHolds for il in d.values() for id in il]
+    return {'jobnames': jobnames, 'jobids': jobids}
+
+def submitSyncJobs(job_name, submitHolds, clustercfg, queue):
+    # create a list of {'jobId': jobid} compatible with batch submit job associated with the
+    # submit holds. if no. of jobids > 20, create two or more sync jobs and return those jobids
+    holds = getIDsAndNames(submitHolds)
+    jids = holds['jobids']
+    hold_jnames = holds['jobnames']
+    dependsList = [{'jobId': jid} for jid in jids]
+    syncOpts = clustercfg["sync_job"]
+    pDebug("\t2> submitSyncJobs: job " + job_name + " depends on " + hold_jnames + " with " + str(len(jids)) + " job ids")
+    maxDepends = 20
+    if len(jids)> maxDepends:
+        pDebug("\t2> submitSyncJobs: job " + job_name + " - creating intemediary sync jobs ...")
+        # set the synjobparams
+        syncOpts["parameters"]["jids"] = str(jids)
+        # submit sync job in batches of 20
+        maxDepends = 20
+        noDepends = len(jids)
+        noSyncJobs = int(math.ceil(noDepends/(maxDepends+1))) + 1
+        noDependsLast = noDepends % maxDepends
+        if noDependsLast == 0:
+            noDependsLast = maxDepends
+        if noSyncJobs > maxDepends:
+            sys.exit("Error: Too many hold jobs to sync_ (" + str(noDepends) + ").  Max number of sync jobs is " + str(maxDepends))
+        pDebug("\t\t2>> submitSyncJobs: No. holds/sync jobs/noLast: " + str(noDepends) + "/" + str(noSyncJobs) +
+                          "/" + str(noDependsLast))
+        # get the batch client
+        batchC = getBatchClient(clustercfg["aws_profile"])
+
+        syncDepends_list = []
+        for sj in range(noSyncJobs):
+            sIndex = sj*maxDepends
+            lIndex = sIndex+maxDepends
+            if sj == noSyncJobs - 1:
+                lIndex = sIndex+noDependsLast
+            jobName = job_name + '_DependsOn_' + hold_jnames + '_' + str(sj)
+            pDebug("\t\t2>> submitSyncJobs: Sumbitting sync job: " + jobName +
+                              " depend list[    " + str(sIndex) + "," + str(lIndex) + "] \n\t\t\t" + str(dependsList[sIndex:lIndex]))
+            subid = batchC.submit_job(
+               jobName = jobName,
+               jobQueue = queue,
+               jobDefinition = syncOpts["submit_opts"]["jobdef"],
+               parameters = syncOpts["parameters"],
+               dependsOn = dependsList[sIndex:lIndex])
+            syncDepends_list.append({'jobId': subid['jobId']})
+        dependsList = syncDepends_list
+
+    pDebug("\t2> submitSyncJobs: job " + job_name + " will depend on the job ids:\n\t\t" + str(dependsList))
+    return dependsList
+
 def submitjob(a_submitParams):
     # get all the parameters and update clustercfg
     # job name
@@ -137,11 +197,13 @@ def submitjob(a_submitParams):
 
     cluster_file = a_submitParams["cluster_file"]    # for print_only
     # get the cluster cfg dict
-    clustercfg = a_submitParams["clustercfg"]
+    clustercfg = deepcopy(a_submitParams["clustercfg"])
     # get the job parameters
     jobParams = clustercfg["job_parameters"]
     # get the submit options
     submitOpts = clustercfg["submit_opts"]
+    # get the sync opts
+    syncOpts = clustercfg["sync_job"]
     # profile
     profile = a_submitParams["profile"]
     if profile != None:
@@ -203,7 +265,7 @@ def submitjob(a_submitParams):
     lmsg_vcpus = str(submitOpts[key])
     if request_cores != None:
         ncl = request_cores.split("-")
-        nci = int(ncs[len(ncl)-1])
+        nci = int(ncl[len(ncl)-1])
         ncs = str(nci)
         submitOpts[key] = nci
         key2 = "env"
@@ -239,8 +301,10 @@ def submitjob(a_submitParams):
     lmsg += " / mem: " + str(submitOpts[key1])
     # hold ids
     holdid = a_submitParams["holdid"]               # none for interactive
-    if holdid != None:
-        submitOpts["dependsOn"] = holdid
+    if holdid is not None:
+        submitHolds = holdid
+    else:
+        submitHolds = []
     # job def
     jobdef = a_submitParams["jobdef"]
     if jobdef != None:
@@ -293,6 +357,16 @@ def submitjob(a_submitParams):
             scmd += " --profile " + profile
         pInfo("Job: " + job_name + " - awsbatch submit job command: \n" + scmd + "\n")
         subOut = {'jobName': job_name, 'jobId': "000000"}
+    else:
+        if len(submitHolds) > 0:
+            # process hold ids and return a "dependsOn" list
+            submitOpts["dependsOn"] = submitSyncJobs(job_name, submitHolds, clustercfg, queue)
+        # set the log file name that's common to both single and array jobs
+        if len(submitOpts["dependsOn"]) > 0:
+            pDebug("\t1> submitJob: " + job_name + " depends on " + getIDsAndNames(submitHolds)['jobnames'])
+        else:
+            pDebug("\t1> submitJob: " + job_name + " does not depend on other jobs" )
+
     # array job or single job
     if arrayJob:
         subName = job_name + "_" + str(noJobs)

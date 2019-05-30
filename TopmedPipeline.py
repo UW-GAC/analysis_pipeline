@@ -446,62 +446,6 @@ class AWS_Batch(Cluster):
                     afile.write("AWS job def: " + self.submitOpts["jobdef"] + "\n")
                     afile.write("AWS batch queue: " + self.queue + "\n")
 
-    def getIDsAndNames(self, submitHolds):
-        # for the submit holds, return a dictionary of all job names in a single string
-        # and a list of all job ids
-        nlist = [name for d in submitHolds for name in d]
-        maxLen = 1
-        if len(nlist) > maxLen:
-            nlist = nlist[:maxLen]
-        jobnames = "_".join(nlist) + "_more"
-        jobids = [id for d in submitHolds for il in d.values() for id in il]
-        return {'jobnames': jobnames, 'jobids': jobids}
-
-    def submitSyncJobs(self, job_name, submitHolds):
-        # create a list of {'jobId': jobid} compatible with batch submit job associated with the
-        # submit holds. if no. of jobids > 20, create two or more sync jobs and return those jobids
-        holds = self.getIDsAndNames(submitHolds)
-        jids = holds['jobids']
-        hold_jnames = holds['jobnames']
-        dependsList = [{'jobId': jid} for jid in jids]
-        self.printVerbose("\t2> submitSyncJobs: job " + job_name + " depends on " + hold_jnames + " with " + str(len(jids)) + " job ids")
-        maxDepends = 20
-        if len(jids)> maxDepends:
-            self.printVerbose("\t2> submitSyncJobs: job " + job_name + " - creating intemediary sync jobs ...")
-            # set the synjobparams
-            self.syncOpts["parameters"]["jids"] = str(jids)
-            # submit sync job in batches of 20
-            maxDepends = 20
-            noDepends = len(jids)
-            noSyncJobs = int(math.ceil(noDepends/(maxDepends+1))) + 1
-            noDependsLast = noDepends % maxDepends
-            if noDependsLast == 0:
-                noDependsLast = maxDepends
-            if noSyncJobs > maxDepends:
-                sys.exit("Error: Too many hold jobs to sync_ (" + str(noDepends) + ").  Max number of sync jobs is " + str(maxDepends))
-            self.printVerbose("\t\t2>> submitSyncJobs: No. holds/sync jobs/noLast: " + str(noDepends) + "/" + str(noSyncJobs) +
-                              "/" + str(noDependsLast))
-            syncDepends_list = []
-            for sj in range(noSyncJobs):
-                sIndex = sj*maxDepends
-                lIndex = sIndex+maxDepends
-                if sj == noSyncJobs - 1:
-                    lIndex = sIndex+noDependsLast
-                jobName = job_name + '_DependsOn_' + hold_jnames + '_' + str(sj)
-                self.printVerbose("\t\t2>> submitSyncJobs: Sumbitting sync job: " + jobName +
-                                  " depend list[    " + str(sIndex) + "," + str(lIndex) + "] \n\t\t\t" + str(dependsList[sIndex:lIndex]))
-                subid = self.batchC.submit_job(
-                   jobName = jobName,
-                   jobQueue = self.queue,
-                   jobDefinition = self.syncOpts["submit_opts"]["jobdef"],
-                   parameters = self.syncOpts["parameters"],
-                   dependsOn = dependsList[sIndex:lIndex])
-                syncDepends_list.append({'jobId': subid['jobId']})
-            dependsList = syncDepends_list
-
-        self.printVerbose("\t2> submitSyncJobs: job " + job_name + " will depend on the job ids:\n\t\t" + str(dependsList))
-        return dependsList
-
     def runCmd(self, job_name, cmd, logfile=None):
         # redirect stdout/stderr
         self.printVerbose("1===== runCmd: job " + job_name + " beginning ...")
