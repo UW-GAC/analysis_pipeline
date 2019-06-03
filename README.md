@@ -100,7 +100,7 @@ The first step in evalulating relatedness and population structure is to select 
 	3. `king --ibdseg`
 	    - `kinship_plots.R`
 	    - `king_to_matrix.R`
-	4. `king --related`
+	4. `king --kinship`
 	    - `kinship_plots.R`
 	    - `king_to_matrix.R`
 
@@ -111,7 +111,7 @@ The first step in evalulating relatedness and population structure is to select 
 	`bed_file` | | Output BED file.
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to include. 
-	`sparse_threshold` | `0.01104854` | Minimum kinship to use for creating the sparse matrix from `king --ibdseg` output (default is `2^(-13/2)` or 5th degree relatives). A block diagonal matrix will be created such that any pair of samples with a kinship greater than the threshold is in the same block, and pairwise kinship between blocks is 0. Not used for the output of `king --related`, which is always saved as a dense GDS file.
+	`sparse_threshold` | `0.01104854` | Minimum kinship to use for creating the sparse matrix from `king --ibdseg` output (default is `2^(-13/2)` or 5th degree relatives). A block diagonal matrix will be created such that any pair of samples with a kinship greater than the threshold is in the same block, and pairwise kinship between blocks is 0. Not used for the output of `king --kinship`, which is always saved as a dense GDS file.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
 

@@ -60,6 +60,10 @@ if (kin.type == "king_ibdseg") {
     kinship <- read_tsv(config["kinship_file"], col_types="-cc----n--n-----") %>%
         rename(kinship=Kinship)
     xvar <- "IBS0"
+} else if (kin.type == "king_kinship") {
+    kinship <- read_tsv(config["kinship_file"], col_types="-cc----nn-") %>%
+        rename(kinship=Kinship)
+    xvar <- "IBS0"
 } else if (kin.type == "king") {
     if (tools::file_ext(f) == "gds") {
         king <- gds2ibdobj(config["kinship_file"], sample.id=sample.id)
@@ -124,8 +128,8 @@ if (!is.na(config["phenotype_file"]) & !is.na(config["study"])) {
 
     ggsave(config["out_file_study"], plot=p, width=7, height=7)
 
-    ## don't plot cross-study for king --related
-    if (kin.type != "king_related") {
+    ## don't plot cross-study for king --related or --kinship
+    if (!(kin.type %in% c("king_related", "king_kinship"))) {
         # only plot cross-study relatives >= Deg2
         kinship.cross <- kinship %>%
             filter(study1 != study2) %>%
