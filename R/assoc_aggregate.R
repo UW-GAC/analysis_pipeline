@@ -120,7 +120,10 @@ if (config["aggregate_type"] == "allele") {
 test <- switch(tolower(config["test"]),
                burden="Burden",
                skat="SKAT",
-               smmat="SMMAT")
+               smmat="SMMAT",
+               fastskat="fastSKAT",
+               fastsmmat="fastSMMAT",
+               skato="SKATO")
 
 test.type <- switch(tolower(config["test_type"]),
                     firth="Firth",
@@ -137,8 +140,8 @@ assoc <- assocTestAggregate(iterator, nullModel,
                             weight.user=weight.user,
                             test=test,
                             burden.test=test.type,
-                            rho=rho,
-                            pval.method=pval)
+                            rho=rho)
+                            # pval.method=pval)
 
 assoc <- addMAC(assoc, "aggregate")
 
