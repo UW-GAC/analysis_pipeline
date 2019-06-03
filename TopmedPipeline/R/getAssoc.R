@@ -111,9 +111,14 @@ getAssoc <- function(files, assoc_type) {
         x
     }))
     
-    if ("pval_0" %in% names(assoc)) {
-        ## SKAT
-        pval.col <- if ("pval_SKATO" %in% names(assoc)) "pval_SKATO" else "pval_0"
+    if ("pval" %in% names(assoc)) {
+        ## SKAT or fastSKAT
+        pval.col <- "pval"
+        assoc <- select_(assoc, "chr", "pos", "start", "end", pval.col, ~suppressWarnings(one_of("MAC"))) %>%
+            rename_(pval=pval.col)
+    } else if ("pval_SKATO" %in% names(assoc)) {
+        ## SKATO
+        pval.col <- "pval_SKATO"
         assoc <- select_(assoc, "chr", "pos", "start", "end", pval.col, ~suppressWarnings(one_of("MAC"))) %>%
             rename_(pval=pval.col)
     } else if ("pval_SMMAT" %in% names(assoc)) {
