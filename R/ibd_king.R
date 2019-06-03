@@ -11,11 +11,11 @@ argv <- parse_args(argp)
 cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
-required <- c("gds_file",
-              "variant_include_file")
+required <- c("gds_file")
 optional <- c("out_file"="ibd_king.gds",
               #"out_file"="ibd_king.RData",
-              "sample_include_file"=NA)
+              "sample_include_file"=NA,
+              "variant_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -29,8 +29,13 @@ if (!is.na(config["sample_include_file"])) {
     message("Using all samples")
 }
 
-variant.id <- getobj(config["variant_include_file"])
-message("Using ", length(variant.id), " variants")
+if (!is.na(config["variant_include_file"])) {
+    variant.id <- getobj(config["variant_include_file"])
+    message("Using ", length(variant.id), " variants")
+} else {
+    variant.id <- NULL
+    message("Using all variants")
+}
 
 ibd <- snpgdsIBDKING(gds, sample.id=sample.id, snp.id=variant.id,
                      num.thread=countThreads())
