@@ -136,23 +136,17 @@ segmatid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile
 
 
 
-job = "king_robust"
+job = "ibd_king"
 
-#bedfile = configdict["bed_file"] + ".bed"
-outprefix = configdict["data_prefix"] + "_king_robust"
-## --kinship doesn't run in parallel
-#arglist = ["-b", bedfile, "--cpus", ncores, "--kinship", "--prefix", outprefix]
-arglist = ["-b", bedfile, "--kinship", "--prefix", outprefix]
+rscript = os.path.join(pipeline, "R", job + ".R")
 
-#kinid = cluster.executeJobCmd(kingOpts
-kinid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name=job, cmd="king", args=arglist, holdid=[plinkid], email=email, print_only=print_only)
+config = deepcopy(configdict)
+config["out_file"] = configdict["data_prefix"] + "_king_robust.gds"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
 
-kingfile = outprefix + ".kin"
+kinid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], request_cores=ncores, email=email, print_only=print_only)
 
-
-# gzip output
-kinid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name="gzip", cmd="gzip", args=[kingfile], holdid=[kinid], email=email, print_only=print_only)
-kingfile = kingfile + ".gz"
 
 
 job = "kinship_plots"
@@ -160,8 +154,8 @@ job = "kinship_plots"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["kinship_file"] = kingfile
-config["kinship_method"] = "king_kinship"
+config["kinship_file"] = configdict["data_prefix"] + "_king_robust.gds"
+config["kinship_method"] = "king"
 config["out_file_all"] = configdict["plots_prefix"] + "_king_robust_kinship_all.pdf"
 config["out_file_cross"] = configdict["plots_prefix"] + "_king_robust_kinship_cross.pdf"
 config["out_file_study"] = configdict["plots_prefix"] + "_king_robust_kinship_study.pdf"
@@ -169,22 +163,6 @@ configfile = configdict["config_prefix"] + "_" + job + "_robust.config"
 TopmedPipeline.writeConfig(config, configfile)
 
 kinplotid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[kinid], email=email, print_only=print_only)
-
-
-job = "king_to_matrix"
-
-rscript = os.path.join(pipeline, "R", job + ".R")
-
-config = deepcopy(configdict)
-config["king_file"] = kingfile
-config["kinship_method"] = "king_kinship"
-config["sparse_threshold"] = "NA" # for divergence, make dense matrix
-config["out_prefix"] = configdict["data_prefix"] + "_king_robust_Matrix"
-config["write_gds"] = "TRUE"
-configfile = configdict["config_prefix"] + "_" + job + "_robust.config"
-TopmedPipeline.writeConfig(config, configfile)
-
-kinmatid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[kinid], email=email, print_only=print_only)
 
 
 
@@ -195,6 +173,6 @@ pcmd=os.path.join(pipeline, jobpy)
 argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
 pdriver=os.path.join(pipeline, "run_python.sh")
-holdlist = [segplotid, segmatid, kinplotid, kinmatid]
+holdlist = [segplotid, segmatid, kinplotid]
 cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
                   holdid=holdlist, print_only=print_only)
