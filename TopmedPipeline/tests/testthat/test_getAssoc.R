@@ -93,7 +93,7 @@ test_that("aggregate, skat", {
         filter_(~(n.site > 0))
 
     assoc <- getAssoc(files, "aggregate")
-    expect_true(setequal(assoc$pval, a$pval_0))
+    expect_true(setequal(assoc$pval, a$pval))
     expect_equal(as.character(assoc$chr[1]), a1$variantInfo[[1]]$chr[1])
     expect_true(assoc$pos[1] > a1$variantInfo[[1]]$pos[1] & assoc$pos[1] < max(a1$variantInfo[[1]]$pos))
     expect_equal(assoc$start[1], a1$variantInfo[[1]]$pos[1])
