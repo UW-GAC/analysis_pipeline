@@ -17,6 +17,8 @@ Convert VCF to GDS with the following steps:
 
 parser = ArgumentParser(description=description)
 parser.add_argument("config_file", help="configuration file")
+parser.add_argument("--merge", action="store_true", default=False,
+                    help="merge genotypes from per-chromosomes GDS files into a combined file")
 parser.add_argument("--cluster_type", default="UW_Cluster",
                     help="type of compute cluster environment [default %(default)s]")
 parser.add_argument("--cluster_file", default=None,
@@ -37,6 +39,7 @@ parser.add_argument("--version", action="version",
 args = parser.parse_args()
 
 configfile = args.config_file
+merge = args.merge
 chromosomes = args.chromosomes
 cluster_file = args.cluster_file
 cluster_type = args.cluster_type
@@ -55,6 +58,8 @@ driver = os.path.join(pipeline, "runRscript.sh")
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "log"])
 
+# analysis init
+cluster.analysisInit(print_only=print_only)
 
 job = "vcf2gds"
 
@@ -67,6 +72,13 @@ if os.path.splitext(configdict["vcf_file"])[1] == ".bcf":
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], array_range=chromosomes, request_cores=ncores, email=email, print_only=print_only)
 
 
+job = "unique_variant_ids"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
+
+
 job = "check_gds"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
@@ -75,34 +87,31 @@ jobid_chk = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, con
 
 
 # do we have more than one chromosome? if not, skip merge
-if len(TopmedPipeline.chromosomeRangeToList(chromosomes)) == 1:
-    print("Only one chromosome selected; skipping merge")
-    sys.exit(0)
-    
+if merge and len(TopmedPipeline.chromosomeRangeToList(chromosomes)) > 1:
+    job = "merge_gds"
 
-job = "merge_gds"
+    rscript = os.path.join(pipeline, "R", job + ".R")
 
-rscript = os.path.join(pipeline, "R", job + ".R")
+    configdict["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
+    configfile = configdict["config_prefix"] + "_" + job + ".config"
+    TopmedPipeline.writeConfig(configdict, configfile)
 
-configdict["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
-configfile = configdict["config_prefix"] + "_" + job + ".config"
-TopmedPipeline.writeConfig(configdict, configfile)
-
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
+    jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
 
 
-job = "unique_variant_ids"
+    job = "check_merged_gds"
 
-rscript = os.path.join(pipeline, "R", job + ".R")
+    rscript = os.path.join(pipeline, "R", job + ".R")
 
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
-
-
-job = "check_merged_gds"
-
-rscript = os.path.join(pipeline, "R", job + ".R")
-
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid], array_range=chromosomes, email=email, print_only=print_only)
+    jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid], array_range=chromosomes, email=email, print_only=print_only)
 
 
-cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=[jobid], print_only=print_only)
+# post analysis
+job = "post_analysis"
+jobpy = job + ".py"
+pcmd=os.path.join(pipeline, jobpy)
+argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
+           "-s", cluster.getAnalysisStartSec()]
+pdriver=os.path.join(pipeline, "run_python.sh")
+cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
+                  holdid=[jobid,jobid_chk], print_only=print_only)

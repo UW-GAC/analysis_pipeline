@@ -93,7 +93,7 @@ test_that("aggregate, skat", {
         filter_(~(n.site > 0))
 
     assoc <- getAssoc(files, "aggregate")
-    expect_true(setequal(assoc$pval, a$pval_0))
+    expect_true(setequal(assoc$pval, a$pval))
     expect_equal(as.character(assoc$chr[1]), a1$variantInfo[[1]]$chr[1])
     expect_true(assoc$pos[1] > a1$variantInfo[[1]]$pos[1] & assoc$pos[1] < max(a1$variantInfo[[1]]$pos))
     expect_equal(assoc$start[1], a1$variantInfo[[1]]$pos[1])
@@ -121,6 +121,29 @@ test_that("window, smmat", {
 
     assoc <- getAssoc(files, "window")
     expect_equal(assoc$pval, a$pval_SMMAT)
+
+    seqClose(seqData)
+    unlink(files)
+})
+
+
+test_that("window, skato", {
+    seqData <- .testData()
+    nullmod <- .testNullModel(seqData)
+    seqSetFilterChrom(seqData, include=1, verbose=FALSE)
+    seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
+    a1 <- assocTestAggregate(seqData, nullmod, test="SKATO", rho=c(0,1), verbose=FALSE)
+    seqSetFilterChrom(seqData, include=2, verbose=FALSE)
+    seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
+    a2 <- assocTestAggregate(seqData, nullmod, test="SKATO", rho=c(0,1), verbose=FALSE)
+    files <- c(tempfile(), tempfile())
+    save(a1, file=files[1])
+    save(a2, file=files[2])
+    a <- rbind(a1$results, a2$results) %>%
+        filter_(~(n.site > 0))
+
+    assoc <- getAssoc(files, "window")
+    expect_equal(assoc$pval, a$pval_SKATO)
 
     seqClose(seqData)
     unlink(files)

@@ -18,7 +18,10 @@ optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
               "known_hits_file"=NA,
               "out_file_manh"="manhattan.png",
               "out_file_qq"="qq.png",
-              "thin"=TRUE)
+              "plot_mac_threshold"=NA,
+              "thin"=TRUE,
+              "thin_npoints"=10000,
+              "thin_nbins"=10)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 writeConfig(config, paste0(basename(argv$config), ".assoc_plots.params"))
@@ -27,6 +30,18 @@ chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 files <- sapply(chr, function(c) insertChromString(config["assoc_file"], c, "assoc_file"))
 
 assoc <- getAssoc(files, config["assoc_type"])
+
+## change p-value from 0 to very small number for extreme test statistics
+if ("stat" %in% names(assoc)) {
+    extreme <- abs(assoc$stat) > 38.5
+    if (any(extreme)) assoc$pval[extreme] <- 5e-324
+}
+
+## filter plot by MAC?
+if (!is.na(config["plot_mac_threshold"])) {
+    mac.thresh <- as.integer(config["plot_mac_threshold"])
+    assoc <- filter(assoc, MAC >= mac.thresh)
+}
 
 ## omit known hits?
 if (!is.na(config["known_hits_file"]) & config["assoc_type"] == "single") {
@@ -50,9 +65,11 @@ dat <- data.frame(obs=sort(assoc$pval),
                   upper=qbeta(0.025, x, rev(x)),
                   lower=qbeta(0.975, x, rev(x)))
 
+thin.n <- as.integer(config["thin_npoints"])
+thin.bins <- as.integer(config["thin_nbins"])
 if (as.logical(config["thin"])) {
     dat <- mutate(dat, logp=-log10(obs)) %>%
-        thinPoints("logp", n=10000, nbins=10)
+        thinPoints("logp", n=thin.n, nbins=thin.bins)
 }
 
 p <- ggplot(dat, aes(-log10(exp), -log10(obs))) +
@@ -85,7 +102,7 @@ if (config["assoc_type"] == "single") {
 
 if (as.logical(config["thin"])) {
     assoc <- mutate(assoc, logp=-log10(pval)) %>%
-        thinPoints("logp", n=10000, nbins=10, groupBy="chr")
+        thinPoints("logp", n=thin.n, nbins=thin.bins, groupBy="chr")
 }
 
 p <- ggplot(assoc, aes(chr, -log10(pval), group=interaction(chr, pos), color=chr)) +

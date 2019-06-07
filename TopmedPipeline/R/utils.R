@@ -125,7 +125,9 @@ constructFilename <- function(prefix, chromosome=NA, segment=NA) {
 list2gds <- function(x, file) {
     gds <- createfn.gds(file)
     for (v in names(x)) {
-        add.gdsn(gds, v, x[[v]], compress="LZMA_RA")
+        if (!is.null(x[[v]])) {
+            add.gdsn(gds, v, x[[v]], compress="LZMA_RA")
+        }
     }
     closefn.gds(gds)
 }
@@ -135,6 +137,7 @@ list2gds <- function(x, file) {
 #'
 #' @param file filename of GDS file
 #' @param sample.id vector of sample.id
+#' @return Object of type "snpgdsIBDClass"
 #' 
 #' @importFrom gdsfmt openfn.gds closefn.gds index.gdsn read.gdsn readex.gdsn
 #' 
@@ -151,10 +154,38 @@ gds2ibdobj <- function(file, sample.id=NULL) {
     }
     rv <- list(sample.id=sample.id,
                snp.id=read.gdsn(index.gdsn(f, "snp.id")),
-               afreq=read.gdsn(index.gdsn(f, "afreq")),
                IBS0=readex.gdsn(index.gdsn(f, "IBS0"), sel=list(samp.sel, samp.sel)),
                kinship=readex.gdsn(index.gdsn(f, "kinship"), sel=list(samp.sel, samp.sel)))
     closefn.gds(f)
     class(rv) <- "snpgdsIBDClass"
     return(rv)
+}
+
+
+#' Return a kinship object for use in pcairPartition
+#' 
+#' @param file filename with kinship object (.gds or .RData)
+#' @return If file is a GDS file, a GDS object providing a file connection. Otherwise, the R object stored in file.
+#' 
+#' @importFrom gdsfmt openfn.gds
+#' 
+#' @export
+kinobj <- function(file) {
+    if (tools::file_ext(file) == "gds") {
+        x <- openfn.gds(file)
+    } else {
+        x <- getobj(file)
+    }
+    x
+}
+
+
+#' Return the median kinship value from a matrix
+#'
+#' @param mat A kinship matrix
+#' @return The median kinship value
+#' 
+#' @export
+medianKinship <- function(mat) {
+    median(mat[lower.tri(mat)])
 }

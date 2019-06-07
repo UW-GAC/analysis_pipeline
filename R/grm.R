@@ -17,6 +17,7 @@ required <- c("gds_file")
 optional <- c("exclude_pca_corr"=TRUE,
               "genome_build"="hg38",
               "maf_threshold"=0.001,
+              "missing_threshold"=0.01,
               "method"="gcta",
               "out_file"="grm.RData",
               "sample_include_file"=NA,
@@ -65,6 +66,7 @@ variant.id <- seqGetData(gds, "variant.id")
 message("Using ", length(variant.id), " variants")
 
 maf.min <- as.numeric(config["maf_threshold"])
+miss <- as.numeric(config["missing_threshold"])
 
 method <- switch(tolower(config["method"]),
                  gcta="GCTA",
@@ -76,7 +78,8 @@ outfile.tmp <- tempfile()
 message("gds temporarily located at ", outfile.tmp)
 
 snpgdsGRM(gds, sample.id=sample.id, snp.id=variant.id,
-          maf=maf.min, method=method, out.fn=outfile.tmp,
+          maf=maf.min, missing.rate=miss,
+          method=method, out.fn=outfile.tmp,
           autosome.only=FALSE,
           num.thread=countThreads())
 

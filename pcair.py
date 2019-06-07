@@ -11,8 +11,9 @@ from copy import deepcopy
 description = """
 PCA with the following steps:
 1) Find unrelated sample set
-2) Select SNPs with LD pruning using unrelated samples
+2) (optional) Select SNPs with LD pruning using unrelated samples
 3) PCA (using unrelated set, then project relatives)
+4) SNV-PC correlation
 """
 
 parser = ArgumentParser(description=description)
@@ -58,6 +59,9 @@ driver = os.path.join(pipeline, "runRscript.sh")
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots"])
 
+# analysis init
+cluster.analysisInit(print_only=print_only)
+
 
 job = "find_unrelated"
 
@@ -100,6 +104,10 @@ if ld:
     jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], email=email, print_only=print_only)
 
 
+## could split pca_byrel script into two parts: pca on unrelated, then project relatives
+## could start pca_corr once first part is done
+## but probably not worth it
+
 job = "pca_byrel"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
@@ -116,6 +124,8 @@ TopmedPipeline.writeConfig(config, configfile)
 
 jobid_pca = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], request_cores=ncores, email=email, print_only=print_only)
 
+
+## config needs both sample and subject annotation (or merge them ahead of running pipeline)
 
 job = "pca_plots"
 jobsPlots = []
@@ -134,18 +144,40 @@ jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, v
 jobsPlots.append(jobid)
 
 
+## want to run pca_corr on more variants than in LD pruned set, but not all variants
+## select a random set of ~10% of variants, where numbers are proportional by chromosome
+## will need to include full GDS files in config as well as LD pruned. could be per-chromosome.
+job = "pca_corr_vars"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+config = deepcopy(configdict)
+build = configdict.setdefault("genome_build", "hg38")
+config["segment_file"] = os.path.join(pipeline, "segments_" + build + ".txt")
+config["gds_file"] = configdict["full_gds_file"]
+if ld:
+    config["variant_include_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
+config["out_file"] = configdict["data_prefix"] + "_pcair_corr_variants_chr .RData"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
+
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid_pca], array_range=chromosomes, email=email, print_only=print_only)
+
+
 job = "pca_corr"
 
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
+config["gds_file"] = configdict["full_gds_file"]
 config["pca_file"] = configdict["data_prefix"] + "_pcair_unrel.RData"
+config["variant_include_file"] = configdict["data_prefix"] + "_pcair_corr_variants_chr .RData"
 config["out_file"] = configdict["data_prefix"] + "_pcair_corr_chr .gds"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
 # single core only
-jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid_pca], array_range=chromosomes, email=email, print_only=print_only)
+jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configfile, version], holdid=[jobid], array_range=chromosomes, email=email, print_only=print_only)
 
 
 job = "pca_corr_plots"
@@ -163,4 +195,12 @@ jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, v
 jobsPlots.append(jobid)
 
 
-cluster.submitJob(job_name="cleanup", cmd=os.path.join(pipeline, "cleanup.sh"), holdid=jobsPlots, print_only=print_only)
+# post analysis
+job = "post_analysis"
+jobpy = job + ".py"
+pcmd=os.path.join(pipeline, jobpy)
+argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
+           "-s", cluster.getAnalysisStartSec()]
+pdriver=os.path.join(pipeline, "run_python.sh")
+cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
+                  holdid=[jobid], print_only=print_only)

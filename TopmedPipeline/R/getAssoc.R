@@ -111,9 +111,14 @@ getAssoc <- function(files, assoc_type) {
         x
     }))
     
-    if ("pval_0" %in% names(assoc)) {
-        ## SKAT
-        pval.col <- if ("pval_SKATO" %in% names(assoc)) "pval_SKATO" else "pval_0"
+    if ("pval" %in% names(assoc)) {
+        ## SKAT or fastSKAT
+        pval.col <- "pval"
+        assoc <- select_(assoc, "chr", "pos", "start", "end", pval.col, ~suppressWarnings(one_of("MAC"))) %>%
+            rename_(pval=pval.col)
+    } else if ("pval_SKATO" %in% names(assoc)) {
+        ## SKATO
+        pval.col <- "pval_SKATO"
         assoc <- select_(assoc, "chr", "pos", "start", "end", pval.col, ~suppressWarnings(one_of("MAC"))) %>%
             rename_(pval=pval.col)
     } else if ("pval_SMMAT" %in% names(assoc)) {
@@ -156,7 +161,7 @@ omitKnownHits <- function(assoc, hits, flank=500) {
 
 #' Add MAC column to association test output
 #'
-#' @param assoc results from \code{\link{assocTestSingle}} or \code{\link{assocTestAggregate}}
+#' @param assoc results from \code{\link[GENESIS]{assocTestSingle}} or \code{\link[GENESIS]{assocTestAggregate}}
 #' @param assoc_type Type of association test ("single", "aggregate", "window")
 #' @return \code{assoc} with a "MAC" column added to the results data.frame
 #'

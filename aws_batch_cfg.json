@@ -1,6 +1,6 @@
 {
     "name": "AWS_Batch_config",
-    "version": "3.1",
+    "version": "3.2",
     "debug": 0,
     "configuration": {
         "memory_limits": {
@@ -30,9 +30,12 @@
     	    "pcrelate":8000,
             "vcf2gds":8000
         },
-        "aws_profile": "default",
+        "autogen_ce": "No",
+        "aws_profile": "nhlbi_compute",
+        "pricing": "EC2",
+        "batch_instances": "",
         "pipeline_path": "/usr/local/analysis_pipeline",
-        "queue": "SPOT_general",
+        "queue": "topmed_general_od",
         "maxperf": 0,
         "job_parameters": {
             "wd" : "",
@@ -48,14 +51,14 @@
             "tf" : "1"
         },
         "submit_opts": {
-            "jobdef": "TM_master",
+            "jobdef": "TM_roybranch",
             "vcpus":  1,
             "memory": 5000,
             "dependsOn": [],
             "command": []
         },
         "retryStrategy": {
-            "attempts": 2
+            "attempts": 1
         },
         "sync_job": {
             "parameters": {

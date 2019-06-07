@@ -25,7 +25,6 @@ optional <- c("aggregate_type"="allele",
               "alt_freq_max"=1,
               "out_prefix"="assoc_aggregate",
               "pass_only"=TRUE,
-              "pval_skat"="kuonen",
               "rho"="0",
               "segment_file"=NA,
               "test"="burden",
@@ -120,16 +119,17 @@ if (config["aggregate_type"] == "allele") {
 test <- switch(tolower(config["test"]),
                burden="Burden",
                skat="SKAT",
-               smmat="SMMAT")
+               smmat="SMMAT",
+               fastskat="fastSKAT",
+               fastsmmat="fastSMMAT",
+               skato="SKATO")
 
 test.type <- switch(tolower(config["test_type"]),
-                    firth="Firth",
                     score="Score",
                     wald="Wald")
 
 weight.beta <- as.numeric(strsplit(config["weight_beta"], " ", fixed=TRUE)[[1]])
 rho <- as.numeric(strsplit(config["rho"], " ", fixed=TRUE)[[1]])
-pval <- tolower(config["pval_skat"])
 
 assoc <- assocTestAggregate(iterator, nullModel,
                             AF.max=af.max,
@@ -137,8 +137,7 @@ assoc <- assocTestAggregate(iterator, nullModel,
                             weight.user=weight.user,
                             test=test,
                             burden.test=test.type,
-                            rho=rho,
-                            pval.method=pval)
+                            rho=rho)
 
 assoc <- addMAC(assoc, "aggregate")
 

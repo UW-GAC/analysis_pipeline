@@ -16,7 +16,7 @@ chr <- intToChr(argv$chromosome)
 
 required <- c("gds_file",
               "pca_file")
-optional <- c("n_pcs"=20,
+optional <- c("n_pcs"=32,
               "out_file"="pca_corr.gds",
               "variant_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
@@ -34,24 +34,21 @@ if (!is.na(chr)) {
     varfile <- insertChromString(varfile, chr)
 }
 
-gds <- seqOpen(config["gds_file"])
-
-if (!is.na(varfile)) {
-    variant.id <- getobj(varfile)
-} else {
-    filt <- seqGetData(gds, "annotation/filter") == "PASS"
-    snv <- isSNV(gds, biallelic=TRUE)
-    variant.id <- seqGetData(gds, "variant.id")[filt & snv]
-}
+gds <- seqOpen(gdsfile)
 
 ## if we have a chromosome indicator but only one gds file, select chromosome
 if (!is.na(chr) && !bychrfile) {
-    chrom <- seqGetData(gds, "chromosome")
-    seqSetFilter(gds, variant.sel=(chrom == chr), verbose=FALSE)
-    var.chr <- seqGetData(gds, "variant.id")
-    variant.id <- intersect(variant.id, var.chr)
-    seqResetFilter(gds, verbose=FALSE)
+    filterByChrom(gds, chr)
 }
+
+if (!is.na(varfile)) {
+    filterByFile(gds, varfile)
+} else {
+    filterByPass(gds)
+    filterBySNV(gds)
+}
+
+variant.id <- seqGetData(gds, "variant.id")
 message("Using ", length(variant.id), " variants")
 
 pca <- getobj(config["pca_file"])

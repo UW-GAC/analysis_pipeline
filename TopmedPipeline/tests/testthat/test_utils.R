@@ -8,6 +8,7 @@ test_that("constructFilename", {
 })
 
 test_that("list2gds", {
+    gdsfmt::showfile.gds(closeall=TRUE, verbose=FALSE)
     x <- list(a=letters,
               b=1:10,
               c=rnorm(10),
@@ -23,10 +24,12 @@ test_that("list2gds", {
 })
 
 test_that("gds2ibdobj", {
+    gdsfmt::showfile.gds(closeall=TRUE, verbose=FALSE)
     gds <- seqOpen(seqExampleFileName())
     ibd <- SNPRelate::snpgdsIBDKING(gds, verbose=FALSE)
     gdsfile <- tempfile()
     list2gds(ibd, gdsfile)
+    ibd$afreq <- NULL
     ibd2 <- gds2ibdobj(gdsfile)
     expect_equal(ibd, ibd2)
 

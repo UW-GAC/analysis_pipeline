@@ -8,10 +8,14 @@ if (length(args) > 0) .libPaths(args[1])
 install.packages(c("BiocManager", "remotes"), repos="https://cloud.r-project.org")
 
 BiocManager::install(c("SeqVarTools", "SNPRelate", "GENESIS", "survey", "CompQuadForm",
-                       "argparser", "ggplot2", "GGally", "rmarkdown"),
+                       "argparser", "data.table", "ggplot2", "GGally", "hexbin", "R.utils",
+                       "rmarkdown"),
                      ask=FALSE)
 
-# bug fix for SeqArray
-remotes::install_git("git://github.com/zhengxwen/SeqArray", dependencies=FALSE)
+remotes::install_git("git://github.com/zhengxwen/gdsfmt.git", ref="v1.20.0", dependencies=FALSE)
+remotes::install_git("git://github.com/zhengxwen/SeqArray.git", ref="v1.24.0", dependencies=FALSE)
+remotes::install_git("git://github.com/smgogarten/GWASTools.git", dependencies=FALSE)
+remotes::install_git("git://github.com/smgogarten/SeqVarTools.git", dependencies=FALSE)
+remotes::install_git("git://github.com/UW-GAC/GENESIS.git", ref="v2.15.3", dependencies=FALSE)
 
 remotes::install_local("TopmedPipeline", dependencies=FALSE)
