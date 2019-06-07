@@ -148,21 +148,22 @@ TopmedPipeline.writeConfig(config, configfile)
 kinid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], request_cores=ncores, email=email, print_only=print_only)
 
 
+## fails for large sample sizes (~50k)
+## https://github.com/zhengxwen/SNPRelate/issues/57
 
-job = "kinship_plots"
+# job = "kinship_plots"
 
-rscript = os.path.join(pipeline, "R", job + ".R")
+# rscript = os.path.join(pipeline, "R", job + ".R")
 
-config = deepcopy(configdict)
-config["kinship_file"] = configdict["data_prefix"] + "_king_robust.gds"
-config["kinship_method"] = "king"
-config["out_file_all"] = configdict["plots_prefix"] + "_king_robust_kinship_all.pdf"
-config["out_file_cross"] = configdict["plots_prefix"] + "_king_robust_kinship_cross.pdf"
-config["out_file_study"] = configdict["plots_prefix"] + "_king_robust_kinship_study.pdf"
-configfile = configdict["config_prefix"] + "_" + job + "_robust.config"
-TopmedPipeline.writeConfig(config, configfile)
+# config = deepcopy(configdict)
+# config["kinship_file"] = configdict["data_prefix"] + "_king_robust.gds"
+# config["kinship_method"] = "king"
+# config["out_file_all"] = configdict["plots_prefix"] + "_king_robust_kinship_all.pdf"
+# config["out_file_study"] = configdict["plots_prefix"] + "_king_robust_kinship_study.pdf"
+# configfile = configdict["config_prefix"] + "_" + job + "_robust.config"
+# TopmedPipeline.writeConfig(config, configfile)
 
-kinplotid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[kinid], email=email, print_only=print_only)
+# kinid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[kinid], email=email, print_only=print_only)
 
 
 
@@ -173,6 +174,6 @@ pcmd=os.path.join(pipeline, jobpy)
 argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
 pdriver=os.path.join(pipeline, "run_python.sh")
-holdlist = [segplotid, segmatid, kinplotid]
+holdlist = [segplotid, segmatid, kinid]
 cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
                   holdid=holdlist, print_only=print_only)
