@@ -13,6 +13,7 @@ import json
 import math
 import collections
 from datetime import datetime, timedelta
+import awsbatch
 
 try:
     import boto3
@@ -331,6 +332,7 @@ class AWS_Batch(Cluster):
     def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
         self.std_cluster_file = "./aws_batch_cfg.json"
+        self.opt_cluster_file = opt_cluster_file
         cfgVersion = "3.2"
         super(AWS_Batch, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
 
@@ -399,6 +401,7 @@ class AWS_Batch(Cluster):
                 print("AWS profile: " + profile)
                 print("AWS batch queue: " + self.queue)
                 print("AWS batch ce: " + ceName)
+                print("AWS job def: " + self.submitOpts["jobdef"])
                 print("Check AWS batch queue to verify ...")
             else:
                 with open(self.analysisLogFile, "a") as afile:
@@ -416,6 +419,7 @@ class AWS_Batch(Cluster):
                 self.printVerbose("AWS profile: " + profile)
                 self.printVerbose("batch queue: " + self.queue)
                 self.printVerbose("batch pricing: " + self.clusterCfg["pricing"])
+                self.printVerbose("AWS job def: " + self.submitOpts["jobdef"])
                 self.printVerbose("instance types: " + str(instanceTypes))
                 self.printVerbose("compute environment name: " + ceName)
                 self.printVerbose("aws profile: " + profile)
@@ -430,69 +434,17 @@ class AWS_Batch(Cluster):
         else:
             if print_only:
                 print("+++++++++  Print Only +++++++++++")
-                print("aws autogen: " + str(self.autogen_ce))
-                print("aws profile: " + profile)
-                print("batch queue: " + self.queue)
+                print("AWS profile: " + profile)
+                print("AWS job def: " + self.submitOpts["jobdef"])
+                print("AWS batch queue: " + self.queue)
             else:
+                self.printVerbose("AWS profile: " + profile)
+                self.printVerbose("AWS job def: " + self.submitOpts["jobdef"])
+                self.printVerbose("AWS batch queue: " + self.queue)
                 with open(self.analysisLogFile, "a") as afile:
                     afile.write("AWS profile: " + profile + "\n")
+                    afile.write("AWS job def: " + self.submitOpts["jobdef"] + "\n")
                     afile.write("AWS batch queue: " + self.queue + "\n")
-
-    def getIDsAndNames(self, submitHolds):
-        # for the submit holds, return a dictionary of all job names in a single string
-        # and a list of all job ids
-        nlist = [name for d in submitHolds for name in d]
-        maxLen = 1
-        if len(nlist) > maxLen:
-            nlist = nlist[:maxLen]
-        jobnames = "_".join(nlist) + "_more"
-        jobids = [id for d in submitHolds for il in d.values() for id in il]
-        return {'jobnames': jobnames, 'jobids': jobids}
-
-    def submitSyncJobs(self, job_name, submitHolds):
-        # create a list of {'jobId': jobid} compatible with batch submit job associated with the
-        # submit holds. if no. of jobids > 20, create two or more sync jobs and return those jobids
-        holds = self.getIDsAndNames(submitHolds)
-        jids = holds['jobids']
-        hold_jnames = holds['jobnames']
-        dependsList = [{'jobId': jid} for jid in jids]
-        self.printVerbose("\t2> submitSyncJobs: job " + job_name + " depends on " + hold_jnames + " with " + str(len(jids)) + " job ids")
-        maxDepends = 20
-        if len(jids)> maxDepends:
-            self.printVerbose("\t2> submitSyncJobs: job " + job_name + " - creating intemediary sync jobs ...")
-            # set the synjobparams
-            self.syncOpts["parameters"]["jids"] = str(jids)
-            # submit sync job in batches of 20
-            maxDepends = 20
-            noDepends = len(jids)
-            noSyncJobs = int(math.ceil(noDepends/(maxDepends+1))) + 1
-            noDependsLast = noDepends % maxDepends
-            if noDependsLast == 0:
-                noDependsLast = maxDepends
-            if noSyncJobs > maxDepends:
-                sys.exit("Error: Too many hold jobs to sync_ (" + str(noDepends) + ").  Max number of sync jobs is " + str(maxDepends))
-            self.printVerbose("\t\t2>> submitSyncJobs: No. holds/sync jobs/noLast: " + str(noDepends) + "/" + str(noSyncJobs) +
-                              "/" + str(noDependsLast))
-            syncDepends_list = []
-            for sj in range(noSyncJobs):
-                sIndex = sj*maxDepends
-                lIndex = sIndex+maxDepends
-                if sj == noSyncJobs - 1:
-                    lIndex = sIndex+noDependsLast
-                jobName = job_name + '_DependsOn_' + hold_jnames + '_' + str(sj)
-                self.printVerbose("\t\t2>> submitSyncJobs: Sumbitting sync job: " + jobName +
-                                  " depend list[    " + str(sIndex) + "," + str(lIndex) + "] \n\t\t\t" + str(dependsList[sIndex:lIndex]))
-                subid = self.batchC.submit_job(
-                   jobName = jobName,
-                   jobQueue = self.queue,
-                   jobDefinition = self.syncOpts["submit_opts"]["jobdef"],
-                   parameters = self.syncOpts["parameters"],
-                   dependsOn = dependsList[sIndex:lIndex])
-                syncDepends_list.append({'jobId': subid['jobId']})
-            dependsList = syncDepends_list
-
-        self.printVerbose("\t2> submitSyncJobs: job " + job_name + " will depend on the job ids:\n\t\t" + str(dependsList))
-        return dependsList
 
     def runCmd(self, job_name, cmd, logfile=None):
         # redirect stdout/stderr
@@ -518,203 +470,35 @@ class AWS_Batch(Cluster):
 
     def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None,
                   request_cores=None, print_only=False, **kwargs):
-        lmsg = "Job: " + job_name
-        self.printVerbose("1===== submitJob: job " + job_name + " beginning ...")
-        jobParams = deepcopy(self.jobParams)
-        submitOpts = deepcopy(self.submitOpts)
-        pipelinePath = self.pipelinePath
-
-        # check if array job and > 1 task
-        arrayJob = False
-        lmsg_array = "no"
-        if array_range is not None:
-            air = [ int(i) for i in array_range.split( '-' ) ]
-            taskList = range( air[0], air[len(air)-1]+1 )
-            noJobs = len(taskList)
-            if noJobs > 1:
-                arrayJob = True
-                envName = "FIRST_INDEX"
-            else:
-                envName = "SGE_TASK_ID"
-            # set env variable appropriately
-            key = "env"
-            if key in submitOpts:
-                submitOpts["env"].append( { "name": envName,
-                                            "value": str(taskList[0]) } )
-            else:
-                submitOpts["env"] = [ { "name": envName,
-                                        "value": str(taskList[0]) } ]
-            lmsg_array = str(noJobs)
-        lmsg = lmsg + " / array: " + lmsg_array
-
-
-        # using time set a job id (which is for tracking; not the batch job id)
-        trackID = job_name + "_" + self.analysisTag
-
-        # set the R driver and arguments (e.g., -s rcode cfg --chr cn)
-        key = "rd"
-        baseName = os.path.basename(cmd)
-        jobParams[key] = os.path.join(self.pipelinePath, baseName)
-
-        key = "ra"
+        # change args from list to str
         if args is None:
             args = ["NoArgs"]
-        jobParams[key] = " ".join(args)
-
-        # check for number of cores - sge can be 1-8; or 4; etc.  In batch we'll
-        # use the highest number.  e.g., if 1-8, then we'll use 8.  in AWS, vcpus
-        # is the number of physical + hyper-threaded cores.  to max performance
-        # (at an increase cost) allocate 2 vcpus for each core.
-        key = "vcpus"
-        lmsg_vcpus = "1"
-        if request_cores is not None:
-            ncs = request_cores.split("-")
-            nci = int(ncs[len(ncs)-1])
-            submitOpts[key] = nci
-            key2 = "env"
-            if key2 in submitOpts:
-                submitOpts[key2].append( { "name": "NSLOTS",
-                                           "value": str(nci) } )
-            else:
-                submitOpts[key2]=[ { "name": "NSLOTS",
-                                     "value": str(nci) } ]
-            lmsg_vcpus = str(nci)
-        if self.maxperf:
-            submitOpts[key] = 2*submitOpts[key]
-        lmsg = lmsg + " / cores: " + lmsg_vcpus
-
-        # get memory limit option
-        key = "memory_limits"
-        lmsg_mem = "not provided"
-        if key in self.clusterCfg.keys():
-            # get the memory limits
-            memlim = super(AWS_Batch, self).memoryLimit(job_name)
-            if memlim != None:
-                submitOpts["memory"] = memlim
-            lmsg_mem = str(memlim)
-        lmsg = lmsg + " / mem: " + lmsg_mem
-
-        # holdid is a previous submit_id dict {job_name: [job_Ids]}
-        if holdid is not None:
-            submitHolds = holdid
-        else:
-            submitHolds = []
-
-        # environment variables
-        key = "env"
-        if key in submitOpts:
-            submitOpts[key].append( { "name": "JOB_ID",
-                                      "value": trackID } )
-        else:
-            submitOpts[key]=[ { "name": "JOB_ID",
-                                "value": trackID } ]
-
-        # if we're doing an array job, specify arrayProperty; else just submit one job
-        if not print_only:
-            # see if there are any holdids
-            if len(submitHolds) > 0:
-                # process hold ids and return a "dependsOn" list
-                submitOpts["dependsOn"] = self.submitSyncJobs(job_name, submitHolds)
-            # set the log file name that's common to both single and array jobs
-            if len(submitOpts["dependsOn"]) > 0:
-                self.printVerbose("\t1> submitJob: " + job_name + " depends on " + self.getIDsAndNames(submitHolds)['jobnames'])
-            else:
-                self.printVerbose("\t1> submitJob: " + job_name + " does not depend on other jobs" )
-            self.printVerbose("\t1> Analysis driver: " + jobParams['rd'])
-            self.printVerbose("\t1> Analysis driver parameters: " + jobParams['ra'])
-            super(AWS_Batch, self).analysisLog(lmsg)
-
-        # array job or single job
-        if arrayJob:
-            subName = job_name + "_" + str(noJobs)
-            jobParams["at"] = "1"
-            jobParams['lf'] = trackID + ".task"
-            self.printVerbose("\t1> submitJob: " + subName + " is an array job")
-            self.printVerbose("\t1>\tNo. tasks: " + str(noJobs))
-            self.printVerbose("\t1>\tFIRST_INDEX: " + str(taskList[0]))
-            if not print_only:
-                try:
-                    subOut = self.batchC.submit_job(
-                                   jobName = subName,
-                                   jobQueue = self.queue,
-                                   arrayProperties = { "size": noJobs },
-                                   jobDefinition = submitOpts["jobdef"],
-                                   parameters = jobParams,
-                                   dependsOn = submitOpts["dependsOn"],
-                                   containerOverrides = {
-                                      "vcpus": submitOpts["vcpus"],
-                                      "memory": submitOpts["memory"],
-                                      "environment": submitOpts["env"]
-                                   },
-                                   retryStrategy = self.retryStrategy
-                    )
-                except Exception as e:
-                    print('boto3 session or client exception ' + str(e))
-                    sys.exit(2)
-        else:
-            jobParams["at"] = "0"
-            jobParams['lf'] = trackID
-            subName = job_name
-            self.printVerbose("\t1> submitJob: " + subName + " is a single job")
-            if array_range is not None:
-                self.printVerbose("\t1> SGE_TASK_ID: " + str(taskList[0]))
-            if not print_only:
-                try:
-                    subOut = self.batchC.submit_job(
-                                   jobName = subName,
-                                   jobQueue = self.queue,
-                                   jobDefinition = submitOpts["jobdef"],
-                                   parameters = jobParams,
-                                   dependsOn = submitOpts["dependsOn"],
-                                   containerOverrides = {
-                                      "vcpus": submitOpts["vcpus"],
-                                      "memory": submitOpts["memory"],
-                                      "environment": submitOpts["env"]
-                                   },
-                                   retryStrategy = self.retryStrategy
-                    )
-                except Exception as e:
-                    print('boto3 session or client exception ' + str(e))
-                    sys.exit(2)
-        if print_only:
-            print("+++++++++  Print Only +++++++++++")
-            print("Job: " + job_name)
-            print("\tSubmit job: " + subName)
-            if arrayJob:
-                print("\tsubmitJob: " + subName + " is an array job")
-                print("\t\tNo. tasks: " + str(noJobs))
-                print("\t\tFIRST_INDEX: " + str(taskList[0]))
-            elif array_range is not None:
-                print("\tsubmitJob: " + subName + " is like array job but with 1 task: ")
-                print("\t\tSGE_TASK_ID: " + str(taskList[0]))
-            else:
-                print("\tsubmitJob: " + subName + " is a single job")
-            print("\tlog file: " + jobParams['lf'])
-            print("\ttrace file: " + jobParams['tf'])
-            print("\tAnalysis driver: " + jobParams['rd'])
-            print("\tAnalysis driver parameters: " + jobParams['ra'])
-            print("\tJOB_ID: " + trackID)
-            print("\tbatch queue: " + self.queue)
-            print("\tjob definition: " + submitOpts["jobdef"])
-            print("\tjob memory: " + str(submitOpts["memory"]))
-            print("\tjob vcpus: " + str(submitOpts["vcpus"]))
-            print("\tjob env: \n\t\t" + str(submitOpts["env"]))
-            print("\tjob params: \n\t\t" + str(jobParams))
-            jobid = "111-222-333-print_only-" +  subName
-            subOut = {'jobName': subName, 'jobId': jobid}
-            submit_id = {job_name: [jobid]}
-            print("\tsubmit_id: " + str(submit_id))
-
-        # return the "submit_id" which is a list of dictionaries
-        submit_id = {job_name: [subOut['jobId']]}
-        # return the job id (either from the single job or array job)
-        self.printVerbose("\t1> submitJob: " + job_name + " returning submit_id: " + str(submit_id))
-        if not print_only:
-            with open(self.jiFileName, "a") as jifile:
-                jifile.write("jobName: " + job_name + " jobQueue: " + self.queue + " jobId: " + subOut['jobId'] + "\n")
+        args_str = " ".join(args)
+        # fill the submit parameters dict
+        awsbatch.subParams['profile'] = self.clusterCfg["aws_profile"]
+        awsbatch.subParams['cluster_file']= self.opt_cluster_file
+        awsbatch.subParams['clustercfg'] = self.clusterCfg
+        awsbatch.subParams['jobname'] = job_name
+        awsbatch.subParams['cmd'] = os.path.basename(cmd)
+        awsbatch.subParams['args'] = args_str
+        awsbatch.subParams['holdid'] = holdid
+        awsbatch.subParams['array_range'] = array_range
+        awsbatch.subParams['request_cores'] = request_cores
+        awsbatch.subParams['print_only'] = print_only
+        awsbatch.subParams['verbose'] = self.verbose
+        awsbatch.subParams['maxmem'] = None
+        awsbatch.subParams['workdir'] = None
+        awsbatch.subParams['queue'] = None
+        awsbatch.subParams['jobdef'] = None
+        awsbatch.subParams['apath'] = os.path.dirname(cmd)
+        awsbatch.subParams['infofile'] = self.jiFileName
+        awsbatch.subParams['analysislog'] = "update"
+        # submit the job
+        submit_id = awsbatch.submitjob(awsbatch.subParams)
+        # update analysis log
+        super(AWS_Batch, self).analysisLog(awsbatch.subParams['analysislog'])
 
         return submit_id
-
 
 class SGE_Cluster(Cluster):
 
