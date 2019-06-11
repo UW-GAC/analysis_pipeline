@@ -20,7 +20,7 @@ getPhenotypes <- function(config) {
         pcs <- pca$vectors[,1:n_pcs,drop=FALSE]
         pccols <- paste0("PC", 1:n_pcs)
         colnames(pcs) <- pccols
-        pcs <- pcs[match(annot$sample.id, rownames(pcs)),]
+        pcs <- pcs[match(annot$sample.id, rownames(pcs)),,drop=FALSE]
         rownames(pcs) <- NULL
         pData(annot) <- cbind(pData(annot), pcs)
     } else {

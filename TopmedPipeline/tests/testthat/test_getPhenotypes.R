@@ -85,6 +85,19 @@ test_that("no covariates or PCs", {
     .cleanupConfig(config)
 })
 
+test_that("one PC", {
+    config <- .testConfig(covars=NA, n_pcs=1)
+    
+    phen <- getPhenotypes(config)
+    expect_is(phen$annot, "AnnotatedDataFrame")
+    expect_equal(phen$outcome, "outcome")
+    expect_equal(phen$covars, "PC1")
+    expect_equal(varLabels(phen$annot), c("sample.id", "outcome", "PC1"))
+    expect_equal(phen$sample.id, phen$annot$sample.id)
+
+    .cleanupConfig(config)
+})
+
 test_that("group.var is NA", {
     config <- .testConfig(covars="study", n_pcs=0, group_var=NA)
     
