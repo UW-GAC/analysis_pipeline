@@ -67,7 +67,7 @@ nrow(ibd)
 rel <- getobj(config["exp_rel_file"])
 rel <- rel %>%
     mutate(pair=GWASTools::pasteSorted(Individ1, Individ2)) %>%
-    select(one_of("pair", "family", "relation", "exp.rel", "MZtwinID"))
+    select(one_of("pair", "Individ1", "Individ2", "family", "relation", "exp.rel", "MZtwinID"))
 
 ibd <- select(ibd, "ID1", "ID2", !!xvar, "kinship", "obs.rel") %>%
     left_join(annot, by=c(ID1="sample.id")) %>%
@@ -75,7 +75,17 @@ ibd <- select(ibd, "ID1", "ID2", !!xvar, "kinship", "obs.rel") %>%
     left_join(annot, by=c(ID2="sample.id")) %>%
     rename(Individ2=Individ) %>%
     mutate(pair=GWASTools::pasteSorted(Individ1, Individ2)) %>%
-    left_join(rel, by="pair") %>%
+    left_join(select(rel, -starts_with("Individ")), by="pair")
+
+unobs <- rel %>%
+    inner_join(annot, by=c(Individ1="Individ")) %>%
+    rename(ID1=sample.id) %>%
+    inner_join(annot, by=c(Individ2="Individ")) %>%
+    rename(ID2=sample.id) %>%
+    filter(!(pair %in% ibd2$pair)) %>%
+    mutate(obs.rel="U")
+
+ibd <- bind_rows(ibd, unobs) %>%
     select(-pair) %>%
     mutate(exp.rel=ifelse(is.na(exp.rel), "U", exp.rel),
            exp.rel=ifelse(Individ1 == Individ2, "Dup", exp.rel)) %>%
