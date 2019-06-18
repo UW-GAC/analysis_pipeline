@@ -82,7 +82,7 @@ unobs <- rel %>%
     rename(ID1=sample.id) %>%
     inner_join(annot, by=c(Individ2="Individ")) %>%
     rename(ID2=sample.id) %>%
-    filter(!(pair %in% ibd2$pair)) %>%
+    filter(!(pair %in% ibd$pair)) %>%
     mutate(obs.rel="U")
 
 ibd <- bind_rows(ibd, unobs) %>%
