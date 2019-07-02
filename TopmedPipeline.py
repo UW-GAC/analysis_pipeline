@@ -757,7 +757,7 @@ class Slurm_Cluster(Cluster):
         if key in kwargs:
             submitOpts["--array"] = kwargs[key]
             lmsg_array = kwargs[key]
-        lmsg = lmsg + " / array: " + lmsg_array
+        lmsg = lmsg + " /array: " + lmsg_array
 
         key = "request_cores"
         lmsg_cores = "1"
@@ -768,7 +768,7 @@ class Slurm_Cluster(Cluster):
             reqCores = rcl[len(rcl)-1]
             submitOpts["--cpus-per-task"] = reqCores
             lmsg_cores = reqCores
-        lmsg = lmsg + " / cores: " + lmsg_cores
+        lmsg = lmsg + " /cores: " + lmsg_cores
 
         # get memory limit option
         key = "memory_limits"
@@ -779,12 +779,15 @@ class Slurm_Cluster(Cluster):
                 memlim = 8
             submitOpts["--mem_limit"] = str(memlim) + "M"
             lmsg_mem = submitOpts["--mem_limit"]
-        lmsg = lmsg + " / memlim: " + lmsg_mem
+        lmsg = lmsg + " /memlim: " + lmsg_mem
 
         # get partition
         submitOpts["--partition"] = self.getPartition(kwargs["job_name"],
                                                       memlim,
                                                       int(reqCores))
+        lmsg = lmsg + " /cluster: " + cluster
+        lmsg = lmsg + " /parition: " + submitOpts["--partition"]
+
         # output (log)
         if submitOpts["--array"] == None:
             submitOpts["--output"] = submitOpts["--job-name"] + "_%j.log"
