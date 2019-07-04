@@ -547,26 +547,26 @@ class SGE_Cluster(Cluster):
         submit_cmd = self.clusterCfg["submit_cmd"]
         # check for binary
         if binary:
-            submitOpts["-b"] = "y"
+            subOpts["-b"] = "y"
         # job name
         job_name = kwargs["job_name"]
-        submitOpts["-N"] = job_name
+        subOpts["-N"] = job_name
         lmsg = "Job: " + job_name
         # if not holding for job array (element wise), check for holding for jobs
-        if hold_array = None:
+        if hold_array == None:
             key = "holdid"
             if key in kwargs and kwargs[key] != []:
                 if isinstance(kwargs[key], str):
                     kwargs[key] = [kwargs[key]]
-                submitOpts["-hold_jid"] =  ",".join(kwargs[key])
+                subOpts["-hold_jid"] =  ",".join(kwargs[key])
         else:
-            submitOpts["-hold_jid_ad"] = hold_array
+            subOpts["-hold_jid_ad"] = hold_array
         # array job
         key = "array_range"
         array_job = False
         lmsg_array = "no"
         if key in kwargs:
-            submitOpts["-t"] = kwargs[key]
+            subOpts["-t"] = kwargs[key]
             lmsg_array = kwargs[key]
             array_job = True
         lmsg = lmsg + " /array: " + lmsg_array
@@ -579,7 +579,7 @@ class SGE_Cluster(Cluster):
             reqCores = kwargs[key]
             if not "-" in reqCores:
                 memcoreFactor = float(reqCores)
-            submitOpts["-pe"] = self.clusterCfg["parallel_env"] + " " + reqCores
+            subOpts["-pe"] = self.clusterCfg["parallel_env"] + " " + reqCores
             lmsg_cores = reqCores
         lmsg = lmsg + " /cores: " + lmsg_cores
         # get memory limit option (adjust based on specifying a specific number of cores)
@@ -589,21 +589,21 @@ class SGE_Cluster(Cluster):
             memlim = super(SGE_Cluster, self).memoryLimit(job_name)
             if memlim != None:
                 memlim = memlim/memcoreFactor
-                submitOpts["-l"] = "h_vmem="+str(memlim)+"M"
+                subOpts["-l"] = "h_vmem="+str(memlim)+"M"
                 lmsg_mem = str(memlim)
         lmsg = lmsg + " /memlim: " + lmsg_mem
         # email
         key = "email"
         if key in kwargs and kwargs[key] != None:
-            submitOpts["-m"] = "e"
-            submitOpts["-M"] = kwargs[key]
+            subOpts["-m"] = "e"
+            subOpts["-M"] = kwargs[key]
         # driver (cmd) args
         key = "args"
         if not key in kwargs:
             kwargs[key] = []
         argStr = " ".join(kwargs[key])
         # create a string for the submit options
-        optStr = dictToString(submitOpts)
+        optStr = dictToString(subOpts)
         # create the entire submit command
         sub_cmd = " ".join([submit_cmd, optStr, kwargs["cmd"], argStr])
 
