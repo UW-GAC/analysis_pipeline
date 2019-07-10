@@ -3,13 +3,13 @@
     "version": "1.0",
     "verbose": false,
     "clusters": {
-        "tm1-cluster": {
-            "tm1-8-15": {
-                "cores": 8,
-                "mem": 15000
+        "tm1": {
+            "tm1-4-26": {
+                "cores": 4,
+                "mem": 26000
             },
-            "tm1-16-30": {
-                "cores": 16,
+            "tm1-8-30": {
+                "cores": 8,
                 "mem": 30000
             },
             "tm1-16-60": {
