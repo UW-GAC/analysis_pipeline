@@ -777,7 +777,7 @@ class Slurm_Cluster(Cluster):
             memlim = super(Slurm_Cluster, self).memoryLimit(kwargs["job_name"])
             if memlim == None:
                 memlim = 8
-            submitOpts["--mem_limit"] = str(memlim) + "M"
+            submitOpts["--mem"] = str(memlim) + "M"
             lmsg_mem = submitOpts["--mem_limit"]
         lmsg = lmsg + " /memlim: " + lmsg_mem
 
