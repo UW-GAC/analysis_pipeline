@@ -31,7 +31,6 @@ import      getpass
 from        argparse import ArgumentParser
 from        copy   import deepcopy
 
-global dockersdk = True
 try:
     import  docker
 except ImportError:
