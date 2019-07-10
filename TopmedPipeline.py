@@ -820,7 +820,8 @@ class Slurm_Cluster(Cluster):
             process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE)
             pipe = process.stdout
             sub_out = pipe.readline()
-            jobid = sub_out.split(" ")[3]
+            jobid = sub_out.split(" ")[3].strip()
+            self.printVerbose("job id: " + jobid)
 
         return jobid
 
