@@ -31,6 +31,7 @@ import      getpass
 from        argparse import ArgumentParser
 from        copy   import deepcopy
 
+dockersdk = True
 try:
     import  docker
 except ImportError:
@@ -43,7 +44,6 @@ msgErrPrefix = '>>> Error: '
 msgInfoPrefix = '>>> Info: '
 debugPrefix = '>>> Vebose: '
 verbose = False
-dockersdk = True
 
 defDockerImage = "uwgac/topmed-roybranch"
 defRunCmd = "/usr/local/analysis_pipeline/runRscript.sh"
