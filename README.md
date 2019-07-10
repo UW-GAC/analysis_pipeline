@@ -222,12 +222,12 @@ When combining samples from groups with different variances for a trait (e.g., s
 
 config parameter | default value | description
 --- | --- | ---
-`out_prefix` | | Prefix for files created by this script.
+`out_prefix` | | Prefix for files created by this script. 
+`phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes.
+`outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `pca_file` | `NA` | RData file with PCA results created by `pcair.py`.
 `pcrelate_file` | `NA` | RData file with 2*kinship created by `pcrelate.py`. 
 `grm_file` | `NA` | GDS file with GRM created by `grm.py`.
-`phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes.
-`outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
 `group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
