@@ -771,14 +771,14 @@ class Slurm_Cluster(Cluster):
         lmsg = lmsg + " /cores: " + lmsg_cores
 
         # get memory limit option
-        key = "--mem"
+        key = "memory_limits"
         lmsg_mem = "not provided"
         if key in self.clusterCfg.keys():
             memlim = super(Slurm_Cluster, self).memoryLimit(kwargs["job_name"])
             if memlim == None:
-                memlim = 8
-            submitOpts[key] = str(memlim) + "M"
-            lmsg_mem = submitOpts[key]
+                memlim = 8000
+            submitOpts["--mem"] = str(memlim) + "M"
+            lmsg_mem = submitOpts["--mem"]
         lmsg = lmsg + " /memlim: " + lmsg_mem
 
         # get partition
