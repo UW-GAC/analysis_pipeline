@@ -61,7 +61,7 @@
         },
         "pipeline_path_docker": "/usr/local/analysis_pipeline",
         "partition_cfg": "slurm_partitions.json",
-        "cluster": "tm1-cluster",
+        "cluster": "tm1",
         "submit_cmd": "sbatch",
         "submit_script": "runDocker.py",
         "submit_opts": {
