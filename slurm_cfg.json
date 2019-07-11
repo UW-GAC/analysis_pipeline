@@ -74,7 +74,7 @@
             "--partition": null
         },
         "rdocker_opts": {
-            "--dockerimage": "uwgac/topmed-roybranch",
+            "--dockerimage": "uwgac/topmed-roybranch:latest",
             "--runcmd": null,
             "--runargs": null,
             "--volumes": null,

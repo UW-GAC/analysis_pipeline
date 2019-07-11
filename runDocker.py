@@ -44,7 +44,7 @@ msgInfoPrefix = '>>> Info: '
 debugPrefix = '>>> Vebose: '
 verbose = False
 
-defDockerImage = "uwgac/topmed-roybranch"
+defDockerImage = "uwgac/topmed-roybranch:latest"
 defRunCmd = "/usr/local/analysis_pipeline/runRscript.sh"
 defVolumes = "/projects:/projects"
 defMemlimit = "8g"
@@ -218,7 +218,6 @@ else:
                 og = dc.logs(stream=True)
                 for line in og:
                    print(line.strip())
-                   sys.stdout.flush()
             except Exception as e:
                 pError("Docker container exception: " + str(e))
                 sys.exit(2)
