@@ -8,3 +8,7 @@ test
 .Rproj.user
 *.Rproj
 R_library
+packrat/*
+.Rprofile
+testdir
+
