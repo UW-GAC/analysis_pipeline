@@ -34,9 +34,9 @@ from        copy   import deepcopy
 try:
     import  docker
 except ImportError:
-    global dockersdk
     dockersdk = False
-
+else:
+    dockersdk = True
 # init globals
 fileversion = '1.0'
 msgErrPrefix = '>>> Error: '
@@ -215,9 +215,10 @@ else:
             try:
                 client = docker.from_env()
                 dc = client.containers.run(dockerimage, command=dockerFullCommand, **dockerkwargs)
-                og=dc.logs(stream=True)
+                og = dc.logs(stream=True)
                 for line in og:
                    print(line.strip())
+                   sys.stdout.flush()
             except Exception as e:
                 pError("Docker container exception: " + str(e))
                 sys.exit(2)
