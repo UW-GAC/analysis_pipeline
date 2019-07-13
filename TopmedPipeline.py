@@ -701,13 +701,13 @@ class Slurm_Cluster(Cluster):
                  ") for "+ str(memcheck) + "MB memory")
             sys.exit(2)
 
-        # from partitions with mem & core, find partition with min mem
+        # from partitions with mem & core, find partition with min cores
         thepart = pmemcore[0]
         nop = len(pmemcore)
         if nop > 1 :
             for i in range(1,nop):
                 pcheck = pmemcore[i]
-                if self.partitions[pcheck]["mem"] < self.partitions[thepart]["mem"]:
+                if self.partitions[pcheck]["cores"] < self.partitions[thepart]["cores"]:
                     thepart = pcheck
         return thepart
 
@@ -821,7 +821,8 @@ class Slurm_Cluster(Cluster):
             pipe = process.stdout
             sub_out = pipe.readline()
             jobid = sub_out.split(" ")[3].strip()
-            self.printVerbose("job id: " + jobid)
+            print("Sbatch to cluster: " + cluster + " / job: " + submitOpts["--job-name"] + 
+                  " / job id: " + jobid)
 
         return jobid
 
