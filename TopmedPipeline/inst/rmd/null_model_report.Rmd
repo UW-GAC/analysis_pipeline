@@ -93,6 +93,7 @@ p <- ggplot(fixef, aes(x = Est, y = covar)) +
     geom_vline(xintercept = 0) +
     geom_point(aes(color = significant)) +
     geom_errorbarh(aes(xmin = Est + qnorm(0.025)*SE, xmax = Est + qnorm(0.975)*SE, color = significant))
+
 print(p)
 ```
 
@@ -106,6 +107,7 @@ dat <- data.frame(sample.id = nullmod$sample.id,
                   PY = as.vector(nullmod$resid),
                   Ytilde = as.vector(nullmod$Ytilde),
                   stringsAsFactors = FALSE)
+# TODO: Add group_var check.
 g <- length(nullmod$group.idx)
 group <- rep(NA, length(nullmod$sample.id))
 for(i in 1:g){
@@ -120,7 +122,7 @@ for (x in covars) {
       p <- p +
         geom_point(alpha = 0.1) +
         geom_hline(yintercept = 0) +
-        geom_smooth(method = 'lm', color = 'forestgreen') +
+        geom_smooth(method = 'lm', color = 'red') +
         geom_smooth(color = 'blue', linetype = 'dashed')
     } else {
       p <- p +
@@ -135,8 +137,8 @@ for (x in covars) {
 p <- ggplot(dat, aes(x = fitted.values, y = resid.marginal)) +
     geom_point(alpha = 0.1) +
     geom_hline(yintercept = 0) +
-    geom_smooth(method = 'lm', color = 'forestgreen') +
-    geom_smooth(color = 'blue', linetype = 'dashed')
+    geom_smooth(method = 'lm', color = 'red', fill = 'red') +
+    geom_smooth(color = 'blue', linetype = 'dashed', fill = 'blue')
 
 print(p)
 ```
@@ -156,40 +158,55 @@ if (!is.null(random)) {
     geom_point() +
     geom_errorbarh(aes(xmin = `Lower 95`, xmax = `Upper 95`))
   print(p)
-
-  p <- ggplot(dat, aes(x = fitted.values, y = Ytilde^2)) +
-    geom_point(alpha = 0.1) +
-    geom_hline(yintercept = 1, color = 'magenta', linetype = 'longdash', size = 1) +
-    geom_smooth(color = 'blue') +
-    geom_smooth(method = 'lm', color = 'forestgreen')
-  print(p)
 }
 ```
 
 ```{r group-header, results='asis'}
 if (!is.null(group_var)) {
-  cat("## By group")
+  cat("## Variance adjustment")
 }
 ```
 
 ```{r group-plots}
 if (!is.null(group_var)) {
+
   p <- ggplot(dat, aes(x = group, y = workingY)) +
     geom_boxplot() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1))
   print(p)
 
-
-  p <- ggplot(dat, aes(x = group, y = Ytilde)) +
-    geom_boxplot() +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  if (!is.null(group_var)) {
+    p <- ggplot(dat, aes(x = group, y = Ytilde))
+  } else {
+    p <- ggplot(dat, aes(y = Ytilde))
+  }
+    p <- p + geom_boxplot()
   print(p)
+
 }
 ```
 
-## PY
+## Adjusted phenotype
 
-```{r py}
+```{r adjusted-phenotype-plots}
+
+p <- ggplot(dat, aes(x = fitted.values, y = Ytilde^2)) +
+  geom_point(alpha = 0.1) +
+  geom_hline(yintercept = 1, color = 'magenta', linetype = 'longdash', size = 1) +
+  geom_smooth(color = 'blue') +
+  geom_smooth(method = 'lm', color = 'forestgreen')
+print(p)
+
+p <- ggplot(dat, aes(x = fitted.values, y = Ytilde^2)) +
+  geom_point(alpha = 0.1) +
+  geom_hline(yintercept = 1, color = 'magenta', linetype = 'longdash', size = 1) +
+  geom_smooth(color = 'blue') +
+  geom_smooth(method = 'lm', color = 'forestgreen') +
+  coord_cartesian(ylim = c(0, 5)) +
+  ylab("Ytilde^2 zoomed in")
+print(p)
+
+
 p <- ggplot(dat, aes(x = PY))
 if (!is.null(group_var)) {
   p <- p +
