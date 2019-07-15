@@ -810,18 +810,23 @@ class Slurm_Cluster(Cluster):
         sub_cmd = " ".join([job_cmd, suboptStr, submit_script, dockeroptStr])
 
         key = "print_only"
+        po = False
         if key in kwargs and kwargs[key] == True:
-            super(Slurm_Cluster, self).analysisLog(lmsg, True)
+            po = True
+
+        super(Slurm_Cluster, self).analysisLog(lmsg, po)
+        if po:
             print("\n" + sub_cmd)
             jobid = submitOpts["--job-name"]
         else:
             self.printVerbose("submitting job: " + sub_cmd)
-            super(Slurm_Cluster, self).analysisLog(lmsg)
+            super(Slurm_Cluster, self).analysisLog("sbatch: " + sub_cmd)
             process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE)
             pipe = process.stdout
             sub_out = pipe.readline()
             jobid = sub_out.split(" ")[3].strip()
-            print("Sbatch to cluster: " + cluster + " / job: " + submitOpts["--job-name"] + 
+            super(Slurm_Cluster, self).analysisLog("jobid: " + sub_cmd)
+            print("Sbatch to cluster: " + cluster + " / job: " + submitOpts["--job-name"] +
                   " / job id: " + jobid)
 
         return jobid
