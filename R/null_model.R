@@ -64,14 +64,16 @@ message("Model: ", model.string)
 message(length(sample.id), " samples")
 
 ## fit null model allowing heterogeneous variances among studies
-nullmod <- fitNullModel(annot, outcome=outcome, covars=covars,
+nullmod_orig <- fitNullModel(annot, outcome=outcome, covars=covars,
                         cov.mat=grm, sample.id=sample.id,
                         family=family, group.var=group.var)
 
+# Remove
 ## if we need an inverse normal transform, take residuals and refit null model
 if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
+
     if (as.logical(config["norm_bygroup"]) & !is.null(group.var)) {
-        norm.option <- "by.group"  
+        norm.option <- "by.group"
     } else {
         norm.option <- "all"
     }
@@ -82,13 +84,27 @@ if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
     } else {
         rescale <- "none"
     }
-    
-    nullmod <- nullModelInvNorm(nullmod, cov.mat=grm,
+
+    nullmod <- nullModelInvNorm(nullmod_orig, cov.mat=grm,
                                 norm.option=norm.option,
                                 rescale=rescale)
+
+    save(nullmod, file=config["out_file"])
+
+    # Save a smaller version of the original null model.
+    nullmod_orig$outcome <- NULL
+    nullmod_orig$model.matrix <- NULL
+    nullmod_orig$cholSigmaInv <- NULL
+    nullmod_orig$CX <- NULL
+    nullmod_orig$CXCXI <- NULL
+
+    filename <- gsub(".RData$", "_intermediate.RData", config["out_file"])
+    save(nullmod_orig, file = filename)
+
+} else {
+  save(nullmod_orig, file = config["out_file"])
 }
 
-save(nullmod, file=config["out_file"])
 
 # mem stats
 ms <- gc()
