@@ -44,6 +44,7 @@ random <- if (!is.na(config["pcrelate_file"])) "kinship" else if (!is.na(config[
 group_var <- if (is.na(config["group_var"])) NULL else config["group_var"]
 model.string <- modelString(outcome, covars, random, group_var)
 nullmod <- getobj(config["out_file"])
+is_binary <- as.logical(config["binary"])
 ```
 
 ## Config
@@ -66,7 +67,7 @@ configTable(config[disp])
 ## Phenotype distributions
 
 ```{r outcome-distribution-plot}
-if (as.logical(config["binary"])) {
+if (is_binary) {
     ggplot(annot, aes_string(outcome)) + geom_bar() + stat_count(geom="text", aes_string(label="..count..", vjust=-0.5))
 } else {
     ggplot(annot, aes_string(outcome)) + geom_histogram()
@@ -100,6 +101,28 @@ print(p)
 ```
 
 ## Marginal residuals
+
+
+```{r marginal-helper-text, results = "asis"}
+if (is_binary) {
+  text <- paste(
+    "Plots of marginal residuals vs covariates should have a trend line near
+    the `y = 0` line for continuous covariates, or the mean of each group near
+    0 for categorical covariates. A distinct trend could indicate that a more
+    complex term for that covariate is needed (e.g. quadratic, spline, etc.)."
+  )
+} else {
+  text <- paste(
+    "Plots of marginal residuals vs covariates should show no distinct
+    pattern, appearing as random noise, with the trend line near the `y = 0`
+    line for continuous covariates, or the mean of each group near 0 for
+    categorical covariates. A distinct pattern or trend could indicate that a
+    more complex term for that covariate is needed, (e.g. quadratic, spline,
+    etc.)."
+  )
+}
+cat(text)
+```
 
 ```{r residual-plots}
 dat <- data.frame(sample.id = nullmod$sample.id,
@@ -135,7 +158,27 @@ for (x in covars) {
     }
     print(p)
 }
+```
 
+```{r, results = 'asis'}
+if (is_binary) {
+  text <- paste(
+    "Plots of marginal residuals vs fitted values should have a trend line near
+    the `y = 0` line. A distinct pattern or trend could indicate that additional
+    covariates are needed, or that the variance model is inadequate."
+  )
+} else {
+  text <- paste(
+    "Plots of marginal residuals vs fitted values should show no distinct
+    pattern, appearing as random noise, with the trend line near the `y = 0`
+    line. A distinct pattern or trend could indicate that additional covariates
+    are needed, or that the variance model is inadequate."
+  )
+}
+cat(text)
+```
+
+```{r}
 p <- ggplot(dat, aes(x = fitted.values, y = resid.marginal)) +
     geom_point(alpha = 0.1) +
     geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
@@ -167,6 +210,15 @@ if (!is.null(random)) {
 if (!is.null(group_var)) {
   cat("## Variance adjustment")
 }
+cat('\n\n')
+text <- paste(
+  "Boxplots of the original phenotype values (`Y`) and the adjusted phenotype
+  values (`Ytilde`) by heterogeneous residual variance group. The `Ytilde` values
+  are adjusted for fixed effect covariates, random effects, and heterogeneous
+  residual variances. The variation of `Ytilde` within each group should be
+  similar."
+)
+cat(text)
 ```
 
 ```{r variance-adjustment-plots}
@@ -197,6 +249,14 @@ if (!is.null(group_var)) {
 
 ## Adjusted phenotype
 
+The adjusted phenotype values (`Ytilde`) are adjusted for fixed effect covariates,
+random effects, and heterogeneous residual variances (if applicable); they
+should be approximately distributed as N(0,1). The square of these values should
+have a trend line near the y = 1 line, indicating homoskedasticity after
+adjustment. Deviation from this trend could indicate that the variance model is
+inadequate.
+
+
 ```{r adjusted-phenotype-plots}
 
 p <- ggplot(dat, aes(x = fitted.values, y = Ytilde^2)) +
@@ -206,16 +266,30 @@ p <- ggplot(dat, aes(x = fitted.values, y = Ytilde^2)) +
   geom_smooth(color = 'blue', linetype = 'dashed', fill = 'blue')
 print(p)
 
-p <- ggplot(dat, aes(x = fitted.values, y = Ytilde^2)) +
-  geom_point(alpha = 0.1) +
-  geom_hline(yintercept = 1, color = COLOR_ZERO_LINE) +
-  geom_smooth(method = 'lm', color = 'red', fill = 'red') +
-  geom_smooth(color = 'blue', linetype = 'dashed', fill = 'blue') +
+p <- p +
   coord_cartesian(ylim = c(0, 5)) +
   ylab("Ytilde^2 zoomed in")
 print(p)
+```
 
+The projected phenotype values (`PY`) are the phenotype values after adjusting
+for the fixed effect covariates, random effects, and heterogenous residual
+variances (if applicable); these are the values that are correlated with
+genotype to test for association.
 
+```{r, results = 'asis'}
+if (!is_binary) {
+  text <- paste(
+    "It may be problematic for association testing if this distribution is far
+    from Gaussian. This problem can be alleviated by rank normalizing `PY` and
+    re-fitting the null model with the rank-normalized values as the outcome
+    (i.e. a two stage procedure)."
+  )
+  cat(text)
+}
+```
+
+```{r}
 p <- ggplot(dat, aes(x = PY))
 if (!is.null(group_var)) {
   p <- p +
