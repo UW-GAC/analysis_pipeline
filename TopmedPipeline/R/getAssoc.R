@@ -168,7 +168,11 @@ omitKnownHits <- function(assoc, hits, flank=500) {
 #' @export
 addMAC <- function(assoc, assoc_type) {
     mac <- function(x) {
-        round(2 * x$n.obs * pmin(x$freq, 1-x$freq))
+        if ("MAC" %in% names(x)) {
+            x$MAC
+        } else {
+            round(2 * x$n.obs * pmin(x$freq, 1-x$freq))
+        }
     }
     if (assoc_type == "single") {
         assoc$MAC <- mac(assoc)

@@ -75,9 +75,7 @@ filterBySNV <- function(gds, biallelic=TRUE, verbose=TRUE) {
 #' @importFrom SeqVarTools alleleCount
 .calcMAC <- function(gds, sample.id) {
     seqSetFilter(gds, sample.id=sample.id, verbose=FALSE)
-    ref.cnt <- alleleCount(gds)
-    n.obs <- SeqVarTools:::.nSampObserved(gds)
-    round(pmin(ref.cnt, 2*n.obs - ref.cnt))
+    round(minorAlleleCount(gds))
 }
 
 #' @importFrom SeqVarTools alleleFrequency
