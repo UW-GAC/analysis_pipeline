@@ -23,6 +23,7 @@ required <- c("gds_file",
               "aggregate_variant_file")
 optional <- c("aggregate_type"="allele",
               "alt_freq_max"=1,
+              "genome_build"="hg38",
               "out_prefix"="assoc_aggregate",
               "pass_only"=TRUE,
               "rho"="0",
@@ -105,7 +106,8 @@ if (as.logical(config["pass_only"])) {
 }
 
 af.max <- as.numeric(config["alt_freq_max"])
-filterByRare(seqData, sample.id, af.max=af.max)
+build <- config["genome_build"]
+filterByRare(seqData, sample.id, af.max=af.max, build=build)
 
 checkSelectedVariants(seqData)
 
@@ -137,7 +139,8 @@ assoc <- assocTestAggregate(iterator, nullModel,
                             weight.user=weight.user,
                             test=test,
                             burden.test=test.type,
-                            rho=rho)
+                            rho=rho,
+                            genome.build=build)
 
 assoc <- addMAC(assoc, "aggregate")
 
