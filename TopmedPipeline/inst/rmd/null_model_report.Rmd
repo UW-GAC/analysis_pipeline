@@ -161,18 +161,22 @@ if (!is.null(random)) {
 }
 ```
 
-```{r group-header, results='asis'}
+```{r variance-adjustment-header, results = 'asis'}
 if (!is.null(group_var)) {
   cat("## Variance adjustment")
 }
 ```
 
-```{r group-plots}
+```{r variance-adjustment-plots}
 if (!is.null(group_var)) {
 
   p <- ggplot(dat, aes(x = group, y = workingY)) +
     geom_boxplot() +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    geom_hline(yintercept = 0) +
+    # Means by group.
+    stat_summary(fun.y=mean, color="red", geom="point") +
+    ylab("Y")
   print(p)
 
   if (!is.null(group_var)) {
@@ -180,7 +184,10 @@ if (!is.null(group_var)) {
   } else {
     p <- ggplot(dat, aes(y = Ytilde))
   }
-    p <- p + geom_boxplot()
+    p <- p +
+      geom_boxplot() +
+      geom_hline(yintercept = 0) +
+      stat_summary(fun.y=mean, color="red", geom="point")
   print(p)
 
 }
