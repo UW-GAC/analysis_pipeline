@@ -21,6 +21,8 @@ configTable <- function(x) {
     dat <- data.frame(parameter=names(x), value=x, row.names=1:length(x))
     knitr::kable(dat)
 }
+
+COLOR_ZERO_LINE = "grey60"
 ```
 
 ```{r}
@@ -90,7 +92,7 @@ names(fixef) <- c("Est", "SE", "Stat", "pval")
 fixef$covar <- rownames(fixef)
 fixef$significant <- fixef$pval < (0.05 / nrow(fixef))
 p <- ggplot(fixef, aes(x = Est, y = covar)) +
-    geom_vline(xintercept = 0) +
+    geom_vline(xintercept = 0, color = COLOR_ZERO_LINE) +
     geom_point(aes(color = significant)) +
     geom_errorbarh(aes(xmin = Est + qnorm(0.025)*SE, xmax = Est + qnorm(0.975)*SE, color = significant))
 
@@ -121,13 +123,13 @@ for (x in covars) {
     if (is.numeric(annot[[x]] )) {
       p <- p +
         geom_point(alpha = 0.1) +
-        geom_hline(yintercept = 0) +
+        geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
         geom_smooth(method = 'lm', color = 'red', fill = 'red') +
         geom_smooth(color = 'blue', linetype = 'dashed', fill = 'blue')
     } else {
       p <- p +
         geom_boxplot() +
-        geom_hline(yintercept = 0) +
+        geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
         # Means by group.
         stat_summary(fun.y=mean, color="red", geom="point")
     }
@@ -136,7 +138,7 @@ for (x in covars) {
 
 p <- ggplot(dat, aes(x = fitted.values, y = resid.marginal)) +
     geom_point(alpha = 0.1) +
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
     geom_smooth(method = 'lm', color = 'red', fill = 'red') +
     geom_smooth(color = 'blue', linetype = 'dashed', fill = 'blue')
 
@@ -154,7 +156,7 @@ if (!is.null(random)) {
   vc <- varCompCI(nullmod, prop = FALSE)
   vc$component <- rownames(vc)
   p <- ggplot(vc, aes(x = Est, y = component)) +
-    geom_vline(xintercept = 0) +
+    geom_vline(xintercept = 0, color = COLOR_ZERO_LINE) +
     geom_point() +
     geom_errorbarh(aes(xmin = `Lower 95`, xmax = `Upper 95`))
   print(p)
@@ -173,7 +175,7 @@ if (!is.null(group_var)) {
   p <- ggplot(dat, aes(x = group, y = workingY)) +
     geom_boxplot() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
     # Means by group.
     stat_summary(fun.y=mean, color="red", geom="point") +
     ylab("Y")
@@ -186,7 +188,7 @@ if (!is.null(group_var)) {
   }
     p <- p +
       geom_boxplot() +
-      geom_hline(yintercept = 0) +
+      geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
       stat_summary(fun.y=mean, color="red", geom="point")
   print(p)
 
@@ -199,14 +201,14 @@ if (!is.null(group_var)) {
 
 p <- ggplot(dat, aes(x = fitted.values, y = Ytilde^2)) +
   geom_point(alpha = 0.1) +
-  geom_hline(yintercept = 1) +
+  geom_hline(yintercept = 1, color = COLOR_ZERO_LINE) +
   geom_smooth(method = 'lm', color = 'red', fill = 'red') +
   geom_smooth(color = 'blue', linetype = 'dashed', fill = 'blue')
 print(p)
 
 p <- ggplot(dat, aes(x = fitted.values, y = Ytilde^2)) +
   geom_point(alpha = 0.1) +
-  geom_hline(yintercept = 1) +
+  geom_hline(yintercept = 1, color = COLOR_ZERO_LINE) +
   geom_smooth(method = 'lm', color = 'red', fill = 'red') +
   geom_smooth(color = 'blue', linetype = 'dashed', fill = 'blue') +
   coord_cartesian(ylim = c(0, 5)) +
