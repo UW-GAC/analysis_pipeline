@@ -122,8 +122,8 @@ for (x in covars) {
       p <- p +
         geom_point(alpha = 0.1) +
         geom_hline(yintercept = 0) +
-        geom_smooth(method = 'lm', color = 'red') +
-        geom_smooth(color = 'blue', linetype = 'dashed')
+        geom_smooth(method = 'lm', color = 'red', fill = 'red') +
+        geom_smooth(color = 'blue', linetype = 'dashed', fill = 'blue')
     } else {
       p <- p +
         geom_boxplot() +
@@ -199,16 +199,16 @@ if (!is.null(group_var)) {
 
 p <- ggplot(dat, aes(x = fitted.values, y = Ytilde^2)) +
   geom_point(alpha = 0.1) +
-  geom_hline(yintercept = 1, color = 'magenta', linetype = 'longdash', size = 1) +
-  geom_smooth(color = 'blue') +
-  geom_smooth(method = 'lm', color = 'forestgreen')
+  geom_hline(yintercept = 1) +
+  geom_smooth(method = 'lm', color = 'red', fill = 'red') +
+  geom_smooth(color = 'blue', linetype = 'dashed', fill = 'blue')
 print(p)
 
 p <- ggplot(dat, aes(x = fitted.values, y = Ytilde^2)) +
   geom_point(alpha = 0.1) +
-  geom_hline(yintercept = 1, color = 'magenta', linetype = 'longdash', size = 1) +
-  geom_smooth(color = 'blue') +
-  geom_smooth(method = 'lm', color = 'forestgreen') +
+  geom_hline(yintercept = 1) +
+  geom_smooth(method = 'lm', color = 'red', fill = 'red') +
+  geom_smooth(color = 'blue', linetype = 'dashed', fill = 'blue') +
   coord_cartesian(ylim = c(0, 5)) +
   ylab("Ytilde^2 zoomed in")
 print(p)
