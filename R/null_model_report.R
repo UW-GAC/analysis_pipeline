@@ -10,8 +10,20 @@ cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
 required <- c()
-optional <- c("out_file"="null_model_report")
+optional <- c("out_file"="null_model_report",
+              "binary"=FALSE,
+              "inverse_normal"=TRUE)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
+print('rendering report for final null model')
 custom_render_markdown("null_model_report", config["out_file"])
+
+# Generate the report for the intermediate model, if necessary.
+if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
+  print('rendering report for intermediate null model')
+  outfile <- gsub("report", "intermediate_report", config["out_file"])
+  print(sprintf("output file: %s", outfile))
+  p <- list(intermediate = TRUE)
+  custom_render_markdown("null_model_report", outfile, parameters = p)
+}

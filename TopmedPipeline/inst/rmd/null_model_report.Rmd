@@ -5,6 +5,8 @@ date: '`r Sys.Date()`'
 output:
   html_document:
     toc: true
+params:
+  intermediate: FALSE
 ---
 
 ```{r setup, include=FALSE}
@@ -31,11 +33,11 @@ scripts <- sapply(files, function(x) {
     tmp <- strsplit(x, split=".", fixed=TRUE)[[1]]
     tmp[length(tmp)-1]
 })
-params <- lapply(setNames(files, scripts), readConfig)
+param_files <- lapply(setNames(files, scripts), readConfig)
 ```
 
 ```{r}
-config <- params$null_model
+config <- param_files$null_model
 phen <- getPhenotypes(config)
 outcome <- phen$outcome
 covars <- phen$covars
@@ -43,7 +45,13 @@ annot <- filter(pData(phen$annot), sample.id %in% phen$sample.id)
 random <- if (!is.na(config["pcrelate_file"])) "kinship" else if (!is.na(config["grm_file"])) "grm" else NULL
 group_var <- if (is.na(config["group_var"])) NULL else config["group_var"]
 model.string <- modelString(outcome, covars, random, group_var)
-nullmod <- getobj(config["out_file"])
+nullmod_file <- config["out_file"]
+if (params$intermediate) {
+  nullmod_file <- gsub(".RData", "_intermediate.RData", nullmod_file)
+  config["inverse_normal"] <- FALSE
+}
+config["null_model_file"] <- nullmod_file
+nullmod <- getobj(nullmod_file)
 is_binary <- as.logical(config["binary"])
 ```
 
