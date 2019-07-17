@@ -1,5 +1,4 @@
 ---
-title: "Null Model Report"
 author: "TOPMed Pipeline"
 date: '`r Sys.Date()`'
 output:
@@ -7,6 +6,10 @@ output:
     toc: true
 params:
   intermediate: FALSE
+---
+
+---
+title: "Null model Report `r if (!is.null(params$intermediate) & params$intermediate) "- intermediate model"`"
 ---
 
 ```{r setup, include=FALSE}
