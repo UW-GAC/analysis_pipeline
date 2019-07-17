@@ -92,7 +92,6 @@ if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
     save(nullmod, file=config["out_file"])
 
     # Save a smaller version of the original null model.
-    nullmod_orig$model.matrix <- NULL
     nullmod_orig$cholSigmaInv <- NULL
     nullmod_orig$CX <- NULL
     nullmod_orig$CXCXI <- NULL
