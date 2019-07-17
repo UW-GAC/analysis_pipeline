@@ -75,10 +75,13 @@ configTable(config[disp])
 ## Phenotype distributions
 
 ```{r outcome-distribution-plot}
+outcome_dat <- data.frame(x = nullmod$outcome)
+names(outcome_dat)[1] <- outcome
+
 if (is_binary) {
-    ggplot(annot, aes_string(outcome)) + geom_bar() + stat_count(geom="text", aes_string(label="..count..", vjust=-0.5))
+    ggplot(outcome_dat, aes_string(outcome)) + geom_bar() + stat_count(geom="text", aes_string(label="..count..", vjust=-0.5))
 } else {
-    ggplot(annot, aes_string(outcome)) + geom_histogram()
+    ggplot(outcome_dat, aes_string(outcome)) + geom_histogram()
 }
 ```
 
