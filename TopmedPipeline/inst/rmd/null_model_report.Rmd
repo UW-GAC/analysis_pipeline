@@ -51,9 +51,7 @@ model.string <- modelString(outcome, covars, random, group_var)
 nullmod_file <- config["out_file"]
 if (params$intermediate) {
   nullmod_file <- gsub(".RData", "_intermediate.RData", nullmod_file)
-  config["inverse_normal"] <- FALSE
 }
-config["null_model_file"] <- nullmod_file
 nullmod <- getobj(nullmod_file)
 is_binary <- as.logical(config["binary"])
 ```
@@ -65,7 +63,7 @@ Number of samples: `r nrow(annot)`
 `r model.string`
 
 ```{r, results='asis'}
-disp <- c("sample_include_file", "phenotype_file", "pca_file", "pcrelate_file", "grm_file", "inverse_normal")
+disp <- c("sample_include_file", "phenotype_file", "pca_file", "pcrelate_file", "grm_file")
 if (as.logical(config["inverse_normal"])) {
     disp <- c(disp, "resid_covars")
     if (!is.na(config["group_var"])) {
