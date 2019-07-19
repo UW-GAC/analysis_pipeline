@@ -53,7 +53,7 @@ pipeline = cluster.getPipelinePath()
 driver = os.path.join(pipeline, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
-configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots", "report"])
+configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "report"])
 
 # analysis init
 cluster.analysisInit(print_only=print_only)
@@ -71,7 +71,20 @@ TopmedPipeline.writeConfig(config, configfile)
 
 submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], request_cores=ncores, email=email, print_only=print_only)
 
-    
+
+# null model report
+job = "null_model_report"
+
+rscript = os.path.join(pipeline, "R", job + ".R")
+
+config = deepcopy(configdict)
+config["out_file"] = configdict["out_prefix"] + "_null_model_report"
+configfile = configdict["config_prefix"] + "_" + job + ".config"
+TopmedPipeline.writeConfig(config, configfile)
+
+submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=submitID, email=email, print_only=print_only)
+
+
 # post analysis
 job = "post_analysis"
 jobpy = job + ".py"
