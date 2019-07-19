@@ -5,11 +5,11 @@ output:
   html_document:
     toc: true
 params:
-  intermediate: FALSE
+  invnorm: FALSE
 ---
 
 ---
-title: "Null model Report `r if (!is.null(params$intermediate) & params$intermediate) "- intermediate model"`"
+title: "Null model report `r if (!is.null(params$invnorm) & params$invnorm) "- inverse normal transform"`"
 ---
 
 ```{r setup, include=FALSE}
@@ -48,9 +48,9 @@ annot <- filter(pData(phen$annot), sample.id %in% phen$sample.id)
 random <- if (!is.na(config["pcrelate_file"])) "kinship" else if (!is.na(config["grm_file"])) "grm" else NULL
 group_var <- if (is.na(config["group_var"])) NULL else config["group_var"]
 model.string <- modelString(outcome, covars, random, group_var)
-nullmod_file <- config["out_file"]
-if (params$intermediate) {
-  nullmod_file <- gsub(".RData", "_intermediate.RData", nullmod_file)
+nullmod_file <- gsub(".RData", "_small.RData", config["out_file"])
+if (params$invnorm) {
+  nullmod_file <- gsub(".RData", "_invnorm_small.RData", config["out_file"])
 }
 nullmod <- getobj(nullmod_file)
 is_binary <- as.logical(config["binary"])
@@ -290,7 +290,7 @@ variances (if applicable); these are the values that are correlated with
 genotype to test for association.
 
 ```{r, results = 'asis'}
-if (!is_binary) {
+if (!is_binary & !params$invnorm) {
   text <- paste(
     "It may be problematic for association testing if this distribution is far
     from Gaussian. This problem can be alleviated by rank normalizing `PY` and
