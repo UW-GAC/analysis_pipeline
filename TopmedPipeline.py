@@ -820,7 +820,7 @@ class Slurm_Cluster(Cluster):
             jobid = submitOpts["--job-name"]
         else:
             self.printVerbose("submitting job: " + sub_cmd)
-            super(Slurm_Cluster, self).analysisLog("sbatch: " + sub_cmd)
+            super(Slurm_Cluster, self).analysisLog("sbatch: " + sub_cmd + "\n")
             process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE)
             pipe = process.stdout
             sub_out = pipe.readline()
