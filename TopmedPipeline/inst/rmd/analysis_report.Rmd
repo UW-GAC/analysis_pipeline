@@ -1,5 +1,5 @@
 ---
-title: "Analysis Report"
+title: "Analysis report"
 author: "TOPMed Pipeline"
 date: '`r Sys.Date()`'
 output: html_document
@@ -43,6 +43,8 @@ model.string <- modelString(outcome, covars, random, group_var)
 ```
 
 Number of samples: `r nrow(annot)`
+
+`r if (!as.logical(config["binary"])) paste("Inverse normal:", config["inverse_normal"])`
 
 `r model.string`
 
