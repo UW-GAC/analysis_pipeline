@@ -267,11 +267,10 @@ config parameter | default value | description
 
 `assoc.py single`
 
-1. `null_model.R`
-2. `define_segments.R`
-3. `assoc_single.R`
-4. `asoc_combine.R`
-5. `assoc_plots.R`
+1. `define_segments.R`
+2. `assoc_single.R`
+3. `asoc_combine.R`
+4. `assoc_plots.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -298,12 +297,11 @@ config parameter | default value | description
 
 `assoc.py aggregate`
 
-1. `null_model.R`
-2. `aggregate_list.R`
-3. `define_segments.R`
-4. `assoc_aggregate.R`
-5. `asoc_combine.R`
-6. `assoc_plots.R`
+1. `aggregate_list.R`
+2. `define_segments.R`
+3. `assoc_aggregate.R`
+4. `asoc_combine.R`
+5. `assoc_plots.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -316,11 +314,10 @@ config parameter | default value | description
 
 `assoc.py window`
 
-1. `null_model.R`
-2. `define_segments.R`
-3. `assoc_window.R`
-4. `asoc_combine.R`
-5. `assoc_plots.R`
+1. `define_segments.R`
+2. `assoc_window.R`
+3. `asoc_combine.R`
+4. `assoc_plots.R`
 
 config parameter | default value | description
 --- | --- | ---
