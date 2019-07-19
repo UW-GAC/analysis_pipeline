@@ -68,10 +68,17 @@ nullmod <- fitNullModel(annot, outcome=outcome, covars=covars,
                         cov.mat=grm, sample.id=sample.id,
                         family=family, group.var=group.var)
 
+# Save a smaller version of the original null model.
+nullmod_small <- smallNullModel(nullmod)
+outfile <- config["out_file"]
+save(nullmod_small, file=gsub(".RData$", "_small.RData", outfile))
+
+
 ## if we need an inverse normal transform, take residuals and refit null model
 if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
+
     if (as.logical(config["norm_bygroup"]) & !is.null(group.var)) {
-        norm.option <- "by.group"  
+        norm.option <- "by.group"
     } else {
         norm.option <- "all"
     }
@@ -82,13 +89,23 @@ if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
     } else {
         rescale <- "none"
     }
-    
+
     nullmod <- nullModelInvNorm(nullmod, cov.mat=grm,
                                 norm.option=norm.option,
                                 rescale=rescale)
+
+    # Save a smaller version of the null model.
+    nullmod_small <- smallNullModel(nullmod)
+    save(nullmod_small, file=gsub(".RData$", "_invnorm_small.RData", outfile))
+
+    # change filename to indicate invnorm
+    outfile <- gsub(".RData$", "_invnorm.RData", outfile)
 }
 
-save(nullmod, file=config["out_file"])
+# save full version of final model
+save(nullmod, file = outfile)
+
+
 
 # mem stats
 ms <- gc()

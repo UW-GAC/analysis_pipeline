@@ -1,5 +1,5 @@
 ---
-title: "Analysis Report"
+title: "Analysis report"
 author: "TOPMed Pipeline"
 date: '`r Sys.Date()`'
 output: html_document
@@ -29,7 +29,6 @@ scripts <- sapply(files, function(x) {
 params <- lapply(setNames(files, scripts), readConfig)
 ```
 
-
 ## Null model
 
 ```{r}
@@ -45,37 +44,10 @@ model.string <- modelString(outcome, covars, random, group_var)
 
 Number of samples: `r nrow(annot)`
 
+`r if (!as.logical(config["binary"])) paste("Inverse normal:", config["inverse_normal"])`
+
 `r model.string`
 
-
-```{r, results='asis'}
-disp <- c("sample_include_file", "phenotype_file", "pca_file", "pcrelate_file", "grm_file", "inverse_normal")
-if (as.logical(config["inverse_normal"])) {
-    disp <- c(disp, "resid_covars")
-    if (!is.na(config["group_var"])) {
-        disp <- c(disp, "rescale_variance")
-    }
-}
-configTable(config[disp])
-```
-
-```{r}
-if (as.logical(config["binary"])) {
-    ggplot(annot, aes_string(outcome)) + geom_bar() + stat_count(geom="text", aes_string(label="..count..", vjust=-0.5))
-} else {
-    ggplot(annot, aes_string(outcome)) + geom_histogram()
-}
-```
-
-```{r}
-for (x in covars[-grep("^PC[[:digit:]]+", covars)]) {
-    if (is.numeric(annot[[x]] )) {
-        print(ggplot(annot, aes_string(x)) + geom_histogram())
-    } else {
-        print(ggplot(annot, aes_string(x)) + geom_bar() + stat_count(geom="text", aes_string(label="..count..", vjust=-0.5)))
-    }
-}
-```
 
 
 ## Association test

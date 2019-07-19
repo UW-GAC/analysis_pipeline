@@ -1,0 +1,17 @@
+"outcome" "status"
+"phenotype_file" "testdata/1KG_phase3_subset_annot.RData"
+"gds_file" NA
+"pca_file" "testdata/pcair.RData"
+"pcrelate_file" "testdata/pcrelate_Matrix.RData"
+"grm_file" NA
+"binary" "TRUE"
+"conditional_variant_file" NA
+"covars" "sex"
+"group_var" NA
+"inverse_normal" "TRUE"
+"n_pcs" "4"
+"norm_bygroup" "FALSE"
+"out_file" "data/test_null_model.RData"
+"out_phenotype_file" "data/test_phenotypes.RData"
+"rescale_variance" "marginal"
+"sample_include_file" NA
