@@ -314,10 +314,18 @@ class Cluster(object):
         memLimits = self.clusterCfg["memory_limits"]
         if memLimits is None:
             return memlim
-        jobMem = [ v for k,v in memLimits.iteritems() if job_name.find(k) != -1 ]
-        if len(jobMem):
-            # just find the first match to job_name
-            memlim = jobMem[0]
+        # find a dicitionary of all partial match with job_name
+        fd = dict(filter(lambda elem: job_name.find(elem[0]) !=-1,memLimits.items()))
+        # if we have an exact match
+        if job_name in fd.keys():
+            memlim = fd[job_name]
+        # else we have a partial match
+        else:
+            jobMem = [ v for k,v in fd.iteritems() if job_name.find(k) != -1 ]
+            if len(jobMem):
+                # find if there is an exact match with jobname and memlimit's key
+                # just find the first match to job_name
+                memlim = jobMem[0]
         self.printVerbose('\t>>> Memory Limit - job: ' + job_name + " memlim: " +
                           str(memlim) + "MB")
         return memlim
