@@ -20,6 +20,7 @@
     	    "kinship_plots":8000,
     	    "ld_pruning":12000,
     	    "null_model":32000,
+    	    "null_model_report":2000,
     	    "pca_byrel":8000,
     	    "pca_corr":8000,
     	    "pca_corr_plots":32000,
