@@ -55,6 +55,7 @@ gds <- seqOpen(gdsfile)
 annot <- getobj(config["phenotype_file"])
 
 # createSeqVarData object
+annot <- matchAnnotGds(gds, annot)
 seqData <- SeqVarData(gds, sampleData=annot)
 
 # get aggregate list

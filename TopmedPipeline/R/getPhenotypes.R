@@ -55,7 +55,7 @@ getPhenotypes <- function(config) {
 
     ## match annot to gds file
     if (!is.na(config["gds_file"])) {
-        annot <- .matchAnnotGds(config, annot)
+        annot <- .matchAnnotGdsConfig(config, annot)
     }
 
     list(annot=annot, outcome=outcome, covars=covars, group.var=group.var, sample.id=sample.id)
@@ -122,13 +122,31 @@ getPhenotypes <- function(config) {
 #' @importFrom dplyr left_join
 #'
 #' @noRd
-.matchAnnotGds <- function(config, annot) {
+.matchAnnotGdsConfig <- function(config, annot) {
     tmp <- sub(" ", "[[:alnum:]]+", config["gds_file"])
     gdsfile <-  list.files(path=dirname(tmp), pattern=basename(tmp), full.names=TRUE)[1]
     gds <- seqOpen(gdsfile)
-    sample.id <- seqGetData(gds, "sample.id")
+    annot <- matchAnnotGds(gds, annot)
     seqClose(gds)
-    dat <- data.frame(sample.id, stringsAsFactors=FALSE)
-    pData(annot) <- left_join(dat, pData(annot), by="sample.id")
+    annot
+}
+
+#' Return an expanded AnnotatedDataFrame with the same sample.id as the gds_file
+#'
+#' @param gds SeqVarGDSClass object
+#' @param annot AnnotatedDataFrame with sample.id matching gds file
+#' @return AnnotatedDataFrame with sample.id matching gds file, and NA values for all
+#'   samples not in original annot
+#'
+#' @import Biobase
+#' @importFrom dplyr left_join
+#'
+#' @export
+matchAnnotGds <- function(gds, annot) {
+    sample.id <- seqGetData(gds, "sample.id")
+    if (!(isTRUE(all.equal(sample.id, annot$sample.id)))) {
+        dat <- data.frame(sample.id, stringsAsFactors=FALSE)
+        pData(annot) <- left_join(dat, pData(annot), by="sample.id")
+    }
     annot
 }
