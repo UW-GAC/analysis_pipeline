@@ -73,11 +73,8 @@ TopmedPipeline.writeConfig(config, configfile)
 
 args = ["-c", rscript, configfile]
 
-# add special submit option to make one array job hold on anther array job, element-wise
-job_cmd = cluster.clusterCfg["submit_cmd"]
-subOpts = deepcopy(cluster.clusterCfg["submit_opts"])
-subOpts["-hold_jid_ad"] = jobid
-jobid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name=job, cmd=driver, args=args, array_range=chromosomes, email=email, print_only=print_only)
+# add hold on anther array job, element-wise
+jobid = cluster.submitJob(binary=True, hold_array = jobid, job_name=job, cmd=driver, args=args, array_range=chromosomes, email=email, print_only=print_only)
 
 # post analysis
 job = "post_analysis"
@@ -86,5 +83,4 @@ pcmd=os.path.join(pipeline, jobpy)
 argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
 pdriver=os.path.join(pipeline, "run_python.sh")
-cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
-                  holdid=[jobid], print_only=print_only)
+cluster.submitJob(job_name=job, cmd=pdriver, args=argList, holdid=[jobid], print_only=print_only)

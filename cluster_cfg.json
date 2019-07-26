@@ -30,6 +30,7 @@
         },
         "submit_cmd": "qsub",
         "submit_opts": {
+            "-b": null,
             "-cwd":"",
             "-N":"",
             "-j":"y",
