@@ -17,13 +17,14 @@ config <- setConfigDefaults(config, required, optional)
 print(config)
 
 print('rendering report for original null model')
-custom_render_markdown("null_model_report", config["out_file"])
+p <- list(pipeline_version = argv$version)
+custom_render_markdown("null_model_report", config["out_file"], parameters = p)
 
 # Generate the report for the inverse normal, if necessary.
 if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
   print('rendering report for inverse normal transform')
   outfile <- gsub("report", "invnorm_report", config["out_file"])
   print(sprintf("output file: %s", outfile))
-  p <- list(invnorm = TRUE)
+  p <- c(p, list(invnorm = TRUE))
   custom_render_markdown("null_model_report", outfile, parameters = p)
 }
