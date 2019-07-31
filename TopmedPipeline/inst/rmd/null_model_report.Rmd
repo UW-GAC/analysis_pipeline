@@ -9,7 +9,7 @@ params:
 ---
 
 ---
-title: "Null model report `r if (!is.null(params$invnorm) & params$invnorm) "- inverse normal transform"`"
+title: "Null model report `r if (!is.null(params$invnorm) & params$invnorm) "- rank-based inverse normal transform"`"
 author: "TOPMed Pipeline v`r params$pipeline_version`"
 ---
 
