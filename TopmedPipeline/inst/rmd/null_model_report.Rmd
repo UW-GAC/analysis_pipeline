@@ -141,19 +141,22 @@ if (any(fixef$significant)) {
 ```{r marginal-helper-text, results = "asis"}
 if (is_binary) {
   text <- paste(
-    "Plots of marginal residuals vs covariates should have a trend line near
-    the `y = 0` line for continuous covariates, or the mean of each group near
-    0 for categorical covariates. A distinct trend could indicate that a more
-    complex term for that covariate is needed (e.g. quadratic, spline, etc.)."
+    "For continuous covariates, plots of marginal residuals vs covariates
+    should have a red linear trend line near the `y = 0` line and a blue
+    smoothed (cubic regression spline) curve near the y = 0 line. For
+    categorical covariates, the mean of each group should be near 0. A distinct
+    trend could indicate that a more complex term for that covariate is needed
+    (e.g. quadratic, spline, etc.)."
   )
 } else {
   text <- paste(
     "Plots of marginal residuals vs covariates should show no distinct
-    pattern, appearing as random noise, with the trend line near the `y = 0`
-    line for continuous covariates, or the mean of each group near 0 for
-    categorical covariates. A distinct pattern or trend could indicate that a
-    more complex term for that covariate is needed, (e.g. quadratic, spline,
-    etc.)."
+    pattern, appearing as random noise. For continuous covariates, the red
+    linear trend line and the blue smoothed curve (cubic regression spline)
+    should be near the y = 0 line. For categorical covariates, the black cross
+    indicating the group mean should be near 0. A distinct pattern or trend
+    could indicate that a more complex term for that covariate is needed,
+    (e.g. quadratic, spline, etc.)."
   )
 }
 cat(text)
@@ -198,16 +201,18 @@ for (x in covars) {
 ```{r, results = 'asis'}
 if (is_binary) {
   text <- paste(
-    "Plots of marginal residuals vs fitted values should have a trend line near
-    the `y = 0` line. A distinct pattern or trend could indicate that additional
+    "Plots of marginal residuals vs fitted values should have the red linear
+    trend line and the blue smoothed curve (cubic regression spline) near the
+    `y = 0` line. A distinct pattern or trend could indicate that additional
     covariates are needed, or that the variance model is inadequate."
   )
 } else {
   text <- paste(
     "Plots of marginal residuals vs fitted values should show no distinct
-    pattern, appearing as random noise, with the trend line near the `y = 0`
-    line. A distinct pattern or trend could indicate that additional covariates
-    are needed, or that the variance model is inadequate."
+    pattern, appearing as random noise, with the red linear trend line and the
+    blue smoothed curve (cubic regression spline) near the `y = 0` line. A
+    distinct pattern or trend could indicate that additional covariates are
+    needed, or that the variance model is inadequate."
   )
 }
 cat(text)
@@ -310,7 +315,8 @@ print(p)
 The projected phenotype values (`PY`) are the phenotype values after adjusting
 for the fixed effect covariates, random effects, and heterogenous residual
 variances (if applicable); these are the values that are correlated with
-genotype to test for association.
+genotype to test for association. The density curve for each group is shown; the
+heavy black line is the density curve pooled across all groups.
 
 ```{r, results = 'asis'}
 if (!is_binary & !params$invnorm) {
