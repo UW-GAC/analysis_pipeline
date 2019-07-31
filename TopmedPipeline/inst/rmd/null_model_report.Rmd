@@ -269,7 +269,7 @@ if (!is.null(group_var)) {
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
     # Means by group.
-    stat_summary(fun.y=mean, color="red", geom="point") +
+    stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point")
     ylab("Y")
   print(p)
 
@@ -281,7 +281,7 @@ if (!is.null(group_var)) {
     p <- p +
       geom_boxplot() +
       geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
-      stat_summary(fun.y=mean, color="red", geom="point")
+      stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point")
   print(p)
 
 }
