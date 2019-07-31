@@ -104,13 +104,35 @@ fixef <- nullmod$fixef
 # Rename fixef columns because they are different for different types of models.
 names(fixef) <- c("Est", "SE", "Stat", "pval")
 fixef$covar <- rownames(fixef)
-fixef$significant <- fixef$pval < (0.05 / nrow(fixef))
-p <- ggplot(fixef, aes(x = Est, y = covar)) +
+fixef <- fixef %>%
+  mutate(
+    significant = pval < (0.05 / n()),
+    errorbar_min = Est + qnorm(0.025)*SE,
+    errorbar_max = Est + qnorm(0.975)*SE
+  )
+cols <- c("FALSE" = "grey70", "TRUE" = "red")
+p <- ggplot(fixef, aes(x = Est, y = covar, color = significant)) +
     geom_vline(xintercept = 0, color = COLOR_ZERO_LINE) +
-    geom_point(aes(color = significant)) +
-    geom_errorbarh(aes(xmin = Est + qnorm(0.025)*SE, xmax = Est + qnorm(0.975)*SE, color = significant))
+    geom_point() +
+    geom_errorbarh(aes(xmin = errorbar_min, xmax = errorbar_max)) +
+    scale_color_manual(values = cols)
 
 print(p)
+```
+
+
+```{r fixef-plot-signif}
+if (any(fixef$significant)) {
+  # Make a plot that's zoomed in to show only the significant effects.
+  idx_signif <- fixef[, "significant"]
+  # Calculate the range based on the error bars.
+  minx <- min(c(0, fixef$errorbar_min[idx_signif]))
+  maxx <- max(c(0, fixef$errorbar_max[idx_signif]))
+  p2 <- p +
+     coord_cartesian(xlim = c(minx, maxx)) +
+     ggtitle("Covariate effects - zoomed to significant only")
+  print(p2)
+}
 ```
 
 ## Marginal residuals
