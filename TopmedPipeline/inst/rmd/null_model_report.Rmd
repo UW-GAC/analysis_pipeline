@@ -189,7 +189,7 @@ for (x in covars) {
         geom_boxplot() +
         geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
         # Means by group.
-        stat_summary(fun.y=mean, color="red", geom="point")
+        stat_summary(fun.y=mean, color="black", shape = 4, geom="point", size = 3)
     }
     print(p)
 }
