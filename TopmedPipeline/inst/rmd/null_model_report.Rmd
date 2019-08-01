@@ -266,11 +266,9 @@ if (!is.null(group_var)) {
 
 ```{r variance-adjustment-plots}
 if (!is.null(group_var)) {
-
   p <- ggplot(dat, aes(x = group, y = workingY)) +
     geom_boxplot() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
     # Means by group.
     stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point")
     ylab("Y")
