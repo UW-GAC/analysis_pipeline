@@ -181,3 +181,21 @@ addMAC <- function(assoc, assoc_type) {
     }
     assoc
 }
+
+
+#' Remove conditional variants from assoc file
+#'
+#' @param assoc results from \code{\link[GENESIS]{assocTestSingle}}
+#' @param varfile conditional variant filename (RData containing data.frame with columns "variant.id", "chromosome")
+#'
+#' @return \code{assoc} with conditional variants removed
+#' @importFrom dplyr anti_join select_
+#'
+#' @export
+removeConditional <- function(assoc, varfile) {
+    dat <- getobj(varfile)
+    stopifnot(all(c("chromosome", "variant.id") %in% names(dat)))
+    dat <- select_(dat, "variant.id", chr="chromosome")
+    dat$chr <- as.character(dat$chr)
+    anti_join(assoc, dat, by=c("variant.id", "chr"))
+}

@@ -1,7 +1,7 @@
 #' Get phenotypes
 #'
 #' @param config Config object (named vector) with params "phenotype_file", "n_pcs", "pca_file",
-#'   "outcome", "covars", "sample_include_file", "gds_file", "conditional_variants"
+#'   "outcome", "covars", "sample_include_file", "gds_file", "conditional_variant_file"
 #' @return list with annot, outcome, covars, sample.id
 #'
 #' @import Biobase
