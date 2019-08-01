@@ -82,7 +82,7 @@ config["out_file"] = configdict["out_prefix"] + "_null_model_report"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=submitID, email=email, print_only=print_only)
+submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[submitID], email=email, print_only=print_only)
 
 
 # post analysis
@@ -93,4 +93,4 @@ argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog()
            "-s", cluster.getAnalysisStartSec()]
 pdriver=os.path.join(pipeline, "run_python.sh")
 cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
-                  holdid=submitID, print_only=print_only)
+                  holdid=[submitID], print_only=print_only)
