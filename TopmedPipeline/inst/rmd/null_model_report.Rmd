@@ -73,6 +73,10 @@ for(i in 1:g){
 }
 dat$group <- group
 dat <- left_join(dat, annot, by = "sample.id")
+
+if (is_binary) {
+  dat[[outcome]] <- as.factor(dat[[outcome]])
+}
 ```
 
 ## Config
@@ -333,9 +337,11 @@ if (!is.null(group_var)) {
     geom_density(aes(color = group)) +
     geom_density(size = 2)
 } else {
-  p <- p +
-    geom_histogram()
-
+  if (is_binary) {
+    p <- p + geom_histogram(aes_string(fill = outcome))
+  } else {
+    p <- p + geom_histogram()
+  }
 }
 print(p)
 ```
