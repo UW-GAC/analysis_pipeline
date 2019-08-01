@@ -20,6 +20,7 @@ library(GENESIS)
 library(Biobase)
 library(dplyr)
 library(ggplot2)
+library(grid)
 theme_set(theme_bw())
 
 configTable <- function(x) {
@@ -332,16 +333,29 @@ if (!is_binary & !params$invnorm) {
 p <- ggplot(dat, aes(x = PY))
 if (!is.null(group_var)) {
   p <- p +
-    geom_density(aes(color = group)) +
-    geom_density(size = 2)
+    stat_density(aes(color = group), geom = "line", position = "identity") +
+    #geom_density(aes(color = group)) +
+    geom_density(size = 2) +
+    theme(legend.position = "top", legend.justification = c(0.5, 1))
+  print(p + theme(legend.position = "none"))
+
+  # Put the legend in a separate plot in case there is a large number of groups.
+  g_legend <- function(my_ggplot) {
+    tmp <- ggplot_gtable(ggplot_build(my_ggplot))
+    leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+    legend <- tmp$grobs[[leg]]
+    legend
+  }
+  grid.newpage()
+  grid.draw(g_legend(p))
 } else {
   if (is_binary) {
     p <- p + geom_histogram(aes_string(fill = outcome))
   } else {
     p <- p + geom_histogram()
   }
+  print(p)
 }
-print(p)
 ```
 
 # Session information
