@@ -14,6 +14,7 @@ chr <- intToChr(argv$chromosome)
 
 required <- c("variant_group_file")
 optional <- c("aggregate_type"="allele",
+              "group_id"="group_id",
               "out_file"="aggregate_list.RData")
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -30,8 +31,11 @@ if (!is.na(chr)) {
 groups <- getobj(varfile)
 
 ## rename columns if necessary
-names(groups)[names(groups) == "chromosome"] <- "chr"
-names(groups)[names(groups) == "position"] <- "pos"
+names(groups)[names(groups) %in% config["group_id"]] <- "group_id"
+names(groups)[names(groups) %in% c("chromosome", "CHROM")] <- "chr"
+names(groups)[names(groups) %in% c("position", "POS")] <- "pos"
+names(groups)[names(groups) %in% "REF"] <- "ref"
+names(groups)[names(groups) %in% "ALT"] <- "alt"
 
 ## subset groups by chromosome
 groups <- groups[groups$chr == chr,]

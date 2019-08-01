@@ -307,6 +307,7 @@ config parameter | default value | description
 --- | --- | ---
 `aggregate_type` | `allele` | Type of aggregate grouping. Options are to select variants by `allele` (unique variants) or `position` (regions of interest).
 `variant_group_file` | | RData file with data frame defining aggregate groups. If `aggregate_type` is `allele`, columns should be `group_id`, `chr`, `pos`, `ref`, `alt`. If `aggregate_type` is `position`, columns should be `group_id`, `chr`, `start`, `end`.
+`group_id` | `group_id` | Alternate name for `group_id` column
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. Variants used will be the intersection of this set and variants defined by `variant_group_file`.
 
 
