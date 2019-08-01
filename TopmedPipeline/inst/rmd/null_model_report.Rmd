@@ -155,6 +155,17 @@ if (any(fixef$significant)) {
 }
 ```
 
+```{r fixef-table-significant, results = 'asis'}
+if (any(fixef$significant)) {
+  cat('### Significant covariate effect sizes\n\n')
+  table_data <- fixef[fixef$significant, c("covar", "Est", "SE", "Stat", "pval")]
+  table_data$pval <- sprintf("%4.3e", table_data$pval)
+  names(table_data)[[1]] <- "Covariate"
+  k <- knitr::kable(table_data, align = "r")
+  print(k)
+}
+```
+
 ## Marginal residuals
 
 
