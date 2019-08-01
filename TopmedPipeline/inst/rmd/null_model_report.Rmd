@@ -57,6 +57,24 @@ nullmod <- getobj(nullmod_file)
 is_binary <- as.logical(config["binary"])
 ```
 
+```{r prepare-data}
+dat <- data.frame(sample.id = nullmod$sample.id,
+                  workingY = nullmod$workingY,
+                  fitted.values = nullmod$fitted.values,
+                  resid.marginal = nullmod$resid.marginal,
+                  PY = as.vector(nullmod$resid),
+                  Ytilde = as.vector(nullmod$Ytilde),
+                  stringsAsFactors = FALSE)
+# TODO: Add group_var check.
+g <- length(nullmod$group.idx)
+group <- rep(NA, length(nullmod$sample.id))
+for(i in 1:g){
+    group[nullmod$group.idx[[i]]] <- names(nullmod$group.idx)[i]
+}
+dat$group <- group
+dat <- left_join(dat, annot, by = "sample.id")
+```
+
 ## Config
 
 Number of samples: `r nrow(annot)`
@@ -77,13 +95,10 @@ configTable(config[disp])
 ## Phenotype distributions
 
 ```{r outcome-distribution-plot}
-outcome_dat <- data.frame(x = nullmod$outcome)
-names(outcome_dat)[1] <- outcome
-
 if (is_binary) {
-    ggplot(outcome_dat, aes_string(outcome)) + geom_bar() + stat_count(geom="text", aes_string(label="..count..", vjust=-0.5))
+    ggplot(dat, aes_string(outcome)) + geom_bar() + stat_count(geom="text", aes_string(label="..count..", vjust=-0.5))
 } else {
-    ggplot(outcome_dat, aes_string(outcome)) + geom_histogram()
+    ggplot(dat, aes_string(outcome)) + geom_histogram()
 }
 ```
 
@@ -163,22 +178,6 @@ cat(text)
 ```
 
 ```{r residual-plots}
-dat <- data.frame(sample.id = nullmod$sample.id,
-                  workingY = nullmod$workingY,
-                  fitted.values = nullmod$fitted.values,
-                  resid.marginal = nullmod$resid.marginal,
-                  PY = as.vector(nullmod$resid),
-                  Ytilde = as.vector(nullmod$Ytilde),
-                  stringsAsFactors = FALSE)
-# TODO: Add group_var check.
-g <- length(nullmod$group.idx)
-group <- rep(NA, length(nullmod$sample.id))
-for(i in 1:g){
-    group[nullmod$group.idx[[i]]] <- names(nullmod$group.idx)[i]
-}
-dat$group <- group
-dat <- left_join(dat, annot, by = "sample.id")
-
 for (x in covars) {
     p <- ggplot(dat, aes_string(x = x, y = "resid.marginal"))
     if (is.numeric(annot[[x]] )) {
