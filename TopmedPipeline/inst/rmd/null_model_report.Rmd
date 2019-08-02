@@ -49,13 +49,18 @@ covars <- phen$covars
 annot <- filter(pData(phen$annot), sample.id %in% phen$sample.id)
 random <- if (!is.na(config["pcrelate_file"])) "kinship" else if (!is.na(config["grm_file"])) "grm" else NULL
 group_var <- if (is.na(config["group_var"])) NULL else config["group_var"]
-model.string <- modelString(outcome, covars, random, group_var)
 nullmod_file <- gsub(".RData", "_small.RData", config["out_file"])
 if (params$invnorm) {
   nullmod_file <- gsub(".RData", "_invnorm_small.RData", config["out_file"])
 }
 nullmod <- getobj(nullmod_file)
 is_binary <- as.logical(config["binary"])
+
+is_invnorm <- !is_binary & params$invnorm & as.logical(config["inverse_normal"])
+
+model_string <- modelString(outcome, covars, random, group_var,
+                            inverse_normal = is_invnorm)
+outcome_string <- modelOutcomeString(outcome, inverse_normal = is_invnorm)
 ```
 
 ```{r prepare-data}
@@ -87,7 +92,7 @@ if (is_binary) {
 
 Number of samples: `r nrow(annot)`
 
-`r model.string`
+`r model_string`
 
 ```{r, results='asis'}
 disp <- c("sample_include_file", "phenotype_file", "pca_file", "pcrelate_file", "grm_file")
@@ -107,11 +112,11 @@ if (is_binary) {q
     ggplot(dat, aes(model_outcome)) +
       geom_bar() +
       stat_count(geom="text", aes_string(label="..count..", vjust=-0.5)) +
-      xlab(outcome)
+      xlab(outcome_string)
 } else {
     ggplot(dat, aes(model_outcome)) +
       geom_histogram() +
-      xlab(outcome)
+      xlab(outcome_string)
 
 }
 ```
