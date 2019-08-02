@@ -2,9 +2,12 @@
 % Please edit documentation in R/report.R
 \name{modelString}
 \alias{modelString}
-\title{Create model strings}
+\alias{modelOutcomeString}
+\title{Create model strings for an analysis}
 \usage{
-modelString(outcome, covars, random, group_var)
+modelString(outcome, covars, random, group_var, inverse_normal = FALSE)
+
+modelOutcomeString(outcome, inverse_normal = FALSE)
 }
 \arguments{
 \item{outcome}{outcome string}
@@ -14,10 +17,19 @@ modelString(outcome, covars, random, group_var)
 \item{random}{vector of random effect strings}
 
 \item{group_var}{grouping variable string}
+
+\item{inverse_normal}{indicator of whether the model was refit with inverse-normal transformed residuals}
 }
 \value{
 String representing analysis model
 }
 \description{
-Create model strings
+Create model strings for an analysis
 }
+\section{Functions}{
+\itemize{
+\item \code{modelString}: Create a string for the entire model
+
+\item \code{modelOutcomeString}: Create model outcome strings
+}}
+
