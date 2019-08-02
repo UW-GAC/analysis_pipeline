@@ -61,6 +61,8 @@ is_binary <- as.logical(config["binary"])
 ```{r prepare-data}
 dat <- data.frame(sample.id = nullmod$sample.id,
                   workingY = nullmod$workingY,
+                  # Need as.vector here because sometimes it's a matrix (but not always)
+                  model_outcome = as.vector(nullmod$outcome),
                   fitted.values = nullmod$fitted.values,
                   resid.marginal = nullmod$resid.marginal,
                   PY = as.vector(nullmod$resid),
@@ -77,6 +79,7 @@ dat <- left_join(dat, annot, by = "sample.id")
 
 if (is_binary) {
   dat[[outcome]] <- as.factor(dat[[outcome]])
+  dat$model_outcome <- as.factor(dat$model_outcome)
 }
 ```
 
@@ -100,10 +103,16 @@ configTable(config[disp])
 ## Phenotype distributions
 
 ```{r outcome-distribution-plot}
-if (is_binary) {
-    ggplot(dat, aes_string(outcome)) + geom_bar() + stat_count(geom="text", aes_string(label="..count..", vjust=-0.5))
+if (is_binary) {q
+    ggplot(dat, aes(model_outcome)) +
+      geom_bar() +
+      stat_count(geom="text", aes_string(label="..count..", vjust=-0.5)) +
+      xlab(outcome)
 } else {
-    ggplot(dat, aes_string(outcome)) + geom_histogram()
+    ggplot(dat, aes(model_outcome)) +
+      geom_histogram() +
+      xlab(outcome)
+
 }
 ```
 
