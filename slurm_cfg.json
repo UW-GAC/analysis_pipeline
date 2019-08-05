@@ -80,7 +80,9 @@
             "--volumes": null,
             "--environment": null,
             "--mem_limit": null,
-            "--working_dir": null
+            "--working_dir": null,
+            "--machine": null,
+            "--cost": null
         }
     }
 }

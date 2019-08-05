@@ -6,77 +6,113 @@
         "tm2": {
             "tm2-4-26": {
                 "cores": 4,
-                "mem": 26000
+                "mem": 26000,
+                "type": "n1-highmem-4",
+                "cost": 0.05
             },
             "tm2-8-30": {
                 "cores": 8,
-                "mem": 30000
+                "mem": 30000,
+                "type": "n1-standard-8",
+                "cost": 0.38
             },
             "tm2-16-60": {
                 "cores": 16,
-                "mem": 60000
+                "mem": 60000,
+                "type": "n1-standard-16",
+                "cost": 0.76
             },
             "tm2-32-120": {
                 "cores": 32,
-                "mem": 120000
+                "mem": 120000,
+                "type": "n1-standard-32",
+                "cost": 1.52
             },
             "tm2-32-208": {
                 "cores": 32,
-                "mem": 208000
+                "mem": 208000,
+                "type": "n1-highmem-32",
+                "cost": 0.40
             },
             "tm2-64-416": {
                 "cores": 64,
-                "mem": 416000
+                "mem": 416000,
+                "type": "n1-highmem-64",
+                "cost": 0.80
             },
             "tm2-32-28": {
                 "cores": 32,
-                "mem": 28000
+                "mem": 28000,
+                "type": "n1-highcpu-32",
+                "cost": 1.1344
             },
             "tm2-64-57": {
                 "cores": 64,
-                "mem": 57000
+                "mem": 57000,
+                "type": "n1-highcpu-64",
+                "cost": 2.2688
             },
             "tm2-96-86": {
                 "cores": 96,
-                "mem": 86000
+                "mem": 86000,
+                "type": "n1-highcpu-96",
+                "cost": 3.402
             }
        },
        "tm1": {
            "tm1-4-26": {
                "cores": 4,
-               "mem": 26000
+               "mem": 26000,
+               "type": "n1-highmem-4",
+               "cost": 0.05
            },
            "tm1-8-30": {
                "cores": 8,
-               "mem": 30000
+               "mem": 30000,
+               "type": "n1-standard-8",
+               "cost": 0.38
            },
            "tm1-16-60": {
                "cores": 16,
-               "mem": 60000
+               "mem": 60000,
+               "type": "n1-standard-16",
+               "cost": 0.76
            },
            "tm1-32-120": {
                "cores": 32,
-               "mem": 120000
+               "mem": 120000,
+               "type": "n1-standard-32",
+               "cost": 1.52
            },
            "tm1-32-208": {
                "cores": 32,
-               "mem": 208000
+               "mem": 208000,
+               "type": "n1-highmem-32",
+               "cost": 0.40
            },
            "tm1-64-416": {
                "cores": 64,
-               "mem": 416000
+               "mem": 416000,
+               "type": "n1-highmem-64",
+               "cost": 0.80
            },
            "tm1-32-28": {
                "cores": 32,
-               "mem": 28000
+               "mem": 28000,
+               "type": "n1-highcpu-32",
+               "cost": 1.1344
            },
            "tm1-64-57": {
                "cores": 64,
-               "mem": 57000
+               "mem": 57000,
+               "type": "n1-highcpu-64",
+               "cost": 2.2688
            },
            "tm1-96-86": {
                "cores": 96,
-               "mem": 86000
+               "mem": 86000,
+               "type": "n1-highcpu-96",
+               "cost": 3.402
            }
       }
    }
