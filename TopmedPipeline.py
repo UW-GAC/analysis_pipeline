@@ -506,7 +506,7 @@ class AWS_Batch(Cluster):
         # submit the job
         submit_id = awsbatch.submitjob(awsbatch.subParams)
         # update analysis log
-        super(AWS_Batch, self).analysisLog(awsbatch.subParams['analysislog'])
+        super(AWS_Batch, self).analysisLog(awsbatch.subParams['analysislog'], print_only)
 
         return submit_id
 
@@ -791,12 +791,14 @@ class Slurm_Cluster(Cluster):
         lmsg = lmsg + " /memlim: " + lmsg_mem
 
         # get partition
-        submitOpts["--partition"] = self.getPartition(kwargs["job_name"],
-                                                      memlim,
-                                                      int(reqCores))
+        thePart = self.getPartition(kwargs["job_name"], memlim, int(reqCores))
+        submitOpts["--partition"] = thePart
         lmsg = lmsg + " /cluster: " + cluster
         lmsg = lmsg + " /parition: " + submitOpts["--partition"]
-
+        # get the machine and cost
+        theMachine = self.partitions][thePartition]["machine"]
+        theCost = str(self.partitions][thePartition]["cost"])
+        lmsg = lmsg + "/machine: " + theMachine + " ( " + theCost "/hr )"
         # output (log)
         if submitOpts["--array"] == None:
             submitOpts["--output"] = submitOpts["--job-name"] + "_%j.log"
@@ -812,6 +814,9 @@ class Slurm_Cluster(Cluster):
         if not key in kwargs:
             kwargs[key] = []
         dockerOpts["--runargs"] = '"' + " ".join(kwargs[key]) + '"'
+        # -- cost
+        dockerOpts["--machine"] = theMachine
+        dockerOpts["--cost"] = theCost
 
         suboptStr = dictToString(submitOpts)
         dockeroptStr = dictToString(dockerOpts)
