@@ -83,7 +83,8 @@
             "--mem_limit": null,
             "--working_dir": null,
             "--machine": null,
-            "--cost": null
+            "--cost": null,
+            "--verbose": null
         }
     }
 }

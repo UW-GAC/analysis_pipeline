@@ -817,7 +817,9 @@ class Slurm_Cluster(Cluster):
         # -- cost
         dockerOpts["--machine"] = theMachine
         dockerOpts["--cost"] = theCost
-
+        # -- verbose
+        if self.verbose:
+            dockerOpts["--verbose"] = "True"
         suboptStr = dictToString(submitOpts)
         dockeroptStr = dictToString(dockerOpts)
 
