@@ -791,14 +791,14 @@ class Slurm_Cluster(Cluster):
         lmsg = lmsg + " /memlim: " + lmsg_mem
 
         # get partition
-        thePart = self.getPartition(kwargs["job_name"], memlim, int(reqCores))
-        submitOpts["--partition"] = thePart
+        thePartition = self.getPartition(kwargs["job_name"], memlim, int(reqCores))
+        submitOpts["--partition"] = thePartition
         lmsg = lmsg + " /cluster: " + cluster
         lmsg = lmsg + " /parition: " + submitOpts["--partition"]
         # get the machine and cost
-        theMachine = self.partitions][thePartition]["machine"]
-        theCost = str(self.partitions][thePartition]["cost"])
-        lmsg = lmsg + "/machine: " + theMachine + " ( " + theCost "/hr )"
+        theMachine = self.partitions[thePartition]["machine"]
+        theCost = str(self.partitions[thePartition]["cost"])
+        lmsg = lmsg + "/machine: " + theMachine + " ( " + theCost + "/hr )"
         # output (log)
         if submitOpts["--array"] == None:
             submitOpts["--output"] = submitOpts["--job-name"] + "_%j.log"
