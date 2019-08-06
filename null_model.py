@@ -64,7 +64,7 @@ job = "null_model"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["out_file"] = configdict["data_prefix"] + "_null_model.RData"
+config["out_prefix"] = configdict["data_prefix"] + "_null_model"
 config["out_phenotype_file"] = configdict["data_prefix"] + "_phenotypes.RData"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
@@ -78,7 +78,7 @@ job = "null_model_report"
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
-config["out_file"] = configdict["out_prefix"] + "_null_model_report"
+config["out_prefix"] = configdict["out_prefix"] + "_null_model"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
