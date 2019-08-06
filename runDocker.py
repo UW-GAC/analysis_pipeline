@@ -110,7 +110,7 @@ def Summary(hdr):
     print("\tTest: " + str(test))
     print("\tDocker sdk installed? " + str(dockersdk))
 # start the timer
-startTime = timer.time()
+startTime = time.time()
 # command line parser
 parser = ArgumentParser(description = "Via docker sdk, create a docker container to execute an analysis job")
 # docker container run: image and command
@@ -129,7 +129,7 @@ parser.add_argument( "--mem_limit",
 parser.add_argument("--working_dir", help = "working directory [default: current working directory]")
 # submit options explicitly passed (not available from env variable)
 parser.add_argument("--machine", help = "machine type of partition")
-parser.add_argument("--cost", help "hourly cost of machine type")
+parser.add_argument("--cost", help="hourly cost of machine type")
 parser.add_argument( "--verbose", action="store_true", default = False,
                      help = "Verbose output [default: False]")
 parser.add_argument( "--test", action="store_true", default = False,
@@ -235,9 +235,9 @@ else:
         if cost != None:
             eTime = time.time() - startTime
             eTimeHr = eTime/60./60.
-            totalCost = eTimeHr*cost)
+            totalCost = eTimeHr*float(cost)
             pInfo("Elapsed time (hr): " + str(eTimeHr))
-            pInfo("Estimated cost: " + "$" + str(totalCost))
+            pInfo("Estimated cost= " + "$" + str(totalCost))
     else:
         pInfo("Docker sdk not installed; cannot run docker.")
         sys.exit(2)

@@ -5,6 +5,13 @@ from       datetime import datetime, timedelta
 import     fnmatch
 import     os
 
+# check for number
+def isnumber(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 # parse input
 parser = ArgumentParser( description = "script for post analysis stuff" )
@@ -29,6 +36,20 @@ td_hrs = (end_time-starttime)/60./60.
 with open(logfile, "a") as afile:
     afile.write(analysis + " end time: " + end_str + "\n")
     afile.write(analysis + " elapse time(hrs): " + str(td_hrs) + "\n")
+# get cost (for batch and slurm)
+totCost = 0.0;
+for file in os.listdir('.'):
+    if file.endswith(".log"):
+        with open(file) as thefile:
+            for line in thefile:
+                if line.startswith(">>> Info") and line.lower().find("cost"):
+                    ll = line.split("$")
+                    if len(ll) == 2:
+                        if isnumber(ll[1]):
+                            totCost += float(ll[1])
+if totCost != 0.0:
+    with open(logfile, "a") as afile:
+        afile.write(analysis + " total estimated cost: $" + str(round(totCost,2)) + "\n")
 
 # cleanup
 errcnt = 0
