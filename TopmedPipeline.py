@@ -831,7 +831,7 @@ class Slurm_Cluster(Cluster):
 
         super(Slurm_Cluster, self).analysisLog(lmsg, po)
         if po:
-            print("\n" + sub_cmd)
+            print(sub_cmd + "\n")
             jobid = submitOpts["--job-name"]
         else:
             self.printVerbose("submitting job: " + sub_cmd)
