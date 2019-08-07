@@ -98,7 +98,7 @@ Number of samples: `r nrow(annot)`
 disp <- c("sample_include_file", "phenotype_file", "pca_file", "pcrelate_file", "grm_file")
 if (as.logical(config["inverse_normal"])) {
     disp <- c(disp, "resid_covars")
-    if (!is.na(config["group_var"]) & !params$invnorm) {
+    if (!is.na(config["group_var"]) & params$invnorm) {
         disp <- c(disp, c("inverse_normal", "rescale_variance"))
     }
 }
