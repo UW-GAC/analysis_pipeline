@@ -339,19 +339,29 @@ print(p)
 The projected phenotype values (`PY`) are the phenotype values after adjusting
 for the fixed effect covariates, random effects, and heterogenous residual
 variances (if applicable); these are the values that are correlated with
-genotype to test for association. The density curve for each group is shown; the
-heavy black line is the density curve pooled across all groups.
-
+genotype to test for association.
 ```{r, results = 'asis'}
-if (!is_binary & !params$invnorm) {
-  text <- paste(
-    "It may be problematic for association testing if this distribution is far
-    from Gaussian. This problem can be alleviated by rank normalizing `PY` and
-    re-fitting the null model with the rank-normalized values as the outcome
-    (i.e. a two stage procedure)."
-  )
-  cat(text)
+extra_text <- ""
+if (is_binary) {
+  extra_text <- "A histogram color-coded by outcome status is shown below."
+} else {
+  if (!is.null(group_var)) {
+    extra_text <- "The density curve for each group is shown; the heavy black
+                   line is the density curve pooled across all groups."
+  } else {
+    extra_text <- "A histogram of `PY` values is shown below."
+  }
+  if(!is_invnorm) {
+    extra_text <- paste(
+      extra_text,
+      "\n\nIt may be problematic for association testing if this distribution is far
+      from Gaussian. This problem can be alleviated by rank normalizing `PY` and
+      re-fitting the null model with the rank-normalized values as the outcome
+      (i.e. a two stage procedure)."
+    )
+  }
 }
+cat(extra_text)
 ```
 
 ```{r}
