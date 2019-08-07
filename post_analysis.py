@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import     time
 from       argparse import ArgumentParser
-from       datetime import datetime, timedelta
+import     datetime
 import     fnmatch
 import     os
 
@@ -20,21 +20,22 @@ parser.add_argument( "-a", "--analysis",
 parser.add_argument( "-l", "--logfile",
                      help = "Name of analysis log file" )
 parser.add_argument( "-s", "--starttime",
-                     help = "start time (in seconds) of analysis ")
+                     help = "start time (in datetime format) of analysis ")
 
 args = parser.parse_args()
 analysis = args.analysis
-starttime = float(args.starttime)
+starttime = args.starttime
 logfile = args.logfile
 
-end_str = time.asctime()
-tFmt = '%a %b %d %H:%M:%S %Y'
-dt_ref = datetime(1970,1,1)
-end_time = (datetime.strptime(end_str,tFmt) - dt_ref).total_seconds()
-td_hrs = (end_time-starttime)/60./60.
+# end time (utc)
+tFmt = "%a, %d %b %Y %I:%M:%S %p"
+endtime = datetime.datetime.utcnow().strftime(tFmt)
+deltaTime = (datetime.datetime.strptime(endtime, tFmt) -
+             datetime.datetime.strptime(starttime, tFmt)).total_seconds()
+td_hrs = deltaTime/60./60.
 # append to log file
 with open(logfile, "a") as afile:
-    afile.write(analysis + " end time: " + end_str + "\n")
+    afile.write(analysis + " end time: " + endtime + "\n")
     afile.write(analysis + " elapse time(hrs): " + str(td_hrs) + "\n")
 # get cost (for batch and slurm)
 totCost = 0.0;
