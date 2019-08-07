@@ -12,7 +12,7 @@ import time
 import json
 import math
 import collections
-from datetime import datetime, timedelta
+import datetime
 import awsbatch
 
 try:
@@ -205,15 +205,13 @@ class Cluster(object):
         self.analysis = os.path.splitext(os.path.basename(os.path.abspath(sys.argv[0])))[0]
         # get user name
         self.username = getpass.getuser()
-        # ascii time
-        self.analysisStart = time.asctime()
         # command line
         self.analysisCmd = " ".join(sys.argv[:])
-        # sec time
-        dt_ref = datetime(1970,1,1)
-        tFmt = '%a %b %d %H:%M:%S %Y'
-        dt_start = datetime.strptime(self.analysisStart, tFmt)
-        self.analysisStartSec = str((dt_start - dt_ref).total_seconds())
+        # get start time (utc)
+        tFmt = "%a, %d %b %Y %I:%M:%S %p"
+        starttime = datetime.datetime.utcnow()
+        self.analysisStart = starttime.strftime(tFmt)
+        self.analysisStartSec = "'" + self.analysisStart + "'"
         # tag for analysis log file name
         self.analysisTag = str(int(time.time()*100))
         # analysis log file
@@ -253,6 +251,7 @@ class Cluster(object):
         return self.analysisStart
 
     def getAnalysisStartSec(self):
+        # get the datetime start (forget the "Sec" part of name)
         return self.analysisStartSec
 
     def openClusterCfg(self, stdCfgFile, optCfgFile, cfg_version, verbose):
@@ -836,12 +835,12 @@ class Slurm_Cluster(Cluster):
             jobid = submitOpts["--job-name"]
         else:
             self.printVerbose("submitting job: " + sub_cmd)
-            super(Slurm_Cluster, self).analysisLog("sbatch: " + sub_cmd + "\n")
+            super(Slurm_Cluster, self).analysisLog("> sbatch: " + sub_cmd)
             process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE)
             pipe = process.stdout
             sub_out = pipe.readline()
             jobid = sub_out.split(" ")[3].strip()
-            super(Slurm_Cluster, self).analysisLog("jobid: " + sub_cmd)
+            super(Slurm_Cluster, self).analysisLog("> jobid: " + str(jobid) + "\n")
             print("Sbatch to cluster: " + cluster + " / job: " + submitOpts["--job-name"] +
                   " / job id: " + jobid)
 
