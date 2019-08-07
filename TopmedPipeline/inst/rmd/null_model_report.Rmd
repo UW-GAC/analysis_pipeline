@@ -361,7 +361,8 @@ if (!is.null(group_var)) {
     stat_density(aes(color = group), geom = "line", position = "identity") +
     #geom_density(aes(color = group)) +
     geom_density(size = 2) +
-    theme(legend.position = "top", legend.justification = c(0.5, 1))
+    theme(legend.position = "top", legend.justification = c(0.5, 1)) +
+    guides(color = guide_legend(title.position="top", title.hjust = 0.5))
   print(p + theme(legend.position = "none"))
 
   # Put the legend in a separate plot in case there is a large number of groups.
