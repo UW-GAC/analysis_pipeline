@@ -39,14 +39,16 @@ covars <- phen$covars
 annot <- filter(pData(phen$annot), sample.id %in% phen$sample.id)
 random <- if (!is.na(config["pcrelate_file"])) "kinship" else if (!is.na(config["grm_file"])) "grm" else NULL
 group_var <- if (is.na(config["group_var"])) NULL else config["group_var"]
-model.string <- modelString(outcome, covars, random, group_var)
+
+is_invnorm <- !as.logical(config["binary"]) & as.logical(config["inverse_normal"])
+model_string <- modelString(outcome, covars, random, group_var, inverse_normal = is_invnorm)
 ```
 
 Number of samples: `r nrow(annot)`
 
 `r if (!as.logical(config["binary"])) paste("Inverse normal:", config["inverse_normal"])`
 
-`r model.string`
+`r model_string`
 
 
 
