@@ -219,6 +219,7 @@ When combining samples from groups with different variances for a trait (e.g., s
 `null_model.py`
 
 1. `null_model.R`
+2. `null_model_report.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -271,6 +272,7 @@ config parameter | default value | description
 2. `assoc_single.R`
 3. `asoc_combine.R`
 4. `assoc_plots.R`
+5. `assoc_report.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -302,6 +304,7 @@ config parameter | default value | description
 3. `assoc_aggregate.R`
 4. `asoc_combine.R`
 5. `assoc_plots.R`
+6. `assoc_report.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -319,6 +322,7 @@ config parameter | default value | description
 2. `assoc_window.R`
 3. `asoc_combine.R`
 4. `assoc_plots.R`
+5. `assoc_report.R`
 
 config parameter | default value | description
 --- | --- | ---

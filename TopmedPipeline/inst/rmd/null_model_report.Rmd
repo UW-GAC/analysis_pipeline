@@ -397,5 +397,6 @@ if (!is.null(group_var)) {
 # Session information
 
 ```{r sessionInfo(), results = 'markup'}
+library(GENESIS)
 print(sessionInfo())
 ```
