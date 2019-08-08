@@ -109,7 +109,8 @@ def Summary(hdr):
     print("\tVerbose: " + str(verbose))
     print("\tTest: " + str(test))
     print("\tDocker sdk installed? " + str(dockersdk))
-
+# start the timer
+startTime = time.time()
 # command line parser
 parser = ArgumentParser(description = "Via docker sdk, create a docker container to execute an analysis job")
 # docker container run: image and command
@@ -127,6 +128,8 @@ parser.add_argument( "--mem_limit",
                      help = "Max memory (g) of container [default: unlimited]" )
 parser.add_argument("--working_dir", help = "working directory [default: current working directory]")
 # submit options explicitly passed (not available from env variable)
+parser.add_argument("--machine", help = "machine type of partition")
+parser.add_argument("--cost", help="hourly cost of machine type")
 parser.add_argument( "--verbose", action="store_true", default = False,
                      help = "Verbose output [default: False]")
 parser.add_argument( "--test", action="store_true", default = False,
@@ -143,6 +146,8 @@ mem_limit = args.mem_limit
 working_dir = args.working_dir
 if working_dir == None:
     working_dir = os.getenv('PWD')
+machine = args.machine
+cost = args.cost
 verbose = args.verbose
 test = args.test
 # get the slurm environment vars
@@ -178,6 +183,13 @@ if slurmEnv["SLURM_ARRAY_TASK_ID"] != None:
         dockerkwargs[key].append = etid
     else:
         dockerkwargs[key] = [etid]
+# environment - set JOB_ID for runRscript.sh (in case of error)
+jid = "JOB_ID=" + slurmEnv["SLURM_JOB_ID"]
+if key in dockerkwargs.keys():
+    dockerkwargs[key].append = jid
+else:
+    dockerkwargs[key] = [jid]
+
 # misc
 dockerkwargs["detach"] = True
 dockerkwargs["remove"] = True
@@ -211,6 +223,8 @@ if test:
 else:
     if dockersdk:
         pDebug("Running docker container ...")
+        if machine != None:
+            pInfo("Machine type: " + machine + " ( $" + str(cost) + "/hr )")
         if dockersdk:
             try:
                 client = docker.from_env()
@@ -220,11 +234,23 @@ else:
                    print(line.strip())
             except Exception as e:
                 pError("Docker container exception: " + str(e))
+                if cost != None:
+                    eTime = time.time() - startTime
+                    eTimeHr = eTime/60./60.
+                    totalCost = eTimeHr*float(cost)
+                    pInfo("Elapsed time (hr) up to error: " + str(eTimeHr))
+                    pInfo("Estimated cost up to error= " + "$" + str(totalCost))
                 sys.exit(2)
         else:
             pError("Docker sdk not installed.")
             sys.exit(2)
         pInfo("Docker run completed.")
+        if cost != None:
+            eTime = time.time() - startTime
+            eTimeHr = eTime/60./60.
+            totalCost = eTimeHr*float(cost)
+            pInfo("Elapsed time (hr): " + str(eTimeHr))
+            pInfo("Estimated cost= " + "$" + str(totalCost))
     else:
         pInfo("Docker sdk not installed; cannot run docker.")
         sys.exit(2)
