@@ -9,9 +9,10 @@ argv <- parse_args(argp)
 cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
-required <- c("out_prefix")
+required <- c()
 optional <- c("binary"=FALSE,
-              "inverse_normal"=TRUE)
+              "inverse_normal"=TRUE,
+              "out_prefix"="null_model")
 config <- setConfigDefaults(config, required, optional)
 print(config)
 

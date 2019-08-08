@@ -13,8 +13,7 @@ cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
 required <- c("outcome",
-              "phenotype_file",
-              "out_prefix")
+              "phenotype_file")
 optional <- c("gds_file"=NA, # required for conditional variants
               "pca_file"=NA,
               "pcrelate_file"=NA,
@@ -27,6 +26,7 @@ optional <- c("gds_file"=NA, # required for conditional variants
               "n_pcs"=0,
               "norm_bygroup"=FALSE,
               "out_phenotype_file"="phenotypes.RData",
+              "out_prefix"="null_model",
               "rescale_variance"="marginal",
               "sample_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
