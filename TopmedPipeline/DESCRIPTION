@@ -1,5 +1,5 @@
 Package: TopmedPipeline
-Version: 2.4.5
+Version: 2.5.0
 Type: Package
 Title: Utilities for the TOPMed pipeline
 Description: Utilities for the TOPMed pipeline.
