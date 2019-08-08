@@ -183,7 +183,7 @@ if slurmEnv["SLURM_ARRAY_TASK_ID"] != None:
         dockerkwargs[key].append = etid
     else:
         dockerkwargs[key] = [etid]
-# environment - set JOB_ID for runRschript (in case of error) 
+# environment - set JOB_ID for runRscript.sh (in case of error)
 jid = "JOB_ID=" + slurmEnv["SLURM_JOB_ID"]
 if key in dockerkwargs.keys():
     dockerkwargs[key].append = jid
@@ -234,6 +234,12 @@ else:
                    print(line.strip())
             except Exception as e:
                 pError("Docker container exception: " + str(e))
+                if cost != None:
+                    eTime = time.time() - startTime
+                    eTimeHr = eTime/60./60.
+                    totalCost = eTimeHr*float(cost)
+                    pInfo("Elapsed time (hr) up to error: " + str(eTimeHr))
+                    pInfo("Estimated cost up to error= " + "$" + str(totalCost))
                 sys.exit(2)
         else:
             pError("Docker sdk not installed.")
