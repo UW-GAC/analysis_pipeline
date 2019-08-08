@@ -4,6 +4,7 @@ from       argparse import ArgumentParser
 import     datetime
 import     fnmatch
 import     os
+import     sys
 
 # check for number
 def isnumber(s):

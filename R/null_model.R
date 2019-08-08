@@ -25,8 +25,8 @@ optional <- c("gds_file"=NA, # required for conditional variants
               "inverse_normal"=TRUE,
               "n_pcs"=0,
               "norm_bygroup"=FALSE,
-              "out_file"="null_model.RData",
               "out_phenotype_file"="phenotypes.RData",
+              "out_prefix"="null_model",
               "rescale_variance"="marginal",
               "sample_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
@@ -70,8 +70,8 @@ nullmod <- fitNullModel(annot, outcome=outcome, covars=covars,
 
 # Save a smaller version of the original null model.
 nullmod_small <- smallNullModel(nullmod)
-outfile <- config["out_file"]
-save(nullmod_small, file=gsub(".RData$", "_small.RData", outfile))
+outfile <- sprintf("%s_small.RData", config["out_prefix"])
+save(nullmod_small, file = outfile)
 
 
 ## if we need an inverse normal transform, take residuals and refit null model
@@ -96,10 +96,11 @@ if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
 
     # Save a smaller version of the null model.
     nullmod_small <- smallNullModel(nullmod)
-    save(nullmod_small, file=gsub(".RData$", "_invnorm_small.RData", outfile))
+    outfile <- sprintf("%s_invnorm_small.RData", config["out_prefix"])
+    save(nullmod_small, file = outfile)
 
     # change filename to indicate invnorm
-    outfile <- gsub(".RData$", "_invnorm.RData", outfile)
+    outfile <- sprintf("%s_invnorm.RData", config["out_prefix"])
 }
 
 # save full version of final model

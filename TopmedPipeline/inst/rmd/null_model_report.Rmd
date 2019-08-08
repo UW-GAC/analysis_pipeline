@@ -1,15 +1,16 @@
 ---
-author: "TOPMed Pipeline"
 date: '`r Sys.Date()`'
 output:
   html_document:
     toc: true
 params:
   invnorm: FALSE
+  pipeline_version: 0
 ---
 
 ---
-title: "Null model report `r if (!is.null(params$invnorm) & params$invnorm) "- inverse normal transform"`"
+title: "Null model report `r if (!is.null(params$invnorm) & params$invnorm) "- rank-based inverse normal transform"`"
+author: "TOPMed Pipeline v`r params$pipeline_version`"
 ---
 
 ```{r setup, include=FALSE}
@@ -19,6 +20,7 @@ library(GENESIS)
 library(Biobase)
 library(dplyr)
 library(ggplot2)
+library(grid)
 theme_set(theme_bw())
 
 configTable <- function(x) {
@@ -47,27 +49,57 @@ covars <- phen$covars
 annot <- filter(pData(phen$annot), sample.id %in% phen$sample.id)
 random <- if (!is.na(config["pcrelate_file"])) "kinship" else if (!is.na(config["grm_file"])) "grm" else NULL
 group_var <- if (is.na(config["group_var"])) NULL else config["group_var"]
-model.string <- modelString(outcome, covars, random, group_var)
-nullmod_file <- gsub(".RData", "_small.RData", config["out_file"])
+nullmod_file <- sprintf("%s_small.RData", config["out_prefix"])
 if (params$invnorm) {
-  nullmod_file <- gsub(".RData", "_invnorm_small.RData", config["out_file"])
+  nullmod_file <- sprintf("%s_invnorm_small.RData", config["out_prefix"])
 }
 nullmod <- getobj(nullmod_file)
 is_binary <- as.logical(config["binary"])
+
+is_invnorm <- !is_binary & params$invnorm & as.logical(config["inverse_normal"])
+
+model_string <- modelString(outcome, covars, random, group_var,
+                            inverse_normal = is_invnorm)
+outcome_string <- modelOutcomeString(outcome, inverse_normal = is_invnorm)
+```
+
+```{r prepare-data}
+dat <- data.frame(sample.id = nullmod$sample.id,
+                  workingY = nullmod$workingY,
+                  # Need as.vector here because sometimes it's a matrix (but not always)
+                  model_outcome = as.vector(nullmod$outcome),
+                  fitted.values = nullmod$fitted.values,
+                  resid.marginal = nullmod$resid.marginal,
+                  PY = as.vector(nullmod$resid),
+                  Ytilde = as.vector(nullmod$Ytilde),
+                  stringsAsFactors = FALSE)
+# TODO: Add group_var check.
+g <- length(nullmod$group.idx)
+group <- rep(NA, length(nullmod$sample.id))
+for(i in 1:g){
+    group[nullmod$group.idx[[i]]] <- names(nullmod$group.idx)[i]
+}
+dat$group <- group
+dat <- left_join(dat, annot, by = "sample.id")
+
+if (is_binary) {
+  dat[[outcome]] <- as.factor(dat[[outcome]])
+  dat$model_outcome <- as.factor(dat$model_outcome)
+}
 ```
 
 ## Config
 
 Number of samples: `r nrow(annot)`
 
-`r model.string`
+`r model_string`
 
 ```{r, results='asis'}
 disp <- c("sample_include_file", "phenotype_file", "pca_file", "pcrelate_file", "grm_file")
 if (as.logical(config["inverse_normal"])) {
     disp <- c(disp, "resid_covars")
-    if (!is.na(config["group_var"])) {
-        disp <- c(disp, "rescale_variance")
+    if (!is.na(config["group_var"]) & params$invnorm) {
+        disp <- c(disp, c("inverse_normal", "rescale_variance"))
     }
 }
 configTable(config[disp])
@@ -76,13 +108,16 @@ configTable(config[disp])
 ## Phenotype distributions
 
 ```{r outcome-distribution-plot}
-outcome_dat <- data.frame(x = nullmod$outcome)
-names(outcome_dat)[1] <- outcome
-
-if (is_binary) {
-    ggplot(outcome_dat, aes_string(outcome)) + geom_bar() + stat_count(geom="text", aes_string(label="..count..", vjust=-0.5))
+if (is_binary) {q
+    ggplot(dat, aes(model_outcome)) +
+      geom_bar() +
+      stat_count(geom="text", aes_string(label="..count..", vjust=-0.5)) +
+      xlab(outcome_string)
 } else {
-    ggplot(outcome_dat, aes_string(outcome)) + geom_histogram()
+    ggplot(dat, aes(model_outcome)) +
+      geom_histogram() +
+      xlab(outcome_string)
+
 }
 ```
 
@@ -103,13 +138,46 @@ fixef <- nullmod$fixef
 # Rename fixef columns because they are different for different types of models.
 names(fixef) <- c("Est", "SE", "Stat", "pval")
 fixef$covar <- rownames(fixef)
-fixef$significant <- fixef$pval < (0.05 / nrow(fixef))
-p <- ggplot(fixef, aes(x = Est, y = covar)) +
+fixef <- fixef %>%
+  mutate(
+    significant = pval < (0.05 / n()),
+    errorbar_min = Est + qnorm(0.025)*SE,
+    errorbar_max = Est + qnorm(0.975)*SE
+  )
+cols <- c("FALSE" = "grey70", "TRUE" = "red")
+p <- ggplot(fixef, aes(x = Est, y = covar, color = significant)) +
     geom_vline(xintercept = 0, color = COLOR_ZERO_LINE) +
-    geom_point(aes(color = significant)) +
-    geom_errorbarh(aes(xmin = Est + qnorm(0.025)*SE, xmax = Est + qnorm(0.975)*SE, color = significant))
+    geom_point() +
+    geom_errorbarh(aes(xmin = errorbar_min, xmax = errorbar_max)) +
+    scale_color_manual(values = cols)
 
 print(p)
+```
+
+
+```{r fixef-plot-signif}
+if (any(fixef$significant)) {
+  # Make a plot that's zoomed in to show only the significant effects.
+  idx_signif <- fixef[, "significant"]
+  # Calculate the range based on the error bars.
+  minx <- min(c(0, fixef$errorbar_min[idx_signif]))
+  maxx <- max(c(0, fixef$errorbar_max[idx_signif]))
+  p2 <- p +
+     coord_cartesian(xlim = c(minx, maxx)) +
+     ggtitle("Covariate effects - zoomed to significant only")
+  print(p2)
+}
+```
+
+```{r fixef-table-significant, results = 'asis'}
+if (any(fixef$significant)) {
+  cat('### Significant covariate effect sizes\n\n')
+  table_data <- fixef[fixef$significant, c("covar", "Est", "SE", "Stat", "pval")]
+  table_data$pval <- sprintf("%4.3e", table_data$pval)
+  names(table_data)[[1]] <- "Covariate"
+  k <- knitr::kable(table_data, align = "r")
+  print(k)
+}
 ```
 
 ## Marginal residuals
@@ -118,41 +186,28 @@ print(p)
 ```{r marginal-helper-text, results = "asis"}
 if (is_binary) {
   text <- paste(
-    "Plots of marginal residuals vs covariates should have a trend line near
-    the `y = 0` line for continuous covariates, or the mean of each group near
-    0 for categorical covariates. A distinct trend could indicate that a more
-    complex term for that covariate is needed (e.g. quadratic, spline, etc.)."
+    "For continuous covariates, plots of marginal residuals vs covariates
+    should have a red linear trend line near the `y = 0` line and a blue
+    smoothed (cubic regression spline) curve near the y = 0 line. For
+    categorical covariates, the mean of each group should be near 0. A distinct
+    trend could indicate that a more complex term for that covariate is needed
+    (e.g. quadratic, spline, etc.)."
   )
 } else {
   text <- paste(
     "Plots of marginal residuals vs covariates should show no distinct
-    pattern, appearing as random noise, with the trend line near the `y = 0`
-    line for continuous covariates, or the mean of each group near 0 for
-    categorical covariates. A distinct pattern or trend could indicate that a
-    more complex term for that covariate is needed, (e.g. quadratic, spline,
-    etc.)."
+    pattern, appearing as random noise. For continuous covariates, the red
+    linear trend line and the blue smoothed curve (cubic regression spline)
+    should be near the y = 0 line. For categorical covariates, the black cross
+    indicating the group mean should be near 0. A distinct pattern or trend
+    could indicate that a more complex term for that covariate is needed,
+    (e.g. quadratic, spline, etc.)."
   )
 }
 cat(text)
 ```
 
 ```{r residual-plots}
-dat <- data.frame(sample.id = nullmod$sample.id,
-                  workingY = nullmod$workingY,
-                  fitted.values = nullmod$fitted.values,
-                  resid.marginal = nullmod$resid.marginal,
-                  PY = as.vector(nullmod$resid),
-                  Ytilde = as.vector(nullmod$Ytilde),
-                  stringsAsFactors = FALSE)
-# TODO: Add group_var check.
-g <- length(nullmod$group.idx)
-group <- rep(NA, length(nullmod$sample.id))
-for(i in 1:g){
-    group[nullmod$group.idx[[i]]] <- names(nullmod$group.idx)[i]
-}
-dat$group <- group
-dat <- left_join(dat, annot, by = "sample.id")
-
 for (x in covars) {
     p <- ggplot(dat, aes_string(x = x, y = "resid.marginal"))
     if (is.numeric(annot[[x]] )) {
@@ -166,7 +221,7 @@ for (x in covars) {
         geom_boxplot() +
         geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
         # Means by group.
-        stat_summary(fun.y=mean, color="red", geom="point")
+        stat_summary(fun.y=mean, color="black", shape = 4, geom="point", size = 3)
     }
     print(p)
 }
@@ -175,16 +230,18 @@ for (x in covars) {
 ```{r, results = 'asis'}
 if (is_binary) {
   text <- paste(
-    "Plots of marginal residuals vs fitted values should have a trend line near
-    the `y = 0` line. A distinct pattern or trend could indicate that additional
+    "Plots of marginal residuals vs fitted values should have the red linear
+    trend line and the blue smoothed curve (cubic regression spline) near the
+    `y = 0` line. A distinct pattern or trend could indicate that additional
     covariates are needed, or that the variance model is inadequate."
   )
 } else {
   text <- paste(
     "Plots of marginal residuals vs fitted values should show no distinct
-    pattern, appearing as random noise, with the trend line near the `y = 0`
-    line. A distinct pattern or trend could indicate that additional covariates
-    are needed, or that the variance model is inadequate."
+    pattern, appearing as random noise, with the red linear trend line and the
+    blue smoothed curve (cubic regression spline) near the `y = 0` line. A
+    distinct pattern or trend could indicate that additional covariates are
+    needed, or that the variance model is inadequate."
   )
 }
 cat(text)
@@ -221,39 +278,34 @@ if (!is.null(random)) {
 ```{r variance-adjustment-header, results = 'asis'}
 if (!is.null(group_var)) {
   cat("## Variance adjustment")
+  cat('\n\n')
+  text <- paste(
+    "Boxplots of the original phenotype values (`Y`) and the adjusted phenotype
+    values (`Ytilde`) by heterogeneous residual variance group. The `Ytilde` values
+    are adjusted for fixed effect covariates, random effects, and heterogeneous
+    residual variances. The variation of `Ytilde` within each group should be
+    similar."
+  )
+  cat(text)
 }
-cat('\n\n')
-text <- paste(
-  "Boxplots of the original phenotype values (`Y`) and the adjusted phenotype
-  values (`Ytilde`) by heterogeneous residual variance group. The `Ytilde` values
-  are adjusted for fixed effect covariates, random effects, and heterogeneous
-  residual variances. The variation of `Ytilde` within each group should be
-  similar."
-)
-cat(text)
 ```
 
 ```{r variance-adjustment-plots}
 if (!is.null(group_var)) {
-
   p <- ggplot(dat, aes(x = group, y = workingY)) +
     geom_boxplot() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
     # Means by group.
-    stat_summary(fun.y=mean, color="red", geom="point") +
+    stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point")
     ylab("Y")
   print(p)
 
-  if (!is.null(group_var)) {
-    p <- ggplot(dat, aes(x = group, y = Ytilde))
-  } else {
-    p <- ggplot(dat, aes(y = Ytilde))
-  }
-    p <- p +
-      geom_boxplot() +
-      geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
-      stat_summary(fun.y=mean, color="red", geom="point")
+  p <- ggplot(dat, aes(x = group, y = Ytilde))
+  p <- p +
+    geom_boxplot() +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
+    stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point")
   print(p)
 
 }
@@ -288,29 +340,62 @@ The projected phenotype values (`PY`) are the phenotype values after adjusting
 for the fixed effect covariates, random effects, and heterogenous residual
 variances (if applicable); these are the values that are correlated with
 genotype to test for association.
-
 ```{r, results = 'asis'}
-if (!is_binary & !params$invnorm) {
-  text <- paste(
-    "It may be problematic for association testing if this distribution is far
-    from Gaussian. This problem can be alleviated by rank normalizing `PY` and
-    re-fitting the null model with the rank-normalized values as the outcome
-    (i.e. a two stage procedure)."
-  )
-  cat(text)
+extra_text <- ""
+if (is_binary) {
+  extra_text <- "A histogram color-coded by outcome status is shown below."
+} else {
+  if (!is.null(group_var)) {
+    extra_text <- "The density curve for each group is shown; the heavy black
+                   line is the density curve pooled across all groups."
+  } else {
+    extra_text <- "A histogram of `PY` values is shown below."
+  }
+  if(!is_invnorm) {
+    extra_text <- paste(
+      extra_text,
+      "\n\nIt may be problematic for association testing if this distribution is far
+      from Gaussian. This problem can be alleviated by rank normalizing `PY` and
+      re-fitting the null model with the rank-normalized values as the outcome
+      (i.e. a two stage procedure)."
+    )
+  }
 }
+cat(extra_text)
 ```
 
 ```{r}
 p <- ggplot(dat, aes(x = PY))
 if (!is.null(group_var)) {
   p <- p +
-    geom_density(aes(color = group)) +
-    geom_density(size = 2)
-} else {
-  p <- p +
-    geom_histogram()
+    stat_density(aes(color = group), geom = "line", position = "identity") +
+    #geom_density(aes(color = group)) +
+    geom_density(size = 2) +
+    theme(legend.position = "top", legend.justification = c(0.5, 1)) +
+    guides(color = guide_legend(title.position="top", title.hjust = 0.5))
+  print(p + theme(legend.position = "none"))
 
+  # Put the legend in a separate plot in case there is a large number of groups.
+  g_legend <- function(my_ggplot) {
+    tmp <- ggplot_gtable(ggplot_build(my_ggplot))
+    leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+    legend <- tmp$grobs[[leg]]
+    legend
+  }
+  grid.newpage()
+  grid.draw(g_legend(p))
+} else {
+  if (is_binary) {
+    p <- p + geom_histogram(aes_string(fill = outcome))
+  } else {
+    p <- p + geom_histogram()
+  }
+  print(p)
 }
-print(p)
+```
+
+# Session information
+
+```{r sessionInfo(), results = 'markup'}
+print(sessionInfo())
 ```
