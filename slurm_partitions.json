@@ -48,59 +48,47 @@
             }
        },
        "tm1": {
+           "tm1-2-13": {
+               "cores": 2,
+               "mem": 13000,
+               "machine": "n1-highmem-2",
+               "cost": 0.1184
+           },
            "tm1-4-26": {
                "cores": 4,
                "mem": 26000,
-               "machine": "n1-highmem-4",
-               "cost": 0.24
-           },
-           "tm1-8-30": {
-               "cores": 8,
-               "mem": 30000,
                "machine": "n1-standard-8",
-               "cost": 0.38
+               "cost": 0.2368
            },
-           "tm1-16-60": {
-               "cores": 16,
-               "mem": 60000,
+           "tm1-8-52": {
+               "cores": 8,
+               "mem": 52000,
                "machine": "n1-standard-16",
-               "cost": 0.76
+               "cost": 0.4736
            },
-           "tm1-32-120": {
-               "cores": 32,
-               "mem": 120000,
+           "tm1-16-104": {
+               "cores": 16,
+               "mem": 104000,
                "machine": "n1-standard-32",
-               "cost": 1.52
+               "cost": 0.9472
            },
            "tm1-32-208": {
                "cores": 32,
                "mem": 208000,
                "machine": "n1-highmem-32",
-               "cost": 1.89
+               "cost": 1.8944
            },
            "tm1-64-416": {
                "cores": 64,
                "mem": 416000,
                "machine": "n1-highmem-64",
-               "cost": 3.78
+               "cost": 3.7888
            },
-           "tm1-32-28": {
-               "cores": 32,
-               "mem": 28000,
-               "machine": "n1-highcpu-32",
-               "cost": 1.1344
-           },
-           "tm1-64-57": {
-               "cores": 64,
-               "mem": 57000,
-               "machine": "n1-highcpu-64",
-               "cost": 2.2688
-           },
-           "tm1-96-86": {
+           "tm1-96-624": {
                "cores": 96,
-               "mem": 86000,
-               "machine": "n1-highcpu-96",
-               "cost": 3.402
+               "mem": 624000,
+               "machine": "n1-highmem-96",
+               "cost": 5.6832
            }
       }
    }
