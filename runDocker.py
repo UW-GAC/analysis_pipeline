@@ -184,11 +184,12 @@ if slurmEnv["SLURM_ARRAY_TASK_ID"] != None:
     else:
         dockerkwargs[key] = [etid]
 # environment - set JOB_ID for runRscript.sh (in case of error)
-jid = "JOB_ID=" + slurmEnv["SLURM_JOB_ID"]
-if key in dockerkwargs.keys():
-    dockerkwargs[key].append(jid)
-else:
-    dockerkwargs[key] = [jid]
+if slurmEnv["SLURM_JOB_ID"] != None:
+    jid = "JOB_ID=" + slurmEnv["SLURM_JOB_ID"]
+    if key in dockerkwargs.keys():
+        dockerkwargs[key].append(jid)
+    else:
+        dockerkwargs[key] = [jid]
 
 # misc
 dockerkwargs["detach"] = True
