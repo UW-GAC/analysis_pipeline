@@ -13,19 +13,19 @@
             "tm2-4-26": {
                 "cores": 4,
                 "mem": 26000,
-                "machine": "n1-standard-8",
+                "machine": "n1-highmem-4",
                 "cost": 0.2368
             },
             "tm2-8-52": {
                 "cores": 8,
                 "mem": 52000,
-                "machine": "n1-standard-16",
+                "machine": "n1-highmem-8",
                 "cost": 0.4736
             },
             "tm2-16-104": {
                 "cores": 16,
                 "mem": 104000,
-                "machine": "n1-standard-32",
+                "machine": "n1-highmem-16",
                 "cost": 0.9472
             },
             "tm2-32-208": {
@@ -57,19 +57,19 @@
            "tm1-4-26": {
                "cores": 4,
                "mem": 26000,
-               "machine": "n1-standard-8",
+               "machine": "n1-highmem-4",
                "cost": 0.2368
            },
            "tm1-8-52": {
                "cores": 8,
                "mem": 52000,
-               "machine": "n1-standard-16",
+               "machine": "n1-highmem-8",
                "cost": 0.4736
            },
            "tm1-16-104": {
                "cores": 16,
                "mem": 104000,
-               "machine": "n1-standard-32",
+               "machine": "n1-highmem-16",
                "cost": 0.9472
            },
            "tm1-32-208": {
