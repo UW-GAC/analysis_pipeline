@@ -19,6 +19,7 @@ if (getRversion() <= "3.6.0") {
     remotes::install_git("git://github.com/smgogarten/GWASTools.git", dependencies=FALSE)
 }
 remotes::install_git("git://github.com/smgogarten/SeqVarTools.git", ref="v1.23.1", dependencies=FALSE)
-remotes::install_git("git://github.com/UW-GAC/GENESIS.git", ref="v2.15.4", dependencies=FALSE)
+remotes::install_git("git://github.com/UW-GAC/GENESIS.git", ref="v2.15.5", dependencies=FALSE)
 
 remotes::install_local("TopmedPipeline", dependencies=FALSE)
+
