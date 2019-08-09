@@ -173,20 +173,20 @@ if environment != None:
 if slurmEnv["SLURM_CPUS_PER_TASK"] != None:
     eslots = "NSLOTS=" + slurmEnv["SLURM_CPUS_PER_TASK"]
     if key in dockerkwargs.keys():
-        dockerkwargs[key].append = eslots
+        dockerkwargs[key].append(eslots)
     else:
         dockerkwargs[key] = [eslots]
 # environment - set SGE_TASK_ID if an array job
 if slurmEnv["SLURM_ARRAY_TASK_ID"] != None:
     etid = "SGE_TASK_ID=" + slurmEnv["SLURM_ARRAY_TASK_ID"]
     if key in dockerkwargs.keys():
-        dockerkwargs[key].append = etid
+        dockerkwargs[key].append(etid)
     else:
         dockerkwargs[key] = [etid]
 # environment - set JOB_ID for runRscript.sh (in case of error)
 jid = "JOB_ID=" + slurmEnv["SLURM_JOB_ID"]
 if key in dockerkwargs.keys():
-    dockerkwargs[key].append = jid
+    dockerkwargs[key].append(jid)
 else:
     dockerkwargs[key] = [jid]
 
