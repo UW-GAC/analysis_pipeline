@@ -661,10 +661,16 @@ class Slurm_Cluster(Cluster):
         self.class_name = self.__class__.__name__
         self.std_cluster_file = "./slurm_cfg.json"
         self.opt_cluster_file = opt_cluster_file
+
         cfgVersion = "1.0"
         super(Slurm_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
         # open slurm partitions cfg
         self.openPartitionCfg(self.pipelinePath + "/" + self.clusterCfg["partition_cfg"])
+        # update pipelinePath
+        self.submitPath = self.pipelinePath
+        key = "pipeline_path_docker"
+        if key in self.clusterCfg.keys():
+            self.pipelinePath = self.clusterCfg[key]
 
     def openPartitionCfg(self, a_pcfg):
         # open partition cfg and set partition names, partitions for cluster
@@ -749,7 +755,7 @@ class Slurm_Cluster(Cluster):
         pipeline_path_docker = self.clusterCfg["pipeline_path_docker"]
         tasks_per_partition = self.clusterCfg["tasks_per_partition"]
         # set full path of submit script
-        submit_script = self.pipelinePath + "/" + submit_script
+        submit_script = self.submitPath + "/" + submit_script
         # process kwargs for submit options
         submitOpts["--job-name"] = kwargs["job_name"]
         lmsg = "Job: " + kwargs["job_name"]
