@@ -32,8 +32,6 @@ parser.add_argument("--cluster_type", default="UW_Cluster",
                     help="type of compute cluster environment [default %(default)s]")
 parser.add_argument("--cluster_file", default=None,
                     help="json file containing cluster options")
-parser.add_argument("-n", "--ncores", default="1-8",
-                    help="number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4) [default %(default)s]")
 parser.add_argument("-e", "--email", default=None,
                     help="email address for job reporting")
 parser.add_argument("--print_only", action="store_true", default=False,
@@ -52,7 +50,6 @@ segment_length = args.segment_length
 n_segments = args.n_segments
 cluster_file = args.cluster_file
 cluster_type = args.cluster_type
-ncores = args.ncores
 email = args.email
 print_only = args.print_only
 verbose = args.verbose
@@ -73,30 +70,10 @@ cluster.analysisInit(print_only=print_only)
 #     {jobname: [jobids]}
 hold_null_agg = []
 
-# null model
-job = "null_model"
-
-# if a null model file is given in the config, skip this step
-run_null_model = "null_model_file" not in configdict
-if run_null_model:
-
-    rscript = os.path.join(pipeline, "R", job + ".R")
-
-    config = deepcopy(configdict)
-    config["out_file"] = configdict["data_prefix"] + "_null_model.RData"
-    config["out_phenotype_file"] = configdict["data_prefix"] + "_phenotypes.RData"
-    configfile = configdict["config_prefix"] + "_" + job + ".config"
-    TopmedPipeline.writeConfig(config, configfile)
-
-    submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], request_cores=ncores, email=email, print_only=print_only)
-
-    hold_null_agg.append(submitID)
-else:
-    print("Using null model in " + configdict["null_model_file"])
-    # copy parameter file for report
-    if "null_model_params" in configdict:
-        paramfile = os.path.basename(configdict["config_prefix"]) + "_" + job + ".config.null_model.params"
-        copyfile(configdict["null_model_params"], paramfile)
+# copy parameter file for report
+if "null_model_params" in configdict:
+    paramfile = os.path.basename(configdict["config_prefix"]) + "_null_model.config.null_model.params"
+    copyfile(configdict["null_model_params"], paramfile)
 
 
 # for aggregate tests, generate variant list
@@ -144,11 +121,6 @@ else:
 # set up config for association test
 config = deepcopy(configdict)
 config["assoc_type"] = assoc_type
-# if we just ran the null model, use output files as input for assoc test
-# otherwise, these parameters should already be in the config
-if run_null_model:
-    config["null_model_file"] = configdict["data_prefix"] + "_null_model.RData"
-    config["phenotype_file"] = configdict["data_prefix"] + "_phenotypes.RData"
 
 if assoc_type == "aggregate":
     config["aggregate_variant_file"] = configdict["data_prefix"] + "_aggregate_list_chr .RData"

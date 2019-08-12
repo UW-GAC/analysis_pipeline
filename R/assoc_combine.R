@@ -13,7 +13,7 @@ chr <- intToChr(argv$chromosome)
 
 required <- c("assoc_type",
               "out_prefix")
-optional <- c()
+optional <- c("conditional_variant_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 writeConfig(config, paste0(basename(argv$config), ".assoc_combine.params"))
@@ -24,6 +24,10 @@ segments <- sub("_seg", "", regmatches(basename(files), regexpr("_seg[[:digit:]]
 files <- files[order(as.integer(segments))]
 
 assoc <- combineAssoc(files, config["assoc_type"])
+
+if (!is.na(config["conditional_variant_file"])) {
+    assoc <- removeConditional(assoc, config["conditional_variant_file"])
+}
 
 save(assoc, file=constructFilename(config["out_prefix"], chr))
 

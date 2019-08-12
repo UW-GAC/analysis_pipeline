@@ -14,4 +14,5 @@ optional <- c("out_file"="analysis_report")
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
-custom_render_markdown("analysis_report", config["out_file"])
+p <- list(pipeline_version = argv$version)
+custom_render_markdown("analysis_report", config["out_file"], parameters = p)

@@ -79,10 +79,7 @@ jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, v
 
 
 # remove temporary files (per-chr subset)
-job_cmd = cluster.clusterCfg["submit_cmd"]
-subOpts = deepcopy(cluster.clusterCfg["submit_opts"])
-subOpts["-b"] = "y"
-tmpid = cluster.executeJobCmd(subOpts, job_cmd=job_cmd, job_name="rm_tmp_files", cmd="rm", args=[configdict["subset_gds_file"] + ".chr*.tmp"], holdid=[jobid], email=email, print_only=print_only)
+tmpid = cluster.submitJob(binary=True, job_name="rm_tmp_files", cmd="rm", args=[configdict["subset_gds_file"] + ".chr*.tmp"], holdid=[jobid], email=email, print_only=print_only)
 
 
 # post analysis
@@ -92,5 +89,4 @@ pcmd=os.path.join(pipeline, jobpy)
 argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
 pdriver=os.path.join(pipeline, "run_python.sh")
-cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
-                  holdid=[jobid], print_only=print_only)
+cluster.submitJob(job_name=job, cmd=pdriver, args=argList, holdid=[jobid], print_only=print_only)

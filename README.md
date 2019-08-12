@@ -199,6 +199,8 @@ config parameter | default value | description
 
 ## Association testing
 
+### Null model
+
 Association tests are done with a mixed model if a kinship matrix (`pcrelate_file`) or GRM (`grm_file`) is given in the config file. If `pcrelate_file` and `grm_file` are both `NA` or missing, testing is done with a fixed effects model.
 
 When combining samples from groups with different variances for a trait (e.g., study or ancestry group), it is recommended to allow the null model to fit heterogeneous variances by group using the parameter `group_var`. The default pipeline options will then result in the following procedure:
@@ -214,21 +216,19 @@ When combining samples from groups with different variances for a trait (e.g., s
     - Include covariates and PCs as fixed effects
     - Include kinship as random effect
 
-The effect estimate is for the alternate alelle, and multiple alternate alelles for a single variant are treated separately.
+`null_model.py`
 
-Association tests have an additional level of parallelization: by segment within chromosome. The R scripts take an optional `"--segment"` (or `"-s"`) argument. The python script `assoc.py` uses the environment variable `SGE_TASK_ID` to submit jobs by segment for each chromosome. By default each segment is 10 Mb in length, but this may be changed by using the arguments `"--segment_length"` or `"--n_segments"`. Note that `"--n_segments"` defines the number of segments for the entire genome, so using this argument with selected chromosomes may result in fewer segments than you expect (and the minimum is one segment per chromosome).
-
-### Parameters common to all association tests
+1. `null_model.R`
+2. `null_model_report.R`
 
 config parameter | default value | description
 --- | --- | ---
-`out_prefix` | | Prefix for files created by this script.
-`gds_file` | | GDS file. Include a space to insert chromosome.
+`out_prefix` | | Prefix for files created by this script. 
+`phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes.
+`outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `pca_file` | `NA` | RData file with PCA results created by `pcair.py`.
 `pcrelate_file` | `NA` | RData file with 2*kinship created by `pcrelate.py`. 
 `grm_file` | `NA` | GDS file with GRM created by `grm.py`.
-`phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes.
-`outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
 `group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
@@ -236,12 +236,28 @@ config parameter | default value | description
 `norm_bygroup` | `FALSE` | If `TRUE` and `group_var` is provided, the inverse normal transform is done on each group separately.
 `rescale_variance` | `marginal` | Applies only if `inverse_normal` is `TRUE`. Controls whether to rescale the variance after inverse-normal transform, restoring it to the original variance before the transform. Options are `marginal`, `varcomp`, or `none`.
 `n_pcs` | `0` | Number of PCs to include as covariates.
-`conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` and `variant.id`. The alternate allele dosage of these variants will be included as covariates in the analysis.
+`conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` and `variant.id`. The alternate allele dosage of these variants will be included as covariates in the analysis. 
+`gds_file` | `NA` | GDS file. Include a space to insert chromosome. Required if `conditional_variant_file` is specified.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include. 
+
+
+### Parameters common to all association tests
+
+The effect estimate is for the alternate alelle, and multiple alternate alelles for a single variant are treated separately.
+
+Association tests have an additional level of parallelization: by segment within chromosome. The R scripts take an optional `"--segment"` (or `"-s"`) argument. The python script `assoc.py` uses the environment variable `SGE_TASK_ID` to submit jobs by segment for each chromosome. By default each segment is 10 Mb in length, but this may be changed by using the arguments `"--segment_length"` or `"--n_segments"`. Note that `"--n_segments"` defines the number of segments for the entire genome, so using this argument with selected chromosomes may result in fewer segments than you expect (and the minimum is one segment per chromosome).
+
+config parameter | default value | description
+--- | --- | ---
+`out_prefix` | | Prefix for files created by this script.
+`gds_file` | | GDS file. Include a space to insert chromosome.
+`null_model_file` | | RData file with null model from `null_model.py`.
+`null_model_params` | | Parameter file ending in `null_model.params` in the `report` directory from `null_model.py`.
+`phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes. Use the output phenotype file from `null_model.py`.
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. 
 `variant_block_size` | `1024` | Number of variants to read in a single block.
 `pass_only` | `TRUE` | `TRUE` to select only variants with FILTER=PASS.
-`genome_build` | `hg38` | Genome build for the genotypes in the GDS file (`hg19` or `hg38`). Used to divide the genome into segments for parallel processing. 
+`genome_build` | `hg38` | Genome build for the genotypes in the GDS file (`hg19` or `hg38`). Used to divide the genome into segments for parallel processing and identify pseudoautosomal regions on the X chromosome.
 `plot_mac_threshold` | `NA` | Minimum minor allele count for variants or aggregate units to include in plots (if different from threshold used to run tests; see `mac_threshold` below).
 `thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots. 
 `thin_nbins` | `10` | Number of bins to use for thinning.
@@ -252,11 +268,11 @@ config parameter | default value | description
 
 `assoc.py single`
 
-1. `null_model.R`
-2. `define_segments.R`
-3. `assoc_single.R`
-4. `asoc_combine.R`
-5. `assoc_plots.R`
+1. `define_segments.R`
+2. `assoc_single.R`
+3. `asoc_combine.R`
+4. `assoc_plots.R`
+5. `assoc_report.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -283,17 +299,18 @@ config parameter | default value | description
 
 `assoc.py aggregate`
 
-1. `null_model.R`
-2. `aggregate_list.R`
-3. `define_segments.R`
-4. `assoc_aggregate.R`
-5. `asoc_combine.R`
-6. `assoc_plots.R`
+1. `aggregate_list.R`
+2. `define_segments.R`
+3. `assoc_aggregate.R`
+4. `asoc_combine.R`
+5. `assoc_plots.R`
+6. `assoc_report.R`
 
 config parameter | default value | description
 --- | --- | ---
 `aggregate_type` | `allele` | Type of aggregate grouping. Options are to select variants by `allele` (unique variants) or `position` (regions of interest).
 `variant_group_file` | | RData file with data frame defining aggregate groups. If `aggregate_type` is `allele`, columns should be `group_id`, `chr`, `pos`, `ref`, `alt`. If `aggregate_type` is `position`, columns should be `group_id`, `chr`, `start`, `end`.
+`group_id` | `group_id` | Alternate name for `group_id` column
 `variant_include_file` | `NA` | RData file with vector of variant.id to include. Variants used will be the intersection of this set and variants defined by `variant_group_file`.
 
 
@@ -301,11 +318,11 @@ config parameter | default value | description
 
 `assoc.py window`
 
-1. `null_model.R`
-2. `define_segments.R`
-3. `assoc_window.R`
-4. `asoc_combine.R`
-5. `assoc_plots.R`
+1. `define_segments.R`
+2. `assoc_window.R`
+3. `asoc_combine.R`
+4. `assoc_plots.R`
+5. `assoc_report.R`
 
 config parameter | default value | description
 --- | --- | ---
@@ -322,13 +339,6 @@ The segment file created at the start of each association test contains the chro
 * Sliding window: the length of the segment is increased by `window.size` before selecting variants. This ensures that all possible windows are tested. When the segments are combined into a single file for each chromosome, duplicate windows are discarded. Since the `assocTestSeqWindow` function defines windows starting at position 1, the windows tested when parallelizing by segment are identical to the windows tested when running an entire chromosome in one job.
 
 The script [`assoc.py`](assoc.py) submits a SGE array job for each chromosome, where the SGE task id is the row number of the segment in the segments file. If a segment has no requested variants, its job will exit without error. After all segments are complete, they are combined into a single file for each chromosome and the temporary per-segment output files are deleted.
-
-
-### Multiple tests with the same null model
-
-To run additional tests using the same null model as a previous test, add the config parameters `null_model_file` and `null_model_params`. `null_model_file` is the output file created by a previous association test run. `null_model_params` is the parameter file ending in `null_model.params` in the `report` directory for the previous association test. The parameter file is needed to generate the report for the new test.
-
-If the number of samples in the initial phenotype file was less than the total number of samples in the GDS file, also provide `phenotype_file` as the output phenotype file created along with the null model file.
 
 
 

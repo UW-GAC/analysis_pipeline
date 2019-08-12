@@ -374,3 +374,19 @@ test_that("MAC - window", {
     seqClose(seqData)
     unlink(files)
 })
+
+
+test_that("remove conditional", {
+    seqData <- SeqVarBlockIterator(.testData(), verbose=FALSE)
+    nullmod <- .testNullModel(seqData, MM=TRUE)
+    seqSetFilterChrom(seqData, include=1, verbose=FALSE)
+    a1 <- assocTestSingle(seqData, nullmod, verbose=FALSE)
+    dat <- data.frame(variant.id=1:3,
+                      chromosome=1,
+                      stringsAsFactors=FALSE)
+    cvfile <- tempfile()
+    save(dat, file=cvfile)
+    a2 <- removeConditional(a1, cvfile)
+    expect_equivalent(a1[4:nrow(a1),], a2)
+    unlink(cvfile)
+})

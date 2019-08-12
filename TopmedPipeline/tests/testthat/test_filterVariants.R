@@ -164,7 +164,7 @@ test_that("filterByMAC", {
     gds <- .testData()
     cnt1 <- alleleCount(gds)
     cnt2 <- alleleCount(gds, n=1)
-    cnt <- pmin(cnt1, cnt2)
+    cnt <- round(pmin(cnt1, cnt2))
     x <- .calcMAC(gds, sample.id=NULL)
     expect_equal(x, cnt)
     filterByMAC(gds, mac.min=5, verbose=FALSE)

@@ -1,8 +1,13 @@
 ---
-title: "Analysis Report"
-author: "TOPMed Pipeline"
+title: "Analysis report"
 date: '`r Sys.Date()`'
 output: html_document
+params:
+  pipeline_version: 0
+---
+
+---
+author: "TOPMed Pipeline v`r params$pipeline_version`"
 ---
 
 ```{r setup, include=FALSE}
@@ -26,64 +31,38 @@ scripts <- sapply(files, function(x) {
     tmp <- strsplit(x, split=".", fixed=TRUE)[[1]]
     tmp[length(tmp)-1]
 })
-params <- lapply(setNames(files, scripts), readConfig)
+param_files <- lapply(setNames(files, scripts), readConfig)
 ```
-
 
 ## Null model
 
 ```{r}
-config <- params$null_model
+config <- param_files$null_model
 phen <- getPhenotypes(config)
 outcome <- phen$outcome
 covars <- phen$covars
 annot <- filter(pData(phen$annot), sample.id %in% phen$sample.id)
 random <- if (!is.na(config["pcrelate_file"])) "kinship" else if (!is.na(config["grm_file"])) "grm" else NULL
 group_var <- if (is.na(config["group_var"])) NULL else config["group_var"]
-model.string <- modelString(outcome, covars, random, group_var)
+
+is_invnorm <- !as.logical(config["binary"]) & as.logical(config["inverse_normal"])
+model_string <- modelString(outcome, covars, random, group_var, inverse_normal = is_invnorm)
 ```
 
 Number of samples: `r nrow(annot)`
 
-`r model.string`
+`r if (!as.logical(config["binary"])) paste("Inverse normal:", config["inverse_normal"])`
 
+`r model_string`
 
-```{r, results='asis'}
-disp <- c("sample_include_file", "phenotype_file", "pca_file", "pcrelate_file", "grm_file", "inverse_normal")
-if (as.logical(config["inverse_normal"])) {
-    disp <- c(disp, "resid_covars")
-    if (!is.na(config["group_var"])) {
-        disp <- c(disp, "rescale_variance")
-    }
-}
-configTable(config[disp])
-```
-
-```{r}
-if (as.logical(config["binary"])) {
-    ggplot(annot, aes_string(outcome)) + geom_bar() + stat_count(geom="text", aes_string(label="..count..", vjust=-0.5))
-} else {
-    ggplot(annot, aes_string(outcome)) + geom_histogram()
-}
-```
-
-```{r}
-for (x in covars[-grep("^PC[[:digit:]]+", covars)]) {
-    if (is.numeric(annot[[x]] )) {
-        print(ggplot(annot, aes_string(x)) + geom_histogram())
-    } else {
-        print(ggplot(annot, aes_string(x)) + geom_bar() + stat_count(geom="text", aes_string(label="..count..", vjust=-0.5)))
-    }
-}
-```
 
 
 ## Association test
 
 ```{r, results='asis'}
 types <- c("single", "window", "aggregate")
-unit <- intersect(sub("assoc_", "", names(params)), types)
-config <- params[[paste0("assoc_", unit)]]
+unit <- intersect(sub("assoc_", "", names(param_files)), types)
+config <- param_files[[paste0("assoc_", unit)]]
 disp <- c("window_size", "window_step",
           "gds_file", "genome_build", "variant_include_file", "pass_only", "alt_freq_range")
 if (unit == "single") {
@@ -94,7 +73,7 @@ if (unit == "single") {
     if (config["test"] == "burden") disp <- c(disp, "test_type") else disp <- c(disp, "pval_skat", "rho")
 }
 if (unit == "aggregate") {
-    extra <- params$aggregate_list[c("aggregate_type", "variant_group_file")]
+    extra <- param_files$aggregate_list[c("aggregate_type", "variant_group_file")]
 } else {
     extra <- NULL
 }
@@ -102,5 +81,14 @@ configTable(c(unit=unit, extra, config[disp]))
 ```
 
 
-![](`r params$assoc_plots["out_file_qq"]`)
-![](`r params$assoc_plots["out_file_manh"]`)
+![](`r param_files$assoc_plots["out_file_qq"]`)
+![](`r param_files$assoc_plots["out_file_manh"]`)
+
+
+# Session information
+
+```{r sessionInfo(), results = 'markup'}
+library(GENESIS)
+library(ggplot2)
+print(sessionInfo())
+```

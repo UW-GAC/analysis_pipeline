@@ -1,6 +1,6 @@
 """Utility functions for TOPMed pipeline"""
 
-__version__ = "2.4.0"
+__version__ = "2.5.0"
 
 import os
 import sys
@@ -12,7 +12,7 @@ import time
 import json
 import math
 import collections
-from datetime import datetime, timedelta
+import datetime
 import awsbatch
 
 try:
@@ -144,7 +144,7 @@ def parseChromosomes(chromosomes):
 
 def dictToString(d):
     """Construct a string from a dictionary"""
-    s = ' '.join([k + ' ' + v for k, v in d.iteritems()])
+    s = ' '.join([k + ' ' + v for k, v in d.iteritems() if v != None])
     return s
 
 def stringToDict(s):
@@ -205,15 +205,13 @@ class Cluster(object):
         self.analysis = os.path.splitext(os.path.basename(os.path.abspath(sys.argv[0])))[0]
         # get user name
         self.username = getpass.getuser()
-        # ascii time
-        self.analysisStart = time.asctime()
         # command line
         self.analysisCmd = " ".join(sys.argv[:])
-        # sec time
-        dt_ref = datetime(1970,1,1)
-        tFmt = '%a %b %d %H:%M:%S %Y'
-        dt_start = datetime.strptime(self.analysisStart, tFmt)
-        self.analysisStartSec = str((dt_start - dt_ref).total_seconds())
+        # get start time (utc)
+        tFmt = "%a, %d %b %Y %I:%M:%S %p"
+        starttime = datetime.datetime.utcnow()
+        self.analysisStart = starttime.strftime(tFmt)
+        self.analysisStartSec = "'" + self.analysisStart + "'"
         # tag for analysis log file name
         self.analysisTag = str(int(time.time()*100))
         # analysis log file
@@ -227,17 +225,21 @@ class Cluster(object):
             print(self.analysis + " start time: " + self.analysisStart)
         else:
             # open file and output start time
-            self.printVerbose("Creating analysis log file: " + self.analysisLogFile)
+            self.printVerbose("creating analysis log file: " + self.analysisLogFile)
             with open(self.analysisLogFile, "w") as afile:
                 afile.write("Analysis: " + self.analysis + "\n")
                 afile.write("Cmd: " + self.analysisCmd + "\n")
                 afile.write("Version: " + __version__ + "\n")
                 afile.write("Start time: " + self.analysisStart + "\n")
 
-    def analysisLog(self, message):
+    def analysisLog(self, message, print_only = False):
         # append a message to the analysis log file
-        with open(self.analysisLogFile, "a") as afile:
-            afile.write("Message: " + message + "\n")
+        if not print_only:
+            with open(self.analysisLogFile, "a") as afile:
+                afile.write(message + "\n")
+        else:
+            print(message)
+
 
     def getAnalysisName(self):
         return self.analysis
@@ -249,12 +251,13 @@ class Cluster(object):
         return self.analysisStart
 
     def getAnalysisStartSec(self):
+        # get the datetime start (forget the "Sec" part of name)
         return self.analysisStartSec
 
     def openClusterCfg(self, stdCfgFile, optCfgFile, cfg_version, verbose):
         # get the standard cluster cfg
         self.clusterfile =  os.path.join(self.pipelinePath, stdCfgFile)
-        self.printVerbose("0>> openClusterCfg: Reading internal cfg file: " + self.clusterfile)
+        self.printVerbose("reading internal cfg file: " + self.clusterfile)
 
         with open(self.clusterfile) as cfgFileHandle:
             clusterCfg= json.load(cfgFileHandle)
@@ -281,7 +284,7 @@ class Cluster(object):
             print("0>>> Dump of " + clusterCfg["name"] + " ... \n")
             print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
         if optCfgFile != None:
-            self.printVerbose("0>> openClusterCfg: Reading user cfg file: " + optCfgFile)
+            self.printVerbose("reading user cfg file: " + optCfgFile)
 
             with open(optCfgFile) as cfgFileHandle:
                 clusterCfg = json.load(cfgFileHandle)
@@ -314,17 +317,25 @@ class Cluster(object):
         memLimits = self.clusterCfg["memory_limits"]
         if memLimits is None:
             return memlim
-        jobMem = [ v for k,v in memLimits.iteritems() if job_name.find(k) != -1 ]
-        if len(jobMem):
-            # just find the first match to job_name
-            memlim = jobMem[0]
+        # find a dicitionary of all partial match with job_name
+        fd = dict(filter(lambda elem: job_name.find(elem[0]) !=-1,memLimits.items()))
+        # if we have an exact match
+        if job_name in fd.keys():
+            memlim = fd[job_name]
+        # else we have a partial match
+        else:
+            jobMem = [ v for k,v in fd.iteritems() if job_name.find(k) != -1 ]
+            if len(jobMem):
+                # find if there is an exact match with jobname and memlimit's key
+                # just find the first match to job_name
+                memlim = jobMem[0]
         self.printVerbose('\t>>> Memory Limit - job: ' + job_name + " memlim: " +
                           str(memlim) + "MB")
         return memlim
 
     def printVerbose(self, message):
         if self.verbose:
-            print(message)
+            print(">>> " + self.class_name + ": " + message)
 
 
 class AWS_Batch(Cluster):
@@ -448,15 +459,13 @@ class AWS_Batch(Cluster):
 
     def runCmd(self, job_name, cmd, logfile=None):
         # redirect stdout/stderr
-        self.printVerbose("1===== runCmd: job " + job_name + " beginning ...")
-        self.printVerbose("1===== runCmd: cmd " + str(cmd))
+        self.printVerbose("runCmd: " + str(cmd))
         if logfile != None:
             sout = sys.stdout
             serr = sys.stderr
             flog = open ( logfile, 'w' )
             sys.stderr = sys.stdout = flog
         # spawn
-        self.printVerbose("1===== runCmd: executing " + str(cmd))
         process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=False)
         status = process.wait()
         # redirect stdout back
@@ -496,7 +505,7 @@ class AWS_Batch(Cluster):
         # submit the job
         submit_id = awsbatch.submitjob(awsbatch.subParams)
         # update analysis log
-        super(AWS_Batch, self).analysisLog(awsbatch.subParams['analysislog'])
+        super(AWS_Batch, self).analysisLog(awsbatch.subParams['analysislog'], print_only)
 
         return submit_id
 
@@ -540,88 +549,88 @@ class SGE_Cluster(Cluster):
             print( "\t> " + str(cmd) )
             sys.exit(2)
 
-    def submitJob(self, **kwargs):
+    def submitJob(self, binary=False, hold_array=None, **kwargs):
         subOpts = deepcopy(self.clusterCfg["submit_opts"])
-        # set the job cmd
-        kwargs["job_cmd"] = self.clusterCfg["submit_cmd"]
-
-        jobid = self.executeJobCmd(subOpts, **kwargs)
-        return jobid
-
-    def executeJobCmd(self, submitOpts, **kwargs):
-        # update sge opts
-        submitOpts["-N"] = kwargs["job_name"]
-        lmsg = "Job: " + kwargs["job_name"]
-
-        key = "holdid"
-        if key in kwargs and kwargs["holdid"] != []:
-            if isinstance(kwargs["holdid"], str):
-                kwargs["holdid"] = [kwargs["holdid"]]
-            submitOpts["-hold_jid"] =  ",".join(kwargs["holdid"])
-
+        # set the submit cmd (e.g., qsub)
+        submit_cmd = self.clusterCfg["submit_cmd"]
+        # check for binary
+        if binary:
+            subOpts["-b"] = "y"
+        # job name
+        job_name = kwargs["job_name"]
+        subOpts["-N"] = job_name
+        lmsg = "Job: " + job_name
+        # if not holding for job array (element wise), check for holding for jobs
+        if hold_array == None:
+            key = "holdid"
+            if key in kwargs and kwargs[key] != []:
+                if isinstance(kwargs[key], str):
+                    kwargs[key] = [kwargs[key]]
+                subOpts["-hold_jid"] =  ",".join(kwargs[key])
+        else:
+            subOpts["-hold_jid_ad"] = hold_array
+        # array job
         key = "array_range"
+        array_job = False
         lmsg_array = "no"
         if key in kwargs:
-            submitOpts["-t"] = kwargs["array_range"]
-            lmsg_array = kwargs["array_range"]
-        lmsg = lmsg + " / array: " + lmsg_array
-
+            subOpts["-t"] = kwargs[key]
+            lmsg_array = kwargs[key]
+            array_job = True
+        lmsg = lmsg + " /array: " + lmsg_array
+        # threads
         key = "request_cores"
         lmsg_cores = "1"
         memcoreFactor = 1.
         if key in kwargs and kwargs[key] != None and kwargs[key] != "1":
             # adjust memcoreFactor if a specific no. of cores is passed (i.e., no "-")
-            reqCores = kwargs["request_cores"]
+            reqCores = kwargs[key]
             if not "-" in reqCores:
                 memcoreFactor = float(reqCores)
-            submitOpts["-pe"] = self.clusterCfg["parallel_env"] + " " + reqCores
+            subOpts["-pe"] = self.clusterCfg["parallel_env"] + " " + reqCores
             lmsg_cores = reqCores
-        lmsg = lmsg + " / cores: " + lmsg_cores
-
+        lmsg = lmsg + " /cores: " + lmsg_cores
         # get memory limit option (adjust based on specifying a specific number of cores)
         key = "memory_limits"
         lmsg_mem = "not provided"
         if key in self.clusterCfg.keys():
-            memlim = super(SGE_Cluster, self).memoryLimit(kwargs["job_name"])
+            memlim = super(SGE_Cluster, self).memoryLimit(job_name)
             if memlim != None:
                 memlim = memlim/memcoreFactor
-                submitOpts["-l"] = "h_vmem="+str(memlim)+"M"
+                subOpts["-l"] = "h_vmem="+str(memlim)+"M"
                 lmsg_mem = str(memlim)
-        lmsg = lmsg + " / memlim: " + lmsg_mem
-
-
+        lmsg = lmsg + " /memlim: " + lmsg_mem
+        # email
         key = "email"
         if key in kwargs and kwargs[key] != None:
-            submitOpts["-m"] = "e"
-            submitOpts["-M"] = kwargs["email"]
-
-        # update sge cmd and args
+            subOpts["-m"] = "e"
+            subOpts["-M"] = kwargs[key]
+        # driver (cmd) args
         key = "args"
         if not key in kwargs:
-            kwargs["args"] = []
-        argStr = " ".join(kwargs["args"])
-
-        optStr = dictToString(submitOpts)
-
-        sub_cmd = " ".join([kwargs["job_cmd"], optStr, kwargs["cmd"], argStr])
+            kwargs[key] = []
+        argStr = " ".join(kwargs[key])
+        # create a string for the submit options
+        optStr = dictToString(subOpts)
+        # create the entire submit command
+        sub_cmd = " ".join([submit_cmd, optStr, kwargs["cmd"], argStr])
 
         key = "print_only"
         if key in kwargs and kwargs[key] == True:
             print sub_cmd
             return "000000"
-        self.printVerbose("executeJobCmd subprocess/sub_cmd " + sub_cmd)
+        self.printVerbose("submitting job: " + sub_cmd)
         super(SGE_Cluster, self).analysisLog(lmsg)
         process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE)
         pipe = process.stdout
         sub_out = pipe.readline()
         jobid = sub_out.strip(' \t\n\r')
 
-        if "array_range" in kwargs:
+        if array_job:
             jobid = jobid.split(".")[0]
-        print("Submitting job " + jobid + " (" + kwargs["job_name"] + ")")
+        print("Submitting job " + jobid + " (" + job_name + ")")
 
         return jobid
-
 
 class UW_Cluster(SGE_Cluster):
 
@@ -646,6 +655,210 @@ class AWS_Cluster(SGE_Cluster):
         jobid = super(AWS_Cluster, self).submitJob(**kwargs)
         return jobid
 
+class Slurm_Cluster(Cluster):
+
+    def __init__(self, opt_cluster_file=None, verbose=False):
+        self.class_name = self.__class__.__name__
+        self.std_cluster_file = "./slurm_cfg.json"
+        self.opt_cluster_file = opt_cluster_file
+
+        cfgVersion = "1.0"
+        super(Slurm_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
+        # open slurm partitions cfg
+        self.openPartitionCfg(self.pipelinePath + "/" + self.clusterCfg["partition_cfg"])
+        # update pipelinePath
+        self.submitPath = self.pipelinePath
+        key = "pipeline_path_docker"
+        if key in self.clusterCfg.keys():
+            self.pipelinePath = self.clusterCfg[key]
+
+    def openPartitionCfg(self, a_pcfg):
+        # open partition cfg and set partition names, partitions for cluster
+        with open(a_pcfg) as cfgFileHandle:
+            partitionCfg = json.load(cfgFileHandle)
+        cname = self.clusterCfg["cluster"]
+        if cname not in partitionCfg["clusters"].keys():
+            print("Cluster " + cname + " not found in " + a_pcfg)
+            sys.exit(2)
+        self.partitions = partitionCfg["clusters"][cname]
+        self.partition_names = self.partitions.keys()
+
+    def analysisInit(self, print_only=False):
+        # analysis log file and analysis info
+        super(Slurm_Cluster, self).analysisInit(print_only)
+        super(Slurm_Cluster, self).analysisLog("Slurm cluster: " +
+                                               self.clusterCfg["cluster"], print_only)
+        super(Slurm_Cluster, self).analysisLog("Slurm submit script: " +
+                                               self.clusterCfg["submit_script"] + "\n", print_only)
+
+    def getPartition(self, a_jobname, a_memsize, a_reqcores):
+        # get tasks per partition for job
+        tasksPerPartition = 1;
+        tpDict = self.clusterCfg["tasks_per_partition"]
+        jobPart = [ v for k,v in tpDict.iteritems() if a_jobname.find(k) != -1]
+        if len(jobPart):
+            # just find the first match to jobname
+            tasksPerPartition = jobPart[0]
+        self.printVerbose("tasks per partition for job " + a_jobname + ": " +
+                          str(tasksPerPartition))
+        # find all partitions with mem > a_memsize*tpp
+        memcheck = a_memsize*tasksPerPartition
+        pmem = [ k for k in self.partition_names if self.partitions[k]["mem"] > memcheck ]
+        if len(pmem) == 0:
+            print("Error: cannot find partition with sufficient memory (" + str(memcheck) + "MB)")
+            sys.exit(2)
+        # from partitions with mem, find partitions with cores >= a_reqcores*tpp
+        corecheck = a_reqcores*tasksPerPartition
+        pmemcore = [ k for k in pmem if self.partitions[k]["cores"] > corecheck ]
+        if len(pmemcore) == 0:
+            print("Error: cannot find partition with enough cores (" + str(corecheck) +
+                 ") for "+ str(memcheck) + "MB memory")
+            sys.exit(2)
+
+        # from partitions with mem & core, find partition with min cores
+        thepart = pmemcore[0]
+        nop = len(pmemcore)
+        if nop > 1 :
+            for i in range(1,nop):
+                pcheck = pmemcore[i]
+                if self.partitions[pcheck]["cores"] < self.partitions[thepart]["cores"]:
+                    thepart = pcheck
+        return thepart
+
+    def runCmd(self, job_name, cmd, logfile=None):
+        # redirect stdout/stderr
+        self.printVerbose("runCmd: " + str(cmd))
+        if logfile != None:
+            sout = sys.stdout
+            serr = sys.stderr
+            flog = open ( logfile, 'w' )
+            sys.stderr = sys.stdout = flog
+        # spawn
+        process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=False)
+        status = process.wait()
+        # redirect stdout back
+        if logfile != "":
+            sys.stdout = sout
+            sys.stderr = serr
+        if status:
+            print( "Error running job: " + job_name + " (" + str(status) + ") for command:" )
+            print( "\t> " + str(cmd) )
+            sys.exit(2)
+
+    def submitJob(self, **kwargs):
+        # get the various config attributes
+        submitOpts = deepcopy(self.clusterCfg["submit_opts"])
+        dockerOpts = deepcopy(self.clusterCfg["rdocker_opts"])
+        cluster = self.clusterCfg["cluster"]
+        job_cmd = self.clusterCfg["submit_cmd"]
+        submit_script = self.clusterCfg["submit_script"]
+        pipeline_path_docker = self.clusterCfg["pipeline_path_docker"]
+        tasks_per_partition = self.clusterCfg["tasks_per_partition"]
+        # set full path of submit script
+        submit_script = self.submitPath + "/" + submit_script
+        # process kwargs for submit options
+        submitOpts["--job-name"] = kwargs["job_name"]
+        lmsg = "Job: " + kwargs["job_name"]
+
+        key = "holdid"
+        if key in kwargs and kwargs[key] != []:
+            if isinstance(kwargs[key], str):
+                kwargs[key] = [kwargs[key]]
+            submitOpts["--dependency"] =  "afterok:" + ":".join(kwargs[key])
+
+        key = "array_range"
+        lmsg_array = "no"
+        if key in kwargs:
+            submitOpts["--array"] = kwargs[key]
+            lmsg_array = kwargs[key]
+        lmsg = lmsg + " /array: " + lmsg_array
+
+        key = "request_cores"
+        lmsg_cores = "1"
+        reqCores = 1
+        if key in kwargs and kwargs[key] != None and kwargs[key] != "1":
+            # just take the max if specified 1-max
+            rcl = kwargs[key].split("-")
+            reqCores = rcl[len(rcl)-1]
+            submitOpts["--cpus-per-task"] = reqCores
+            lmsg_cores = reqCores
+        lmsg = lmsg + " /cores: " + lmsg_cores
+
+        # get memory limit option
+        key = "memory_limits"
+        lmsg_mem = "not provided"
+        if key in self.clusterCfg.keys():
+            memlim = super(Slurm_Cluster, self).memoryLimit(kwargs["job_name"])
+            if memlim == None:
+                memlim = 8000
+            submitOpts["--mem"] = str(memlim) + "M"
+            lmsg_mem = submitOpts["--mem"]
+        lmsg = lmsg + " /memlim: " + lmsg_mem
+
+        # get partition
+        thePartition = self.getPartition(kwargs["job_name"], memlim, int(reqCores))
+        submitOpts["--partition"] = thePartition
+        lmsg = lmsg + " /cluster: " + cluster
+        lmsg = lmsg + " /parition: " + submitOpts["--partition"]
+        # get the machine and cost
+        theMachine = self.partitions[thePartition]["machine"]
+        theCost = str(self.partitions[thePartition]["cost"])
+        lmsg = lmsg + "/machine: " + theMachine + " ( " + theCost + "/hr )"
+        # output (log)
+        if submitOpts["--array"] == None:
+            submitOpts["--output"] = submitOpts["--job-name"] + "_%j.log"
+        else:
+            submitOpts["--output"] = submitOpts["--job-name"] + "_%A_%a.log"
+
+        # set the docker options
+        # -- cmd (change path associated within docker)
+        cmd = kwargs["cmd"]
+        dockerOpts["--runcmd"] = pipeline_path_docker + "/" + os.path.basename(cmd)
+        # -- args
+        key = "args"
+        if not key in kwargs:
+            kwargs[key] = []
+        dockerOpts["--runargs"] = '"' + " ".join(kwargs[key]) + '"'
+        # -- cost
+        dockerOpts["--machine"] = theMachine
+        dockerOpts["--cost"] = theCost
+        # -- verbose
+        if self.verbose:
+            dockerOpts["--verbose"] = "True"
+        suboptStr = dictToString(submitOpts)
+        dockeroptStr = dictToString(dockerOpts)
+
+        sub_cmd = " ".join([job_cmd, suboptStr, submit_script, dockeroptStr])
+
+        key = "print_only"
+        po = False
+        if key in kwargs and kwargs[key] == True:
+            po = True
+
+        super(Slurm_Cluster, self).analysisLog(lmsg, po)
+        if po:
+            print(sub_cmd + "\n")
+            jobid = submitOpts["--job-name"]
+        else:
+            self.printVerbose("submitting job: " + sub_cmd)
+            super(Slurm_Cluster, self).analysisLog("> sbatch: " + sub_cmd)
+            process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE)
+            pipe = process.stdout
+            sub_out = pipe.readline()
+            jobid = sub_out.split(" ")[3].strip()
+            super(Slurm_Cluster, self).analysisLog("> jobid: " + str(jobid) + "\n")
+            print("Sbatch to cluster: " + cluster + " / job: " + submitOpts["--job-name"] +
+                  " / job id: " + jobid)
+
+        return jobid
+
+class GCP_Cluster(Slurm_Cluster):
+
+    def __init__(self, opt_cluster_file=None, verbose=False):
+        self.class_name = self.__class__.__name__
+        self.std_cluster_file = "./gcp_slurm_cfg.json"
+        cfgVersion="3"
+        super(GCP_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
 
 class ClusterFactory(object):
 

@@ -19,7 +19,8 @@ segment <- argv$segment
 required <- c("gds_file",
               "null_model_file",
               "phenotype_file")
-optional <- c("mac_threshold"=5, # takes precedence
+optional <- c("genome_build"="hg38",
+              "mac_threshold"=5, # takes precedence
               "maf_threshold"=0.001,
               "out_prefix"="assoc_single",
               "pass_only"=TRUE,
@@ -46,6 +47,7 @@ gds <- seqOpen(gdsfile)
 annot <- getobj(config["phenotype_file"])
 
 # createSeqVarData object
+annot <- matchAnnotGds(gds, annot)
 seqData <- SeqVarData(gds, sampleData=annot)
 
 # get null model
@@ -74,10 +76,11 @@ if (as.logical(config["pass_only"])) {
 ## MAC/MAF filtering
 mac.min <- as.numeric(config["mac_threshold"])
 maf.min <- as.numeric(config["maf_threshold"])
+build <- config["genome_build"]
 if (!is.na(mac.min)) {
-    filterByMAC(seqData, sample.id, mac.min=mac.min)
+    filterByMAC(seqData, sample.id, mac.min=mac.min, build=build)
 } else {
-    filterByMAF(seqData, sample.id, maf.min=maf.min)
+    filterByMAF(seqData, sample.id, maf.min=maf.min, build=build)
 }
 
 checkSelectedVariants(seqData)
@@ -90,9 +93,7 @@ test <- switch(tolower(config["test_type"]),
                score="Score",
                wald="Wald")
 
-assoc <- assocTestSingle(iterator, nullModel, test=test)
-
-assoc <- addMAC(assoc, "single")
+assoc <- assocTestSingle(iterator, nullModel, test=test, genome.build=build)
 
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 

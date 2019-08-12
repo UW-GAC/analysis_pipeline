@@ -26,13 +26,17 @@ filterByPass(gds, verbose = TRUE)
 
 filterBySNV(gds, biallelic = TRUE, verbose = TRUE)
 
-filterByMAF(gds, sample.id = NULL, maf.min = 0, verbose = TRUE)
+filterByMAF(gds, sample.id = NULL, maf.min = 0, build = "hg19",
+  verbose = TRUE)
 
-filterByMAC(gds, sample.id = NULL, mac.min = 1, verbose = TRUE)
+filterByMAC(gds, sample.id = NULL, mac.min = 1, build = "hg19",
+  verbose = TRUE)
 
-filterByEffN(gds, sample.id = NULL, effN.min = 1, verbose = TRUE)
+filterByEffN(gds, sample.id = NULL, effN.min = 1, build = "hg19",
+  verbose = TRUE)
 
-filterByRare(gds, sample.id = NULL, af.max = 0.01, verbose = TRUE)
+filterByRare(gds, sample.id = NULL, af.max = 0.01, build = "hg19",
+  verbose = TRUE)
 
 filterByPCAcorr(gds, build = "hg19", verbose = TRUE)
 
@@ -59,13 +63,13 @@ checkSelectedVariants(gds)
 
 \item{maf.min}{Minimum MAF to include}
 
+\item{build}{Genome build to use when identifying regions to exclude from PCA because of high correlation (HLA, LCT, inversions)}
+
 \item{mac.min}{Minimum minor allele count to include}
 
 \item{effN.min}{Minimum effective N, calculated as 2 * MAF * (1-MAF) * n.obs}
 
 \item{af.max}{Maximum alternate allele frequency to include}
-
-\item{build}{Genome build to use when identifying regions to exclude from PCA because of high correlation (HLA, LCT, inversions)}
 }
 \description{
 Set variant filters on SeqVarGDSClass objects

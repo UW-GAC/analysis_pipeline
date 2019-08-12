@@ -1,0 +1,95 @@
+{
+    "name": "slurm_partitions",
+    "version": "1.0",
+    "verbose": false,
+    "clusters": {
+        "tm2": {
+            "tm2-2-13": {
+                "cores": 2,
+                "mem": 13000,
+                "machine": "n1-highmem-2",
+                "cost": 0.1184
+            },
+            "tm2-4-26": {
+                "cores": 4,
+                "mem": 26000,
+                "machine": "n1-highmem-4",
+                "cost": 0.2368
+            },
+            "tm2-8-52": {
+                "cores": 8,
+                "mem": 52000,
+                "machine": "n1-highmem-8",
+                "cost": 0.4736
+            },
+            "tm2-16-104": {
+                "cores": 16,
+                "mem": 104000,
+                "machine": "n1-highmem-16",
+                "cost": 0.9472
+            },
+            "tm2-32-208": {
+                "cores": 32,
+                "mem": 208000,
+                "machine": "n1-highmem-32",
+                "cost": 1.8944
+            },
+            "tm2-64-416": {
+                "cores": 64,
+                "mem": 416000,
+                "machine": "n1-highmem-64",
+                "cost": 3.7888
+            },
+            "tm2-96-624": {
+                "cores": 96,
+                "mem": 624000,
+                "machine": "n1-highmem-96",
+                "cost": 5.6832
+            }
+       },
+       "tm1": {
+           "tm1-2-13": {
+               "cores": 2,
+               "mem": 13000,
+               "machine": "n1-highmem-2",
+               "cost": 0.1184
+           },
+           "tm1-4-26": {
+               "cores": 4,
+               "mem": 26000,
+               "machine": "n1-highmem-4",
+               "cost": 0.2368
+           },
+           "tm1-8-52": {
+               "cores": 8,
+               "mem": 52000,
+               "machine": "n1-highmem-8",
+               "cost": 0.4736
+           },
+           "tm1-16-104": {
+               "cores": 16,
+               "mem": 104000,
+               "machine": "n1-highmem-16",
+               "cost": 0.9472
+           },
+           "tm1-32-208": {
+               "cores": 32,
+               "mem": 208000,
+               "machine": "n1-highmem-32",
+               "cost": 1.8944
+           },
+           "tm1-64-416": {
+               "cores": 64,
+               "mem": 416000,
+               "machine": "n1-highmem-64",
+               "cost": 3.7888
+           },
+           "tm1-96-624": {
+               "cores": 96,
+               "mem": 624000,
+               "machine": "n1-highmem-96",
+               "cost": 5.6832
+           }
+      }
+   }
+}

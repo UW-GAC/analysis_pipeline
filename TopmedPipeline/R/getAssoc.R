@@ -168,7 +168,11 @@ omitKnownHits <- function(assoc, hits, flank=500) {
 #' @export
 addMAC <- function(assoc, assoc_type) {
     mac <- function(x) {
-        round(2 * x$n.obs * pmin(x$freq, 1-x$freq))
+        if ("MAC" %in% names(x)) {
+            x$MAC
+        } else {
+            round(2 * x$n.obs * pmin(x$freq, 1-x$freq))
+        }
     }
     if (assoc_type == "single") {
         assoc$MAC <- mac(assoc)
@@ -176,4 +180,22 @@ addMAC <- function(assoc, assoc_type) {
         assoc$results$MAC <- sapply(assoc$variantInfo, function(x) sum(mac(x)))
     }
     assoc
+}
+
+
+#' Remove conditional variants from assoc file
+#'
+#' @param assoc results from \code{\link[GENESIS]{assocTestSingle}}
+#' @param varfile conditional variant filename (RData containing data.frame with columns "variant.id", "chromosome")
+#'
+#' @return \code{assoc} with conditional variants removed
+#' @importFrom dplyr anti_join select_
+#'
+#' @export
+removeConditional <- function(assoc, varfile) {
+    dat <- getobj(varfile)
+    stopifnot(all(c("chromosome", "variant.id") %in% names(dat)))
+    dat <- select_(dat, "variant.id", chr="chromosome")
+    dat$chr <- as.character(dat$chr)
+    anti_join(assoc, dat, by=c("variant.id", "chr"))
 }

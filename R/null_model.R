@@ -25,8 +25,8 @@ optional <- c("gds_file"=NA, # required for conditional variants
               "inverse_normal"=TRUE,
               "n_pcs"=0,
               "norm_bygroup"=FALSE,
-              "out_file"="null_model.RData",
               "out_phenotype_file"="phenotypes.RData",
+              "out_prefix"="null_model",
               "rescale_variance"="marginal",
               "sample_include_file"=NA)
 config <- setConfigDefaults(config, required, optional)
@@ -68,10 +68,17 @@ nullmod <- fitNullModel(annot, outcome=outcome, covars=covars,
                         cov.mat=grm, sample.id=sample.id,
                         family=family, group.var=group.var)
 
+# Save a smaller version of the original null model.
+nullmod_small <- smallNullModel(nullmod)
+outfile <- sprintf("%s_small.RData", config["out_prefix"])
+save(nullmod_small, file = outfile)
+
+
 ## if we need an inverse normal transform, take residuals and refit null model
 if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
+
     if (as.logical(config["norm_bygroup"]) & !is.null(group.var)) {
-        norm.option <- "by.group"  
+        norm.option <- "by.group"
     } else {
         norm.option <- "all"
     }
@@ -82,13 +89,24 @@ if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
     } else {
         rescale <- "none"
     }
-    
+
     nullmod <- nullModelInvNorm(nullmod, cov.mat=grm,
                                 norm.option=norm.option,
                                 rescale=rescale)
+
+    # Save a smaller version of the null model.
+    nullmod_small <- smallNullModel(nullmod)
+    outfile <- sprintf("%s_invnorm_small.RData", config["out_prefix"])
+    save(nullmod_small, file = outfile)
+
+    # change filename to indicate invnorm
+    outfile <- sprintf("%s_invnorm.RData", config["out_prefix"])
 }
 
-save(nullmod, file=config["out_file"])
+# save full version of final model
+save(nullmod, file = outfile)
+
+
 
 # mem stats
 ms <- gc()
