@@ -193,7 +193,7 @@ if slurmEnv["SLURM_JOB_ID"] != None:
 
 # misc
 dockerkwargs["detach"] = True
-dockerkwargs["remove"] = True
+dockerkwargs["remove"] = False
 
 # create full docker run command
 dockerFullCommand = runcmd + " " + runargs
@@ -233,6 +233,8 @@ else:
                 og = dc.logs(stream=True)
                 for line in og:
                    print(line.strip())
+                result = dc.wait()
+                exit_code = result["StatusCode"]
             except Exception as e:
                 pError("Docker container exception: " + str(e))
                 if cost != None:
@@ -241,17 +243,22 @@ else:
                     totalCost = eTimeHr*float(cost)
                     pInfo("Elapsed time (hr) up to error: " + str(eTimeHr))
                     pInfo("Estimated cost up to error= " + "$" + str(totalCost))
-                sys.exit(2)
+                exit_code = 2
+            dc.remove()
         else:
             pError("Docker sdk not installed.")
             sys.exit(2)
-        pInfo("Docker run completed.")
         if cost != None:
             eTime = time.time() - startTime
             eTimeHr = eTime/60./60.
             totalCost = eTimeHr*float(cost)
             pInfo("Elapsed time (hr): " + str(eTimeHr))
             pInfo("Estimated cost= " + "$" + str(totalCost))
+        if exit_code == 0:
+            pInfo("Docker run completed successfully.")
+        else:
+            pError("Docker run had error: " + str(exit_code))
+        sys.exit(exit_code)
     else:
         pInfo("Docker sdk not installed; cannot run docker.")
         sys.exit(2)
