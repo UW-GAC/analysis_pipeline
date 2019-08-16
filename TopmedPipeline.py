@@ -196,6 +196,7 @@ class Cluster(object):
         self.class_name = self.__class__.__name__
         # set default pipeline path
         self.pipelinePath = os.path.dirname(os.path.abspath(sys.argv[0]))
+        self.submitPath = self.pipelinePath
         # set analysis name
 
         self.openClusterCfg(std_cluster_file, opt_cluster_file, cfg_version, verbose)
@@ -308,6 +309,9 @@ class Cluster(object):
 
     def getPipelinePath(self):
         return self.pipelinePath
+
+    def getSubmitPath(self):
+        return self.submitPath
 
     def getClusterCfg(self):
         return self.clusterCfg
@@ -667,7 +671,6 @@ class Slurm_Cluster(Cluster):
         # open slurm partitions cfg
         self.openPartitionCfg(self.pipelinePath + "/" + self.clusterCfg["partition_cfg"])
         # update pipelinePath
-        self.submitPath = self.pipelinePath
         key = "pipeline_path_docker"
         if key in self.clusterCfg.keys():
             self.pipelinePath = self.clusterCfg[key]

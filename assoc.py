@@ -59,6 +59,7 @@ version = "--version " + TopmedPipeline.__version__
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = cluster.getPipelinePath()
+submitPath = cluster.getSubmitPath()
 driver = os.path.join(pipeline, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
@@ -94,12 +95,12 @@ if assoc_type == "aggregate":
 # define segments
 if segment_length == default_segment_length and n_segments is None:
     build = configdict.setdefault("genome_build", "hg38")
-    segment_file = os.path.join(pipeline, "segments_" + build + ".txt")
+    segment_file = os.path.join(submitPath, "segments_" + build + ".txt")
     print("Using default segment file for build " + build + " with segment_length " + default_segment_length + " kb")
 else:
     job = "define_segments"
 
-    rscript = os.path.join(pipeline, "R", job + ".R")
+    rscript = os.path.join(submitPath, "R", job + ".R")
 
     config = deepcopy(configdict)
     config["out_file"] = configdict["config_prefix"] + "_segments.txt"
