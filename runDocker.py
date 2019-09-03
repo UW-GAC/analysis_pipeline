@@ -228,8 +228,9 @@ else:
             pInfo("Machine type: " + machine + " ( $" + str(cost) + "/hr )")
         if dockersdk:
             try:
-                client = docker.from_env()
-                dc = client.containers.run(dockerimage, command=dockerFullCommand, **dockerkwargs)
+                dclient = docker.from_env()
+                dimage = dclient.images.pull(dockerimage)
+                dc = dclient.containers.run(dimage, command=dockerFullCommand, **dockerkwargs)
                 og = dc.logs(stream=True)
                 for line in og:
                    print(line.strip())
@@ -244,7 +245,8 @@ else:
                     pInfo("Elapsed time (hr) up to error: " + str(eTimeHr))
                     pInfo("Estimated cost up to error= " + "$" + str(totalCost))
                 exit_code = 2
-            dc.remove()
+            if exit_code == 0:
+                dc.remove()
         else:
             pError("Docker sdk not installed.")
             sys.exit(2)
