@@ -82,6 +82,7 @@
             "--environment": null,
             "--mem_limit": null,
             "--working_dir": null,
+            "--log": null,
             "--machine": null,
             "--cost": null,
             "--verbose": null
