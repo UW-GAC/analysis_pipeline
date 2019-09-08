@@ -24,10 +24,12 @@
 
 
 import      sys
+import      errno
 import      os
 import      time
 import      json
 import      getpass
+import      subprocess
 from        argparse import ArgumentParser
 from        copy   import deepcopy
 
@@ -64,6 +66,44 @@ slurmEnvDict = {
         "SLURM_MEM_PER_NODE": None,
         "SLURM_JOB_DEPENDENCY": None
 }
+def GetSlurmJobID():
+    # if array job, use the array job id; else job id
+    # check if array_job
+    sj = {"arrayjob":None, "jobid": None}
+    if slurmEnv["SLURM_ARRAY_JOB_ID"] != None:
+        sj["arrayjob"] = True
+        sj["jobid"] = slurmEnv["SLURM_ARRAY_JOB_ID"]
+    else:
+        sj["arrayjob"] = False
+        if slurmEnv["SLURM_JOB_ID"] != None:
+            sj["jobid"] =  slurmEnv["SLURM_JOB_ID"]
+        else:
+            sj["jobid"] = "NOJOBID"
+    return sj
+
+def CreateLogFileName():
+    # general name is <jobname>_<array_job_id>_<array_index>.log or
+    #                 <jobname>_<job_id>.log
+    ext = ".log"
+    # get slurm job id
+    slurmjid = GetSlurmJobID()
+    jid = slurmjid["jobid"]
+    # jobname
+    if slurmEnv["SLURM_JOB_NAME"] != None:
+        jn = slurmEnv["SLURM_JOB_NAME"]
+    else:
+        jn = "NOJOBNAME"
+    # check if array_job
+    if slurmjid["arrayjob"]:
+        if slurmEnv["SLURM_ARRAY_TASK_ID"] != None:
+            tid = slurmEnv["SLURM_ARRAY_TASK_ID"]
+        else:
+            tid = "NOTASKID"
+        lfn = jn + "_" + jid + "_" + tid + ext
+    else:
+        lfn = jn + "_" + jid + ext
+    return lfn
+
 
 def pInfo(msg):
     tmsg=time.asctime()
@@ -95,6 +135,7 @@ def Summary(hdr):
     print("\t\tEnvironment opts: " + str(environment))
     print("\t\tMemory limit: " + str(mem_limit))
     print("\t\tWorking dir: " + working_dir)
+    print("\t\tDocker run command:\n\t\t" + dockerFullCommand)
     print("\tSlurm environment:")
     print("\t\tCluster name: " + str(slurmEnv["SLURM_CLUSTER_NAME"]))
     print("\t\tPartition name: " + str(slurmEnv["SLURM_JOB_PARTITION"]))
@@ -106,13 +147,15 @@ def Summary(hdr):
     print("\t\tArray task id: " + str(slurmEnv["SLURM_ARRAY_TASK_ID"]))
     print("\t\tArray task max: " + str(slurmEnv["SLURM_ARRAY_TASK_MAX"]))
     print("\t\tMemory per node: " + str(slurmEnv["SLURM_MEM_PER_NODE"]))
+    if log:
+        print("\tLog file: " + logfile)
     print("\tVerbose: " + str(verbose))
     print("\tTest: " + str(test))
     print("\tDocker sdk installed? " + str(dockersdk))
 # start the timer
 startTime = time.time()
 # command line parser
-parser = ArgumentParser(description = "Via docker sdk, create a docker container to execute an analysis job")
+parser = ArgumentParser(description = "Via python Popen, run docker to execute an analysis job")
 # docker container run: image and command
 parser.add_argument( "--dockerimage", default = defDockerImage,
                      help = "Docker image [default: " + defDockerImage + "]" )
@@ -130,6 +173,7 @@ parser.add_argument("--working_dir", help = "working directory [default: current
 # submit options explicitly passed (not available from env variable)
 parser.add_argument("--machine", help = "machine type of partition")
 parser.add_argument("--cost", help="hourly cost of machine type")
+parser.add_argument("--log", action="store_true", default = False, help = "create a docker log file" )
 parser.add_argument( "--verbose", action="store_true", default = False,
                      help = "Verbose output [default: False]")
 parser.add_argument( "--test", action="store_true", default = False,
@@ -150,59 +194,55 @@ machine = args.machine
 cost = args.cost
 verbose = args.verbose
 test = args.test
+log = args.log
 # get the slurm environment vars
 slurmEnv = getSlurmEnv()
+# log
+if log:
+    logfile = CreateLogFileName()
 
-# kwargs (docker run options)
+# docker run options
+dockeropts = ""
+# standard opt (--rm)
+dockeropts += "-a stdout -a stderr --rm "
 if mem_limit != None:
-    dockerkwargs["mem_limit"] = str(mem_limit) + "g"
+    dockeropts += "-m " + str(mem_limit) + "g "
 # working dir
-dockerkwargs["working_dir"] = working_dir
+dockeropts += "-w " + working_dir + " "
 # volumes
 optdelim = ";"
 volumes = volumes.rstrip(optdelim)
 volumes = volumes.split(optdelim)
-dockerkwargs["volumes"] = volumes
+for v in volumes:
+    dockeropts += "-v " + v + " "
 # environment
-key = "environment"
 if environment != None:
     elist = environment.rstrip(optdelim)
     elist = elist.split(optdelim)
-    dockerkwargs[key] = elist
+    for e in elist:
+        dockeropts += "-e " + e + " "
+# environment - set JOB_ID for runRscript.sh (in case of error)
+slurmjid = GetSlurmJobID()
+rjid = "JOB_ID=" + slurmjid["jobid"]
+dockeropts += "-e " + rjid + " "
+# environment - set SGE_TASK_ID if an array job
+if slurmjid["arrayjob"]:
+    sgeid = "SGE_TASK_ID=" + slurmEnv["SLURM_ARRAY_TASK_ID"]
+    dockeropts += "-e " + sgeid + " "
 # environment - handle SLURM_CPUS_PER_TASK which changes to NSLOTS
 if slurmEnv["SLURM_CPUS_PER_TASK"] != None:
-    eslots = "NSLOTS=" + slurmEnv["SLURM_CPUS_PER_TASK"]
-    if key in dockerkwargs.keys():
-        dockerkwargs[key].append(eslots)
-    else:
-        dockerkwargs[key] = [eslots]
-# environment - set SGE_TASK_ID if an array job
-if slurmEnv["SLURM_ARRAY_TASK_ID"] != None:
-    etid = "SGE_TASK_ID=" + slurmEnv["SLURM_ARRAY_TASK_ID"]
-    if key in dockerkwargs.keys():
-        dockerkwargs[key].append(etid)
-    else:
-        dockerkwargs[key] = [etid]
-# environment - set JOB_ID for runRscript.sh (in case of error)
-if slurmEnv["SLURM_JOB_ID"] != None:
-    jid = "JOB_ID=" + slurmEnv["SLURM_JOB_ID"]
-    if key in dockerkwargs.keys():
-        dockerkwargs[key].append(jid)
-    else:
-        dockerkwargs[key] = [jid]
-
-# misc
-dockerkwargs["detach"] = True
-dockerkwargs["remove"] = False
-
+    slots = "NSLOTS=" + slurmEnv["SLURM_CPUS_PER_TASK"]
+    dockeropts += "-e " + slots + " "
 # create full docker run command
-dockerFullCommand = runcmd + " " + runargs
+dockerFullCommand = "docker run " + dockeropts + dockerimage + " " + runcmd + " " + runargs
+if log:
+    dockerFullCommand +=  " > " + logfile + " 2>&1"
 if verbose:
     Summary("Summary of " + __file__)
 pInfo("Docker container run parameters:")
 print("\tImage: " + dockerimage)
+print("\tRun opts:")
 print("\tCommand: " + dockerFullCommand)
-print("\tKwargs: " + str(dockerkwargs))
 pInfo("Slurm info")
 print("\tCluster: " + str(slurmEnv["SLURM_CLUSTER_NAME"]))
 print("\tPartition: " + str(slurmEnv["SLURM_JOB_PARTITION"]))
@@ -217,50 +257,53 @@ else:
     print("\tArray task index: " + str(slurmEnv["SLURM_ARRAY_TASK_ID"]))
     print("\tArray task max: " + str(slurmEnv["SLURM_ARRAY_TASK_MAX"]))
 
-
 # if testing, just exit; else run docker container via sdk
 if test:
     pInfo("Testing and not running docker")
+    status = 0
 else:
     if dockersdk:
-        pDebug("Running docker container ...")
         if machine != None:
             pInfo("Machine type: " + machine + " ( $" + str(cost) + "/hr )")
-        if dockersdk:
-            try:
-                dclient = docker.from_env()
-                dimage = dclient.images.pull(dockerimage)
-                dc = dclient.containers.run(dimage, command=dockerFullCommand, **dockerkwargs)
-                og = dc.logs(stream=True)
-                for line in og:
-                   print(line.strip())
-                result = dc.wait()
-                exit_code = result["StatusCode"]
-            except Exception as e:
-                pError("Docker container exception: " + str(e))
-                if cost != None:
-                    eTime = time.time() - startTime
-                    eTimeHr = eTime/60./60.
-                    totalCost = eTimeHr*float(cost)
-                    pInfo("Elapsed time (hr) up to error: " + str(eTimeHr))
-                    pInfo("Estimated cost up to error= " + "$" + str(totalCost))
-                exit_code = 2
-            if exit_code == 0:
-                dc.remove()
-        else:
-            pError("Docker sdk not installed.")
-            sys.exit(2)
-        if cost != None:
-            eTime = time.time() - startTime
-            eTimeHr = eTime/60./60.
-            totalCost = eTimeHr*float(cost)
-            pInfo("Elapsed time (hr): " + str(eTimeHr))
-            pInfo("Estimated cost= " + "$" + str(totalCost))
-        if exit_code == 0:
+        try:
+            pDebug("Getting docker client ...")
+            dclient = docker.from_env()
+            pDebug("Pulling latest ...")
+            dimage = dclient.images.pull(dockerimage)
+            cmd = dockerFullCommand
+            cmdl = cmd.split()
+            pDebug("cmdl = " + str(cmdl))
+            pInfo("Executing docker via popen:\n\t" + cmd + " ...")
+            if log:
+                pInfo("Sending stdout/stderr of docker run to: " + logfile)
+            process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
+            status = process.wait()
+            if status:
+                smsg = os.strerror(status)
+                if status == -9:
+                    smsg = "possibly killed externally via kill -9"
+                if status == 137:
+                    smsg = "possibly killed internally via memory limit"
+                pError("Executing docker failed. Error: " + str(status) + " - " + smsg)
+            else:
+                pInfo( "Executing docker completed without errors.")
+        except Exception as e:
+            pError("Docker container exception: " + str(e))
+            status = 2
+        eTime = time.time() - startTime
+        eTimeHr = eTime/60./60.
+        pInfo("Elapsed time (hr): " + str(eTimeHr))
+        if status == 0:
+            if cost != None:
+                totalCost = eTimeHr*float(cost)
+                pInfo("Estimated cost= " + "$" + str(totalCost))
             pInfo("Docker run completed successfully.")
         else:
-            pError("Docker run had error: " + str(exit_code))
-        sys.exit(exit_code)
+            if cost != None:
+                totalCost = eTimeHr*float(cost)
+                pInfo("Estimated cost up to error= " + "$" + str(totalCost))
     else:
-        pInfo("Docker sdk not installed; cannot run docker.")
-        sys.exit(2)
+        pError("Docker sdk not installed; cannot run docker.")
+        status = 2
+# exit
+    sys.exit(status)
