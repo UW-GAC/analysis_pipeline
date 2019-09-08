@@ -797,6 +797,7 @@ class Slurm_Cluster(Cluster):
             submitOpts["--mem"] = str(memlim) + "M"
             lmsg_mem = submitOpts["--mem"]
         lmsg = lmsg + " /memlim: " + lmsg_mem
+        dockerOpts["--mem_limit"] = str(int(math.ceil(float(memlim)/1000)))
 
         # get partition
         thePartition = self.getPartition(kwargs["job_name"], memlim, int(reqCores))
