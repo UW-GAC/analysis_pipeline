@@ -66,6 +66,12 @@ slurmEnvDict = {
         "SLURM_MEM_PER_NODE": None,
         "SLURM_JOB_DEPENDENCY": None
 }
+
+miscEnvDict = {
+        "SGE_TASK_ID": None,
+        "NSLOTS": None
+}
+
 def GetSlurmJobID():
     # if array job, use the array job id; else job id
     # check if array_job
@@ -123,6 +129,12 @@ def getSlurmEnv():
     for key in slurmEnvDict.keys():
         slurmEnv[key] = os.getenv(key)
     return slurmEnv
+
+def getMiscEnv():
+    miscEnv = miscEnvDict
+    for key in miscEnvDict.keys():
+        miscEnv[key] = os.getenv(key)
+    return miscEnv
 
 def Summary(hdr):
     print(hdr)
@@ -197,6 +209,8 @@ test = args.test
 log = args.log
 # get the slurm environment vars
 slurmEnv = getSlurmEnv()
+# get misc environment vars
+miscEnv = getMiscEnv()
 # log
 if log:
     logfile = CreateLogFileName()
@@ -229,10 +243,18 @@ dockeropts += "-e " + rjid + " "
 if slurmjid["arrayjob"]:
     sgeid = "SGE_TASK_ID=" + slurmEnv["SLURM_ARRAY_TASK_ID"]
     dockeropts += "-e " + sgeid + " "
+else:
+    if miscEnv["SGE_TASK_ID"] != None:
+        sgeid = "SGE_TASK_ID=" + miscEnv["SGE_TASK_ID"]
+        dockeropts += "-e " + sgeid + " "
 # environment - handle SLURM_CPUS_PER_TASK which changes to NSLOTS
 if slurmEnv["SLURM_CPUS_PER_TASK"] != None:
     slots = "NSLOTS=" + slurmEnv["SLURM_CPUS_PER_TASK"]
     dockeropts += "-e " + slots + " "
+else:
+    if miscEnv["NSLOTS"] != None:
+        sgeid = "NSLOTS=" + miscEnv["NSLOTS"]
+        dockeropts += "-e " + sgeid + " "
 # create full docker run command
 dockerFullCommand = "docker run " + dockeropts + dockerimage + " " + runcmd + " " + runargs
 if log:
@@ -256,7 +278,9 @@ else:
     print("\tArray job id: " + str(slurmEnv["SLURM_ARRAY_JOB_ID"]))
     print("\tArray task index: " + str(slurmEnv["SLURM_ARRAY_TASK_ID"]))
     print("\tArray task max: " + str(slurmEnv["SLURM_ARRAY_TASK_MAX"]))
-
+pInfo("Misc environment variables")
+print("\tSGE_TASK_ID: " + str(miscEnv["SGE_TASK_ID"]))
+print("\tNSLOTS: " + str(miscEnv["NSLOTS"]))
 # if testing, just exit; else run docker container via sdk
 if test:
     pInfo("Testing and not running docker")
@@ -276,6 +300,7 @@ else:
             pInfo("Executing docker via popen:\n\t" + cmd + " ...")
             if log:
                 pInfo("Sending stdout/stderr of docker run to: " + logfile)
+            sys.stdout.flush()
             process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
             status = process.wait()
             if status:
