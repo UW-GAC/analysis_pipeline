@@ -64,6 +64,7 @@
         "partition_cfg": "slurm_partitions.json",
         "cluster": "tm1",
         "submit_cmd": "sbatch",
+        "dependency_value": "afterok",
         "submit_script": "runDocker.py",
         "submit_opts": {
             "--job-name": null,

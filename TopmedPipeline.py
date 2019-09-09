@@ -754,6 +754,7 @@ class Slurm_Cluster(Cluster):
         dockerOpts = deepcopy(self.clusterCfg["rdocker_opts"])
         cluster = self.clusterCfg["cluster"]
         job_cmd = self.clusterCfg["submit_cmd"]
+        dependency_value = self.clusterCfg["dependency_value"]
         submit_script = self.clusterCfg["submit_script"]
         pipeline_path_docker = self.clusterCfg["pipeline_path_docker"]
         tasks_per_partition = self.clusterCfg["tasks_per_partition"]
@@ -767,7 +768,7 @@ class Slurm_Cluster(Cluster):
         if key in kwargs and kwargs[key] != []:
             if isinstance(kwargs[key], str):
                 kwargs[key] = [kwargs[key]]
-            submitOpts["--dependency"] =  "afterok:" + ":".join(kwargs[key])
+            submitOpts["--dependency"] =  dependency_value + ":" + ":".join(kwargs[key])
 
         key = "array_range"
         lmsg_array = "no"
