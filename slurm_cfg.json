@@ -83,12 +83,12 @@
             "--environment": null,
             "--mem_limit": null,
             "--working_dir": null,
-            "--log": null,
+            "--log": false,
             "--machine": null,
             "--cost": null,
-            "--verbose": null,
-            "--stats": "True",
-            "--pull": "False"
+            "--verbose": false,
+            "--stats": true,
+            "--pull": false
         }
     }
 }
