@@ -832,11 +832,11 @@ class Slurm_Cluster(Cluster):
             dockerOpts["--verbose"] = "True"
         # -- stats (enable by default)
         key = "stats"
-        if key not in dockerOpts: OR dockerOpts[key] == None:
+        if key not in dockerOpts or dockerOpts[key] == None:
             dockerOpts[key] = "True"
         # -- pull
         key = "pull"
-        if key not in dockerOpts: OR dockerOpts[key] == None:
+        if key not in dockerOpts or dockerOpts[key] == None:
             dockerOpts[key] = "False"
         # convert opts to strings
         suboptStr = dictToString(submitOpts)
