@@ -827,17 +827,37 @@ class Slurm_Cluster(Cluster):
         # -- cost
         dockerOpts["--machine"] = theMachine
         dockerOpts["--cost"] = theCost
+        # dockerOpts - boolean options.  All boolean options are default to false
+        # in runDocker.py.  A boolean option does not have a value.
+        # If a boolean option is passed then that option in runDocker is set true.
+        # We convert all options to strings so to a true boolean is passed as an empty
+        # string; for false option, we delete the key.
         # -- verbose
+        key = "--verbose"
         if self.verbose:
-            dockerOpts["--verbose"] = "True"
-        # -- stats (enable by default)
+            dockerOpts[key] = True
+        if dockerOpts[key]:
+            dockerOpts[key] = ""
+        else:
+            del dockerOpts[key]
+        # -- stats
         key = "--stats"
-        if key not in dockerOpts or dockerOpts[key] == None:
-            dockerOpts[key] = "True"
+        if dockerOpts[key]:
+            dockerOpts[key] = ""
+        else:
+            del dockerOpts[key]
         # -- pull
         key = "--pull"
-        if key not in dockerOpts or dockerOpts[key] == None:
-            dockerOpts[key] = "False"
+        if dockerOpts[key]:
+            dockerOpts[key] = ""
+        else:
+            del dockerOpts[key]
+        # -- log
+        key = "--log"
+        if dockerOpts[key]:
+            dockerOpts[key] = ""
+        else:
+            del dockerOpts[key]
         # convert opts to strings
         suboptStr = dictToString(submitOpts)
         dockeroptStr = dictToString(dockerOpts)
