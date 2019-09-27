@@ -161,6 +161,7 @@ def Summary(hdr):
     print("\t\tMemory per node: " + str(slurmEnv["SLURM_MEM_PER_NODE"]))
     if log:
         print("\tLog file: " + logfile)
+    print("\tGather stats: " + str(stats))
     print("\tVerbose: " + str(verbose))
     print("\tTest: " + str(test))
     print("\tDocker sdk installed? " + str(dockersdk))
@@ -177,15 +178,18 @@ parser.add_argument( "--runargs", default = "", help = "Run cmd arguments" )
 # docker container run: kwargs (run options)
 parser.add_argument( "--volumes", default = defVolumes,
                      help = "Bind opts (/ld1:/rd1;/z1:/z2 etc)[default: " + defVolumes + "]" )
-parser.add_argument( "--environment",
-                     help = "Env opts (x=y;w=z etc)" )
-parser.add_argument( "--mem_limit",
-                     help = "Max memory (g) of container [default: unlimited]" )
+parser.add_argument( "--environment", help = "Env opts (x=y;w=z etc)" )
+parser.add_argument( "--mem_limit", help = "Max memory (g) of container [default: unlimited]" )
 parser.add_argument("--working_dir", help = "working directory [default: current working directory]")
 # submit options explicitly passed (not available from env variable)
 parser.add_argument("--machine", help = "machine type of partition")
 parser.add_argument("--cost", help="hourly cost of machine type")
-parser.add_argument("--log", action="store_true", default = False, help = "create a docker log file" )
+parser.add_argument("--pull", action="store_true", default = False,
+                    help = "pull latest docker image [default: False]" )
+parser.add_argument("--stats", action="store_true", default = False,
+                    help = "gather stats with docker [default: False]" )
+parser.add_argument("--log", action="store_true", default = False,
+                    help = "create a docker log file [default: False]" )
 parser.add_argument( "--verbose", action="store_true", default = False,
                      help = "Verbose output [default: False]")
 parser.add_argument( "--test", action="store_true", default = False,
@@ -207,6 +211,8 @@ cost = args.cost
 verbose = args.verbose
 test = args.test
 log = args.log
+pull = args.pull
+stats = args.stats
 # get the slurm environment vars
 slurmEnv = getSlurmEnv()
 # get misc environment vars
@@ -255,8 +261,13 @@ else:
     if miscEnv["NSLOTS"] != None:
         sgeid = "NSLOTS=" + miscEnv["NSLOTS"]
         dockeropts += "-e " + sgeid + " "
+# check for stats
+statscmd = ""
+if stats:
+    statscmd = '/usr/bin/time -f ">>> Stats: MaxRSS=%M ElapsedTime=%E CPUTime.user=%U CPUTime.kernel=%S"  '
+
 # create full docker run command
-dockerFullCommand = "docker run " + dockeropts + dockerimage + " " + runcmd + " " + runargs
+dockerFullCommand = "docker run " + dockeropts + dockerimage + " " + statscmd + runcmd + " " + runargs
 if log:
     dockerFullCommand +=  " > " + logfile + " 2>&1"
 if verbose:
@@ -286,49 +297,53 @@ if test:
     pInfo("Testing and not running docker")
     status = 0
 else:
-    if dockersdk:
-        if machine != None:
-            pInfo("Machine type: " + machine + " ( $" + str(cost) + "/hr )")
-        try:
-            pDebug("Getting docker client ...")
-            dclient = docker.from_env()
-            pDebug("Pulling latest ...")
-            dimage = dclient.images.pull(dockerimage)
-            cmd = dockerFullCommand
-            cmdl = cmd.split()
-            pDebug("cmdl = " + str(cmdl))
-            pInfo("Executing docker via popen:\n\t" + cmd + " ...")
-            if log:
-                pInfo("Sending stdout/stderr of docker run to: " + logfile)
-            sys.stdout.flush()
-            process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
-            status = process.wait()
-            if status:
-                smsg = os.strerror(status)
-                if status == -9:
-                    smsg = "possibly killed externally via kill -9"
-                if status == 137:
-                    smsg = "possibly killed internally via memory limit"
-                pError("Executing docker failed. Error: " + str(status) + " - " + smsg)
-            else:
-                pInfo( "Executing docker completed without errors.")
-        except Exception as e:
-            pError("Docker container exception: " + str(e))
-            status = 2
-        eTime = time.time() - startTime
-        eTimeHr = eTime/60./60.
-        pInfo("Elapsed time (hr): " + str(eTimeHr))
-        if status == 0:
-            if cost != None:
-                totalCost = eTimeHr*float(cost)
-                pInfo("Estimated cost= " + "$" + str(totalCost))
-            pInfo("Docker run completed successfully.")
+    status = 0
+    if machine != None:
+        pInfo("Machine type: " + machine + " ( $" + str(cost) + "/hr )")
+    # pull image is selected
+    if pull:
+        pInfo("Pulling latest docker image via docker sdk ...")
+        if not dockersdk:
+            status=2
+            pError("Docker sdk is not present - cannot pull the latest docker image")
         else:
-            if cost != None:
-                totalCost = eTimeHr*float(cost)
-                pInfo("Estimated cost up to error= " + "$" + str(totalCost))
+            try:
+                pDebug("Getting docker client ...")
+                dclient = docker.from_env()
+                pDebug("Pulling latest ...")
+                dimage = dclient.images.pull(dockerimage)
+            except Exception as e:
+                status=2
+                pError("Docker pull exception " + str(e))
+    # execute docker run command via popen for better logging, et al
+    if status == 0:
+        cmd = dockerFullCommand
+        cmdl = cmd.split()
+        pDebug("cmdl = " + str(cmdl))
+        pInfo("Executing docker via popen:\n\t" + cmd + " ...")
+        if log:
+            pInfo("Sending stdout/stderr of docker run to: " + logfile)
+        sys.stdout.flush()
+        process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
+        status = process.wait()
+        if status:
+            smsg = os.strerror(status)
+            if status == -9:
+                smsg = "possibly killed externally via kill -9"
+            if status == 137:
+                smsg = "possibly killed internally via memory limit"
+            pError("Executing docker run cmd failed. Error: " + str(status) + " - " + smsg)
+    eTime = time.time() - startTime
+    eTimeHr = eTime/60./60.
+    pInfo("Elapsed time (hr): " + str(eTimeHr))
+    if status == 0:
+        if cost != None:
+            totalCost = eTimeHr*float(cost)
+            pInfo("Estimated cost= " + "$" + str(totalCost))
+        pInfo("Docker run cmd completed successfully.")
     else:
-        pError("Docker sdk not installed; cannot run docker.")
-        status = 2
+        if cost != None:
+            totalCost = eTimeHr*float(cost)
+            pInfo("Estimated cost up to error= " + "$" + str(totalCost))
 # exit
-    sys.exit(status)
+sys.exit(status)
