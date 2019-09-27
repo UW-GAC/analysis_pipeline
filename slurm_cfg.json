@@ -86,7 +86,9 @@
             "--log": null,
             "--machine": null,
             "--cost": null,
-            "--verbose": null
+            "--verbose": null,
+            "--stats": "True",
+            "--pull": "False"
         }
     }
 }
