@@ -73,6 +73,9 @@ nullmod_small <- smallNullModel(nullmod)
 outfile <- sprintf("%s_small.RData", config["out_prefix"])
 save(nullmod_small, file = outfile)
 
+# outfile if there is no invnorm
+outfile <- sprintf("%s.RData", config["out_prefix"])
+
 
 ## if we need an inverse normal transform, take residuals and refit null model
 if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
