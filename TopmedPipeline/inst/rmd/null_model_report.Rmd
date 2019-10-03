@@ -259,20 +259,27 @@ print(p)
 ```
 
 ```{r varcomp-header, results = 'asis'}
+show_varcomp <- FALSE
 if (!is.null(random)){
-  cat("## Variance components")
+  cat("## Variance components\n")
+
+  if (!all(nullmod$zeroFLAG)) {
+    show_varcomp <- TRUE
+  } else {
+    cat("\nAll variance components are estimated to be 0.\n\n")
+  }
 }
 ```
 
 ```{r varcomp}
-if (!is.null(random)) {
+if (show_varcomp) {
   vc <- varCompCI(nullmod, prop = FALSE)
   vc$component <- rownames(vc)
-  p <- ggplot(vc, aes(x = Est, y = component)) +
-    geom_vline(xintercept = 0, color = COLOR_ZERO_LINE) +
-    geom_point() +
-    geom_errorbarh(aes(xmin = `Lower 95`, xmax = `Upper 95`))
-  print(p)
+    p <- ggplot(vc, aes(x = Est, y = component)) +
+      geom_vline(xintercept = 0, color = COLOR_ZERO_LINE) +
+      geom_point() +
+      geom_errorbarh(aes(xmin = `Lower 95`, xmax = `Upper 95`))
+    print(p)
 }
 ```
 
