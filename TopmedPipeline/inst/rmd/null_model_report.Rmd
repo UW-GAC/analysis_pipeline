@@ -109,7 +109,7 @@ configTable(config[disp])
 ## Phenotype distributions
 
 ```{r outcome-distribution-plot}
-if (is_binary) {q
+if (is_binary) {
     ggplot(dat, aes(model_outcome)) +
       geom_bar() +
       stat_count(geom="text", aes_string(label="..count..", vjust=-0.5)) +
