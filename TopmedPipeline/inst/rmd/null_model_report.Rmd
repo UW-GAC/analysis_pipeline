@@ -283,6 +283,14 @@ if (show_varcomp) {
 }
 ```
 
+```{r varcomp-table, results = 'asis'}
+if (show_varcomp) {
+  cat("### Variance component estimates\n\n")
+  k <- knitr::kable(vc)
+  print(k)
+}
+```
+
 ```{r variance-adjustment-header, results = 'asis'}
 if (!is.null(group_var)) {
   cat("## Variance adjustment")
