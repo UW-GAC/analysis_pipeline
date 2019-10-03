@@ -65,7 +65,8 @@ outcome_string <- modelOutcomeString(outcome, inverse_normal = is_invnorm)
 
 ```{r prepare-data}
 dat <- data.frame(sample.id = nullmod$sample.id,
-                  workingY = nullmod$workingY,
+                  # Need as.vector here because sometimes it's a matrix (but not always)
+                  workingY = as.vector(nullmod$workingY),
                   # Need as.vector here because sometimes it's a matrix (but not always)
                   model_outcome = as.vector(nullmod$outcome),
                   fitted.values = nullmod$fitted.values,
