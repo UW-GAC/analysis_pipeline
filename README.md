@@ -278,7 +278,7 @@ config parameter | default value | description
 --- | --- | ---
 `mac_threshold` | `5` | Minimum minor allele count for variants to include in test. Use a higher threshold when outcome is binary.
 `maf_threshold` | `0.001` | Minimum minor allele frequency for variants to include in test. Only used if `mac_threshold` is `NA`.
-`test_type` | `score` | Type of test to perform. If samples are related (mixed model), options are `score` and `wald` if `binary` is `FALSE`, `score` and `score.spa` if `binary` is `TRUE`.
+`test_type` | `score` | Type of test to perform. If samples are related (mixed model), options are `score` if `binary` is `FALSE`, `score` and `score.spa` if `binary` is `TRUE`.
 `known_hits_file` | `NA` | RData file with data.frame containing columns `chr` and `pos`. If provided, 1 Mb regions surrounding each variant listed will be omitted from the QQ and manhattan plots.
 
 
@@ -288,7 +288,6 @@ config parameter | default value | description
 --- | --- | ---
 `alt_freq_max` | `1` | Maximum alternate allele frequency to consider.
 `test` | `burden` | Test to perform. Options are `burden`, `skat`,  `smmat`, `fastskat`, or `skato`.
-`test_type` | `score` | Type of test to perform if `test` is `burden`. Options are `score` and `wald` if `binary` is `FALSE`, `score` if `binary` is `TRUE`.
 `rho` | `0` | A numeric value (or quoted, space-delimited list of numeric values) in [0,1] specifying the rho parameter when `test` is `skat`. `0` is a standard SKAT test, `1` is a score burden test, and multiple values is a SKAT-O test.
 `variant_weight_file` | `NA` | RData file with data frame defining variant weights. Columns should contain either `variant.id` or all of (`chr`, `pos`, `ref`, `alt`).
 `weight_user` | `NA` | Name of column in `variant_weight_file` or `variant_group_file` (see aggregate test, below) containing the weight for each variant.

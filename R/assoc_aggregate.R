@@ -29,7 +29,6 @@ optional <- c("aggregate_type"="allele",
               "rho"="0",
               "segment_file"=NA,
               "test"="burden",
-              "test_type"="score",
               "variant_include_file"=NA,
               "variant_weight_file"=NA,
               "weight_user"=NA,
@@ -127,10 +126,6 @@ test <- switch(tolower(config["test"]),
                fastsmmat="fastSMMAT",
                skato="SKATO")
 
-test.type <- switch(tolower(config["test_type"]),
-                    score="Score",
-                    wald="Wald")
-
 weight.beta <- as.numeric(strsplit(config["weight_beta"], " ", fixed=TRUE)[[1]])
 rho <- as.numeric(strsplit(config["rho"], " ", fixed=TRUE)[[1]])
 
@@ -139,7 +134,6 @@ assoc <- assocTestAggregate(iterator, nullModel,
                             weight.beta=weight.beta,
                             weight.user=weight.user,
                             test=test,
-                            burden.test=test.type,
                             rho=rho,
                             genome.build=build)
 
