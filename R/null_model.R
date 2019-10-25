@@ -93,6 +93,11 @@ if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
         rescale <- "none"
     }
 
+    model.string <- modelString(outcome, covars, random, group.var,
+                                inverse_normal = TRUE)
+    message("Refitting model: ", model.string)
+    message(length(sample.id), " samples")
+
     nullmod <- nullModelInvNorm(nullmod, cov.mat=grm,
                                 norm.option=norm.option,
                                 rescale=rescale)
