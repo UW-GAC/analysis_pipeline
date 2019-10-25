@@ -68,6 +68,9 @@ nullmod <- fitNullModel(annot, outcome=outcome, covars=covars,
                         cov.mat=grm, sample.id=sample.id,
                         family=family, group.var=group.var)
 
+# Add the model string as a temporary fix until it can be added to GENESIS null models.
+nullmod$model.string <- model.string
+
 # Save a smaller version of the original null model.
 nullmod_small <- smallNullModel(nullmod)
 outfile <- sprintf("%s_small.RData", config["out_prefix"])
@@ -101,6 +104,10 @@ if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
     nullmod <- nullModelInvNorm(nullmod, cov.mat=grm,
                                 norm.option=norm.option,
                                 rescale=rescale)
+
+    # Update the model string so it has the inverse normal outcome.
+    # This is a temporary fix until the model.string can be added to GENESIS null models.
+    nullmod$model.string <- model.string
 
     # Save a smaller version of the null model.
     nullmod_small <- smallNullModel(nullmod)
