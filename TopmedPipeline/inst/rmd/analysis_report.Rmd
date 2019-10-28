@@ -64,7 +64,8 @@ types <- c("single", "window", "aggregate")
 unit <- intersect(sub("assoc_", "", names(param_files)), types)
 config <- param_files[[paste0("assoc_", unit)]]
 disp <- c("window_size", "window_step",
-          "gds_file", "genome_build", "variant_include_file", "pass_only", "alt_freq_range")
+          "gds_file", "genome_build", "variant_include_file", "pass_only", "alt_freq_range",
+          "null_model_file")
 if (unit == "single") {
     if (!is.na(config["mac_threshold"])) disp <- c(disp, "mac_threshold") else disp <- c(disp, "maf_threshold")
     disp <- c(disp, "test_type")
