@@ -36,35 +36,25 @@ param_files <- lapply(setNames(files, scripts), readConfig)
 
 ## Null model
 
-```{r}
-config <- param_files$null_model
-phen <- getPhenotypes(config)
-outcome <- phen$outcome
-covars <- phen$covars
-annot <- filter(pData(phen$annot), sample.id %in% phen$sample.id)
-random <- if (!is.na(config["pcrelate_file"])) "kinship" else if (!is.na(config["grm_file"])) "grm" else NULL
-group_var <- if (is.na(config["group_var"])) NULL else config["group_var"]
-
-is_invnorm <- !as.logical(config["binary"]) & as.logical(config["inverse_normal"])
-model_string <- modelString(outcome, covars, random, group_var, inverse_normal = is_invnorm)
+```{r, results='markup'}
+types <- c("single", "window", "aggregate")
+unit <- intersect(sub("assoc_", "", names(param_files)), types)
+config <- param_files[[paste0("assoc_", unit)]]
+nullmod_file <- gsub("\\.RData", "_small.RData", config["null_model_file"])
+nullmod <- getobj(nullmod_file)
 ```
 
-Number of samples: `r nrow(annot)`
+Number of samples: `r length(nullmod$sample.id)`
 
-`r if (!as.logical(config["binary"])) paste("Inverse normal:", config["inverse_normal"])`
-
-`r model_string`
-
+Model: `r nullmod$model.string`
 
 
 ## Association test
 
 ```{r, results='asis'}
-types <- c("single", "window", "aggregate")
-unit <- intersect(sub("assoc_", "", names(param_files)), types)
-config <- param_files[[paste0("assoc_", unit)]]
 disp <- c("window_size", "window_step",
-          "gds_file", "genome_build", "variant_include_file", "pass_only", "alt_freq_range")
+          "gds_file", "genome_build", "variant_include_file", "pass_only", "alt_freq_range",
+          "null_model_file")
 if (unit == "single") {
     if (!is.na(config["mac_threshold"])) disp <- c(disp, "mac_threshold") else disp <- c(disp, "maf_threshold")
     disp <- c(disp, "test_type")

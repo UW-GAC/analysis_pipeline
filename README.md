@@ -80,12 +80,12 @@ The first step in evalulating relatedness and population structure is to select 
     config parameter | default value | description
     --- | --- | ---
     `out_prefix` | | Prefix for files created by this script.
-	`gds_file` | | GDS file. Include a space to insert chromosome. 
+	`gds_file` | | GDS file. Include a space to insert chromosome.
 	`subset_gds_file` | | Output GDS file, to contain only LD pruned variants from all chromosomes.
 	`autosome_only` | `TRUE` | Only include autosomes in LD pruning.
 	`ld_r_threshold` | `0.32` | `r` threshold for LD pruning. Default is `r^2 = 0.1`.
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
-	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning. 
+	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning.
 	`missing_threshold` | `0.01` | Maximum missing call rate for variants used in LD pruning.
 	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
 	`genome_build` | `hg38` | Genome build, used to define correlation regions.
@@ -107,8 +107,8 @@ The first step in evalulating relatedness and population structure is to select 
     `out_prefix` | | Prefix for files created by this script.
     `gds_file` | | GDS file with only LD pruned variants, all chromosomes.
 	`bed_file` | | Output BED file.
-	`sample_include_file` | | RData file with vector of sample.id to include. Required to ensure that the two output matrices have the same dimensions. 
-	`variant_include_file` | `NA` | RData file with vector of variant.id to include. 
+	`sample_include_file` | | RData file with vector of sample.id to include. Required to ensure that the two output matrices have the same dimensions.
+	`variant_include_file` | `NA` | RData file with vector of variant.id to include.
 	`sparse_threshold` | `0.01104854` | Minimum kinship to use for creating the sparse matrix from `king --ibdseg` output (default is `2^(-13/2)` or 5th degree relatives). A block diagonal matrix will be created such that any pair of samples with a kinship greater than the threshold is in the same block, and pairwise kinship between blocks is 0. Not used for the output of `king --kinship`, which is always saved as a dense GDS file.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
@@ -129,19 +129,19 @@ The first step in evalulating relatedness and population structure is to select 
 
     config parameter | default value | description
     --- | --- | ---
-    `out_prefix` | | Prefix for files created by this script. 
+    `out_prefix` | | Prefix for files created by this script.
     `gds_file` | | GDS file with only LD pruned variants, all chromosomes.
 	`full_gds_file` | | GDS file with all variants. Include a space to insert chromosome.
 	`king_file` | | GDS (recommended) or RData file with kinship coefficients created by `king.py`. Used for ancestry divergence, and optionally for kinship if `kinship_file` is not specified.
 	`kinship_file` | `NA` | File containing kinship matrix to use for defining the unrelated sample set. Multiple formats are accepted, including RData or GDS from `king.py` or `pcrelate.py`. A sparse Matrix object stored as RData is recommended.
-	`kinship_threshold` | `0.04419417` | Minimum kinship estimate to use for assigning relatives (default is `2^(-9/2)` or 3rd degree relatives). 
+	`kinship_threshold` | `0.04419417` | Minimum kinship estimate to use for assigning relatives (default is `2^(-9/2)` or 3rd degree relatives).
 	`divergence_threshold` | `-0.04419417` | Minimum kinship estimate to use for ancestry divergence (default is `-2^(-9/2)`).
-	`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
+	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
 	`ld_r_threshold` | `0.32` | `r` threshold for LD pruning. Default is `r^2 = 0.1`.
 	`ld_win_size` | `10` | Sliding window size in Mb for LD pruning.
-	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning. 
-	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions). 
-	`genome_build` | `hg38` | Genome build, used to define correlation regions. 
+	`maf_threshold` | `0.01` | Minimum MAF for variants used in LD pruning.
+	`exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
+	`genome_build` | `hg38` | Genome build, used to define correlation regions.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to include.
 	`n_pcs` | `32` | Number of PCs to return.
 	`n_pair` | `6` | Number of PCs in include in the pairs plot.
@@ -161,15 +161,15 @@ The first step in evalulating relatedness and population structure is to select 
 
     config parameter | default value | description
     --- | --- | ---
-    `out_prefix` | | Prefix for files created by this script. 
+    `out_prefix` | | Prefix for files created by this script.
     `gds_file` | | GDS file with only LD pruned variants, all chromosomes.
 	`pca_file` | | RData file with PCA results created by `pcair.py`.
-	`n_pcs` | `3` | Number of PCs to use in adjusting for ancestry. 
+	`n_pcs` | `3` | Number of PCs to use in adjusting for ancestry.
 	`n_sample_blocks` | `1` | Number of blocks to divide samples into for parallel computation. Adjust depending on computer memory and number of samples in the analysis.
-	`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
-	`variant_block_size` | `1024` | Number of variants to read in a single block. 
+	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
+	`variant_block_size` | `1024` | Number of variants to read in a single block.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to include.
-	`sparse_threshold` | `0.01104854` | Minimum kinship to use for creating the sparse matrix (default is `2^(-13/2)` or 5th degree relatives). A block diagonal matrix will be created such that any pair of samples with a kinship greater than the threshold is in the same block, and pairwise kinship between blocks is 0. 
+	`sparse_threshold` | `0.01104854` | Minimum kinship to use for creating the sparse matrix (default is `2^(-13/2)` or 5th degree relatives). A block diagonal matrix will be created such that any pair of samples with a kinship greater than the threshold is in the same block, and pairwise kinship between blocks is 0.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
 
@@ -186,10 +186,10 @@ The GRM is calculated for each chromosome separately, and then averaged to creat
 
 config parameter | default value | description
 --- | --- | ---
-`out_prefix` | | Prefix for files created by this script. 
+`out_prefix` | | Prefix for files created by this script.
 `gds_file` | | GDS file. Include a space to insert chromosome.
 `method` | `GCTA` | Method used to compute GRM. Options are `GCTA`, `EIGMIX`, and `IndivBeta`.
-`maf_threshold` | `0.001` | Minimum MAF for variants used. 
+`maf_threshold` | `0.001` | Minimum MAF for variants used.
 `missing_threshold` | `0.01` | Maximum missing call rate for variants used.
 `exclude_pca_corr` | `TRUE` | Exclude variants in regions with high correlation with PCs (HLA, LCT, inversions).
 `genome_build` | `hg38` | Genome build, used to define correlation regions.
@@ -223,11 +223,11 @@ When combining samples from groups with different variances for a trait (e.g., s
 
 config parameter | default value | description
 --- | --- | ---
-`out_prefix` | | Prefix for files created by this script. 
+`out_prefix` | | Prefix for files created by this script.
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes.
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
 `pca_file` | `NA` | RData file with PCA results created by `pcair.py`.
-`pcrelate_file` | `NA` | RData file with 2*kinship created by `pcrelate.py`. 
+`pcrelate_file` | `NA` | RData file with 2*kinship created by `pcrelate.py`.
 `grm_file` | `NA` | GDS file with GRM created by `grm.py`.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
@@ -236,9 +236,9 @@ config parameter | default value | description
 `norm_bygroup` | `FALSE` | If `TRUE` and `group_var` is provided, the inverse normal transform is done on each group separately.
 `rescale_variance` | `marginal` | Applies only if `inverse_normal` is `TRUE`. Controls whether to rescale the variance after inverse-normal transform, restoring it to the original variance before the transform. Options are `marginal`, `varcomp`, or `none`.
 `n_pcs` | `0` | Number of PCs to include as covariates.
-`conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` and `variant.id`. The alternate allele dosage of these variants will be included as covariates in the analysis. 
+`conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` and `variant.id`. The alternate allele dosage of these variants will be included as covariates in the analysis.
 `gds_file` | `NA` | GDS file. Include a space to insert chromosome. Required if `conditional_variant_file` is specified.
-`sample_include_file` | `NA` | RData file with vector of sample.id to include. 
+`sample_include_file` | `NA` | RData file with vector of sample.id to include.
 
 
 ### Parameters common to all association tests
@@ -251,15 +251,14 @@ config parameter | default value | description
 --- | --- | ---
 `out_prefix` | | Prefix for files created by this script.
 `gds_file` | | GDS file. Include a space to insert chromosome.
-`null_model_file` | | RData file with null model from `null_model.py`.
-`null_model_params` | | Parameter file ending in `null_model.params` in the `report` directory from `null_model.py`.
+`null_model_file` | | RData file with null model from `null_model.py`. Note that a small null model with the suffix `_small.RData` must exist in the same directory as the specified null model for use by the analysis report.
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes. Use the output phenotype file from `null_model.py`.
-`variant_include_file` | `NA` | RData file with vector of variant.id to include. 
+`variant_include_file` | `NA` | RData file with vector of variant.id to include.
 `variant_block_size` | `1024` | Number of variants to read in a single block.
 `pass_only` | `TRUE` | `TRUE` to select only variants with FILTER=PASS.
 `genome_build` | `hg38` | Genome build for the genotypes in the GDS file (`hg19` or `hg38`). Used to divide the genome into segments for parallel processing and identify pseudoautosomal regions on the X chromosome.
 `plot_mac_threshold` | `NA` | Minimum minor allele count for variants or aggregate units to include in plots (if different from threshold used to run tests; see `mac_threshold` below).
-`thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots. 
+`thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 `thin_nbins` | `10` | Number of bins to use for thinning.
 `thin_npoints` | `10000` | Number of points in each bin after thinning.
 
@@ -347,7 +346,7 @@ LocusZoom plots are created with the [LocusZoom standalone software](https://git
 
 Loci to plot are specified in the `locus_file`, with chromosome `chr` and either `variant.id` (to specify the reference variant) or `start end` (to indicate a region to plot, in which case the variant with the smallest p-value will be the reference. Population (`pop`) is either `TOPMED` or one of the 1000 Genomes populations (`hg19`:`AFR`, `AMR`, `ASN`, `EUR`; `hg38`: `AFR`, `AMR`, `EUR`, `EAS`, `SAS`). If `pop = TOPMED`, LD is computed from the TOPMed data using the sample set in `ld_sample_include`.
 
-Regions from sliding window or aggregate tests with p-values below a certain threshold can be displayed in a separate track. 
+Regions from sliding window or aggregate tests with p-values below a certain threshold can be displayed in a separate track.
 
 `locuszoom.py`
 1. `locuszoom.R`
@@ -359,7 +358,7 @@ config parameter | default value | description
 `locus_file` | | Text file with columns `chr`, `pop` and either `variant.id` (for `locus_type=variant`) or `start`, `end` (for `locus_type=region`)
 `locus_type` | `variant` | Type of region to plot (`variant` with flanking region, or `region`)
 `flanking_region` | `500` | Flanking region in kb
-`gds_file` | `NA` | GDS file to use for calculating LD. Include a space to insert chromosome. 
+`gds_file` | `NA` | GDS file to use for calculating LD. Include a space to insert chromosome.
 `genome_build` | `hg38` | Genome build (`hg19` or `hg38`).
 `ld_sample_include` | `NA` | RData file with vector of sample.id to include when calculating LD.
 `track_file` | `NA` | File with aggregate or window association test results. Regions will be displayed in a track in the LocusZoom plot. Include a space to insert chromosome.
