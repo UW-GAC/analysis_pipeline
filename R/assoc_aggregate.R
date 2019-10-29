@@ -41,11 +41,13 @@ writeConfig(config, paste0(basename(argv$config), ".assoc_aggregate.params"))
 gdsfile <- config["gds_file"]
 aggfile <- config["aggregate_variant_file"]
 varfile <- config["variant_include_file"]
+wgtfile <- config["variant_weight_file"]
 if (!is.na(chr)) {
     bychrfile <- grepl(" ", gdsfile) # do we have one file per chromosome?
     gdsfile <- insertChromString(gdsfile, chr)
     aggfile <- insertChromString(aggfile, chr, err="aggregate_variant_file")
     varfile <- insertChromString(varfile, chr)
+    wgtfile <- insertChromString(wgtfile, chr)
 }
 
 gds <- seqOpen(gdsfile)
@@ -61,9 +63,9 @@ seqData <- SeqVarData(gds, sampleData=annot)
 aggVarList <- getobj(aggfile)
 
 # get weights
-if (!is.na(config["variant_weight_file"])) {
+if (!is.na(wgtfile)) {
     # weights provided in separate file
-    dat <- getobj(config["variant_weight_file"])
+    dat <- getobj(wgtfile)
     weight.user <- config["weight_user"]
     stopifnot(weight.user %in% names(dat))
     seqData <- addVariantData(seqData, dat)
