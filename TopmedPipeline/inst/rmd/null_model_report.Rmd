@@ -64,6 +64,13 @@ outcome_string <- modelOutcomeString(outcome, inverse_normal = is_invnorm)
 ```
 
 ```{r prepare-data}
+# Fix 0/1 covariates so they display as categorical.
+for (covar in covars) {
+  if (!is.numeric(annot[[covar]]) | length(setdiff(annot[[covar]], c(0, 1, NA))) == 0) {
+    annot[[covar]] <- as.factor(annot[[covar]])
+  }
+}
+
 dat <- data.frame(sample.id = nullmod$sample.id,
                   # Need as.vector here because sometimes it's a matrix (but not always)
                   workingY = as.vector(nullmod$workingY),
@@ -124,7 +131,7 @@ if (is_binary) {
 
 ```{r covariate-distribution-plot}
 for (x in covars[-grep("^PC[[:digit:]]+", covars)]) {
-    if (is.numeric(annot[[x]] )) {
+    if (is.numeric(annot[[x]])) {
         print(ggplot(annot, aes_string(x)) + geom_histogram())
     } else {
         print(ggplot(annot, aes_string(x)) + geom_bar() + stat_count(geom="text", aes_string(label="..count..", vjust=-0.5)))
