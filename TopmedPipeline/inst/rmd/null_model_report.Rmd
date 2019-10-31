@@ -134,6 +134,8 @@ for (x in covars[-grep("^PC[[:digit:]]+", covars)]) {
 
 ## Covariate effect size estimates
 
+Covariates are considered to be significant if they have $p < 0.05$ after a Bonferroni correction for the number of fixed effects.
+
 ```{r fixef-plot}
 fixef <- nullmod$fixef
 # Rename fixef columns because they are different for different types of models.
