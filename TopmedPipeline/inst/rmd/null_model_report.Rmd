@@ -47,7 +47,7 @@ phen <- getPhenotypes(config)
 outcome <- phen$outcome
 covars <- phen$covars
 annot <- filter(pData(phen$annot), sample.id %in% phen$sample.id)
-random <- if (!is.na(config["pcrelate_file"])) "kinship" else if (!is.na(config["grm_file"])) "grm" else NULL
+random <- if (!is.na(config["relatedness_matrix_file"])) "relatedness" else NULL
 group_var <- if (is.na(config["group_var"])) NULL else config["group_var"]
 nullmod_file <- sprintf("%s_small.RData", config["out_prefix"])
 if (params$invnorm) {
@@ -103,7 +103,7 @@ Number of samples: `r nrow(annot)`
 `r model_string`
 
 ```{r, results='asis'}
-disp <- c("sample_include_file", "phenotype_file", "pca_file", "pcrelate_file", "grm_file")
+disp <- c("sample_include_file", "phenotype_file", "pca_file", "relatedness_matrix_file")
 if (as.logical(config["inverse_normal"])) {
     disp <- c(disp, "resid_covars")
     if (!is.na(config["group_var"]) & params$invnorm) {
