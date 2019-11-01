@@ -16,6 +16,7 @@ getPhenotypes <- function(config) {
     ## get PCs
     n_pcs <- as.integer(config["n_pcs"])
     if (n_pcs > 0) {
+        if (is.na(config["pca_file"])) stop("must specify pca_file if n_pcs > 0")
         pca <- getobj(config["pca_file"])
         pcs <- pca$vectors[,1:n_pcs,drop=FALSE]
         pccols <- paste0("PC", 1:n_pcs)

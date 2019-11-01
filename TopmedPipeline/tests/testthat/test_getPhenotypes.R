@@ -85,6 +85,14 @@ test_that("no covariates or PCs", {
     .cleanupConfig(config)
 })
 
+test_that("no PC file error", {
+    config <- .testConfig(covars=NA, n_pcs=2)
+    config["pca_file"] <- NA
+    expect_error(getPhenotypes(config), "must specify pca_file")
+    
+    .cleanupConfig(config)
+})
+
 test_that("one PC", {
     config <- .testConfig(covars=NA, n_pcs=1)
     
