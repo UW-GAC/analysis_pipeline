@@ -16,8 +16,7 @@ required <- c("outcome",
               "phenotype_file")
 optional <- c("gds_file"=NA, # required for conditional variants
               "pca_file"=NA,
-              "pcrelate_file"=NA,
-              "grm_file"=NA,
+              "relatedness_matrix_file"=NA,
               "binary"=FALSE,
               "conditional_variant_file"=NA,
               "covars"=NA,
@@ -58,7 +57,7 @@ if (as.logical(config["binary"])) {
 grm <- getGRM(config, sample.id)
 
 # print model
-random <- if (!is.na(config["pcrelate_file"])) "kinship" else if (!is.na(config["grm_file"])) "GRM" else NULL
+random <- if (!is.na(config["relatedness_matrix_file"])) "relatedness" else NULL
 model.string <- modelString(outcome, covars, random, group.var)
 message("Model: ", model.string)
 message(length(sample.id), " samples")

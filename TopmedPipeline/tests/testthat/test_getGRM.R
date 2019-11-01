@@ -17,20 +17,17 @@ library(Matrix)
         grm <- pcrelateToMatrix(grm, scaleKin=2, verbose=FALSE)
         grmfile <- tempfile()
         save(grm, file=grmfile)
-        config["pcrelate_file"] <- grmfile
     } else if (type == "grm") {
         gds <- seqOpen(seqExampleFileName())
         grm <- snpgdsGRM(gds, verbose=FALSE)
         seqClose(gds)
         grmfile <- tempfile()
         save(grm, file=grmfile)
-        config["grm_file"] <- grmfile
     } else if (type == "grm_gds") {
         gds <- seqOpen(seqExampleFileName())
         grmfile <- file.path(tempdir(), "tmp.gds")
         grm <- snpgdsGRM(gds, out.fn=grmfile, verbose=FALSE)
         seqClose(gds)
-        config["grm_file"] <- grmfile
     } else if (type == "grm_Matrix") {
         gds <- seqOpen(seqExampleFileName())
         grm <- snpgdsGRM(gds, verbose=FALSE)
@@ -38,18 +35,18 @@ library(Matrix)
         grm <- Matrix(grm$grm, dimnames=list(grm$sample.id, grm$sample.id))
         grmfile <- tempfile()
         save(grm, file=grmfile)
-        config["grm_file"] <- grmfile
     }
+    config["relatedness_matrix_file"] <- grmfile
     config
 }
 
 .cleanupConfig <- function(config) {
-    unlink(config[c("grm_file")])
+    unlink(config[c("relatedness_matrix_file")])
 }
 
 test_that("pcrelate", {
     config <- .testConfig(type="pcrelate")
-    pcr <- getobj(config["pcrelate_file"])
+    pcr <- getobj(config["relatedness_matrix_file"])
     samp <- rownames(pcr)[1:10]
     grm <- getGRM(config, sample.id=samp)
     expect_is(grm, "list")
@@ -64,7 +61,7 @@ test_that("pcrelate", {
 test_that("grm", {
     config <- .testConfig(type="grm")
     
-    x <- getobj(config["grm_file"])
+    x <- getobj(config["relatedness_matrix_file"])
     samp <- x$sample.id[1:10]
     grm <- getGRM(config, sample.id=samp)
     expect_is(grm, "list")
@@ -78,7 +75,7 @@ test_that("grm", {
 test_that("grm_gds", {
     config <- .testConfig(type="grm_gds")
     
-    x <- openfn.gds(config["grm_file"])
+    x <- openfn.gds(config["relatedness_matrix_file"])
     samp <- read.gdsn(index.gdsn(x, "sample.id"))[1:10]
     closefn.gds(x)
     grm <- getGRM(config, sample.id=samp)
@@ -93,7 +90,7 @@ test_that("grm_gds", {
 test_that("grm_Matrix", {
     config <- .testConfig(type="grm_Matrix")
     
-    x <- getobj(config["grm_file"])
+    x <- getobj(config["relatedness_matrix_file"])
     samp <- rownames(x)[1:10]
     grm <- getGRM(config, sample.id=samp)
     expect_is(grm, "list")
@@ -107,10 +104,10 @@ test_that("grm_Matrix", {
 test_that("multiple files", {
     config <- .testConfig(type="grm")
     
-    x <- getobj(config["grm_file"])
+    x <- getobj(config["relatedness_matrix_file"])
     samp <- x$sample.id[1:10]
 
-    config["grm_file"] <- paste(config["grm_file"], config["grm_file"])
+    config["relatedness_matrix_file"] <- paste(config["relatedness_matrix_file"], config["relatedness_matrix_file"])
     grm <- getGRM(config, sample.id=samp)
     expect_is(grm, "list")
     expect_equal(length(grm), 2)

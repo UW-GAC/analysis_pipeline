@@ -8,7 +8,7 @@ getPhenotypes(config)
 }
 \arguments{
 \item{config}{Config object (named vector) with params "phenotype_file", "n_pcs", "pca_file",
-"outcome", "covars", "sample_include_file", "gds_file", "conditional_variants"}
+"outcome", "covars", "sample_include_file", "gds_file", "conditional_variant_file"}
 }
 \value{
 list with annot, outcome, covars, sample.id
