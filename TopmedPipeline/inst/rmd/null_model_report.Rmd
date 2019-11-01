@@ -305,7 +305,7 @@ if (!is.null(group_var)) {
   cat("## Variance adjustment")
   cat('\n\n')
   text <- paste(
-    "Boxplots of the original phenotype values (`Y`) and the adjusted phenotype
+    "Boxplots of the original phenotype values (`workingY`) and the adjusted phenotype
     values (`Ytilde`) by heterogeneous residual variance group. The `Ytilde` values
     are adjusted for fixed effect covariates, random effects, and heterogeneous
     residual variances. The variation of `Ytilde` within each group should be
@@ -321,8 +321,7 @@ if (!is.null(group_var)) {
     geom_boxplot() +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     # Means by group.
-    stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point") +
-    ylab("Y")
+    stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point")
   print(p)
 
   p <- ggplot(dat, aes(x = group, y = Ytilde))
