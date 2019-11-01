@@ -80,9 +80,10 @@ getPhenotypes <- function(config) {
 
 .conditionalVariants <- function(config, sample.id) {
     dat <- getobj(config["conditional_variant_file"])
-    stopifnot(all(c("chromosome", "variant.id") %in% names(dat)))
-    geno <- do.call(cbind, lapply(unique(dat$chromosome), function(c) {
-        vars <- dat$variant.id[dat$chromosome == c]
+    if ("chromosome" %in% names(dat)) names(dat)[names(dat) == "chromosome"] <- "chr"
+    stopifnot(all(c("chr", "variant.id") %in% names(dat)))
+    geno <- do.call(cbind, lapply(unique(dat$chr), function(c) {
+        vars <- dat$variant.id[dat$chr == c]
         gdsfile <- insertChromString(config["gds_file"], c)
         .genotypes(gdsfile, variant.id=vars, sample.id=sample.id)
     }))
