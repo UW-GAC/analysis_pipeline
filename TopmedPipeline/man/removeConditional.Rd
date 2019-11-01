@@ -9,7 +9,7 @@ removeConditional(assoc, varfile)
 \arguments{
 \item{assoc}{results from \code{\link[GENESIS]{assocTestSingle}}}
 
-\item{varfile}{conditional variant filename (RData containing data.frame with columns "variant.id", "chromosome")}
+\item{varfile}{conditional variant filename (RData containing data.frame with columns "variant.id", "chr")}
 }
 \value{
 \code{assoc} with conditional variants removed
