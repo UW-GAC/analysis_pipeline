@@ -250,7 +250,7 @@ config parameter | default value | description
 --- | --- | ---
 `out_prefix` | | Prefix for files created by this script.
 `gds_file` | | GDS file. Include a space to insert chromosome.
-`null_model_file` | | RData file with null model from `null_model.py`. Note that a small null model with the suffix `_small.RData` must exist in the same directory as the specified null model for use by the analysis report.
+`null_model_file` | | RData file with null model from `null_model.py`. Note that a small null model with the suffix `_reportonly.RData` must exist in the same directory as the specified null model for use by the analysis report.
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes. Use the output phenotype file from `null_model.py`.
 `variant_include_file` | `NA` | RData file with vector of variant.id to include.
 `variant_block_size` | `1024` | Number of variants to read in a single block.

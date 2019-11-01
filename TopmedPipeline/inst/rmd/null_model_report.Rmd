@@ -49,9 +49,9 @@ covars <- phen$covars
 annot <- filter(pData(phen$annot), sample.id %in% phen$sample.id)
 random <- if (!is.na(config["relatedness_matrix_file"])) "relatedness" else NULL
 group_var <- if (is.na(config["group_var"])) NULL else config["group_var"]
-nullmod_file <- sprintf("%s_small.RData", config["out_prefix"])
+nullmod_file <- sprintf("%s_reportonly.RData", config["out_prefix"])
 if (params$invnorm) {
-  nullmod_file <- sprintf("%s_invnorm_small.RData", config["out_prefix"])
+  nullmod_file <- sprintf("%s_invnorm_reportonly.RData", config["out_prefix"])
 }
 nullmod <- getobj(nullmod_file)
 is_binary <- as.logical(config["binary"])

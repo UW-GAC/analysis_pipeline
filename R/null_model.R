@@ -72,7 +72,7 @@ nullmod$model.string <- model.string
 
 # Save a smaller version of the original null model.
 nullmod_small <- smallNullModel(nullmod)
-outfile <- sprintf("%s_small.RData", config["out_prefix"])
+outfile <- sprintf("%s_reportonly.RData", config["out_prefix"])
 save(nullmod_small, file = outfile)
 
 # outfile if there is no invnorm
@@ -110,7 +110,7 @@ if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
 
     # Save a smaller version of the null model.
     nullmod_small <- smallNullModel(nullmod)
-    outfile <- sprintf("%s_invnorm_small.RData", config["out_prefix"])
+    outfile <- sprintf("%s_invnorm_reportonly.RData", config["out_prefix"])
     save(nullmod_small, file = outfile)
 
     # change filename to indicate invnorm

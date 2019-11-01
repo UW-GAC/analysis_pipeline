@@ -40,7 +40,7 @@ param_files <- lapply(setNames(files, scripts), readConfig)
 types <- c("single", "window", "aggregate")
 unit <- intersect(sub("assoc_", "", names(param_files)), types)
 config <- param_files[[paste0("assoc_", unit)]]
-nullmod_file <- gsub("\\.RData", "_small.RData", config["null_model_file"])
+nullmod_file <- gsub("\\.RData", "_reportonly.RData", config["null_model_file"])
 nullmod <- getobj(nullmod_file)
 ```
 
