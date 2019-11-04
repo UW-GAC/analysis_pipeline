@@ -7,7 +7,7 @@
 getGRM(config, sample.id = NULL)
 }
 \arguments{
-\item{config}{Config object (named vector) with params "pcrelate_file", "grm_file"}
+\item{config}{Config object (named vector) with param "relatedness_matrix_file"}
 
 \item{sample.id}{Vector of samples to include}
 }

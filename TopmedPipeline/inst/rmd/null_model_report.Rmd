@@ -47,11 +47,11 @@ phen <- getPhenotypes(config)
 outcome <- phen$outcome
 covars <- phen$covars
 annot <- filter(pData(phen$annot), sample.id %in% phen$sample.id)
-random <- if (!is.na(config["pcrelate_file"])) "kinship" else if (!is.na(config["grm_file"])) "grm" else NULL
+random <- if (!is.na(config["relatedness_matrix_file"])) "relatedness" else NULL
 group_var <- if (is.na(config["group_var"])) NULL else config["group_var"]
-nullmod_file <- sprintf("%s_small.RData", config["out_prefix"])
+nullmod_file <- sprintf("%s_reportonly.RData", config["out_prefix"])
 if (params$invnorm) {
-  nullmod_file <- sprintf("%s_invnorm_small.RData", config["out_prefix"])
+  nullmod_file <- sprintf("%s_invnorm_reportonly.RData", config["out_prefix"])
 }
 nullmod <- getobj(nullmod_file)
 is_binary <- as.logical(config["binary"])
@@ -64,8 +64,16 @@ outcome_string <- modelOutcomeString(outcome, inverse_normal = is_invnorm)
 ```
 
 ```{r prepare-data}
+# Fix 0/1 covariates so they display as categorical.
+for (covar in covars) {
+  if (!is.numeric(annot[[covar]]) | length(setdiff(annot[[covar]], c(0, 1, NA))) == 0) {
+    annot[[covar]] <- as.factor(annot[[covar]])
+  }
+}
+
 dat <- data.frame(sample.id = nullmod$sample.id,
-                  workingY = nullmod$workingY,
+                  # Need as.vector here because sometimes it's a matrix (but not always)
+                  workingY = as.vector(nullmod$workingY),
                   # Need as.vector here because sometimes it's a matrix (but not always)
                   model_outcome = as.vector(nullmod$outcome),
                   fitted.values = nullmod$fitted.values,
@@ -95,7 +103,7 @@ Number of samples: `r nrow(annot)`
 `r model_string`
 
 ```{r, results='asis'}
-disp <- c("sample_include_file", "phenotype_file", "pca_file", "pcrelate_file", "grm_file")
+disp <- c("sample_include_file", "phenotype_file", "pca_file", "relatedness_matrix_file")
 if (as.logical(config["inverse_normal"])) {
     disp <- c(disp, "resid_covars")
     if (!is.na(config["group_var"]) & params$invnorm) {
@@ -108,7 +116,7 @@ configTable(config[disp])
 ## Phenotype distributions
 
 ```{r outcome-distribution-plot}
-if (is_binary) {q
+if (is_binary) {
     ggplot(dat, aes(model_outcome)) +
       geom_bar() +
       stat_count(geom="text", aes_string(label="..count..", vjust=-0.5)) +
@@ -123,7 +131,7 @@ if (is_binary) {q
 
 ```{r covariate-distribution-plot}
 for (x in covars[-grep("^PC[[:digit:]]+", covars)]) {
-    if (is.numeric(annot[[x]] )) {
+    if (is.numeric(annot[[x]])) {
         print(ggplot(annot, aes_string(x)) + geom_histogram())
     } else {
         print(ggplot(annot, aes_string(x)) + geom_bar() + stat_count(geom="text", aes_string(label="..count..", vjust=-0.5)))
@@ -132,6 +140,8 @@ for (x in covars[-grep("^PC[[:digit:]]+", covars)]) {
 ```
 
 ## Covariate effect size estimates
+
+Covariates are considered to be significant if they have $p < 0.05$ after a Bonferroni correction for the number of fixed effects.
 
 ```{r fixef-plot}
 fixef <- nullmod$fixef
@@ -258,20 +268,35 @@ print(p)
 ```
 
 ```{r varcomp-header, results = 'asis'}
+show_varcomp <- FALSE
 if (!is.null(random)){
-  cat("## Variance components")
+  cat("## Variance components\n")
+
+  if (!all(nullmod$zeroFLAG)) {
+    show_varcomp <- TRUE
+  } else {
+    cat("\nAll variance components are estimated to be 0.\n\n")
+  }
 }
 ```
 
 ```{r varcomp}
-if (!is.null(random)) {
+if (show_varcomp) {
   vc <- varCompCI(nullmod, prop = FALSE)
   vc$component <- rownames(vc)
-  p <- ggplot(vc, aes(x = Est, y = component)) +
-    geom_vline(xintercept = 0, color = COLOR_ZERO_LINE) +
-    geom_point() +
-    geom_errorbarh(aes(xmin = `Lower 95`, xmax = `Upper 95`))
-  print(p)
+    p <- ggplot(vc, aes(x = Est, y = component)) +
+      geom_vline(xintercept = 0, color = COLOR_ZERO_LINE) +
+      geom_point() +
+      geom_errorbarh(aes(xmin = `Lower 95`, xmax = `Upper 95`))
+    print(p)
+}
+```
+
+```{r varcomp-table, results = 'asis'}
+if (show_varcomp) {
+  cat("### Variance component estimates\n\n")
+  k <- knitr::kable(vc)
+  print(k)
 }
 ```
 
@@ -280,7 +305,7 @@ if (!is.null(group_var)) {
   cat("## Variance adjustment")
   cat('\n\n')
   text <- paste(
-    "Boxplots of the original phenotype values (`Y`) and the adjusted phenotype
+    "Boxplots of the original phenotype values (`workingY`) and the adjusted phenotype
     values (`Ytilde`) by heterogeneous residual variance group. The `Ytilde` values
     are adjusted for fixed effect covariates, random effects, and heterogeneous
     residual variances. The variation of `Ytilde` within each group should be
@@ -297,7 +322,6 @@ if (!is.null(group_var)) {
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     # Means by group.
     stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point")
-    ylab("Y")
   print(p)
 
   p <- ggplot(dat, aes(x = group, y = Ytilde))

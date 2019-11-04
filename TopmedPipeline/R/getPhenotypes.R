@@ -16,6 +16,7 @@ getPhenotypes <- function(config) {
     ## get PCs
     n_pcs <- as.integer(config["n_pcs"])
     if (n_pcs > 0) {
+        if (is.na(config["pca_file"])) stop("must specify pca_file if n_pcs > 0")
         pca <- getobj(config["pca_file"])
         pcs <- pca$vectors[,1:n_pcs,drop=FALSE]
         pccols <- paste0("PC", 1:n_pcs)
@@ -80,9 +81,10 @@ getPhenotypes <- function(config) {
 
 .conditionalVariants <- function(config, sample.id) {
     dat <- getobj(config["conditional_variant_file"])
-    stopifnot(all(c("chromosome", "variant.id") %in% names(dat)))
-    geno <- do.call(cbind, lapply(unique(dat$chromosome), function(c) {
-        vars <- dat$variant.id[dat$chromosome == c]
+    if ("chromosome" %in% names(dat)) names(dat)[names(dat) == "chromosome"] <- "chr"
+    stopifnot(all(c("chr", "variant.id") %in% names(dat)))
+    geno <- do.call(cbind, lapply(unique(dat$chr), function(c) {
+        vars <- dat$variant.id[dat$chr == c]
         gdsfile <- insertChromString(config["gds_file"], c)
         .genotypes(gdsfile, variant.id=vars, sample.id=sample.id)
     }))

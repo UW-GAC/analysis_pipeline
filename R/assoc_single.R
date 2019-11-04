@@ -91,7 +91,7 @@ iterator <- SeqVarBlockIterator(seqData, variantBlock=block.size)
 
 test <- switch(tolower(config["test_type"]),
                score="Score",
-               wald="Wald")
+               score.spa="Score.SPA")
 
 assoc <- assocTestSingle(iterator, nullModel, test=test, genome.build=build)
 

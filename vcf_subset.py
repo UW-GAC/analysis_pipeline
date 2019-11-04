@@ -7,6 +7,7 @@ import sys
 import os
 from argparse import ArgumentParser
 from copy import deepcopy
+from string import replace
 
 description = """
 
@@ -61,6 +62,12 @@ out_file = configdict["out_file"].split(" ")
 args = [samp_file] + in_file + out_file
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=args, array_range=chromosomes, email=email, print_only=print_only)
 
+# md5 checksums
+job = "vcf_md5"
+driver = os.path.join(pipeline, job + ".sh")
+args = [os.path.dirname(configdict["out_file"])]
+md5id = cluster.submitJob(job_name=job, cmd=driver, args=args, holdid=[jobid], email=email, print_only=print_only)
+
 # check file
 job = "check_gds"
 driver = os.path.join(pipeline, "runRscript.sh")
@@ -83,4 +90,4 @@ pcmd=os.path.join(pipeline, jobpy)
 argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
 pdriver=os.path.join(pipeline, "run_python.sh")
-cluster.submitJob(job_name=job, cmd=pdriver, args=argList, holdid=[jobid], print_only=print_only)
+cluster.submitJob(job_name=job, cmd=pdriver, args=argList, holdid=[jobid, md5id], print_only=print_only)

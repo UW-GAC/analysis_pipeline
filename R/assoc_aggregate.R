@@ -29,7 +29,6 @@ optional <- c("aggregate_type"="allele",
               "rho"="0",
               "segment_file"=NA,
               "test"="burden",
-              "test_type"="score",
               "variant_include_file"=NA,
               "variant_weight_file"=NA,
               "weight_user"=NA,
@@ -42,11 +41,13 @@ writeConfig(config, paste0(basename(argv$config), ".assoc_aggregate.params"))
 gdsfile <- config["gds_file"]
 aggfile <- config["aggregate_variant_file"]
 varfile <- config["variant_include_file"]
+wgtfile <- config["variant_weight_file"]
 if (!is.na(chr)) {
     bychrfile <- grepl(" ", gdsfile) # do we have one file per chromosome?
     gdsfile <- insertChromString(gdsfile, chr)
     aggfile <- insertChromString(aggfile, chr, err="aggregate_variant_file")
     varfile <- insertChromString(varfile, chr)
+    wgtfile <- insertChromString(wgtfile, chr)
 }
 
 gds <- seqOpen(gdsfile)
@@ -62,9 +63,9 @@ seqData <- SeqVarData(gds, sampleData=annot)
 aggVarList <- getobj(aggfile)
 
 # get weights
-if (!is.na(config["variant_weight_file"])) {
+if (!is.na(wgtfile)) {
     # weights provided in separate file
-    dat <- getobj(config["variant_weight_file"])
+    dat <- getobj(wgtfile)
     weight.user <- config["weight_user"]
     stopifnot(weight.user %in% names(dat))
     seqData <- addVariantData(seqData, dat)
@@ -127,10 +128,6 @@ test <- switch(tolower(config["test"]),
                fastsmmat="fastSMMAT",
                skato="SKATO")
 
-test.type <- switch(tolower(config["test_type"]),
-                    score="Score",
-                    wald="Wald")
-
 weight.beta <- as.numeric(strsplit(config["weight_beta"], " ", fixed=TRUE)[[1]])
 rho <- as.numeric(strsplit(config["rho"], " ", fixed=TRUE)[[1]])
 
@@ -139,7 +136,6 @@ assoc <- assocTestAggregate(iterator, nullModel,
                             weight.beta=weight.beta,
                             weight.user=weight.user,
                             test=test,
-                            burden.test=test.type,
                             rho=rho,
                             genome.build=build)
 

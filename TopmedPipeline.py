@@ -1,6 +1,6 @@
 """Utility functions for TOPMed pipeline"""
 
-__version__ = "2.5.0"
+__version__ = "2.6.0"
 
 import os
 import sys
@@ -196,6 +196,7 @@ class Cluster(object):
         self.class_name = self.__class__.__name__
         # set default pipeline path
         self.pipelinePath = os.path.dirname(os.path.abspath(sys.argv[0]))
+        self.submitPath = self.pipelinePath
         # set analysis name
 
         self.openClusterCfg(std_cluster_file, opt_cluster_file, cfg_version, verbose)
@@ -308,6 +309,9 @@ class Cluster(object):
 
     def getPipelinePath(self):
         return self.pipelinePath
+
+    def getSubmitPath(self):
+        return self.submitPath
 
     def getClusterCfg(self):
         return self.clusterCfg
@@ -667,7 +671,6 @@ class Slurm_Cluster(Cluster):
         # open slurm partitions cfg
         self.openPartitionCfg(self.pipelinePath + "/" + self.clusterCfg["partition_cfg"])
         # update pipelinePath
-        self.submitPath = self.pipelinePath
         key = "pipeline_path_docker"
         if key in self.clusterCfg.keys():
             self.pipelinePath = self.clusterCfg[key]
@@ -751,6 +754,7 @@ class Slurm_Cluster(Cluster):
         dockerOpts = deepcopy(self.clusterCfg["rdocker_opts"])
         cluster = self.clusterCfg["cluster"]
         job_cmd = self.clusterCfg["submit_cmd"]
+        dependency_value = self.clusterCfg["dependency_value"]
         submit_script = self.clusterCfg["submit_script"]
         pipeline_path_docker = self.clusterCfg["pipeline_path_docker"]
         tasks_per_partition = self.clusterCfg["tasks_per_partition"]
@@ -764,7 +768,7 @@ class Slurm_Cluster(Cluster):
         if key in kwargs and kwargs[key] != []:
             if isinstance(kwargs[key], str):
                 kwargs[key] = [kwargs[key]]
-            submitOpts["--dependency"] =  "afterok:" + ":".join(kwargs[key])
+            submitOpts["--dependency"] =  dependency_value + ":" + ":".join(kwargs[key])
 
         key = "array_range"
         lmsg_array = "no"
@@ -794,6 +798,7 @@ class Slurm_Cluster(Cluster):
             submitOpts["--mem"] = str(memlim) + "M"
             lmsg_mem = submitOpts["--mem"]
         lmsg = lmsg + " /memlim: " + lmsg_mem
+        dockerOpts["--mem_limit"] = str(int(math.ceil(float(memlim)/1000)))
 
         # get partition
         thePartition = self.getPartition(kwargs["job_name"], memlim, int(reqCores))
@@ -822,9 +827,38 @@ class Slurm_Cluster(Cluster):
         # -- cost
         dockerOpts["--machine"] = theMachine
         dockerOpts["--cost"] = theCost
+        # dockerOpts - boolean options.  All boolean options are default to false
+        # in runDocker.py.  A boolean option does not have a value.
+        # If a boolean option is passed then that option in runDocker is set true.
+        # We convert all options to strings so to a true boolean is passed as an empty
+        # string; for false option, we delete the key.
         # -- verbose
+        key = "--verbose"
         if self.verbose:
-            dockerOpts["--verbose"] = "True"
+            dockerOpts[key] = True
+        if dockerOpts[key]:
+            dockerOpts[key] = ""
+        else:
+            del dockerOpts[key]
+        # -- stats
+        key = "--stats"
+        if dockerOpts[key]:
+            dockerOpts[key] = ""
+        else:
+            del dockerOpts[key]
+        # -- pull
+        key = "--pull"
+        if dockerOpts[key]:
+            dockerOpts[key] = ""
+        else:
+            del dockerOpts[key]
+        # -- log
+        key = "--log"
+        if dockerOpts[key]:
+            dockerOpts[key] = ""
+        else:
+            del dockerOpts[key]
+        # convert opts to strings
         suboptStr = dictToString(submitOpts)
         dockeroptStr = dictToString(dockerOpts)
 
