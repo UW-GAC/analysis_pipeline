@@ -14,7 +14,9 @@ from        datetime import datetime, timedelta
 try:
     import boto3
 except ImportError:
-    print ("AWS batch not supported.")
+    batchSupport = False
+else:
+    batchSupport = True
 
 # init globals
 fileversion = '1.0'
@@ -48,6 +50,10 @@ subParams = {   'profile': None,
 
 def getBatchClient(profile_a):
     global batchClient
+
+    if not batchSupport:
+        pError('getBatchClient: AWS Batch is not supported (boto3 is not available)')
+        sys.exit(2)
     if batchClient == None:
         # create the batch client
         try:
