@@ -89,6 +89,9 @@
             "--verbose": false,
             "--stats": true,
             "--pull": false
+        },
+        "run_cmd": {
+            "docker_image": "uwgac/topmed-roybranch:latest"
         }
     }
 }

@@ -19,7 +19,9 @@ try:
     import boto3
     import batchInit
 except ImportError:
-    print ("AWS batch not supported.")
+    batchSupport = True
+else:
+    batchSupport = False
 
 
 
@@ -345,6 +347,9 @@ class Cluster(object):
 class AWS_Batch(Cluster):
 
     def __init__(self, opt_cluster_file=None, verbose=False):
+        if not batchSupport:
+            print('AWS Batch is not supported (boto3 is not available)')
+            sys.exit(2)
         self.class_name = self.__class__.__name__
         self.std_cluster_file = "./aws_batch_cfg.json"
         self.opt_cluster_file = opt_cluster_file
@@ -729,23 +734,43 @@ class Slurm_Cluster(Cluster):
         return thepart
 
     def runCmd(self, job_name, cmd, logfile=None):
+        # get the docker image
+        rc = self.clusterCfg["run_cmd"]
+        dockerimage = rc["docker_image"]
+        # build the docker run command to run the R driver and all it's args
+        working_dir = os.getenv('PWD')
+        drun = "docker run --rm -it -v /projects:/projects -w " + working_dir + " " + \
+                dockerimage + " "
+        dargs = cmd[0] + ' ' + " ".join(cmd[1:])
+        dcmd = drun + dargs
         # redirect stdout/stderr
-        self.printVerbose("runCmd: " + str(cmd))
+        self.printVerbose("docker run cmd:\n\t" + dcmd)
         if logfile != None:
             sout = sys.stdout
             serr = sys.stderr
             flog = open ( logfile, 'w' )
             sys.stderr = sys.stdout = flog
         # spawn
-        process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=False)
+        try:
+            process = subprocess.Popen(dcmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
+        except Exception as e:
+            # redirect stdout back
+            if logfile != "":
+                sys.stdout = sout
+                sys.stderr = serr
+                flog.close()
+            print("Popen exception: " + str(e))
+            print("Popen command:\n\t" + dcmd)
+            sys.exit(2)
         status = process.wait()
         # redirect stdout back
         if logfile != "":
             sys.stdout = sout
             sys.stderr = serr
+            flog.close()
         if status:
             print( "Error running job: " + job_name + " (" + str(status) + ") for command:" )
-            print( "\t> " + str(cmd) )
+            print( "\t> " + dcmd )
             sys.exit(2)
 
     def submitJob(self, **kwargs):

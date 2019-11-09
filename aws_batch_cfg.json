@@ -71,6 +71,7 @@
             }
         },
         "run_cmd": {
+            "docker_image": "uwgac/topmed-roybranch:latest"
         }
     }
 }
