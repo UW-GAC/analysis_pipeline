@@ -19,9 +19,9 @@ try:
     import boto3
     import batchInit
 except ImportError:
-    batchSupport = True
-else:
     batchSupport = False
+else:
+    batchSupport = True
 
 
 
@@ -343,17 +343,62 @@ class Cluster(object):
         if self.verbose:
             print(">>> " + self.class_name + ": " + message)
 
+class Docker_Cluster(Cluster):
+    def __init__(self, std_cluster_file, opt_cluster_file=None, cfg_version="3", verbose=True):
+        self.class_name = self.__class__.__name__
+        self.std_cluster_file = std_cluster_file
+        super(Docker_Cluster, self).__init__(std_cluster_file, opt_cluster_file, cfg_version, verbose)
 
-class AWS_Batch(Cluster):
+    def runCmd(self, job_name, cmd, logfile=None):
+        # get the docker image
+        rc = self.clusterCfg["run_cmd"]
+        dockerimage = rc["docker_image"]
+        # build the docker run command to run the R driver and all it's args
+        working_dir = os.getenv('PWD')
+        drun = "docker run --rm -it -v /projects:/projects -w " + working_dir + " " + \
+                dockerimage + " "
+        dargs = cmd[0] + ' ' + " ".join(cmd[1:])
+        dcmd = drun + dargs
+        # redirect stdout/stderr
+        self.printVerbose("docker run cmd:\n\t" + dcmd)
+        if logfile != None:
+            sout = sys.stdout
+            serr = sys.stderr
+            flog = open ( logfile, 'w' )
+            sys.stderr = sys.stdout = flog
+        # spawn
+        try:
+            process = subprocess.Popen(dcmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
+        except Exception as e:
+            # redirect stdout back
+            if logfile != "":
+                sys.stdout = sout
+                sys.stderr = serr
+                flog.close()
+            print("Popen exception: " + str(e))
+            print("Popen command:\n\t" + dcmd)
+            sys.exit(2)
+        status = process.wait()
+        # redirect stdout back
+        if logfile != "":
+            sys.stdout = sout
+            sys.stderr = serr
+            flog.close()
+        if status:
+            print( "Error running job: " + job_name + " (" + str(status) + ") for command:" )
+            print( "\t> " + dcmd )
+            sys.exit(2)
+
+class AWS_Batch(Docker_Cluster):
 
     def __init__(self, opt_cluster_file=None, verbose=False):
         if not batchSupport:
-            print('AWS Batch is not supported (boto3 is not available)')
+            print('AWS_Batch: AWS Batch is not supported (boto3 is not available)')
             sys.exit(2)
         self.class_name = self.__class__.__name__
         self.std_cluster_file = "./aws_batch_cfg.json"
         self.opt_cluster_file = opt_cluster_file
-        cfgVersion = "3.2"
+        cfgVersion = "3.3"
         super(AWS_Batch, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
 
         # get the job parameters
@@ -465,26 +510,6 @@ class AWS_Batch(Cluster):
                     afile.write("AWS profile: " + profile + "\n")
                     afile.write("AWS job def: " + self.submitOpts["jobdef"] + "\n")
                     afile.write("AWS batch queue: " + self.queue + "\n")
-
-    def runCmd(self, job_name, cmd, logfile=None):
-        # redirect stdout/stderr
-        self.printVerbose("runCmd: " + str(cmd))
-        if logfile != None:
-            sout = sys.stdout
-            serr = sys.stderr
-            flog = open ( logfile, 'w' )
-            sys.stderr = sys.stdout = flog
-        # spawn
-        process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=False)
-        status = process.wait()
-        # redirect stdout back
-        if logfile != "":
-            sys.stdout = sout
-            sys.stderr = serr
-        if status:
-            print( "Error running job: " + job_name + " (" + str(status) + ") for command:" )
-            print( "\t> " + str(cmd) )
-            sys.exit(2)
 
     def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None,
                   request_cores=None, print_only=False, **kwargs):
@@ -664,14 +689,14 @@ class AWS_Cluster(SGE_Cluster):
         jobid = super(AWS_Cluster, self).submitJob(**kwargs)
         return jobid
 
-class Slurm_Cluster(Cluster):
+class Slurm_Cluster(Docker_Cluster):
 
     def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
         self.std_cluster_file = "./slurm_cfg.json"
         self.opt_cluster_file = opt_cluster_file
 
-        cfgVersion = "1.0"
+        cfgVersion = "2.0"
         super(Slurm_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
         # open slurm partitions cfg
         self.openPartitionCfg(self.pipelinePath + "/" + self.clusterCfg["partition_cfg"])
@@ -732,46 +757,6 @@ class Slurm_Cluster(Cluster):
                 if self.partitions[pcheck]["cores"] < self.partitions[thepart]["cores"]:
                     thepart = pcheck
         return thepart
-
-    def runCmd(self, job_name, cmd, logfile=None):
-        # get the docker image
-        rc = self.clusterCfg["run_cmd"]
-        dockerimage = rc["docker_image"]
-        # build the docker run command to run the R driver and all it's args
-        working_dir = os.getenv('PWD')
-        drun = "docker run --rm -it -v /projects:/projects -w " + working_dir + " " + \
-                dockerimage + " "
-        dargs = cmd[0] + ' ' + " ".join(cmd[1:])
-        dcmd = drun + dargs
-        # redirect stdout/stderr
-        self.printVerbose("docker run cmd:\n\t" + dcmd)
-        if logfile != None:
-            sout = sys.stdout
-            serr = sys.stderr
-            flog = open ( logfile, 'w' )
-            sys.stderr = sys.stdout = flog
-        # spawn
-        try:
-            process = subprocess.Popen(dcmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
-        except Exception as e:
-            # redirect stdout back
-            if logfile != "":
-                sys.stdout = sout
-                sys.stderr = serr
-                flog.close()
-            print("Popen exception: " + str(e))
-            print("Popen command:\n\t" + dcmd)
-            sys.exit(2)
-        status = process.wait()
-        # redirect stdout back
-        if logfile != "":
-            sys.stdout = sout
-            sys.stderr = serr
-            flog.close()
-        if status:
-            print( "Error running job: " + job_name + " (" + str(status) + ") for command:" )
-            print( "\t> " + dcmd )
-            sys.exit(2)
 
     def submitJob(self, **kwargs):
         # get the various config attributes

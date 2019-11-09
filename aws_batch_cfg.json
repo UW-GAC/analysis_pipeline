@@ -1,6 +1,6 @@
 {
     "name": "AWS_Batch_config",
-    "version": "3.2",
+    "version": "3.3",
     "debug": 0,
     "configuration": {
         "memory_limits": {
