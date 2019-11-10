@@ -696,7 +696,7 @@ class Slurm_Cluster(Docker_Cluster):
         self.std_cluster_file = "./slurm_cfg.json"
         self.opt_cluster_file = opt_cluster_file
 
-        cfgVersion = "2.0"
+        cfgVersion = "2.1"
         super(Slurm_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
         # open slurm partitions cfg
         self.openPartitionCfg(self.pipelinePath + "/" + self.clusterCfg["partition_cfg"])
@@ -819,11 +819,14 @@ class Slurm_Cluster(Docker_Cluster):
         theMachine = self.partitions[thePartition]["machine"]
         theCost = str(self.partitions[thePartition]["cost"])
         lmsg = lmsg + "/machine: " + theMachine + " ( " + theCost + "/hr )"
-        # output (log)
+        # submit output (log)
+        sldir = ""
+        if self.clusterCfg["submit_log_dir"] != None:
+            sldir = self.clusterCfg["submit_log_dir"] + "/sbatch_"
         if submitOpts["--array"] == None:
-            submitOpts["--output"] = submitOpts["--job-name"] + "_%j.log"
+            submitOpts["--output"] = sldir + submitOpts["--job-name"] + "_%j.log"
         else:
-            submitOpts["--output"] = submitOpts["--job-name"] + "_%A_%a.log"
+            submitOpts["--output"] = sldir + submitOpts["--job-name"] + "_%A_%a.log"
 
         # set the docker options
         # -- cmd (change path associated within docker)

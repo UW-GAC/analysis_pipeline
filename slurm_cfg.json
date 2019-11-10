@@ -1,6 +1,6 @@
 {
     "name": "GCP_slurm_config",
-    "version": "2.0",
+    "version": "2.1",
     "verbose": false,
     "configuration": {
         "memory_limits": {
@@ -64,6 +64,7 @@
         "partition_cfg": "slurm_partitions.json",
         "cluster": "tm1",
         "submit_cmd": "sbatch",
+        "submit_log_dir": null,
         "dependency_value": "afterok",
         "submit_script": "runDocker.py",
         "submit_opts": {
