@@ -293,7 +293,7 @@ class Cluster(object):
                 clusterCfg = json.load(cfgFileHandle)
             optCfg = clusterCfg["configuration"]
             if debugCfg:
-                print("0>>> Dump of " + clusterCfg["name"] + " ... \n")
+                print("0>>> Dump of opt cfg file " + optCfgFile + " ... \n")
                 print json.dumps(optCfg, indent=3, sort_keys=True)
             # update
             self.clusterCfg = update(self.clusterCfg, optCfg)
@@ -335,7 +335,7 @@ class Cluster(object):
                 # find if there is an exact match with jobname and memlimit's key
                 # just find the first match to job_name
                 memlim = jobMem[0]
-        self.printVerbose('\t>>> Memory Limit - job: ' + job_name + " memlim: " +
+        self.printVerbose('Memory Limit - job: ' + job_name + " memlim: " +
                           str(memlim) + "MB")
         return memlim
 
@@ -889,14 +889,19 @@ class Slurm_Cluster(Docker_Cluster):
         else:
             self.printVerbose("submitting job: " + sub_cmd)
             super(Slurm_Cluster, self).analysisLog("> sbatch: " + sub_cmd)
-            process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE)
+            process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            status = process.wait()
+            if status != 0:
+                pipe = process.stderr
+                eMsg = pipe.readline()
+                print("Error: sbatch status: " + str(status) + " - " + eMsg)
+                sys.exit(2)
             pipe = process.stdout
             sub_out = pipe.readline()
             jobid = sub_out.split(" ")[3].strip()
             super(Slurm_Cluster, self).analysisLog("> jobid: " + str(jobid) + "\n")
-            print("Sbatch to cluster: " + cluster + " / job: " + submitOpts["--job-name"] +
+            print(sub_out + "Sbatch to cluster: " + cluster + " / job: " + submitOpts["--job-name"] +
                   " / job id: " + jobid)
-
         return jobid
 
 class GCP_Cluster(Slurm_Cluster):
