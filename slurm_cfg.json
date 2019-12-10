@@ -1,6 +1,6 @@
 {
     "name": "GCP_slurm_config",
-    "version": "2.1",
+    "version": "2.2",
     "verbose": false,
     "configuration": {
         "memory_limits": {
@@ -65,7 +65,9 @@
         "cluster": "tm1",
         "submit_cmd": "sbatch",
         "submit_log_dir": null,
+        "execute_prescript": false,
         "dependency_value": "afterok",
+        "submit_prescript": "runDocker.bash",
         "submit_script": "runDocker.py",
         "submit_opts": {
             "--job-name": null,
