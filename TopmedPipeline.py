@@ -696,7 +696,7 @@ class Slurm_Cluster(Docker_Cluster):
         self.std_cluster_file = "./slurm_cfg.json"
         self.opt_cluster_file = opt_cluster_file
 
-        cfgVersion = "2.1"
+        cfgVersion = "2.2"
         super(Slurm_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
         # open slurm partitions cfg
         self.openPartitionCfg(self.pipelinePath + "/" + self.clusterCfg["partition_cfg"])
@@ -724,24 +724,15 @@ class Slurm_Cluster(Docker_Cluster):
         super(Slurm_Cluster, self).analysisLog("Slurm submit script: " +
                                                self.clusterCfg["submit_script"] + "\n", print_only)
 
-    def getPartition(self, a_jobname, a_memsize, a_reqcores):
-        # get tasks per partition for job
-        tasksPerPartition = 1;
-        tpDict = self.clusterCfg["tasks_per_partition"]
-        jobPart = [ v for k,v in tpDict.iteritems() if a_jobname.find(k) != -1]
-        if len(jobPart):
-            # just find the first match to jobname
-            tasksPerPartition = jobPart[0]
-        self.printVerbose("tasks per partition for job " + a_jobname + ": " +
-                          str(tasksPerPartition))
+    def getPartition(self, a_jobname, a_memsize, a_reqcores, a_tasksPerPartition):
         # find all partitions with mem > a_memsize*tpp
-        memcheck = a_memsize*tasksPerPartition
+        memcheck = a_memsize*a_tasksPerPartition
         pmem = [ k for k in self.partition_names if self.partitions[k]["mem"] > memcheck ]
         if len(pmem) == 0:
             print("Error: cannot find partition with sufficient memory (" + str(memcheck) + "MB)")
             sys.exit(2)
         # from partitions with mem, find partitions with cores >= a_reqcores*tpp
-        corecheck = a_reqcores*tasksPerPartition
+        corecheck = a_reqcores*a_tasksPerPartition
         pmemcore = [ k for k in pmem if self.partitions[k]["cores"] > corecheck ]
         if len(pmemcore) == 0:
             print("Error: cannot find partition with enough cores (" + str(corecheck) +
@@ -767,7 +758,17 @@ class Slurm_Cluster(Docker_Cluster):
         dependency_value = self.clusterCfg["dependency_value"]
         submit_script = self.clusterCfg["submit_script"]
         pipeline_path_docker = self.clusterCfg["pipeline_path_docker"]
-        tasks_per_partition = self.clusterCfg["tasks_per_partition"]
+        # get tasks per partition based on job name
+        tasksPerPartition = 1;
+        tppDict = self.clusterCfg["tasks_per_partition"]
+        jobPart = [ v for k,v in tppDict.iteritems() if a_jobname.find(k) != -1]
+        if len(jobPart):
+            # just find the first match to jobname
+            tasksPerPartition = jobPart[0]
+        self.printVerbose("tasks per partition for job " + a_jobname + ": " +
+                          str(tasksPerPartition))
+        # set the full path of the prescript (bash)
+        submit_prescript = self.submitPath + "/" + self.clusterCfg["submit_prescript"]
         # set full path of submit script
         submit_script = self.submitPath + "/" + submit_script
         # process kwargs for submit options
@@ -811,14 +812,15 @@ class Slurm_Cluster(Docker_Cluster):
         dockerOpts["--mem_limit"] = str(int(math.ceil(float(memlim)/1000)))
 
         # get partition
-        thePartition = self.getPartition(kwargs["job_name"], memlim, int(reqCores))
+        thePartition = self.getPartition(kwargs["job_name"], memlim, int(reqCores), tasksPerPartition)
         submitOpts["--partition"] = thePartition
         lmsg = lmsg + " /cluster: " + cluster
         lmsg = lmsg + " /parition: " + submitOpts["--partition"]
+        lmsg = lmsg + " /tasks_per_partition: " + str(tasksPerPartition)
         # get the machine and cost
         theMachine = self.partitions[thePartition]["machine"]
-        theCost = str(self.partitions[thePartition]["cost"])
-        lmsg = lmsg + "/machine: " + theMachine + " ( " + theCost + "/hr )"
+        theCost = str(self.partitions[thePartition]["cost"]/tasksPerPartition)
+        lmsg = lmsg + "/machine: " + theMachine + " ( " + theCost + "/hr for " + str(tasksPerPartition) + " task(s))"
         # submit output (log)
         sldir = ""
         if self.clusterCfg["submit_log_dir"] != None:
@@ -840,6 +842,8 @@ class Slurm_Cluster(Docker_Cluster):
         # -- cost
         dockerOpts["--machine"] = theMachine
         dockerOpts["--cost"] = theCost
+        # -- working_dir
+        dockerOpts["--working_dir"] = os.getenv('PWD')
         # dockerOpts - boolean options.  All boolean options are default to false
         # in runDocker.py.  A boolean option does not have a value.
         # If a boolean option is passed then that option in runDocker is set true.
@@ -874,8 +878,12 @@ class Slurm_Cluster(Docker_Cluster):
         # convert opts to strings
         suboptStr = dictToString(submitOpts)
         dockeroptStr = dictToString(dockerOpts)
-
-        sub_cmd = " ".join([job_cmd, suboptStr, submit_script, dockeroptStr])
+        # create either the submit python script without prescript; or add
+        # the prescript (which checks the nfs mount point)
+        if self.clusterCfg["execute_prescript"]:
+            sub_cmd = " ".join([job_cmd, suboptStr, submit_prescript, submit_script, dockeroptStr])
+        else:
+            sub_cmd = " ".join([job_cmd, suboptStr, submit_script, dockeroptStr])
 
         key = "print_only"
         po = False
