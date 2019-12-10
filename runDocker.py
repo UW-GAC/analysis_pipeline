@@ -219,7 +219,7 @@ slurmEnv = getSlurmEnv()
 miscEnv = getMiscEnv()
 # log
 if log:
-    logfile = CreateLogFileName()
+    logfile = working_dir + "/" + CreateLogFileName()
 
 # docker run options
 dockeropts = ""
