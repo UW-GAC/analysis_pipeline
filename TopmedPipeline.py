@@ -761,18 +761,19 @@ class Slurm_Cluster(Docker_Cluster):
         # get tasks per partition based on job name
         tasksPerPartition = 1;
         tppDict = self.clusterCfg["tasks_per_partition"]
-        jobPart = [ v for k,v in tppDict.iteritems() if a_jobname.find(k) != -1]
+        jobName = kwargs["job_name"]
+        jobPart = [ v for k,v in tppDict.iteritems() if jobName.find(k) != -1]
         if len(jobPart):
             # just find the first match to jobname
             tasksPerPartition = jobPart[0]
-        self.printVerbose("tasks per partition for job " + a_jobname + ": " +
+        self.printVerbose("tasks per partition for job " + jobName + ": " +
                           str(tasksPerPartition))
         # set the full path of the prescript (bash)
         submit_prescript = self.submitPath + "/" + self.clusterCfg["submit_prescript"]
         # set full path of submit script
         submit_script = self.submitPath + "/" + submit_script
         # process kwargs for submit options
-        submitOpts["--job-name"] = kwargs["job_name"]
+        submitOpts["--job-name"] = jobName
         lmsg = "Job: " + kwargs["job_name"]
 
         key = "holdid"
