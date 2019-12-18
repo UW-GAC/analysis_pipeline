@@ -725,9 +725,9 @@ class Slurm_Cluster(Docker_Cluster):
                                                self.clusterCfg["submit_script"] + "\n", print_only)
 
     def getPartition(self, a_jobname, a_memsize, a_reqcores, a_tasksPerPartition):
-        # find all partitions with mem > a_memsize*tpp
+        # find all partitions with mem >= a_memsize*tpp
         memcheck = a_memsize*a_tasksPerPartition
-        pmem = [ k for k in self.partition_names if self.partitions[k]["mem"] > memcheck ]
+        pmem = [ k for k in self.partition_names if self.partitions[k]["mem"] >= memcheck ]
         if len(pmem) == 0:
             print("Error: cannot find partition with sufficient memory (" + str(memcheck) + "MB)")
             sys.exit(2)
@@ -739,14 +739,17 @@ class Slurm_Cluster(Docker_Cluster):
                  ") for "+ str(memcheck) + "MB memory")
             sys.exit(2)
 
-        # from partitions with mem & core, find partition with min cores
+        # from partitions with mem & core, find partition with min memory
         thepart = pmemcore[0]
+        themem = self.partitions[thepart]["mem"]
         nop = len(pmemcore)
         if nop > 1 :
             for i in range(1,nop):
                 pcheck = pmemcore[i]
-                if self.partitions[pcheck]["cores"] < self.partitions[thepart]["cores"]:
+                mcheck = self.partitions[pcheck]["mem"]
+                if mcheck < themem:
                     thepart = pcheck
+                    themem = mcheck
         return thepart
 
     def submitJob(self, **kwargs):
