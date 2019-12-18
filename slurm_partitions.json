@@ -3,50 +3,6 @@
     "version": "1.0",
     "verbose": false,
     "clusters": {
-        "tm3": {
-            "tm3-2-13": {
-                "cores": 2,
-                "mem": 13000,
-                "machine": "n1-highmem-2",
-                "cost": 0.1184
-            },
-            "tm3-4-26": {
-                "cores": 4,
-                "mem": 26000,
-                "machine": "n1-highmem-4",
-                "cost": 0.2368
-            },
-            "tm3-8-52": {
-                "cores": 8,
-                "mem": 52000,
-                "machine": "n1-highmem-8",
-                "cost": 0.4736
-            },
-            "tm3-16-104": {
-                "cores": 16,
-                "mem": 104000,
-                "machine": "n1-highmem-16",
-                "cost": 0.9472
-            },
-            "tm3-32-208": {
-                "cores": 32,
-                "mem": 208000,
-                "machine": "n1-highmem-32",
-                "cost": 1.8944
-            },
-            "tm3-64-416": {
-                "cores": 64,
-                "mem": 416000,
-                "machine": "n1-highmem-64",
-                "cost": 3.7888
-            },
-            "tm3-96-624": {
-                "cores": 96,
-                "mem": 624000,
-                "machine": "n1-highmem-96",
-                "cost": 5.6832
-            }
-       },
        "tm2": {
            "tm2-2-13": {
                "cores": 2,
@@ -60,11 +16,23 @@
                "machine": "n1-highmem-4",
                "cost": 0.2368
            },
+           "tm2-8-30": {
+               "cores": 8,
+               "mem": 30000,
+               "machine": "n1-standard-8",
+               "cost": 0.38
+           },
            "tm2-8-52": {
                "cores": 8,
                "mem": 52000,
                "machine": "n1-highmem-8",
                "cost": 0.4736
+           },
+           "tm2-16-60": {
+               "cores": 16,
+               "mem": 60000,
+               "machine": "n1-standard-16",
+               "cost": 0.76
            },
            "tm2-16-104": {
                "cores": 16,
@@ -77,20 +45,8 @@
                "mem": 208000,
                "machine": "n1-highmem-32",
                "cost": 1.8944
-           },
-           "tm2-64-416": {
-               "cores": 64,
-               "mem": 416000,
-               "machine": "n1-highmem-64",
-               "cost": 3.7888
-           },
-           "tm2-96-624": {
-               "cores": 96,
-               "mem": 624000,
-               "machine": "n1-highmem-96",
-               "cost": 5.6832
            }
-      },
+       },
        "tm1": {
            "tm1-2-13": {
                "cores": 2,
@@ -104,11 +60,23 @@
                "machine": "n1-highmem-4",
                "cost": 0.2368
            },
+           "tm1-8-30": {
+               "cores": 8,
+               "mem": 30000,
+               "machine": "n1-standard-8",
+               "cost": 0.38
+           },
            "tm1-8-52": {
                "cores": 8,
                "mem": 52000,
                "machine": "n1-highmem-8",
                "cost": 0.4736
+           },
+           "tm1-16-60": {
+               "cores": 16,
+               "mem": 60000,
+               "machine": "n1-standard-16",
+               "cost": 0.76
            },
            "tm1-16-104": {
                "cores": 16,
@@ -121,18 +89,6 @@
                "mem": 208000,
                "machine": "n1-highmem-32",
                "cost": 1.8944
-           },
-           "tm1-64-416": {
-               "cores": 64,
-               "mem": 416000,
-               "machine": "n1-highmem-64",
-               "cost": 3.7888
-           },
-           "tm1-96-624": {
-               "cores": 96,
-               "mem": 624000,
-               "machine": "n1-highmem-96",
-               "cost": 5.6832
            }
       }
    }
