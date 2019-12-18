@@ -733,7 +733,7 @@ class Slurm_Cluster(Docker_Cluster):
             sys.exit(2)
         # from partitions with mem, find partitions with cores >= a_reqcores*tpp
         corecheck = a_reqcores*a_tasksPerPartition
-        pmemcore = [ k for k in pmem if self.partitions[k]["cores"] > corecheck ]
+        pmemcore = [ k for k in pmem if self.partitions[k]["cores"] >= corecheck ]
         if len(pmemcore) == 0:
             print("Error: cannot find partition with enough cores (" + str(corecheck) +
                  ") for "+ str(memcheck) + "MB memory")
