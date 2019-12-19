@@ -727,7 +727,7 @@ class Slurm_Cluster(Docker_Cluster):
     def getPartition(self, a_jobname, a_memsize, a_reqcores, a_tasksPerPartition):
         # find all partitions with mem >= a_memsize*tpp
         memcheck = a_memsize*a_tasksPerPartition
-        pmem = [ k for k in self.partition_names if self.partitions[k]["mem"] >= memcheck ]
+        pmem = [ k for k in self.partition_names if self.partitions[k]["mem"] > memcheck ]
         if len(pmem) == 0:
             print("Error: cannot find partition with sufficient memory (" + str(memcheck) + "MB)")
             sys.exit(2)
