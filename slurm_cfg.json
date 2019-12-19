@@ -24,6 +24,7 @@
             "unique_variants":16000,
             "check_merged":16000,
     	    "pca_byrel":8000,
+            "pca_corr_vars":4000,
     	    "pca_corr":8000,
     	    "pca_corr_plots":32000,
     	    "pca_plots":2000,
