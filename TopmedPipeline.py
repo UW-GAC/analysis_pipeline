@@ -1,5 +1,5 @@
 """Utility functions for TOPMed pipeline"""
-__version__ = "2.6.0"
+__version__ = "2.6.1"
 
 from __future__ import division
 import os
