@@ -3,6 +3,50 @@
     "version": "1.0",
     "verbose": false,
     "clusters": {
+        "tm3": {
+            "tm3-2-13": {
+                "cores": 2,
+                "mem": 13000,
+                "machine": "n1-highmem-2",
+                "cost": 0.1184
+            },
+            "tm3-4-26": {
+                "cores": 4,
+                "mem": 26000,
+                "machine": "n1-highmem-4",
+                "cost": 0.2368
+            },
+            "tm3-8-30": {
+                "cores": 8,
+                "mem": 30000,
+                "machine": "n1-standard-8",
+                "cost": 0.38
+            },
+            "tm3-8-52": {
+                "cores": 8,
+                "mem": 52000,
+                "machine": "n1-highmem-8",
+                "cost": 0.4736
+            },
+            "tm3-16-60": {
+                "cores": 16,
+                "mem": 60000,
+                "machine": "n1-standard-16",
+                "cost": 0.76
+            },
+            "tm3-16-104": {
+                "cores": 16,
+                "mem": 104000,
+                "machine": "n1-highmem-16",
+                "cost": 0.9472
+            },
+            "tm3-32-208": {
+                "cores": 32,
+                "mem": 208000,
+                "machine": "n1-highmem-32",
+                "cost": 1.8944
+            }
+        },
        "tm2": {
            "tm2-2-13": {
                "cores": 2,
