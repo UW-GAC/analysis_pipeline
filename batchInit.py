@@ -48,7 +48,7 @@ def removeCE(batchC, queue, cename, supportCE, verbose):
     cenames = {}
     for d in ces:
         cenames[d['computeEnvironmentName']]=d['computeEnvironmentArn']
-    if len(cenames) == 0 or supportCE not in cenames.keys():
+    if len(cenames) == 0 or supportCE not in list(cenames.keys()):
         print("removeCE: support ce " + supportCE + " not found.")
         sys.exit(2)
     # see if the queue exists

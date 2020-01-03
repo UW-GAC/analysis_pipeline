@@ -1,7 +1,7 @@
 """Utility functions for TOPMed pipeline"""
-
 __version__ = "2.6.0"
 
+from __future__ import division
 import os
 import sys
 import csv
@@ -77,7 +77,7 @@ def writeConfig(config, file):
 
     f = open(file, 'w')
     writer = csv.writer(f, delimiter=' ', quotechar='"')
-    for key, value in config.iteritems():
+    for key, value in config.items():
         writer.writerow([key, value])
     f.close()
 
@@ -97,7 +97,7 @@ def getFirstColumn(file, skipHeader=True):
     f = open(file, 'r')
     reader = csv.reader(f, delimiter="\t")
     if skipHeader:
-        dummy = reader.next()
+        dummy = next(reader)
     x = [line[0] for line in reader]
     f.close()
 
@@ -135,7 +135,7 @@ def chromosomeRangeToList(chromosomes):
     chromRange = [int(x) for x in chromosomes.split("-")]
     start = chromRange[0]
     end = start if len(chromRange) == 1 else chromRange[1]
-    return range(start, end + 1)
+    return list(range(start, end + 1))
 
 def parseChromosomes(chromosomes):
     chromString = " ".join([str(x) for x in chromosomeRangeToList(chromosomes)])
@@ -146,13 +146,13 @@ def parseChromosomes(chromosomes):
 
 def dictToString(d):
     """Construct a string from a dictionary"""
-    s = ' '.join([k + ' ' + v for k, v in d.iteritems() if v != None])
+    s = ' '.join([k + ' ' + v for k, v in d.items() if v != None])
     return s
 
 def stringToDict(s):
     """Construct a dictionary from a string"""
     ss = s.split()
-    d = dict(zip(ss[0::2], ss[1::2]))
+    d = dict(list(zip(ss[0::2], ss[1::2])))
     return d
 
 
@@ -177,7 +177,7 @@ def directorySetup(config, subdirs=["config", "data", "log", "plots", "report"])
 # https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
 def update(d, u):
     ld = deepcopy(d)
-    for k, v in u.iteritems():
+    for k, v in u.items():
         if isinstance(v, collections.Mapping):
             if len(v) == 0:
                 ld[k] = u[k]
@@ -285,7 +285,7 @@ class Cluster(object):
         self.clusterCfg = clusterCfg["configuration"]
         if debugCfg:
             print("0>>> Dump of " + clusterCfg["name"] + " ... \n")
-            print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
+            print(json.dumps(self.clusterCfg, indent=3, sort_keys=True))
         if optCfgFile != None:
             self.printVerbose("reading user cfg file: " + optCfgFile)
 
@@ -294,12 +294,12 @@ class Cluster(object):
             optCfg = clusterCfg["configuration"]
             if debugCfg:
                 print("0>>> Dump of opt cfg file " + optCfgFile + " ... \n")
-                print json.dumps(optCfg, indent=3, sort_keys=True)
+                print(json.dumps(optCfg, indent=3, sort_keys=True))
             # update
             self.clusterCfg = update(self.clusterCfg, optCfg)
             if debugCfg:
                 print("0>>> Dump of updated cluster cfg ... \n")
-                print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
+                print(json.dumps(self.clusterCfg, indent=3, sort_keys=True))
         key = "memory_limits"
         if key not in self.clusterCfg:
             self.clusterCfg[key] = None
@@ -324,13 +324,13 @@ class Cluster(object):
         if memLimits is None:
             return memlim
         # find a dicitionary of all partial match with job_name
-        fd = dict(filter(lambda elem: job_name.find(elem[0]) !=-1,memLimits.items()))
+        fd = dict([elem for elem in list(memLimits.items()) if job_name.find(elem[0]) !=-1])
         # if we have an exact match
-        if job_name in fd.keys():
+        if job_name in list(fd.keys()):
             memlim = fd[job_name]
         # else we have a partial match
         else:
-            jobMem = [ v for k,v in fd.iteritems() if job_name.find(k) != -1 ]
+            jobMem = [ v for k,v in fd.items() if job_name.find(k) != -1 ]
             if len(jobMem):
                 # find if there is an exact match with jobname and memlimit's key
                 # just find the first match to job_name
@@ -553,7 +553,7 @@ class SGE_Cluster(Cluster):
     def runCmd(self, job_name, cmd, logfile=None):
         # get and set the env
         key = "-v"
-        if key in self.clusterCfg["submit_opts"].keys():
+        if key in list(self.clusterCfg["submit_opts"].keys()):
             vopt = self.clusterCfg["submit_opts"][key]
             envVars = vopt.split(",")
             for var in envVars:
@@ -627,7 +627,7 @@ class SGE_Cluster(Cluster):
         # get memory limit option (adjust based on specifying a specific number of cores)
         key = "memory_limits"
         lmsg_mem = "not provided"
-        if key in self.clusterCfg.keys():
+        if key in list(self.clusterCfg.keys()):
             memlim = super(SGE_Cluster, self).memoryLimit(job_name)
             if memlim != None:
                 memlim = memlim/memcoreFactor
@@ -651,7 +651,7 @@ class SGE_Cluster(Cluster):
 
         key = "print_only"
         if key in kwargs and kwargs[key] == True:
-            print sub_cmd
+            print(sub_cmd)
             return "000000"
         self.printVerbose("submitting job: " + sub_cmd)
         super(SGE_Cluster, self).analysisLog(lmsg)
@@ -702,7 +702,7 @@ class Slurm_Cluster(Docker_Cluster):
         self.openPartitionCfg(self.pipelinePath + "/" + self.clusterCfg["partition_cfg"])
         # update pipelinePath
         key = "pipeline_path_docker"
-        if key in self.clusterCfg.keys():
+        if key in list(self.clusterCfg.keys()):
             self.pipelinePath = self.clusterCfg[key]
 
     def openPartitionCfg(self, a_pcfg):
@@ -710,11 +710,11 @@ class Slurm_Cluster(Docker_Cluster):
         with open(a_pcfg) as cfgFileHandle:
             partitionCfg = json.load(cfgFileHandle)
         cname = self.clusterCfg["cluster"]
-        if cname not in partitionCfg["clusters"].keys():
+        if cname not in list(partitionCfg["clusters"].keys()):
             print("Cluster " + cname + " not found in " + a_pcfg)
             sys.exit(2)
         self.partitions = partitionCfg["clusters"][cname]
-        self.partition_names = self.partitions.keys()
+        self.partition_names = list(self.partitions.keys())
 
     def analysisInit(self, print_only=False):
         # analysis log file and analysis info
@@ -765,7 +765,7 @@ class Slurm_Cluster(Docker_Cluster):
         tasksPerPartition = 1;
         tppDict = self.clusterCfg["tasks_per_partition"]
         jobName = kwargs["job_name"]
-        jobPart = [ v for k,v in tppDict.iteritems() if jobName.find(k) != -1]
+        jobPart = [ v for k,v in tppDict.items() if jobName.find(k) != -1]
         if len(jobPart):
             # just find the first match to jobname
             tasksPerPartition = jobPart[0]
@@ -806,7 +806,7 @@ class Slurm_Cluster(Docker_Cluster):
         # get memory limit option
         key = "memory_limits"
         lmsg_mem = "not provided"
-        if key in self.clusterCfg.keys():
+        if key in list(self.clusterCfg.keys()):
             memlim = super(Slurm_Cluster, self).memoryLimit(kwargs["job_name"])
             if memlim == None:
                 memlim = 8000
@@ -823,7 +823,7 @@ class Slurm_Cluster(Docker_Cluster):
         lmsg = lmsg + " /tasks_per_partition: " + str(tasksPerPartition)
         # get the machine and cost
         theMachine = self.partitions[thePartition]["machine"]
-        theCost = str(self.partitions[thePartition]["cost"]/tasksPerPartition)
+        theCost = str((self.partitions[thePartition]["cost"]/tasksPerPartition))
         lmsg = lmsg + "/machine: " + theMachine + " ( " + theCost + "/hr for " + str(tasksPerPartition) + " task(s))"
         # submit output (log)
         sldir = ""

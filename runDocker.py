@@ -126,13 +126,13 @@ def pDebug(msg):
 
 def getSlurmEnv():
     slurmEnv = slurmEnvDict
-    for key in slurmEnvDict.keys():
+    for key in list(slurmEnvDict.keys()):
         slurmEnv[key] = os.getenv(key)
     return slurmEnv
 
 def getMiscEnv():
     miscEnv = miscEnvDict
-    for key in miscEnvDict.keys():
+    for key in list(miscEnvDict.keys()):
         miscEnv[key] = os.getenv(key)
     return miscEnv
 
