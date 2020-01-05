@@ -1,7 +1,6 @@
 #! /usr/bin/env python2.7
 
 """Association tests"""
-
 import TopmedPipeline
 import sys
 import os
@@ -137,7 +136,7 @@ TopmedPipeline.writeConfig(config, configfile)
 chrom_list = TopmedPipeline.parseChromosomes(chromosomes).split(" ")
 segment_list = TopmedPipeline.getChromSegments(segment_file, chrom_list)
 segment_str = ["-".join([str(i) for i in s]) for s in segment_list]
-segments = dict(zip(chrom_list, segment_str))
+segments = dict(list(zip(chrom_list, segment_str)))
 
 
 # run association tests
