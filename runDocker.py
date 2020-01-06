@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # using docker sdk, runs the topmed docker image to execute an analysis
 # R function (via the R driver in the pipeline within docker container).
 # This script is executed when a job is submitted to slurm and the compute
