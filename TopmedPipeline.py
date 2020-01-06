@@ -1,7 +1,8 @@
+#! /usr/bin/env python3
+from __future__ import division
 """Utility functions for TOPMed pipeline"""
 __version__ = "2.6.1"
 
-from __future__ import division
 import os
 import sys
 import csv
