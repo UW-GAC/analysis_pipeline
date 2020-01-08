@@ -659,6 +659,8 @@ class SGE_Cluster(Cluster):
         process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE)
         pipe = process.stdout
         sub_out = pipe.readline()
+        # byte seq (python3) or string (python2)
+        sub_out = bytes(sub_out).decode()
         jobid = sub_out.strip(' \t\n\r')
 
         if array_job:
@@ -911,6 +913,8 @@ class Slurm_Cluster(Docker_Cluster):
                 sys.exit(2)
             pipe = process.stdout
             sub_out = pipe.readline()
+            # byte seq (python3) or string (python2)
+            sub_out = bytes(sub_out).decode()
             jobid = sub_out.split(" ")[3].strip()
             super(Slurm_Cluster, self).analysisLog("> jobid: " + str(jobid) + "\n")
             print(sub_out + "Sbatch to cluster: " + cluster + " / job: " + submitOpts["--job-name"] +
