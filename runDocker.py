@@ -179,6 +179,7 @@ parser.add_argument( "--runargs", default = "", help = "Run cmd arguments" )
 parser.add_argument( "--volumes", default = defVolumes,
                      help = "Bind opts (/ld1:/rd1;/z1:/z2 etc)[default: " + defVolumes + "]" )
 parser.add_argument( "--environment", help = "Env opts (x=y;w=z etc)" )
+parser.add_argument( "--username", help = "User name (uid:gid)" )
 parser.add_argument( "--mem_limit", help = "Max memory (g) of container [default: unlimited]" )
 parser.add_argument("--working_dir", help = "working directory [default: current working directory]")
 # submit options explicitly passed (not available from env variable)
@@ -203,6 +204,7 @@ runargs = args.runargs
 volumes = args.volumes
 environment = args.environment
 mem_limit = args.mem_limit
+username = args.username
 working_dir = args.working_dir
 if working_dir == None:
     working_dir = os.getenv('PWD')
@@ -227,6 +229,9 @@ dockeropts = ""
 dockeropts += "-a stdout -a stderr --rm "
 if mem_limit != None:
     dockeropts += "-m " + str(mem_limit) + "g "
+# username
+if username != None:
+    dockeropts += "-u " + username + " "
 # working dir
 dockeropts += "-w " + working_dir + " "
 # volumes

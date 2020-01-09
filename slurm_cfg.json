@@ -92,7 +92,8 @@
             "--cost": null,
             "--verbose": false,
             "--stats": true,
-            "--pull": false
+            "--pull": false,
+            "--username": null
         },
         "run_cmd": {
             "docker_image": "uwgac/topmed-roybranch:latest"
