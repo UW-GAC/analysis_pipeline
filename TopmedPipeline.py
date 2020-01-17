@@ -15,10 +15,10 @@ import math
 import collections
 import datetime
 import awsbatch
+import port_popen
 
 try:
     import boto3
-    import batchInit
 except ImportError:
     batchSupport = False
 else:
@@ -215,7 +215,8 @@ class Cluster(object):
         tFmt = "%a, %d %b %Y %I:%M:%S %p"
         starttime = datetime.datetime.utcnow()
         self.analysisStart = starttime.strftime(tFmt)
-        self.analysisStartSec = "'" + self.analysisStart + "'"
+        # for python/shell need "'feb 22 2022'"
+        self.analysisStartSec = '"' + "'" + self.analysisStart + "'" +'"'
         # tag for analysis log file name
         self.analysisTag = str(int(time.time()*100))
         # analysis log file
@@ -344,6 +345,7 @@ class Cluster(object):
         if self.verbose:
             print(">>> " + self.class_name + ": " + message)
 
+
 class Docker_Cluster(Cluster):
     def __init__(self, std_cluster_file, opt_cluster_file=None, cfg_version="3", verbose=True):
         self.class_name = self.__class__.__name__
@@ -360,35 +362,9 @@ class Docker_Cluster(Cluster):
                 dockerimage + " "
         dargs = cmd[0] + ' ' + " ".join(cmd[1:])
         dcmd = drun + dargs
-        # redirect stdout/stderr
+
         self.printVerbose("docker run cmd:\n\t" + dcmd)
-        if logfile != None:
-            sout = sys.stdout
-            serr = sys.stderr
-            flog = open ( logfile, 'w' )
-            sys.stderr = sys.stdout = flog
-        # spawn
-        try:
-            process = subprocess.Popen(dcmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
-        except Exception as e:
-            # redirect stdout back
-            if logfile != "":
-                sys.stdout = sout
-                sys.stderr = serr
-                flog.close()
-            print("Popen exception: " + str(e))
-            print("Popen command:\n\t" + dcmd)
-            sys.exit(2)
-        status = process.wait()
-        # redirect stdout back
-        if logfile != "":
-            sys.stdout = sout
-            sys.stderr = serr
-            flog.close()
-        if status:
-            print( "Error running job: " + job_name + " (" + str(status) + ") for command:" )
-            print( "\t> " + dcmd )
-            sys.exit(2)
+        port_popen.popen_stdout(dcmd, logfile, jobname="run_cmd")
 
 class AWS_Batch(Docker_Cluster):
 
@@ -442,75 +418,21 @@ class AWS_Batch(Docker_Cluster):
         super(AWS_Batch, self).analysisInit(print_only)
         # jobinfo file name
         self.jiFileName = self.analysis + "_" + self.analysisTag + "_jobinfo.txt"
-        # analysis log file and autogen stuff
+        # analysis log file
         profile = self.clusterCfg["aws_profile"]
-        # autogen (for auto generation of queue and ce)
-        self.autogen_ce = False
-        if self.clusterCfg["autogen_ce"].lower() == "yes":
-            self.autogen_ce = True
-        if self.autogen_ce:
-            # pricing
-            pricing = self.clusterCfg["pricing"]
-            # create an aws tag for costs
-            self.awstag = self.analysis + "_" + self.username + "_" + self.analysisTag
-            # create ce name
-            ceName = "ag_ce" + "_" + pricing + "_" + self.analysis + "_" + self.username
-            # create costing queue name
-            awsqueue = "ag_queue" + "_" + pricing + "_" + self.analysis + "_" + self.username
-            self.queue = awsqueue
-            print("Creating batch env ...")
-            # if print_only
-            if print_only:
-                print("+++++++++  Print Only +++++++++++")
-                print("AWS autogen: " + str(self.autogen_ce))
-                print("AWS tag: " + self.awstag)
-                print("AWS profile: " + profile)
-                print("AWS batch queue: " + self.queue)
-                print("AWS batch ce: " + ceName)
-                print("AWS job def: " + self.submitOpts["jobdef"])
-                print("Check AWS batch queue to verify ...")
-            else:
-                with open(self.analysisLogFile, "a") as afile:
-                    afile.write("AWS profile: " + profile + "\n")
-                    afile.write("AWS batch queue: " + self.queue + "\n")
-                    afile.write("AWS batch ce: " + ceName + "\n")
-                    afile.write("AWS tag: " + self.awstag + "\n")
-            # set default instance types
-            instanceTypes = None
-            if len(self.clusterCfg["batch_instances"]) > 0:
-                instanceTypes = self.clusterCfg["batch_instances"]
-            # init batch by creating ce and queue based on batch pricing
-            if not print_only:
-                self.printVerbose("AWS tag: " + self.awstag)
-                self.printVerbose("AWS profile: " + profile)
-                self.printVerbose("batch queue: " + self.queue)
-                self.printVerbose("batch pricing: " + self.clusterCfg["pricing"])
-                self.printVerbose("AWS job def: " + self.submitOpts["jobdef"])
-                self.printVerbose("instance types: " + str(instanceTypes))
-                self.printVerbose("compute environment name: " + ceName)
-                self.printVerbose("aws profile: " + profile)
-            batchInit.createEnv(self.batchC,
-                                self.queue,
-                                self.clusterCfg["pricing"],
-                                instanceTypes,
-                                ceName,
-                                self.awstag,
-                                profile,
-                                self.verbose)
+        if print_only:
+            print("+++++++++  Print Only +++++++++++")
+            print("AWS profile: " + profile)
+            print("AWS job def: " + self.submitOpts["jobdef"])
+            print("AWS batch queue: " + self.queue)
         else:
-            if print_only:
-                print("+++++++++  Print Only +++++++++++")
-                print("AWS profile: " + profile)
-                print("AWS job def: " + self.submitOpts["jobdef"])
-                print("AWS batch queue: " + self.queue)
-            else:
-                self.printVerbose("AWS profile: " + profile)
-                self.printVerbose("AWS job def: " + self.submitOpts["jobdef"])
-                self.printVerbose("AWS batch queue: " + self.queue)
-                with open(self.analysisLogFile, "a") as afile:
-                    afile.write("AWS profile: " + profile + "\n")
-                    afile.write("AWS job def: " + self.submitOpts["jobdef"] + "\n")
-                    afile.write("AWS batch queue: " + self.queue + "\n")
+            self.printVerbose("AWS profile: " + profile)
+            self.printVerbose("AWS job def: " + self.submitOpts["jobdef"])
+            self.printVerbose("AWS batch queue: " + self.queue)
+            with open(self.analysisLogFile, "a") as afile:
+                afile.write("AWS profile: " + profile + "\n")
+                afile.write("AWS job def: " + self.submitOpts["jobdef"] + "\n")
+                afile.write("AWS batch queue: " + self.queue + "\n")
 
     def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None,
                   request_cores=None, print_only=False, **kwargs):
@@ -566,23 +488,8 @@ class SGE_Cluster(Cluster):
                     os.environ[varVal[0]] = np + cp
                 else:
                     os.environ[varVal[0]] = varVal[1]
-        # redirect stdout/stderr
-        if logfile != None:
-            sout = sys.stdout
-            serr = sys.stderr
-            flog = open ( logfile, 'w' )
-            sys.stderr = sys.stdout = flog
-        # spawn
-        process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=False)
-        status = process.wait()
-        # redirect stdout back
-        if logfile != "":
-            sys.stdout = sout
-            sys.stderr = serr
-        if status:
-            print( "Error running job: " + job_name + " (" + str(status) + ") for command:" )
-            print( "\t> " + str(cmd) )
-            sys.exit(2)
+
+        port_popen.popen_stdout(cmd, logfile, jobname=job_name, shell=False)
 
     def submitJob(self, binary=False, hold_array=None, **kwargs):
         subOpts = deepcopy(self.clusterCfg["submit_opts"])
@@ -649,6 +556,17 @@ class SGE_Cluster(Cluster):
         optStr = dictToString(subOpts)
         # create the entire submit command
         sub_cmd = " ".join([submit_cmd, optStr, kwargs["cmd"], argStr])
+        # check for resume
+        if self.clusterCfg["enable_resume"]:
+            rscript = self.clusterCfg["resume_script"]
+            spath = super(SGE_Cluster, self).getSubmitPath()
+            rscript = spath + "/" + rscript + " sge " + job_name
+            # update submit opts -N
+            subOpts["-N"] = "resume_" + subOpts["-N"]
+            subOpts["-b"] = "y"
+            optStr = dictToString(subOpts)
+            # update sub_cmd
+            sub_cmd = " ".join([submit_cmd, optStr, rscript, kwargs["cmd"], argStr])
 
         key = "print_only"
         if key in kwargs and kwargs[key] == True:
@@ -656,16 +574,11 @@ class SGE_Cluster(Cluster):
             return "000000"
         self.printVerbose("submitting job: " + sub_cmd)
         super(SGE_Cluster, self).analysisLog(lmsg)
-        process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE)
-        pipe = process.stdout
-        sub_out = pipe.readline()
-        # byte seq (python3) or string (python2)
-        sub_out = bytes(sub_out).decode()
-        jobid = sub_out.strip(' \t\n\r')
+        jobid = port_popen.popen(sub_cmd)
 
         if array_job:
             jobid = jobid.split(".")[0]
-        print("Submitting job " + jobid + " (" + job_name + ")")
+        print("Submitting job " + jobid + " (" + subOpts["-N"] + ")")
 
         return jobid
 
@@ -904,17 +817,7 @@ class Slurm_Cluster(Docker_Cluster):
         else:
             self.printVerbose("submitting job: " + sub_cmd)
             super(Slurm_Cluster, self).analysisLog("> sbatch: " + sub_cmd)
-            process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            status = process.wait()
-            if status != 0:
-                pipe = process.stderr
-                eMsg = pipe.readline()
-                print("Error: sbatch status: " + str(status) + " - " + eMsg)
-                sys.exit(2)
-            pipe = process.stdout
-            sub_out = pipe.readline()
-            # byte seq (python3) or string (python2)
-            sub_out = bytes(sub_out).decode()
+            sub_out = port_popen.popen(subcmd)
             jobid = sub_out.split(" ")[3].strip()
             super(Slurm_Cluster, self).analysisLog("> jobid: " + str(jobid) + "\n")
             print(sub_out + "Sbatch to cluster: " + cluster + " / job: " + submitOpts["--job-name"] +
