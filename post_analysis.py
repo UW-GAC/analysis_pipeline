@@ -27,6 +27,8 @@ args = parser.parse_args()
 analysis = args.analysis
 starttime = args.starttime
 logfile = args.logfile
+# strip of any leading/trailing quotes
+starttime = starttime.strip("'")
 
 # end time (utc)
 tFmt = "%a, %d %b %Y %I:%M:%S %p"
@@ -57,15 +59,20 @@ if totCost != 0.0:
 errcnt = 0
 for file in os.listdir('.'):
     try:
+        if fnmatch.fnmatch(file, 'resume*'):
+                os.remove('./'+file)
+        if fnmatch.fnmatch(file, '*.completed.*'):
+                os.remove('./'+file)
         if fnmatch.fnmatch(file, '*.log') or fnmatch.fnmatch(file,'*.trace') or \
            fnmatch.fnmatch(file, '*.o*') or fnmatch.fnmatch(file,'*.po*'):
                 os.rename('./'+file,'./log/'+file)
-        if fnmatch.fnmatch(file, '*report.*')  or fnmatch.fnmatch(file,'*.params'):
-            os.rename('./'+file,'./report/'+file)
+        if fnmatch.fnmatch(file, '*report.html')  or fnmatch.fnmatch(file,'*.params') or \
+           fnmatch.fnmatch(file, '*report.Rmd'):
+                os.rename('./'+file,'./report/'+file)
         if fnmatch.fnmatch(file, '*.pdf'):
-            os.rename('./'+file,'./plots/'+file)
+                os.rename('./'+file,'./plots/'+file)
     except Exception as e:
-        print('Error moving file ' + file + " (" + str(e) + ")")
+        print('Error moving/deleting file ' + file + " (" + str(e) + ")")
         errcnt += 1
         continue
 if errcnt:
