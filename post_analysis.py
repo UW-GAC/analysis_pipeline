@@ -61,16 +61,18 @@ for file in os.listdir('.'):
     try:
         if fnmatch.fnmatch(file, 'resume*'):
                 os.remove('./'+file)
-        if fnmatch.fnmatch(file, '*.completed.*'):
+        elif fnmatch.fnmatch(file, '*.completed.*'):
                 os.remove('./'+file)
-        if fnmatch.fnmatch(file, '*.log') or fnmatch.fnmatch(file,'*.trace') or \
+        elif fnmatch.fnmatch(file, '*.log') or fnmatch.fnmatch(file,'*.trace') or \
            fnmatch.fnmatch(file, '*.o*') or fnmatch.fnmatch(file,'*.po*'):
                 os.rename('./'+file,'./log/'+file)
-        if fnmatch.fnmatch(file, '*report.html')  or fnmatch.fnmatch(file,'*.params') or \
+        elif fnmatch.fnmatch(file, '*report.html')  or fnmatch.fnmatch(file,'*.params') or \
            fnmatch.fnmatch(file, '*report.Rmd'):
                 os.rename('./'+file,'./report/'+file)
-        if fnmatch.fnmatch(file, '*.pdf'):
+        elif fnmatch.fnmatch(file, '*.pdf'):
                 os.rename('./'+file,'./plots/'+file)
+        else:
+            continue
     except Exception as e:
         print('Error moving/deleting file ' + file + " (" + str(e) + ")")
         errcnt += 1
