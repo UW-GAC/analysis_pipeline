@@ -27,7 +27,7 @@ def popen(cmd, sout=subprocess.PIPE, serr=subprocess.PIPE, pshell=True):
             # compatibility p2/p3: byte seq or string converts to string
             eMsg = bytes(eMsg).decode()
             print("Popen: Error msg: " + eMsg)
-        sys.exit(2)
+        sys.exit(status)
     # if pipes, read the results of popen
     if sout == subprocess.PIPE:
         pipe = process.stdout
