@@ -60,7 +60,7 @@ errcnt = 0
 for file in os.listdir('.'):
     try:
         if fnmatch.fnmatch(file, 'resume*'):
-                os.remove('./'+file)
+                os.rename('./'+file,'./log/'+file)
         elif fnmatch.fnmatch(file, '*.completed.*'):
                 os.remove('./'+file)
         elif fnmatch.fnmatch(file, '*.log') or fnmatch.fnmatch(file,'*.trace') or \
