@@ -7,7 +7,6 @@ import sys
 import os
 from argparse import ArgumentParser
 from copy import deepcopy
-from string import replace
 
 description = """
 
