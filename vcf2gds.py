@@ -53,7 +53,8 @@ version = "--version " + TopmedPipeline.__version__
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
-driver = os.path.join(pipeline, "runRscript.sh")
+submitPath = cluster.getSubmitPath()
+driver = os.path.join(submitPath, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "log"])

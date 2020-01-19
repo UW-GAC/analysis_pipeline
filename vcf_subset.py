@@ -45,7 +45,8 @@ version = "--version " + TopmedPipeline.__version__
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
-driver = os.path.join(pipeline, "runRscript.sh")
+submitPath = cluster.getSubmitPath()
+driver = os.path.join(submitPath, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "log"])
@@ -55,7 +56,7 @@ cluster.analysisInit(print_only=print_only)
 
 # submit job for each chromosome
 job = "vcf_subset"
-driver = os.path.join(pipeline, job + ".sh")
+driver = os.path.join(submitPath, job + ".sh")
 samp_file = configdict["sample_file"]
 in_file = configdict["vcf_file"].split(" ")
 out_file = configdict["out_file"].split(" ")
@@ -64,13 +65,13 @@ jobid = cluster.submitJob(job_name=job, cmd=driver, args=args, array_range=chrom
 
 # md5 checksums
 job = "vcf_md5"
-driver = os.path.join(pipeline, job + ".sh")
+driver = os.path.join(submitPath, job + ".sh")
 args = [os.path.dirname(configdict["out_file"])]
 md5id = cluster.submitJob(job_name=job, cmd=driver, args=args, holdid=[jobid], email=email, print_only=print_only)
 
 # check file
 job = "check_gds"
-driver = os.path.join(pipeline, "runRscript.sh")
+driver = os.path.join(submitPath, "runRscript.sh")
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
