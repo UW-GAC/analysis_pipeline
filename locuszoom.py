@@ -59,13 +59,11 @@ range = "1-" + str(n-1)
 args = ["-s", rscript, configfile, version]
 jobid = cluster.submitJob(job_name=job, cmd=driver, args=args, array_range=range, email=email, print_only=print_only)
 
-
 # post analysis
 job = "post_analysis"
 jobpy = job + ".py"
-pcmd=os.path.join(pipeline, jobpy)
-argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
+pcmd=os.path.join(submitPath, jobpy)
+argList = ["-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
-pdriver=os.path.join(pipeline, "run_python.sh")
-cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
+cluster.submitJob(binary=True, job_name=job, cmd=pcmd, args=argList,
                   holdid=[jobid], print_only=print_only)
