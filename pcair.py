@@ -196,8 +196,9 @@ jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, v
 jobsPlots.append(jobid)
 
 # post analysis
-job = "post_analysis"
-jobpy = job + ".py"
+bname = "post_analysis"
+job = "pcair" + "_" + bname
+jobpy = bname + ".py"
 pcmd=os.path.join(submitPath, jobpy)
 argList = ["-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]

@@ -86,8 +86,9 @@ TopmedPipeline.writeConfig(config, configfile)
 submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[submitID], email=email, print_only=print_only)
 
 # post analysis
-job = "post_analysis"
-jobpy = job + ".py"
+bname = "post_analysis"
+job = "null_model" + "_" + bname
+jobpy = bname + ".py"
 pcmd=os.path.join(submitPath, jobpy)
 argList = ["-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]

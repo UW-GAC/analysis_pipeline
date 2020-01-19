@@ -187,8 +187,9 @@ submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile
 hold_report = [submitID]
 
 # post analysis
-job = "post_analysis"
-jobpy = job + ".py"
+bname = "post_analysis"
+job = "assoc" + "_" + assoc_type + "_" + bname
+jobpy = bname + ".py"
 pcmd=os.path.join(submitPath, jobpy)
 argList = ["-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]

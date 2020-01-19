@@ -159,8 +159,9 @@ kinid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, v
 # kinid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[kinid], email=email, print_only=print_only)
 
 # post analysis
-job = "post_analysis"
-jobpy = job + ".py"
+bname = "post_analysis"
+job = "king" + "_" + bname
+jobpy = bname + ".py"
 pcmd=os.path.join(submitPath, jobpy)
 holdlist = [segplotid, segmatid, kinid]
 argList = ["-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),

@@ -85,8 +85,9 @@ args = ["-c", rscript, configfile]
 jobid = cluster.submitJob(binary=True, hold_array = jobid, job_name=job, cmd=driver, args=args, array_range=chromosomes, email=email, print_only=print_only)
 
 # post analysis
-job = "post_analysis"
-jobpy = job + ".py"
+bname = "post_analysis"
+job = "vcf_subset" + "_" + bname
+jobpy = bname + ".py"
 pcmd=os.path.join(submitPath, jobpy)
 argList = ["-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
