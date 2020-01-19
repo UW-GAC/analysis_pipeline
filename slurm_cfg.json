@@ -67,6 +67,8 @@
         "submit_cmd": "sbatch",
         "submit_log_dir": null,
         "execute_prescript": false,
+        "resume_script": "resume_analysis.py",
+        "enable_resume": true,
         "dependency_value": "afterok",
         "submit_prescript": "runDocker.bash",
         "submit_script": "runDocker.py",

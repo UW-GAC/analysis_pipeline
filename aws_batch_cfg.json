@@ -37,6 +37,8 @@
         "pipeline_path": "/usr/local/analysis_pipeline",
         "queue": "topmed_general_od",
         "maxperf": 0,
+        "resume_script": "resume_analysis.py",
+        "enable_resume": false,
         "job_parameters": {
             "wd" : "",
             "rd" : "tbd",

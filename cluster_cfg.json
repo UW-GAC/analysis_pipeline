@@ -40,8 +40,7 @@
             "-v":"R_LIBS=/projects/topmed/working_code/analysis_pipeline/R_library,PATH=/projects/resources/software/apps/bin:$PATH"
         },
         "parallel_env": "local",
-        "resume_script": "resume_sge.py",
+        "resume_script": "resume_analysis.py",
         "enable_resume": false
-
     }
 }
