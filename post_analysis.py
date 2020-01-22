@@ -28,7 +28,7 @@ analysis = args.analysis
 starttime = args.starttime
 logfile = args.logfile
 # strip of any leading/trailing quotes
-starttime = starttime.strip("'")
+starttime = starttime.replace("_", " ")
 
 # end time (utc)
 tFmt = "%a, %d %b %Y %I:%M:%S %p"
@@ -61,8 +61,6 @@ for file in os.listdir('.'):
     try:
         if fnmatch.fnmatch(file, 'resume*'):
                 os.rename('./'+file,'./log/'+file)
-        elif fnmatch.fnmatch(file, '*.completed.*'):
-                os.remove('./'+file)
         elif fnmatch.fnmatch(file, '*.log') or fnmatch.fnmatch(file,'*.trace') or \
            fnmatch.fnmatch(file, '*.o*') or fnmatch.fnmatch(file,'*.po*'):
                 os.rename('./'+file,'./log/'+file)
