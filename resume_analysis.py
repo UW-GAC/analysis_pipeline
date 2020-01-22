@@ -26,6 +26,7 @@ import      os
 import      time
 import      subprocess
 import      glob
+
 import      port_popen
 
 # init globals
@@ -74,6 +75,21 @@ class SGE(JobScheduler):
                 jobInfo["jobid"] = "NOJOBID"
         super(SGE, self).updateJobInfo(jobInfo)
 
+    def createFilename(self, jName, ctag=None):
+        jInfo = super(SGE, self).getJobInfo()
+        if ctag == None:
+            pfile = jName + ".o" + jInfo["jobid"]
+            if jInfo["arrayjob"]:
+                pfile += "." + jInfo["taskid"]
+        else:
+            if jInfo["arrayjob"]:
+                pfile = ctag + "_" + jName + "_" + jInfo["taskid"]
+            else:
+                pfile = ctag + "_" + jName
+
+        return pfile
+
+
 class BATCH(JobScheduler):
     def __init__(self):
         super(BATCH,self).__init__()
@@ -99,6 +115,19 @@ class BATCH(JobScheduler):
             else:
                 jobInfo["jobid"] = "NOJOBID"
         super(BATCH, self).updateJobInfo(jobInfo)
+
+    def createFilename(self, jName, ctag=None):
+        jInfo = super(BATCH, self).getJobInfo()
+        if ctag == None:
+            pfile = jName + "_" + jInfo["jobid"] + ".log"
+            if jInfo["arrayjob"]:
+                pfile += "_" + jInfo["taskid"] + ".log"
+        else:
+            if jInfo["arrayjob"]:
+                pfile = ctag + "_" + jName + "_" + jInfo["taskid"]
+            else:
+                pfile = ctag + "_" + jName
+        return pfile
 
 class SLURM(JobScheduler):
     def __init__(self):
@@ -126,6 +155,19 @@ class SLURM(JobScheduler):
             else:
                 jobInfo["jobid"] = "NOJOBID"
         super(SLURM, self).updateJobInfo(jobInfo)
+
+    def createFilename(self, jName, ctag=None):
+        jInfo = super(SLURM, self).getJobInfo()
+        if ctag == None:
+            pfile = jName + "_" + jInfo["jobid"] + ".log"
+            if jInfo["arrayjob"]:
+                pfile += "_" + jInfo["taskid"] + ".log"
+        else:
+            if jInfo["arrayjob"]:
+                pfile = ctag + "_" + jName + "_" + jInfo["taskid"]
+            else:
+                pfile = ctag + "_" + jName
+        return pfile
 
 def pInfo_file(msg, fhandle):
     tmsg=time.asctime()
@@ -181,29 +223,22 @@ jInfo = thecluster.getJobInfo()
 jId = jInfo["jobid"]
 # set the file name
 ctag = "completed"
-fext = "." + ctag + "." + jId
-fpre = jName
-if jInfo["arrayjob"]:
-    fpre = jName + "_" + jInfo["taskid"]
-rfilename = fpre + fext
+cfname = thecluster.createFilename(jName, ctag)
+lfname = thecluster.createFilename(jName)
+pInfo(sName + " - Checking file: " + cfname)
 
-pInfo(sName + " - Checking file: " + rfilename)
-
-if len(glob.glob(fpre + ".completed.*")):
-    pInfo(sName + " - job " + fpre + " already completed.")
+if os.path.isfile(cfname):
+    pInfo(sName + " - job " + jName + " already completed (" + cfname +")")
 else:
     pInfo(sName + " - calling Popen to execute " + jCmd)
-    pfile = jName + ".o" + jId
-    if jInfo["arrayjob"]:
-        pfile += "." + jInfo["taskid"]
-    port_popen.popen_stdout(jCmd, logfile=pfile, jobname=jName)
+    port_popen.popen_stdout(jCmd, logfile=lfname, jobname=jName)
     # if the popen returns, the job completed (popen calls sys.exit(2) if it fails)
     # open the file and write out job info (name, id, task)
-    with open(rfilename, mode='w') as fhandle:
-        msgC = "job: " + jName + ", job id: " + jId
+    with open(cfname, mode='w') as fhandle:
+        msgC =  "job: " + jName + ", job id: " + jId
         if jInfo["arrayjob"]:
-            pInfo_file(msgC + " task: " + jInfo["taskid"], fhandle)
+            pInfo_file(msgC + " task: " + jInfo["taskid"] + " completed", fhandle)
         else:
-            pInfo_file(msgC, fhandle)
+            pInfo_file(msgC + " completed", fhandle)
 
 sys.exit(0)
