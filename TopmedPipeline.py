@@ -216,7 +216,7 @@ class Cluster(object):
         starttime = datetime.datetime.utcnow()
         self.analysisStart = starttime.strftime(tFmt)
         # for python/shell need "'feb 22 2022'"
-        self.analysisStartSec = '"' + "'" + self.analysisStart + "'" +'"'
+        self.analysisStartSec = self.analysisStart.replace(" ", "_")
         # tag for analysis log file name
         self.analysisTag = str(int(time.time()*100))
         # analysis log file
@@ -675,7 +675,6 @@ class Slurm_Cluster(Docker_Cluster):
         cluster = self.clusterCfg["cluster"]
         job_cmd = self.clusterCfg["submit_cmd"]
         dependency_value = self.clusterCfg["dependency_value"]
-        submit_script = self.clusterCfg["submit_script"]
         pipeline_path_docker = self.clusterCfg["pipeline_path_docker"]
         # get tasks per partition based on job name
         tasksPerPartition = 1;
@@ -687,13 +686,9 @@ class Slurm_Cluster(Docker_Cluster):
             tasksPerPartition = jobPart[0]
         self.printVerbose("tasks per partition for job " + jobName + ": " +
                           str(tasksPerPartition))
-        # set the full path of the prescript (bash)
-        submit_prescript = self.submitPath + "/" + self.clusterCfg["submit_prescript"]
-        # set full path of submit script
-        submit_script = self.submitPath + "/" + submit_script
         # process kwargs for submit options
         submitOpts["--job-name"] = jobName
-        lmsg = "Job: " + kwargs["job_name"]
+        lmsg = "Job: " + jobName
 
         key = "holdid"
         if key in kwargs and kwargs[key] != []:
@@ -742,13 +737,13 @@ class Slurm_Cluster(Docker_Cluster):
         theCost = str((self.partitions[thePartition]["cost"]/tasksPerPartition))
         lmsg = lmsg + "/machine: " + theMachine + " ( " + theCost + "/hr for " + str(tasksPerPartition) + " task(s))"
         # submit output (log)
-        sldir = ""
+        submit_logdir = ""
         if self.clusterCfg["submit_log_dir"] != None:
-            sldir = self.clusterCfg["submit_log_dir"] + "/sbatch_"
+            submit_logdir = self.clusterCfg["submit_log_dir"] + "/sbatch_"
         if submitOpts["--array"] == None:
-            submitOpts["--output"] = sldir + submitOpts["--job-name"] + "_%j.log"
+            submitOpts["--output"] = submit_logdir + submitOpts["--job-name"] + "_%j.log"
         else:
-            submitOpts["--output"] = sldir + submitOpts["--job-name"] + "_%A_%a.log"
+            submitOpts["--output"] = submit_logdir + submitOpts["--job-name"] + "_%A_%a.log"
 
         # set the docker options
         # -- cmd (change path associated within docker)
@@ -798,12 +793,28 @@ class Slurm_Cluster(Docker_Cluster):
         # convert opts to strings
         suboptStr = dictToString(submitOpts)
         dockeroptStr = dictToString(dockerOpts)
-        # create either the submit python script without prescript; or add
-        # the prescript (which checks the nfs mount point)
-        if self.clusterCfg["execute_prescript"]:
-            sub_cmd = " ".join([job_cmd, suboptStr, submit_prescript, submit_script, dockeroptStr])
+        # submit scripts
+        submit_script = self.submitPath + "/" + self.clusterCfg["submit_script"]
+        submit_prescript = self.submitPath + "/" + self.clusterCfg["submit_prescript"]
+        resume_script = self.submitPath + "/" + self.clusterCfg["resume_script"]
+        if self.clusterCfg["enable_resume"]:
+            # resume
+            submit_script = submit_prescript + " " + resume_script + " slurm " + jobName + " " + submit_script
+            # update submit opts - batch job name and log file
+            rpre = "resume_"
+            submitOpts["--job-name"] = rpre + jobName
+            # either a single job or an array job
+            if submitOpts["--array"] == None:
+                submitOpts["--output"] = submit_logdir + submitOpts["--job-name"] + "_%j.log"
+            else:
+                submitOpts["--output"] = submit_logdir + submitOpts["--job-name"] + "_%A_%a.log"
+
+            suboptStr = dictToString(submitOpts)
         else:
-            sub_cmd = " ".join([job_cmd, suboptStr, submit_script, dockeroptStr])
+            self.clusterCfg["execute_prescript"]
+            submit_script = submit_prescript + " " + submit_script
+
+        sub_cmd = " ".join([job_cmd, suboptStr, submit_script, dockeroptStr])
 
         key = "print_only"
         po = False
@@ -817,7 +828,7 @@ class Slurm_Cluster(Docker_Cluster):
         else:
             self.printVerbose("submitting job: " + sub_cmd)
             super(Slurm_Cluster, self).analysisLog("> sbatch: " + sub_cmd)
-            sub_out = port_popen.popen(subcmd)
+            sub_out = port_popen.popen(sub_cmd)
             jobid = sub_out.split(" ")[3].strip()
             super(Slurm_Cluster, self).analysisLog("> jobid: " + str(jobid) + "\n")
             print(sub_out + "Sbatch to cluster: " + cluster + " / job: " + submitOpts["--job-name"] +
