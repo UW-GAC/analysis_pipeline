@@ -70,7 +70,7 @@
         "resume_script": "resume_analysis.py",
         "enable_resume": true,
         "dependency_value": "afterok",
-        "submit_prescript": "runDocker.bash",
+        "submit_prescript": "runPython.sh",
         "submit_script": "runDocker.py",
         "submit_opts": {
             "--job-name": null,
