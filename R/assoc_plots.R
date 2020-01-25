@@ -61,7 +61,7 @@ if ("stat" %in% names(assoc)) {
     lambda <- calculateLambda(qchisq(assoc$pval, df=1, lower=FALSE), df=1)
 }
 
-# Check if we should truncate the plots.
+# Check if we should also generate truncated plots.
 truncate = any(assoc$pval < truncate_pval_threshold)
 
 ## qq plot
