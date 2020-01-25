@@ -97,7 +97,8 @@ if (truncate) {
       oob = scales::squish,
       limits = c(0, -log10(truncate_pval_threshold)),
       expand = c(0,0)
-    )
+    ) +
+    ylab(expression(paste(-log[10], "(observed P)") ~ " (truncated)"))
   outfile <- gsub(".", "_truncated.", config["out_file_qq"], fixed=TRUE)
   ggsave(outfile, plot=p, width=6, height=6)
 }
@@ -139,7 +140,8 @@ if (truncate) {
       oob = scales::squish,
       limits = c(0, -log10(truncate_pval_threshold)),
       expand = c(0,0)
-    )
+    ) +
+    ylab(expression(-log[10](p) ~ " (truncated)"))
   outfile <- gsub(".", "_truncated.", config["out_file_manh"], fixed=TRUE)
   ggsave(outfile, plot=p, width=10, height=5)
 }
