@@ -21,13 +21,17 @@ optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
               "plot_mac_threshold"=NA,
               "thin"=TRUE,
               "thin_npoints"=10000,
-              "thin_nbins"=10)
+              "thin_nbins"=10,
+              "truncate_pval_threshold" = 1e-12)
+
 config <- setConfigDefaults(config, required, optional)
 print(config)
 writeConfig(config, paste0(basename(argv$config), ".assoc_plots.params"))
 
 chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 files <- sapply(chr, function(c) insertChromString(config["assoc_file"], c, "assoc_file"))
+
+truncate_pval_threshold = as.numeric(config["truncate_pval_threshold"])
 
 assoc <- getAssoc(files, config["assoc_type"])
 
@@ -57,6 +61,9 @@ if ("stat" %in% names(assoc)) {
     lambda <- calculateLambda(qchisq(assoc$pval, df=1, lower=FALSE), df=1)
 }
 
+# Check if we should truncate the plots.
+truncate = any(assoc$pval < truncate_pval_threshold)
+
 ## qq plot
 n <- nrow(assoc)
 x <- 1:n
@@ -83,6 +90,17 @@ p <- ggplot(dat, aes(-log10(exp), -log10(obs))) +
     theme_bw() +
     theme(plot.title = element_text(size = 22))
 ggsave(config["out_file_qq"], plot=p, width=6, height=6)
+
+if (truncate) {
+  p <- p +
+    scale_y_continuous(
+      oob = scales::squish,
+      limits = c(0, -log10(truncate_pval_threshold)),
+      expand = c(0,0)
+    )
+  outfile <- gsub(".", "_truncated.", config["out_file_qq"], fixed=TRUE)
+  ggsave(outfile, plot=p, width=6, height=6)
+}
 
 rm(dat)
 
@@ -114,6 +132,17 @@ p <- ggplot(assoc, aes(chr, -log10(pval), group=interaction(chr, pos), color=chr
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
     xlab("chromosome") + ylab(expression(-log[10](p)))
 ggsave(config["out_file_manh"], plot=p, width=10, height=5)
+
+if (truncate) {
+  p <- p +
+    scale_y_continuous(
+      oob = scales::squish,
+      limits = c(0, -log10(truncate_pval_threshold)),
+      expand = c(0,0)
+    )
+  outfile <- gsub(".", "_truncated.", config["out_file_manh"], fixed=TRUE)
+  ggsave(outfile, plot=p, width=10, height=5)
+}
 
 # mem stats
 ms <- gc()
