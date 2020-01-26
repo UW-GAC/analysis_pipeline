@@ -12,7 +12,7 @@
 #       <jobname>.completed (for a single job)
 # The script will place the job id into the completed file.
 #
-# There are 4 or arguments:
+# There are 4 or more arguments:
 #       <resumescript> <cluster_type> <jobname> <job run cmd>  <job run cmd arguments>
 # This script basically parses out the jobrun command and all it's arguments, and then
 # calls popen to execute syncrhonously.  Once completed, this script checks the status and
@@ -216,8 +216,9 @@ if cName.upper() not in clusters:
     sys.exit(2)
 clusterclass = globals()[cName.upper()]
 thecluster = clusterclass()
-
-pInfo(sName + " - Job: " + jName + " Command: \n\t" + jCmd)
+pInfo("Script: " + sName)
+pInfo("Job: " + jName)
+pInfo("Cmd: " + jCmd)
 # get the job info
 jInfo = thecluster.getJobInfo()
 jId = jInfo["jobid"]
@@ -225,20 +226,23 @@ jId = jInfo["jobid"]
 ctag = "completed"
 cfname = thecluster.createFilename(jName, ctag)
 lfname = thecluster.createFilename(jName)
-pInfo(sName + " - Checking file: " + cfname)
 
+status = 0
 if os.path.isfile(cfname):
-    pInfo(sName + " - job " + jName + " already completed (" + cfname +")")
+    pInfo("Job " + jName + " already completed (" + cfname +")")
 else:
-    pInfo(sName + " - calling Popen to execute " + jCmd)
-    port_popen.popen_stdout(jCmd, logfile=lfname, jobname=jName)
-    # if the popen returns, the job completed (popen calls sys.exit(2) if it fails)
+    pInfo("Calling Popen to execute: \n\t" + jCmd)
+    (pmsg, status) = port_popen.popen_stdout(jCmd, logfile=lfname, jobname=jName)
+    # if status == 0, write a complete file unless it's the post_analysis
     # open the file and write out job info (name, id, task)
-    with open(cfname, mode='w') as fhandle:
-        msgC =  "job: " + jName + ", job id: " + jId
-        if jInfo["arrayjob"]:
-            pInfo_file(msgC + " task: " + jInfo["taskid"] + " completed", fhandle)
-        else:
-            pInfo_file(msgC + " completed", fhandle)
+    if status == 0 and "post_analysis" not in jName:
+        with open(cfname, mode='w') as fhandle:
+            msgC =  "job: " + jName + ", job id: " + jId
+            if jInfo["arrayjob"]:
+                pInfo_file(msgC + " task: " + jInfo["taskid"] + " completed", fhandle)
+            else:
+                pInfo_file(msgC + " completed", fhandle)
+    else:
+        pError("Status: " + str(status) + " See " + lfname + " for details")
 
-sys.exit(0)
+sys.exit(status)
