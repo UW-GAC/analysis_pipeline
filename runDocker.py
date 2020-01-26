@@ -32,6 +32,7 @@ import      getpass
 import      subprocess
 from        argparse import ArgumentParser
 from        copy   import deepcopy
+import      port_popen
 
 try:
     import  docker
@@ -329,15 +330,16 @@ else:
         if log:
             pInfo("Sending stdout/stderr of docker run to: " + logfile)
         sys.stdout.flush()
-        process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
-        status = process.wait()
+        {smsg, status} = port_popen.popen_stdout(cmd)
         if status:
-            smsg = os.strerror(status)
             if status == -9:
                 smsg = "possibly killed externally via kill -9"
-            if status == 137:
+            elif status == 137:
                 smsg = "possibly killed internally via memory limit"
-            pError("Executing docker run cmd failed. Error: " + str(status) + " - " + smsg)
+            if smsg == "":
+                pError("Executing docker run cmd failed. Error: " + str(status))
+            else:
+                pError("Executing docker run cmd failed. Error: " + str(status) + " - " + smsg)
     eTime = time.time() - startTime
     eTimeHr = eTime/60./60.
     pInfo("Elapsed time (hr): " + str(eTimeHr))
