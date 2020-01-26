@@ -29,16 +29,20 @@ echo ">>> Start job: $JOB_ID at $tb ... "
 R -q --vanilla --args ${args[@]} $TASK < $1
 
 
-export R_exit_code="$?"
+R_exit_code="$?"
+r_status=$R_exit_code
 
 if [ $R_exit_code -ne "0" ]
 then
+  echo ">>> Error: R status code $R_exit_code"
   if [[ "$SGE_TASK_ID" -ne "" ]]; then
     touch fail.${JOB_ID}.${SGE_TASK_ID}
   else
     touch fail.${JOB_ID}
   fi
+  r_status=100
+  echo ">>> Error: return status $r_status"
 fi
 te=`date`
 echo ">>> End job: $JOB_ID at $te"
-exit $R_exit_code
+exit $r_status
