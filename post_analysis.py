@@ -5,6 +5,7 @@ import     datetime
 import     fnmatch
 import     os
 import     sys
+import     glob
 
 # check for number
 def isnumber(s):
@@ -29,7 +30,40 @@ starttime = args.starttime
 logfile = args.logfile
 # strip of any leading/trailing quotes
 starttime = starttime.replace("_", " ")
-
+# check for any errors in the log and resume files
+foundErr = False
+fileError = []
+rfiles = glob.glob("resume*")
+if len(rfiles):
+    for file in rfiles:
+        with open(file) as f:
+            if ">>> Error" in f.read():
+                fileError.append(file)
+                foundErr = True;
+                break;
+ofiles = glob.glob("*.o*")
+if len(ofiles):
+    for file in ofiles:
+        with open(file) as f:
+            if "Error" in f.read():
+                fileError.append(file)
+                foundErr = True;
+                break;
+lfiles = glob.glob("*.log")
+if len(lfiles):
+    for file in lfiles:
+        with open(file) as f:
+            if "Error" in f.read():
+                fileError.append(file)
+                foundErr = True;
+                break;
+ffiles = glob.glob("fail*")
+if len(ffiles):
+    fileError.append(",".join(ffiles))
+    foundErr = True;
+if foundErr:
+    print("post_analysis not executed because analysis error(s) has been found in " + str(fileError))
+    sys.exit(2)
 # end time (utc)
 tFmt = "%a, %d %b %Y %I:%M:%S %p"
 endtime = datetime.datetime.utcnow().strftime(tFmt)
@@ -57,11 +91,20 @@ if totCost != 0.0:
 
 # cleanup
 errcnt = 0
+# delete all the resume* and complete*
+rfiles = glob.glob("resume*")
+if len(rfiles):
+    for file in rfiles:
+        os.remove(file)
+
+cfiles = glob.glob("completed*")
+if len(cfiles):
+    for file in cfiles:
+        os.remove(file)
+
 for file in os.listdir('.'):
     try:
-        if fnmatch.fnmatch(file, 'resume*'):
-                os.rename('./'+file,'./log/'+file)
-        elif fnmatch.fnmatch(file, '*.log') or fnmatch.fnmatch(file,'*.trace') or \
+        if fnmatch.fnmatch(file, '*.log') or fnmatch.fnmatch(file,'*.trace') or \
            fnmatch.fnmatch(file, '*.o*') or fnmatch.fnmatch(file,'*.po*'):
                 os.rename('./'+file,'./log/'+file)
         elif fnmatch.fnmatch(file, '*report.html')  or fnmatch.fnmatch(file,'*.params') or \
