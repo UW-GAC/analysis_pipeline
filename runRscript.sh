@@ -30,7 +30,6 @@ R -q --vanilla --args ${args[@]} $TASK < $1
 
 
 R_exit_code="$?"
-r_status=$R_exit_code
 
 if [ $R_exit_code -ne "0" ]
 then
@@ -40,8 +39,14 @@ then
   else
     touch fail.${JOB_ID}
   fi
-  r_status=100
-  echo ">>> Error: return status $r_status"
+  if [ -z ${SGE_ROOT+x}]; then
+    r_status=$R_exit_code
+  else
+    r_status=100
+    echo ">>> Error: return status $r_status"
+  fi
+else
+  r_status=$R_exit_code
 fi
 te=`date`
 echo ">>> End job: $JOB_ID at $te"
