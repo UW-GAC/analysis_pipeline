@@ -364,7 +364,11 @@ class Docker_Cluster(Cluster):
         dcmd = drun + dargs
 
         self.printVerbose("docker run cmd:\n\t" + dcmd)
-        port_popen.popen_stdout(dcmd, logfile, jobname="run_cmd")
+        (pmsg, status) = port_popen.popen_stdout(dcmd, logfile, jobname="run_cmd")
+        if status != 0:
+            print(">>> Error: Docker_Cluster/runCmd executing popen\nStatus: " + str(status) + " Msg: " + pmsg)
+            sys.exit(status)
+
 
 class AWS_Batch(Docker_Cluster):
 
@@ -489,7 +493,10 @@ class SGE_Cluster(Cluster):
                 else:
                     os.environ[varVal[0]] = varVal[1]
 
-        port_popen.popen_stdout(cmd, logfile, jobname=job_name, shell=False)
+        (pmsg, status) = port_popen.popen_stdout(cmd, logfile, jobname=job_name, shell=False)
+        if status != 0:
+            print(">>> Error: SGE_Cluster:runCmd executing popen\nStatus: " + str(status) + " Msg: " + str(pmsg))
+            sys.exit(status)
 
     def submitJob(self, binary=False, hold_array=None, **kwargs):
         subOpts = deepcopy(self.clusterCfg["submit_opts"])
@@ -574,7 +581,10 @@ class SGE_Cluster(Cluster):
             return "000000"
         self.printVerbose("submitting job: " + sub_cmd)
         super(SGE_Cluster, self).analysisLog(lmsg)
-        jobid = port_popen.popen(sub_cmd)
+        (jobid, status) = port_popen.popen(sub_cmd)
+        if status != 0:
+            print(">>> Error: SGE_Cluster:submitJob executing popen\nStatus: " + str(status) + " Msg: " + str(jobid))
+            sys.exit(status)
 
         if array_job:
             jobid = jobid.split(".")[0]
@@ -828,7 +838,11 @@ class Slurm_Cluster(Docker_Cluster):
         else:
             self.printVerbose("submitting job: " + sub_cmd)
             super(Slurm_Cluster, self).analysisLog("> sbatch: " + sub_cmd)
-            sub_out = port_popen.popen(sub_cmd)
+            (sub_out, status) = port_popen.popen(sub_cmd)
+            if status != 0:
+                print(">>> Error: Slurm_Cluster:submitJob executing popen\nStatus: " + \
+                      str(status) + " Msg: " + str(sub_out))
+                sys.exit(status)
             jobid = sub_out.split(" ")[3].strip()
             super(Slurm_Cluster, self).analysisLog("> jobid: " + str(jobid) + "\n")
             print(sub_out + "Sbatch to cluster: " + cluster + " / job: " + submitOpts["--job-name"] +
