@@ -76,6 +76,14 @@ assoc <- assoc %>%
     filter(chr == var.chr, pos > start, pos < end) %>%
     select(variant.id, chr, pos, ends_with("pval"))
 names(assoc)[4] <- "pval"
+
+##### NOTE: i added the following two lines of code #####
+## remove duplicate chr:pos rows, removing the variant with the less significant (higher) pvalue
+assoc <- assoc[order(assoc$pval,decreasing=FALSE),]
+assoc <- assoc[!duplicated(assoc$pos),]
+assoc <- assoc[order(assoc$pos),]
+#####
+
 assoc.filename <- tempfile()
 writeMETAL(assoc, file=assoc.filename)
 
