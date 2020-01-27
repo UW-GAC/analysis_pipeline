@@ -18,8 +18,8 @@ if (getRversion() <= "3.6.0") {
     remotes::install_git("git://github.com/zhengxwen/SeqArray.git", ref="v1.24.0", dependencies=FALSE)
     remotes::install_git("git://github.com/smgogarten/GWASTools.git", ref="v1.32.0", dependencies=FALSE)
     remotes::install_git("git://github.com/smgogarten/SeqVarTools.git", ref="v1.23.1", dependencies=FALSE)
-    remotes::install_git("git://github.com/UW-GAC/GENESIS.git", ref="v2.16.0", dependencies=FALSE)
 }
+remotes::install_git("git://github.com/UW-GAC/GENESIS.git", ref="v2.17.1", dependencies=FALSE)
 
 remotes::install_local("TopmedPipeline", dependencies=FALSE)
 
