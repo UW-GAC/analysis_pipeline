@@ -260,7 +260,7 @@ config parameter | default value | description
 `thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 `thin_nbins` | `10` | Number of bins to use for thinning.
 `thin_npoints` | `10000` | Number of points in each bin after thinning.
-`truncate_pval_threshold` | `1e-10` | Minimum p-value to display in truncated QQ and manhattan plots.
+`truncate_pval_threshold` | `1e-12` | Minimum p-value to display in truncated QQ and manhattan plots.
 
 ### Single-variant
 
