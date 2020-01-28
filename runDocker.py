@@ -330,7 +330,7 @@ else:
         if log:
             pInfo("Sending stdout/stderr of docker run to: " + logfile)
         sys.stdout.flush()
-        {smsg, status} = port_popen.popen_stdout(cmd)
+        (smsg, status) = port_popen.popen_stdout(cmd)
         if status:
             if status == -9:
                 smsg = "possibly killed externally via kill -9"
