@@ -850,7 +850,7 @@ class Slurm_Cluster(Docker_Cluster):
                 sys.exit(status)
             jobid = sub_out.split(" ")[3].strip()
             super(Slurm_Cluster, self).analysisLog("> jobid: " + str(jobid) + "\n")
-            print(sub_out + "Sbatch to cluster: " + cluster + " / job: " + submitOpts["--job-name"] +
+            print(sub_out + " cluster: " + cluster + " / job: " + submitOpts["--job-name"] +
                   " / job id: " + jobid)
         return jobid
 
