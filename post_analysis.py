@@ -91,15 +91,10 @@ if totCost != 0.0:
 
 # cleanup
 errcnt = 0
-# delete all the resume* and complete*
-rfiles = glob.glob("resume*")
+# delete all the resume related files
+rfiles = glob.glob("./resume/*")
 if len(rfiles):
     for file in rfiles:
-        os.remove(file)
-
-cfiles = glob.glob("completed*")
-if len(cfiles):
-    for file in cfiles:
         os.remove(file)
 
 for file in os.listdir('.'):
