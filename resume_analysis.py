@@ -40,6 +40,7 @@ class JobScheduler(object):
     def __init__(self):
         print("JobScheduler init ...")
         self.jobInfo = {"arrayjob":None, "jobid": None, "taskid": None}
+        self.resumeDir = "./resume/"
     def getJobInfo(self):
         return self.jobInfo
     def updateJobInfo(self, jinfo):
@@ -224,10 +225,11 @@ jInfo = thecluster.getJobInfo()
 jId = jInfo["jobid"]
 # set the file name
 ctag = "completed"
-cfname = thecluster.createFilename(jName, ctag)
+cfname = thecluster.resumeDir + thecluster.createFilename(jName, ctag)
 lfname = thecluster.createFilename(jName)
 
 status = 0
+
 if os.path.isfile(cfname):
     pInfo("Job " + jName + " already completed (" + cfname +")")
 else:
