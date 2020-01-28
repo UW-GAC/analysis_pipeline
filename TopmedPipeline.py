@@ -200,9 +200,13 @@ class Cluster(object):
         # set default pipeline path
         self.pipelinePath = os.path.dirname(os.path.abspath(sys.argv[0]))
         self.submitPath = self.pipelinePath
-        # set analysis name
-
+        # get cluster cfg
         self.openClusterCfg(std_cluster_file, opt_cluster_file, cfg_version, verbose)
+        # if resuming, create resume subdirectory
+        self.resumeDir = "./resume/"
+        if self.clusterCfg["enable_resume"]:
+            if not os.path.exists(self.resumeDir):
+                os.mkdir(self.resumeDir)
 
     def analysisInit(self, print_only=False):
         # get analysis name
@@ -571,6 +575,7 @@ class SGE_Cluster(Cluster):
             # update submit opts -N
             subOpts["-N"] = "resume_" + subOpts["-N"]
             subOpts["-b"] = "y"
+            subOpts["-o"] = self.resumeDir
             optStr = dictToString(subOpts)
             # update sub_cmd
             sub_cmd = " ".join([submit_cmd, optStr, rscript, kwargs["cmd"], argStr])
@@ -815,9 +820,9 @@ class Slurm_Cluster(Docker_Cluster):
             submitOpts["--job-name"] = rpre + jobName
             # either a single job or an array job
             if submitOpts["--array"] == None:
-                submitOpts["--output"] = submit_logdir + submitOpts["--job-name"] + "_%j.log"
+                submitOpts["--output"] = self.resumeDir + submitOpts["--job-name"] + "_%j.log"
             else:
-                submitOpts["--output"] = submit_logdir + submitOpts["--job-name"] + "_%A_%a.log"
+                submitOpts["--output"] = self.resumeDir + submitOpts["--job-name"] + "_%A_%a.log"
 
             suboptStr = dictToString(submitOpts)
         else:
