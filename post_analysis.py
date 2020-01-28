@@ -33,7 +33,7 @@ starttime = starttime.replace("_", " ")
 # check for any errors in the log and resume files
 foundErr = False
 fileError = []
-rfiles = glob.glob("resume*")
+rfiles = glob.glob("./resume/resume*")
 if len(rfiles):
     for file in rfiles:
         with open(file) as f:
