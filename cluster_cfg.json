@@ -41,6 +41,7 @@
         },
         "parallel_env": "local",
         "resume_script": "resume_analysis.py",
-        "enable_resume": false
+        "enable_resume": false,
+        "enable_eqw": false
     }
 }
