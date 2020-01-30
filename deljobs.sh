@@ -12,7 +12,7 @@ if [[ $? -eq 0 ]]; then
     QCMD="squeue -j"
     DCMD="scancel"
 else
-    which qstat > /dev/null: 2>&1
+    which qstat > /dev/null 2>&1
     if [[ $? -eq 0 ]]; then
         QCMD="qstat -j"
         DCMD="qdel"
