@@ -30,24 +30,20 @@ R -q --vanilla --args ${args[@]} $TASK < $1
 
 
 R_exit_code="$?"
-
-if [ $R_exit_code -ne "0" ]
-then
+r_status=$R_exit_code
+if [[ $R_exit_code -ne "0" ]]; then
   echo ">>> Error: R status code $R_exit_code"
   if [[ "$SGE_TASK_ID" -ne "" ]]; then
     touch fail.${JOB_ID}.${SGE_TASK_ID}
   else
     touch fail.${JOB_ID}
   fi
-  if [ -z ${SGE_ROOT+x}]; then
-    r_status=$R_exit_code
-  else
+  if [[ ! -z "${SGE_ROOT+x}" && ! -z "${ENABLE_EQW+x}" ]]; then
     r_status=100
     echo ">>> Error: return status $r_status"
   fi
-else
-  r_status=$R_exit_code
 fi
+
 te=`date`
 echo ">>> End job: $JOB_ID at $te"
 exit $r_status
