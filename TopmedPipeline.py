@@ -563,6 +563,14 @@ class SGE_Cluster(Cluster):
         if not key in kwargs:
             kwargs[key] = []
         argStr = " ".join(kwargs[key])
+        # check for eqw
+        if self.clusterCfg["enable_eqw"]:
+            eqwVal = "ENABLE_EQW=1"
+            key = "-v"
+            if key in subOpts:
+                subOpts[key] = subOpts[key] + "," + eqwVal
+            else:
+                subOpts[key] = eqwVal
         # create a string for the submit options
         optStr = dictToString(subOpts)
         # create the entire submit command
@@ -585,7 +593,6 @@ class SGE_Cluster(Cluster):
             print(sub_cmd)
             return "000000"
         self.printVerbose("submitting job: " + sub_cmd)
-        super(SGE_Cluster, self).analysisLog(lmsg)
         (jobid, status) = port_popen.popen(sub_cmd)
         if status != 0:
             print(">>> Error: SGE_Cluster:submitJob executing popen\nStatus: " + str(status) + " Msg: " + str(jobid))
@@ -594,6 +601,8 @@ class SGE_Cluster(Cluster):
         if array_job:
             jobid = jobid.split(".")[0]
         print("Submitting job " + jobid + " (" + subOpts["-N"] + ")")
+        lmsg += " /jobid: " + str(jobid)
+        super(SGE_Cluster, self).analysisLog(lmsg)
 
         return jobid
 
