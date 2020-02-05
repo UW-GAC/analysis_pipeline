@@ -390,18 +390,18 @@ When running analysis pipeline on an SGE cluster, there is a json configuration 
 4. Holding dependent jobs when a parent job fails
 5. Resuming jobs that partially completed from a previous run
 
-This configuration file can be copied to a user's working directory, editted, and specified when running the pipeline using the `--cluster_file` option.
+This configuration file can be copied to a user's working directory, edited, and specified when running the pipeline using the `--cluster_file` option.
 
 #### Holding Dependent Jobs
 The configuration option `enable_eqw` controls this feature.  By default, the option is `false`.  As a result, if a parent job fails, all the dependent jobs will still be submitted (and most likely fail).
 
 If `enable_eqw` is set to `true`, when a parent job fails all the dependent jobs will be in a hold state (i.e., `hqw`) and the failed parent job will be in an error state (i.e., 'Eqw').
 
-If the error is fixable (and only very few errors are fixable), once fixed users can resubmit the failed job by entering the command `qmod -cj <jobid>`. The parent job will be resubmmitted (with the same arguments) and, if fixed, the dependent jobs will now run.  If the parent job still encounters an error, it will enter the same error state and the dependent jobs will remain in a hold state.
+If the error is fixable (and only very few errors are fixable), once fixed users can resubmit the failed job by entering the command `qmod -cj <jobid>`. The parent job will be resubmitted (with the same arguments) and, if fixed, the dependent jobs will now run.  If the parent job still encounters an error, it will enter the same error state and the dependent jobs will remain in a hold state.
 
-If the error cannot be fixed, then users can either delete all the dependent jobs manually or run the scirpt `deljobs.sh` located in the analysis pipeline's root directory.
+If the error cannot be fixed, then users can either delete all the dependent jobs manually or run the script `deljobs.sh` located in the analysis pipeline's root directory.
 
-(Note: Running 'deljobs.sh' requires one parameter that specifies the analysis pipeline log file that's created in the working directory where the pipeline was run.  The analysis pipeline log file is named using the name of the analysis, the user's name, and a timestamp.  For example
+(Note: Running 'deljobs.sh' requires one argument that specifies the analysis pipeline log file that's created in the working directory where the pipeline was run.  The analysis pipeline log file is named using the name of the analysis, the user's name, and a timestamp.  For example
 
 `analysis_null_model_User1_158041804837.log`
 )
