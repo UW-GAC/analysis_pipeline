@@ -1,7 +1,6 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3
 
 """Association tests"""
-
 import TopmedPipeline
 import sys
 import os
@@ -60,7 +59,7 @@ cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file
 
 pipeline = cluster.getPipelinePath()
 submitPath = cluster.getSubmitPath()
-driver = os.path.join(pipeline, "runRscript.sh")
+driver = os.path.join(submitPath, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots", "report"])
@@ -137,7 +136,7 @@ TopmedPipeline.writeConfig(config, configfile)
 chrom_list = TopmedPipeline.parseChromosomes(chromosomes).split(" ")
 segment_list = TopmedPipeline.getChromSegments(segment_file, chrom_list)
 segment_str = ["-".join([str(i) for i in s]) for s in segment_list]
-segments = dict(zip(chrom_list, segment_str))
+segments = dict(list(zip(chrom_list, segment_str)))
 
 
 # run association tests
@@ -188,11 +187,11 @@ submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile
 hold_report = [submitID]
 
 # post analysis
-job = "post_analysis"
-jobpy = job + ".py"
-pcmd=os.path.join(pipeline, jobpy)
-argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
+bname = "post_analysis"
+job = "assoc" + "_" + assoc_type + "_" + bname
+jobpy = bname + ".py"
+pcmd=os.path.join(submitPath, jobpy)
+argList = ["-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
-pdriver=os.path.join(pipeline, "run_python.sh")
-cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
+cluster.submitJob(binary=True, job_name=job, cmd=pcmd, args=argList,
                   holdid=hold_report, print_only=print_only)

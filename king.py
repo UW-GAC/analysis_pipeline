@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3
 
 """Identity By Descent"""
 
@@ -47,7 +47,8 @@ version = "--version " + TopmedPipeline.__version__
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = cluster.getPipelinePath()
-driver = os.path.join(pipeline, "runRscript.sh")
+submitPath = cluster.getSubmitPath()
+driver = os.path.join(submitPath, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots"])
@@ -157,14 +158,13 @@ kinid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, v
 
 # kinid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[kinid], email=email, print_only=print_only)
 
-
-
 # post analysis
-job = "post_analysis"
-jobpy = job + ".py"
-pcmd=os.path.join(pipeline, jobpy)
-argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
-           "-s", cluster.getAnalysisStartSec()]
-pdriver=os.path.join(pipeline, "run_python.sh")
+bname = "post_analysis"
+job = "king" + "_" + bname
+jobpy = bname + ".py"
+pcmd=os.path.join(submitPath, jobpy)
 holdlist = [segplotid, segmatid, kinid]
-cluster.submitJob(job_name=job, cmd=pdriver, args=argList, holdid=holdlist, print_only=print_only)
+argList = ["-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
+           "-s", cluster.getAnalysisStartSec()]
+cluster.submitJob(binary=True, job_name=job, cmd=pcmd, args=argList,
+                  holdid=holdlist, print_only=print_only)

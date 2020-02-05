@@ -40,6 +40,9 @@
             "-terse":"",
             "-v":"R_LIBS=/projects/topmed/working_code/analysis_pipeline_devel/R_library,PATH=/projects/resources/software/apps/bin:$PATH"
         },
-        "parallel_env": "local"
+        "parallel_env": "local",
+        "resume_script": "resume_analysis.py",
+        "enable_resume": false,
+        "enable_eqw": false
     }
 }

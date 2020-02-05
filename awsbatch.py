@@ -1,5 +1,6 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # submit a single analysis from the analysis pipeline (e.g., ld_pruning)
+from __future__ import division
 import      os
 import      getpass
 import      time
@@ -14,7 +15,9 @@ from        datetime import datetime, timedelta
 try:
     import boto3
 except ImportError:
-    print ("AWS batch not supported.")
+    batchSupport = False
+else:
+    batchSupport = True
 
 # init globals
 fileversion = '1.0'
@@ -48,6 +51,10 @@ subParams = {   'profile': None,
 
 def getBatchClient(profile_a):
     global batchClient
+
+    if not batchSupport:
+        pError('getBatchClient: AWS Batch is not supported (boto3 is not available)')
+        sys.exit(2)
     if batchClient == None:
         # create the batch client
         try:
@@ -63,7 +70,7 @@ def getBatchClient(profile_a):
 # https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
 def updatecfg(d, u):
     ld = deepcopy(d)
-    for k, v in u.iteritems():
+    for k, v in u.items():
         if isinstance(v, collections.Mapping):
             if len(v) == 0:
                 ld[k] = u[k]
@@ -79,7 +86,7 @@ def memoryLimit(job_name, clusterCfg):
     memLimits = clusterCfg["memory_limits"]
     if memLimits is None:
         return memlim
-    jobMem = [ v for k,v in memLimits.iteritems() if job_name.find(k) != -1 ]
+    jobMem = [ v for k,v in memLimits.items() if job_name.find(k) != -1 ]
     if len(jobMem):
         # just find the first match to job_name
         memlim = jobMem[0]
@@ -109,7 +116,7 @@ def getClusterCfg(a_stdcfg, a_optcfg, a_cfgversion):
         clusterconfig = clustercfg[key]
         if debugCfg:
             pInfo("Dump of " + clustercfg["name"] + " ... \n")
-            print json.dumps(clusterconfig, indent=3, sort_keys=True)
+            print(json.dumps(clusterconfig, indent=3, sort_keys=True))
         if a_optcfg != None:
             pDebug("Option cluster cfg file: " + a_optcfg)
 
@@ -118,12 +125,12 @@ def getClusterCfg(a_stdcfg, a_optcfg, a_cfgversion):
             optconfiguration = optcfg["configuration"]
             if debugCfg:
                 pDebug("Dump of " + optcfg["name"] + " ... \n")
-                print json.dumps(optconfiguration, indent=3, sort_keys=True)
+                print(json.dumps(optconfiguration, indent=3, sort_keys=True))
             # update
             clusterconfig = updatecfg(clusterconfig, optconfiguration)
             if debugCfg:
                 pDebug("Dump of updated cluster cfg ... \n")
-                print json.dumps(clusterconfig, indent=3, sort_keys=True)
+                print(json.dumps(clusterconfig, indent=3, sort_keys=True))
     return clusterconfig
 
 def getIDsAndNames(submitHolds):
@@ -134,7 +141,7 @@ def getIDsAndNames(submitHolds):
     if len(nlist) > maxLen:
         nlist = nlist[:maxLen]
     jobnames = "_".join(nlist) + "_more"
-    jobids = [id for d in submitHolds for il in d.values() for id in il]
+    jobids = [id for d in submitHolds for il in list(d.values()) for id in il]
     return {'jobnames': jobnames, 'jobids': jobids}
 
 def submitSyncJobs(job_name, submitHolds, clustercfg, queue):
@@ -154,7 +161,7 @@ def submitSyncJobs(job_name, submitHolds, clustercfg, queue):
         # submit sync job in batches of 20
         maxDepends = 20
         noDepends = len(jids)
-        noSyncJobs = int(math.ceil(noDepends/(maxDepends+1))) + 1
+        noSyncJobs = int(math.ceil((noDepends/(maxDepends+1)))) + 1
         noDependsLast = noDepends % maxDepends
         if noDependsLast == 0:
             noDependsLast = maxDepends
@@ -214,7 +221,7 @@ def submitjob(a_submitParams):
     array_range = a_submitParams["array_range"]
     if array_range is not None:
         air = [ int(i) for i in array_range.split( '-' ) ]
-        taskList = range( air[0], air[len(air)-1]+1 )
+        taskList = list(range( air[0], air[len(air)-1]+1))
         noJobs = len(taskList)
         if noJobs > 1:
             arrayJob = True
@@ -294,7 +301,7 @@ def submitjob(a_submitParams):
         submitOpts[key1] = int(maxmem)
     else:
         key2 = "memory_limits"
-        if key2 in clustercfg.keys():
+        if key2 in list(clustercfg.keys()):
             memlim = memoryLimit(job_name, clustercfg)
             if memlim != None:
                 submitOpts[key1] = memlim

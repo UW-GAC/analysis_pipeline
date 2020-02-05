@@ -54,12 +54,12 @@ class cecontext(object):
             print("Error: " + key + " key not found in " + self.ctx_file)
             sys.exit(2)
         #
-        self.resource_names = self.resources.keys()
-        self.accntctx_names = self.accnt_ctx.keys()
+        self.resource_names = list(self.resources.keys())
+        self.accntctx_names = list(self.accnt_ctx.keys())
         if self.verbose:
-            for name,resources in self.accnt_ctx.iteritems():
+            for name,resources in self.accnt_ctx.items():
                 print( "\t>>>account ctx: name: " + name + "  resources: " + str(resources))
-            for name,value in self.resources.iteritems():
+            for name,value in self.resources.items():
                 print( "\t>>>resources: name: " + name + "  value: " + str(value))
     def cstate(self):
         return self.state
@@ -83,14 +83,14 @@ class cecontext(object):
         arsrc = None
         if accntname_a in self.accntctx_names:
             # get resources in account
-            if "resources" in self.accnt_ctx[accntname_a].keys():
+            if "resources" in list(self.accnt_ctx[accntname_a].keys()):
                 arsrc = self.accnt_ctx[accntname_a]["resources"]
         return arsrc
     def accntresource(self, accntname_a,resname_a):
         rsrc = None
         arsrc = self.allaccntresources(accntname_a)
         if arsrc != None:
-            if resname_a in arsrc.keys():
+            if resname_a in list(arsrc.keys()):
                 rsrc = arsrc[resname_a]
         return rsrc
     # get all resources for an account
@@ -98,17 +98,17 @@ class cecontext(object):
         arsc = None
         if accntname_a in self.accntctx_names:
             # combine the accnt resources with other resources
-            arsc = dict(self.allaccntresources(accntname_a).items() + self.resources.items())
+            arsc = dict(list(self.allaccntresources(accntname_a).items()) + list(self.resources.items()))
         return arsc
     def accntservice(self, accntname_a):
         svc = None
         if accntname_a in self.accntctx_names:
-            if "serviceRole" in self.accnt_ctx[accntname_a].keys():
+            if "serviceRole" in list(self.accnt_ctx[accntname_a].keys()):
                 svc = self.accnt_ctx[accntname_a]["serviceRole"]
         return svc
     def accntprofile(self, accntname_a):
         prof = None
         if accntname_a in self.accntctx_names:
-            if "profile" in self.accnt_ctx[accntname_a].keys():
+            if "profile" in list(self.accnt_ctx[accntname_a].keys()):
                 prof = self.accnt_ctx[accntname_a]["profile"]
         return prof

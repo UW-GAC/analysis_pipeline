@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # using docker sdk, runs the topmed docker image to execute an analysis
 # R function (via the R driver in the pipeline within docker container).
 # This script is executed when a job is submitted to slurm and the compute
@@ -32,6 +32,7 @@ import      getpass
 import      subprocess
 from        argparse import ArgumentParser
 from        copy   import deepcopy
+import      port_popen
 
 try:
     import  docker
@@ -126,13 +127,13 @@ def pDebug(msg):
 
 def getSlurmEnv():
     slurmEnv = slurmEnvDict
-    for key in slurmEnvDict.keys():
+    for key in list(slurmEnvDict.keys()):
         slurmEnv[key] = os.getenv(key)
     return slurmEnv
 
 def getMiscEnv():
     miscEnv = miscEnvDict
-    for key in miscEnvDict.keys():
+    for key in list(miscEnvDict.keys()):
         miscEnv[key] = os.getenv(key)
     return miscEnv
 
@@ -179,6 +180,7 @@ parser.add_argument( "--runargs", default = "", help = "Run cmd arguments" )
 parser.add_argument( "--volumes", default = defVolumes,
                      help = "Bind opts (/ld1:/rd1;/z1:/z2 etc)[default: " + defVolumes + "]" )
 parser.add_argument( "--environment", help = "Env opts (x=y;w=z etc)" )
+parser.add_argument( "--username", help = "User name (uid:gid)" )
 parser.add_argument( "--mem_limit", help = "Max memory (g) of container [default: unlimited]" )
 parser.add_argument("--working_dir", help = "working directory [default: current working directory]")
 # submit options explicitly passed (not available from env variable)
@@ -203,6 +205,7 @@ runargs = args.runargs
 volumes = args.volumes
 environment = args.environment
 mem_limit = args.mem_limit
+username = args.username
 working_dir = args.working_dir
 if working_dir == None:
     working_dir = os.getenv('PWD')
@@ -219,7 +222,7 @@ slurmEnv = getSlurmEnv()
 miscEnv = getMiscEnv()
 # log
 if log:
-    logfile = CreateLogFileName()
+    logfile = working_dir + "/" + CreateLogFileName()
 
 # docker run options
 dockeropts = ""
@@ -227,6 +230,9 @@ dockeropts = ""
 dockeropts += "-a stdout -a stderr --rm "
 if mem_limit != None:
     dockeropts += "-m " + str(mem_limit) + "g "
+# username
+if username != None:
+    dockeropts += "-u " + username + " "
 # working dir
 dockeropts += "-w " + working_dir + " "
 # volumes
@@ -324,15 +330,16 @@ else:
         if log:
             pInfo("Sending stdout/stderr of docker run to: " + logfile)
         sys.stdout.flush()
-        process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
-        status = process.wait()
+        (smsg, status) = port_popen.popen_stdout(cmd)
         if status:
-            smsg = os.strerror(status)
             if status == -9:
                 smsg = "possibly killed externally via kill -9"
-            if status == 137:
+            elif status == 137:
                 smsg = "possibly killed internally via memory limit"
-            pError("Executing docker run cmd failed. Error: " + str(status) + " - " + smsg)
+            if smsg == "":
+                pError("Executing docker run cmd failed. Error: " + str(status))
+            else:
+                pError("Executing docker run cmd failed. Error: " + str(status) + " - " + smsg)
     eTime = time.time() - startTime
     eTimeHr = eTime/60./60.
     pInfo("Elapsed time (hr): " + str(eTimeHr))

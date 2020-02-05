@@ -36,6 +36,8 @@
             "-terse":"",
             "-v":"R_LIBS=/projects/resources/gactools/R_packages/library,PATH=/projects/resources/software/apps/bin:$PATH"
         },
-        "parallel_env": "local"
+        "parallel_env": "local",
+        "resume_script": "resume_analysis.py",
+        "enable_resume": false
     }
 }
