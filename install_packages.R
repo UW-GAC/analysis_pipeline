@@ -7,18 +7,26 @@ if (length(args) > 0) .libPaths(args[1])
 
 install.packages(c("BiocManager", "remotes"), repos="https://cloud.r-project.org")
 
+if (getRversion() >= "3.6.0") {
 BiocManager::install(c("SeqVarTools", "SNPRelate", "GENESIS", "survey", "CompQuadForm",
                        "argparser", "data.table", "ggplot2", "GGally", "hexbin", "R.utils",
                        "rmarkdown", "SPAtest"),
-                     ask=FALSE)
+                     ask=FALSE, version="3.10")
+}
 
 # if R version is current, BiocManager will automatically install latest release
-if (getRversion() <= "3.6.0") {
+if (getRversion() < "3.6.0") {
+    BiocManager::install(c("SeqVarTools", "SNPRelate", "GENESIS", "survey", "CompQuadForm",
+                           "argparser", "data.table", "ggplot2", "GGally", "hexbin", "R.utils",
+                           "rmarkdown", "SPAtest"),
+                         ask=FALSE)
+    
     remotes::install_git("git://github.com/zhengxwen/gdsfmt.git", ref="v1.20.0", dependencies=FALSE)
     remotes::install_git("git://github.com/zhengxwen/SeqArray.git", ref="v1.24.0", dependencies=FALSE)
     remotes::install_git("git://github.com/smgogarten/GWASTools.git", ref="v1.32.0", dependencies=FALSE)
     remotes::install_git("git://github.com/smgogarten/SeqVarTools.git", ref="v1.23.1", dependencies=FALSE)
 }
+
 remotes::install_git("git://github.com/UW-GAC/GENESIS.git", ref="v2.17.1", dependencies=FALSE)
 
 remotes::install_local("TopmedPipeline", dependencies=FALSE)
