@@ -11,14 +11,12 @@ argv <- parse_args(argp)
 cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
-required <- c("king_file")
-optional <- c("kinship_file"=NA,
-              #"kinship_method"="king",
+required <- c("kinship_file")
+optional <- c("divergence_file"=NA,
               "kinship_threshold"=0.04419417, # 2^(-9/2), 3rd degree
               "divergence_threshold"=-0.04419417, # 2^(-9/2), 3rd degree
               "out_related_file"="related.RData",
               "out_unrelated_file"="unrelated.RData",
-              #"pcrelate_file"=NA,
               "phenotype_file"=NA,
               "sample_include_file"=NA,
               "study"=NA)
@@ -33,17 +31,15 @@ if (!is.na(config["sample_include_file"])) {
     message("Using all samples")
 }
 
-# always use king estimates for ancestry divergence
-divMat <- kinobj(config["king_file"])
+kinMat <- kinobj(config["kinship_file"])
 
-# select type of kinship estimates to use (king or pcrelate)
-#kin.type <- tolower(config["kinship_method"])
-if (is.na(config["kinship_file"])) {
-    kinMat <- divMat
+if (!is.na(config["divergence_file"])) {
+    divMat <- kinobj(config["divergence_file"])
+    message("Using divergence matrix to find unrelated set")
 } else {
-    kinMat <- kinobj(config["kinship_file"])
+    divMat <- NULL
+    message("No divergence matrix specified")
 }
-#message("Using ", kin.type, " kinship estimates")
 
 kin_thresh <- as.numeric(config["kinship_threshold"])
 div_thresh <- as.numeric(config["divergence_threshold"])
