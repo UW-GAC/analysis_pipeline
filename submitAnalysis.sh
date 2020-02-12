@@ -1,16 +1,17 @@
 #!/bin/bash
-# a bash script invoked by sbatch in slurm as a preprocess step before executing
-# the python script for executing the pipeline.
+# a bash script invoked by sbatch in slurm that can execute a function before
+# executing the actual analysis script.  For SGE the analysis script is
+# runRscript.sh; for SLURM, the analysis script is runDocker.py
 #
 # arguments:
 #   1 function name
 #   2-n function specific args (0 to n)
-#   n+1 python script (full path)
-#   n+2-m python script args
+#   n+1 analysis script (full path)
+#   n+2-m analysis script args
 #
-# check mountpoint args:
+# check_mountpoint args:
 #   none
-# create label args:
+# create_label args:
 #   1 label
 #   2 label value
 # none:
