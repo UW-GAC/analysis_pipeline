@@ -1,6 +1,6 @@
 {
     "name": "GCP_slurm_config",
-    "version": "2.2",
+    "version": "3.0",
     "verbose": false,
     "configuration": {
         "memory_limits": {
@@ -66,12 +66,15 @@
         "cluster": "tm1",
         "submit_cmd": "sbatch",
         "submit_log_dir": null,
-        "execute_prescript": false,
+        "submit_script_info" : {
+            "name": "submitAnalysis.sh",
+            "pre_analysis": "none",
+            "analysis_script": null
+        },
         "resume_script": "resume_analysis.py",
-        "enable_resume": true,
+        "dockerrun_script": "runDocker.py",
+        "enable_resume": false,
         "dependency_value": "afterok",
-        "submit_prescript": "runPython.sh",
-        "submit_script": "runDocker.py",
         "submit_opts": {
             "--job-name": null,
             "--array": null,
