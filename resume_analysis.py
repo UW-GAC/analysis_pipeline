@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-# Support resume on slurm.
+# Support resume on slurm, sge and batch.
 # Monitors the jobs/tasks of analysis.  If enabled, resume will do the following:
 #   1.  Determines if this job is an array job (cluster dependent)
 #   2.  Creates a file for each job that completes and runs without errors
@@ -12,11 +12,29 @@
 #       <jobname>.completed (for a single job)
 # The script will place the job id into the completed file.
 #
-# There are 4 or more arguments:
-#       <resumescript> <cluster_type> <jobname> <job run cmd>  <job run cmd arguments>
-# This script basically parses out the jobrun command and all it's arguments, and then
-# calls popen to execute syncrhonously.  Once completed, this script checks the status and
-# touches the completed file.
+# For all cluster types (i.e., SGE, SLURM, and BATCH), there are 4 or more aguments that
+# are cluster type dependent.
+#
+# The general command syntax is:
+#   <resumescript> <cluster_type> <jobname> <run_script> <run_script_args>
+# the specifics are dependent on the cluster type.
+#
+# For SGE:
+#   resumescript: this script
+#   cluster_type: SGE
+#   jobname: name of job (e.g., assoc)
+#   run_script: runRscript.sh
+#   run_script_args: Arguments to runRscript.sh
+#
+# For SLURM:
+#   resumescript: this script
+#   cluster_type: SLURM
+#   jobname: name of job (e.g., assoc)
+#   run_script: runDocker.py (python script to execute the docker run cmd and execute analysis)
+#   run_script_args: the arguments associated with the docker run cmd (within the run_script) for executing analysis
+#
+# For BATCH:
+#   tbd
 #
 # and the sc
 from __future__ import print_function
@@ -237,13 +255,16 @@ else:
     (pmsg, status) = port_popen.popen_stdout(jCmd, logfile=lfname, jobname=jName)
     # if status == 0, write a complete file unless it's the post_analysis
     # open the file and write out job info (name, id, task)
-    if status == 0 and "post_analysis" not in jName:
-        with open(cfname, mode='w') as fhandle:
-            msgC =  "job: " + jName + ", job id: " + jId
-            if jInfo["arrayjob"]:
-                pInfo_file(msgC + " task: " + jInfo["taskid"] + " completed", fhandle)
-            else:
-                pInfo_file(msgC + " completed", fhandle)
+    if status == 0:
+        if and "post_analysis" not in jName:
+            with open(cfname, mode='w') as fhandle:
+                msgC =  "job: " + jName + ", job id: " + jId
+                if jInfo["arrayjob"]:
+                    pInfo_file(msgC + " task: " + jInfo["taskid"] + " completed", fhandle)
+                else:
+                    pInfo_file(msgC + " completed", fhandle)
+        else:
+            pInfo("post_analysis completed without errors.")
     else:
         pError("Status: " + str(status) + " See " + lfname + " for details")
 
