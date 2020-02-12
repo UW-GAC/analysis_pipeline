@@ -663,14 +663,16 @@ class Slurm_Cluster(Docker_Cluster):
         super(Slurm_Cluster, self).analysisInit(print_only)
         super(Slurm_Cluster, self).analysisLog("Slurm cluster: " +
                                                self.clusterCfg["cluster"], print_only)
-        super(Slurm_Cluster, self).analysisLog("Slurm submit script: " +
-                                               ssInfo["name"] + " /pre-analysis: " + ssInfo["pre_analysis"] +
-                                               " /resume: " + str(self.clusterCfg["enable_resume"]) + "\n", print_only)
         # check for auto label
         if ssInfo["auto_label"]:
             now = datetime.datetime.now()
-            ts = now("%b-%-d-%Y-%I_%-M_%-S%p")
+            ts = now.strftime("%b-%-d-%Y-%I_%-M_%-S%p")
             ssInfo["pre_analysis"] = "create_label ap_auto_label " + ts.lower()
+
+        super(Slurm_Cluster, self).analysisLog("Slurm submit script: " +
+                                               ssInfo["name"] + " /pre-analysis: " + ssInfo["pre_analysis"] +
+                                               " /resume: " + str(self.clusterCfg["enable_resume"]) + "\n", print_only)
+
 
     def getPartition(self, a_jobname, a_memsize, a_reqcores, a_tasksPerPartition):
         # find all partitions with mem >= a_memsize*tpp
