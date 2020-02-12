@@ -637,7 +637,7 @@ class Slurm_Cluster(Docker_Cluster):
         self.std_cluster_file = "./slurm_cfg.json"
         self.opt_cluster_file = opt_cluster_file
 
-        cfgVersion = "2.2"
+        cfgVersion = "3.0"
         super(Slurm_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
         # open slurm partitions cfg
         self.openPartitionCfg(self.pipelinePath + "/" + self.clusterCfg["partition_cfg"])
@@ -659,11 +659,13 @@ class Slurm_Cluster(Docker_Cluster):
 
     def analysisInit(self, print_only=False):
         # analysis log file and analysis info
+        ssInfo = self.clusterCfg["submit_script_info"]
         super(Slurm_Cluster, self).analysisInit(print_only)
         super(Slurm_Cluster, self).analysisLog("Slurm cluster: " +
                                                self.clusterCfg["cluster"], print_only)
         super(Slurm_Cluster, self).analysisLog("Slurm submit script: " +
-                                               self.clusterCfg["submit_script"] + "\n", print_only)
+                                               ssInfo["name"] + " /pre-analysis: " + ssInfo["pre_analysis"] +
+                                               " /resume: " + str(self.clusterCfg["enable_resume"]) + "\n", print_only)
 
     def getPartition(self, a_jobname, a_memsize, a_reqcores, a_tasksPerPartition):
         # find all partitions with mem >= a_memsize*tpp
@@ -697,6 +699,7 @@ class Slurm_Cluster(Docker_Cluster):
         # get the various config attributes
         submitOpts = deepcopy(self.clusterCfg["submit_opts"])
         dockerOpts = deepcopy(self.clusterCfg["rdocker_opts"])
+        ssInfo = deepcopy(self.clusterCfg["submit_script_info"])
         cluster = self.clusterCfg["cluster"]
         job_cmd = self.clusterCfg["submit_cmd"]
         dependency_value = self.clusterCfg["dependency_value"]
@@ -819,15 +822,13 @@ class Slurm_Cluster(Docker_Cluster):
         suboptStr = dictToString(submitOpts)
         dockeroptStr = dictToString(dockerOpts)
         # submit scripts
-        submit_script = self.submitPath + "/" + self.clusterCfg["submit_script"]
-        submit_prescript = self.submitPath + "/" + self.clusterCfg["submit_prescript"]
-        resume_script = self.submitPath + "/" + self.clusterCfg["resume_script"]
+        submit_script = self.submitPath + "/" + ssInfo["name"]
         if self.clusterCfg["enable_resume"]:
-            # resume
-            submit_script = submit_prescript + " " + resume_script + " slurm " + jobName + " " + submit_script
+            ssInfo["analysis_script"] = self.submitPath + "/" + self.clusterCfg["resume_script"] + \
+                                        " slurm " + jobName + " " + \
+                                        self.submitPath + "/" + self.clusterCfg["dockerrun_script"]
             # update submit opts - batch job name and log file
-            rpre = "resume_"
-            submitOpts["--job-name"] = rpre + jobName
+            submitOpts["--job-name"] = "resume_" + jobName
             # either a single job or an array job
             if submitOpts["--array"] == None:
                 submitOpts["--output"] = self.resumeDir + submitOpts["--job-name"] + "_%j.log"
@@ -836,10 +837,11 @@ class Slurm_Cluster(Docker_Cluster):
 
             suboptStr = dictToString(submitOpts)
         else:
-            self.clusterCfg["execute_prescript"]
-            submit_script = submit_prescript + " " + submit_script
+            ssInfo["analysis_script"] = self.submitPath + "/" + self.clusterCfg["dockerrun_script"]
+        # submit script cmd
+        submit_script_cmd = submit_script + " " + ssInfo["pre_analysis"] + " " + ssInfo["analysis_script"]
 
-        sub_cmd = " ".join([job_cmd, suboptStr, submit_script, dockeroptStr])
+        sub_cmd = " ".join([job_cmd, suboptStr, submit_script_cmd, dockeroptStr])
 
         key = "print_only"
         po = False
