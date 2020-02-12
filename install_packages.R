@@ -10,7 +10,7 @@ install.packages(c("BiocManager", "remotes"), repos="https://cloud.r-project.org
 BiocManager::install(c("SeqVarTools", "SNPRelate", "GENESIS", "survey", "CompQuadForm",
                        "argparser", "data.table", "ggplot2", "GGally", "hexbin", "R.utils",
                        "rmarkdown", "SPAtest"),
-                     ask=FALSE)
+                     update=FALSE, ask=FALSE)
 
 # if R version is current, BiocManager will automatically install latest release
 if (getRversion() < "3.6.0") {
