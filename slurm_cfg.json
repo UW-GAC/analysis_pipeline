@@ -69,7 +69,8 @@
         "submit_script_info" : {
             "name": "submitAnalysis.sh",
             "pre_analysis": "none",
-            "analysis_script": null
+            "analysis_script": null,
+            "auto_label": false
         },
         "resume_script": "resume_analysis.py",
         "dockerrun_script": "runDocker.py",
