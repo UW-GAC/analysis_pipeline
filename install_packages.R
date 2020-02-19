@@ -5,12 +5,16 @@
 args <- commandArgs(trailingOnly=TRUE)
 if (length(args) > 0) .libPaths(args[1])
 
+skip.install <- (length(args) > 1) & (args[2] == "skip_bioc_install")
+if (!skip.install) {
+    
 install.packages(c("BiocManager", "remotes"), repos="https://cloud.r-project.org")
 
 BiocManager::install(c("SeqVarTools", "SNPRelate", "GENESIS", "survey", "CompQuadForm",
                        "argparser", "data.table", "ggplot2", "GGally", "hexbin", "R.utils",
                        "rmarkdown", "SPAtest"),
                      update=FALSE, ask=FALSE)
+}
 
 # if R version is current, BiocManager will automatically install latest release
 if (getRversion() < "3.6.0") {
@@ -23,4 +27,3 @@ if (getRversion() < "3.6.0") {
 remotes::install_git("git://github.com/UW-GAC/GENESIS.git", ref="v2.17.3", dependencies=FALSE)
 
 remotes::install_local("TopmedPipeline", dependencies=FALSE)
-
