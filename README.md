@@ -67,7 +67,7 @@ config parameter | default value | description
 
 ## Relatedness and Population structure
 
-The first step in evalulating relatedness and population structure is to select a subset of variants with LD pruning and create a GDS file containing only these variants. KING is used to get initial estimates of kinship for close relatives (using the "IBDSeg" methed) and a full matrix of population divergence estimates for all sample pairs (using the "robust" method). These two matrices are used by PC-AiR to identify a set of unrelated samples, run Principal Component Analysis on unrelated samples, and project relatives. Finally, PC-Relate estimates kinship accounting for population structure.
+The first step in evalulating relatedness and population structure is to select a subset of variants with LD pruning and create a GDS file containing only these variants. KING is used to get initial estimates of kinship for close relatives (using the "IBDSeg" methed) and a full matrix of population divergence estimates for all sample pairs (using the "robust" method). These two matrices are used by PC-AiR to identify a set of unrelated samples, run Principal Component Analysis (PCA) on unrelated samples, and project relatives. (Note that for very large sample sizes, it is recommended to omit the KING-robust step and ignore ancestry divergence when selecting an unrelated set.) Finally, PC-Relate estimates kinship accounting for population structure.
 
 1. LD pruning to select variants
 
@@ -98,22 +98,38 @@ The first step in evalulating relatedness and population structure is to select 
     1. `gds2bed.R`
 	2. `plink --make-bed`
 	3. `king --ibdseg`
-	    - `kinship_plots.R`
-	    - `king_to_matrix.R`
-	4. `ibd_king.R`
+	4. `kinship_plots.R`
+	5. `king_to_matrix.R`
 
     config parameter | default value | description
     --- | --- | ---
     `out_prefix` | | Prefix for files created by this script.
     `gds_file` | | GDS file with only LD pruned variants, all chromosomes.
 	`bed_file` | | Output BED file.
-	`sample_include_file` | | RData file with vector of sample.id to include. Required to ensure that the two output matrices have the same dimensions.
+	`sample_include_file` | | RData file with vector of sample.id to include. Required to ensure that the output matrix includes all samples for later analysis.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to include.
 	`sparse_threshold` | `0.01104854` | Minimum kinship to use for creating the sparse matrix from `king --ibdseg` output (default is `2^(-13/2)` or 5th degree relatives). A block diagonal matrix will be created such that any pair of samples with a kinship greater than the threshold is in the same block, and pairwise kinship between blocks is 0. Not used for the output of `king --kinship`, which is always saved as a dense GDS file.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
 
-3. [PC-AiR](http://www.ncbi.nlm.nih.gov/pubmed/25810074) to select an informative set of unrelated samples, do PCA on unrelated, project into relatives
+3. (optional) [KING](http://www.ncbi.nlm.nih.gov/pubmed/20926424) to get population divergence estimates
+
+    `king_robust.py`
+    1. `ibd_king.R`
+	2. `kinship_plots.R`
+
+	This analysis is very slow and memory-intensive for large sample sizes, as it calculates `N^2` pairwise divergence estimates.
+
+    config parameter | default value | description
+    --- | --- | ---
+    `out_prefix` | | Prefix for files created by this script.
+    `gds_file` | | GDS file with only LD pruned variants, all chromosomes.
+	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
+	`variant_include_file` | `NA` | RData file with vector of variant.id to include.
+	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
+	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
+
+4. [PC-AiR](http://www.ncbi.nlm.nih.gov/pubmed/25810074) to select an informative set of unrelated samples, do PCA on unrelated, project into relatives
 
     `pcair.py`
     1. `find_unrelated.R`
@@ -132,8 +148,8 @@ The first step in evalulating relatedness and population structure is to select 
     `out_prefix` | | Prefix for files created by this script.
     `gds_file` | | GDS file with only LD pruned variants, all chromosomes.
 	`full_gds_file` | | GDS file with all variants. Include a space to insert chromosome.
-	`king_file` | | GDS (recommended) or RData file with kinship coefficients created by `king.py`. Used for ancestry divergence, and optionally for kinship if `kinship_file` is not specified.
-	`kinship_file` | `NA` | File containing kinship matrix to use for defining the unrelated sample set. Multiple formats are accepted, including RData or GDS from `king.py` or `pcrelate.py`. A sparse Matrix object stored as RData is recommended.
+	`kinship_file` | `NA` | File containing kinship matrix to use for defining the unrelated sample set. Multiple formats are accepted, including RData or GDS from `king.py` or `pcrelate.py`. A sparse Matrix object stored as RData is recommended. 
+	`divergence_file` | `NA` | GDS (recommended) or RData file with kinship coefficients created by `king_robust.py`. Used for ancestry divergence.
 	`kinship_threshold` | `0.04419417` | Minimum kinship estimate to use for assigning relatives (default is `2^(-9/2)` or 3rd degree relatives).
 	`divergence_threshold` | `-0.04419417` | Minimum kinship estimate to use for ancestry divergence (default is `-2^(-9/2)`).
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
@@ -151,7 +167,7 @@ The first step in evalulating relatedness and population structure is to select 
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for color-coding PCA plots by group.
 	`group` | `NA` | Name of column in `phenotype_file` containing group variable.
 
-4. [PC-Relate](http://www.ncbi.nlm.nih.gov/pubmed/26748516) to estimate kinship coefficients adjusted for population structure and admixture using PCs
+5. [PC-Relate](http://www.ncbi.nlm.nih.gov/pubmed/26748516) to estimate kinship coefficients adjusted for population structure and admixture using PCs
 
     `pcrelate.py`
     1. `pcrelate_beta.R`

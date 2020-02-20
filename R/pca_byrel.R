@@ -48,7 +48,7 @@ n_pcs <- min(as.integer(config["n_pcs"]), length(unrels))
 message("PCA on unrelated set")
 nt <- countThreads()
 pca.unrel <- snpgdsPCA(gds, sample.id=unrels, snp.id=variant.id,
-                       eigen.cnt=n_pcs, num.thread=nt)
+                       algorithm="randomized", eigen.cnt=n_pcs, num.thread=nt)
 save(pca.unrel, file=config["out_file_unrel"])
 
 # project values for relatives
