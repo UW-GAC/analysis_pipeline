@@ -667,7 +667,8 @@ class Slurm_Cluster(Docker_Cluster):
         if ssInfo["auto_label"]:
             now = datetime.datetime.now()
             ts = now.strftime("%b-%-d-%Y-%I_%-M_%-S%p")
-            ssInfo["pre_analysis"] = "create_label ap_auto_label " + ts.lower()
+            l_value = self.clusterCfg["cluster"] + "_" + ts.lower()
+            ssInfo["pre_analysis"] = "create_label ap_auto_label " + l_value
 
         super(Slurm_Cluster, self).analysisLog("Slurm submit script: " +
                                                ssInfo["name"] + " /pre-analysis: " + ssInfo["pre_analysis"] +
