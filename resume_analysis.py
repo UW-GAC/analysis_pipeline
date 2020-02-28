@@ -256,7 +256,7 @@ else:
     # if status == 0, write a complete file unless it's the post_analysis
     # open the file and write out job info (name, id, task)
     if status == 0:
-        if and "post_analysis" not in jName:
+        if "post_analysis" not in jName:
             with open(cfname, mode='w') as fhandle:
                 msgC =  "job: " + jName + ", job id: " + jId
                 if jInfo["arrayjob"]:
