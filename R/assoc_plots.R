@@ -109,29 +109,28 @@ if (as.logical(config["thin"])) {
       ungroup()
 }
 
+gg_qq <- list(
+  geom_abline(intercept=0, slope=1, color="red"),
+  geom_line(aes(-log10(exp), -log10(upper)), color="gray"),
+  geom_line(aes(-log10(exp), -log10(lower)), color="gray"),
+  xlab(expression(paste(-log[10], "(expected P)"))),
+  ylab(expression(paste(-log[10], "(observed P)"))),
+  theme_bw()
+)
+
 p <- ggplot(dat, aes(-log10(exp), -log10(obs))) +
-    geom_abline(intercept=0, slope=1, color="red") +
-    geom_line(aes(-log10(exp), -log10(upper)), color="gray") +
-    geom_line(aes(-log10(exp), -log10(lower)), color="gray") +
-    xlab(expression(paste(-log[10], "(expected P)"))) +
-    ylab(expression(paste(-log[10], "(observed P)"))) +
     ggtitle(paste("lambda =", format(lambda, digits=4, nsmall=3))) +
-    theme_bw() +
+    gg_qq +
     theme(plot.title = element_text(size = 22)) +
     geom_point()
 ggsave(config["out_file_qq"], plot=p, width=6, height=6)
 
 # QQ plots by chromosome.
 p_by_chr <- ggplot(dat_by_chr, aes(-log10(exp), -log10(obs))) +
-    geom_abline(intercept=0, slope=1, color="red") +
-    geom_line(aes(-log10(exp), -log10(upper)), color="gray") +
-    geom_line(aes(-log10(exp), -log10(lower)), color="gray") +
-    geom_point(size = 0.5) +
-    xlab(expression(paste(-log[10], "(expected P)"))) +
-    ylab(expression(paste(-log[10], "(observed P)"))) +
+    gg_qq +
     ggtitle(paste("lambda =", format(lambda, digits=4, nsmall=3))) +
-    theme_bw() +
     theme(plot.title = element_text(size = 22)) +
+    geom_point(size = 0.5) +
     facet_wrap(~ chr)
 outfile <- gsub(".", "_bychr.", config["out_file_qq"], fixed=TRUE)
 ggsave(outfile, plot = p_by_chr, width = 10, height = 9)
