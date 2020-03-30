@@ -56,9 +56,15 @@ if (!is.na(config["known_hits_file"]) & config["assoc_type"] == "single") {
 if ("stat" %in% names(assoc)) {
     ## burden or single
     lambda <- calculateLambda((assoc$stat)^2, df=1)
+    lambda_by_chr <- assoc %>%
+      group_by(chr) %>%
+      summarise(lambda = calculateLambda(stat^2, df=1))
 } else {
     ## SKAT
     lambda <- calculateLambda(qchisq(assoc$pval, df=1, lower=FALSE), df=1)
+    lambda_by_chr <- assoc %>%
+      group_by(chr) %>%
+      summarise(lambda = calculateLambda(qchisq(pval, df = 1, lower=FALSE), df = 1))
 }
 
 # Check if we should also generate truncated plots.
@@ -131,7 +137,10 @@ p_by_chr <- ggplot(dat_by_chr, aes(-log10(exp), -log10(obs))) +
     ggtitle(paste("lambda =", format(lambda, digits=4, nsmall=3))) +
     theme(plot.title = element_text(size = 22)) +
     geom_point(size = 0.5) +
-    facet_wrap(~ chr)
+    facet_wrap(~ chr) +
+    # Add lambda by chromosome.
+    geom_text(data = lambda_by_chr, aes(label = sprintf("lambda == %4.3f", lambda)),
+              x = -Inf, y = Inf, hjust = -0.2, vjust = 1.2, parse=T)
 outfile <- gsub(".", "_bychr.", config["out_file_qq"], fixed=TRUE)
 ggsave(outfile, plot = p_by_chr, width = 10, height = 9)
 
