@@ -65,12 +65,19 @@ if ("stat" %in% names(assoc)) {
 truncate = any(assoc$pval < truncate_pval_threshold)
 
 ## qq plot
-n <- nrow(assoc)
-x <- 1:n
-dat <- data.frame(obs=sort(assoc$pval),
-                  exp=x/n,
-                  upper=qbeta(0.025, x, rev(x)),
-                  lower=qbeta(0.975, x, rev(x)))
+dat <- assoc %>%
+  select(
+    obs = pval
+  ) %>%
+  arrange(obs) %>%
+  mutate(
+    x = row_number(),
+    exp = x / n(),
+    upper = qbeta(0.025, x, rev(x)),
+    lower = qbeta(0.975, x, rev(x))
+  ) %>%
+  select(-x)
+
 
 thin.n <- as.integer(config["thin_npoints"])
 thin.bins <- as.integer(config["thin_nbins"])
