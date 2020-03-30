@@ -78,12 +78,35 @@ dat <- assoc %>%
   ) %>%
   select(-x)
 
+## qq plot
+dat_by_chr <- assoc %>%
+  select(
+    chr = chr,
+    obs = pval
+  ) %>%
+  group_by(chr) %>%
+  arrange(obs) %>%
+  mutate(
+    x = row_number(),
+    exp = x / n(),
+    upper = qbeta(0.025, x, rev(x)),
+    lower = qbeta(0.975, x, rev(x))
+  ) %>%
+  select(-x) %>%
+  ungroup()
+
 
 thin.n <- as.integer(config["thin_npoints"])
 thin.bins <- as.integer(config["thin_nbins"])
 if (as.logical(config["thin"])) {
     dat <- mutate(dat, logp=-log10(obs)) %>%
         thinPoints("logp", n=thin.n, nbins=thin.bins)
+
+    dat_by_chr <- dat_by_chr %>%
+      mutate(logp = -log10(obs)) %>%
+      group_by(chr) %>%
+      thinPoints("logp", n=thin.n, nbins=thin.bins) %>%
+      ungroup()
 }
 
 p <- ggplot(dat, aes(-log10(exp), -log10(obs))) +
@@ -98,6 +121,21 @@ p <- ggplot(dat, aes(-log10(exp), -log10(obs))) +
     geom_point()
 ggsave(config["out_file_qq"], plot=p, width=6, height=6)
 
+# QQ plots by chromosome.
+p_by_chr <- ggplot(dat_by_chr, aes(-log10(exp), -log10(obs))) +
+    geom_abline(intercept=0, slope=1, color="red") +
+    geom_line(aes(-log10(exp), -log10(upper)), color="gray") +
+    geom_line(aes(-log10(exp), -log10(lower)), color="gray") +
+    geom_point(size = 0.5) +
+    xlab(expression(paste(-log[10], "(expected P)"))) +
+    ylab(expression(paste(-log[10], "(observed P)"))) +
+    ggtitle(paste("lambda =", format(lambda, digits=4, nsmall=3))) +
+    theme_bw() +
+    theme(plot.title = element_text(size = 22)) +
+    facet_wrap(~ chr)
+outfile <- gsub(".", "_bychr.", config["out_file_qq"], fixed=TRUE)
+ggsave(outfile, plot = p_by_chr, width = 10, height = 9)
+
 if (truncate) {
   p <- p +
     scale_y_continuous(
@@ -108,6 +146,17 @@ if (truncate) {
     ylab(expression(paste(-log[10], "(observed P)") ~ " (truncated)"))
   outfile <- gsub(".", "_truncated.", config["out_file_qq"], fixed=TRUE)
   ggsave(outfile, plot=p, width=6, height=6)
+
+  # QQ plots by chromosome, truncated.
+  p_by_chr <- p_by_chr +
+    scale_y_continuous(
+      oob = scales::squish,
+      limits = c(0, -log10(truncate_pval_threshold)),
+      expand = c(0,0)
+    ) +
+    ylab(expression(paste(-log[10], "(observed P)") ~ " (truncated)"))
+  outfile <- gsub(".", "_truncated_bychr.", config["out_file_qq"], fixed=TRUE)
+  ggsave(outfile, plot = p_by_chr, width = 6, height = 6)
 }
 
 rm(dat)
