@@ -84,7 +84,7 @@ dat <- assoc %>%
   ) %>%
   select(-x)
 
-## qq plot
+## Calculate QQ values separately for each chromosome.
 dat_by_chr <- assoc %>%
   select(
     chr = chr,
