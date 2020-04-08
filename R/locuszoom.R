@@ -21,10 +21,10 @@ optional <- c("flanking_region"=500,
               "ld_sample_include"=NA,
               "locus_type"="variant",
               "out_prefix"="locuszoom",
-              "track_file"=NA,
               "track_file_type"="window",
               "track_label"="",
-              "track_threshold"=5e-8)
+              "track_threshold"=5e-8,
+              "signif_level"=5e-8)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -60,6 +60,10 @@ if (config["locus_type"] == "variant") {
     maf <- min(freq, 1-freq)
     mac <- assoc$MAC[assoc$variant.id == variant]
     title <- paste(lz.name, "- MAF:", formatC(maf, digits=3), "- MAC:", mac)
+    if("locus_name" %in% names(locus)){
+      prefix <- paste(prefix, locus$locus_name, sep = "_")
+      title <- paste(locus$locus_name, title, sep = " - ")
+    }
     
 } else if (config["locus_type"] == "region") {
     stopifnot(all(c("start", "end") %in% names(locus)))
@@ -68,7 +72,12 @@ if (config["locus_type"] == "variant") {
 
     ld.region <- paste("--chr", var.chr, "--start", start, "--end", end)
     prefix <- paste0(config["out_prefix"], "_ld_", pop)
-    title <- ""
+    if("locus_name" %in% names(locus)){
+      prefix <- paste(prefix, locus$locus_name, sep = "_")
+      title <- locus$locus_name
+    }else{
+      title <- ""
+    }
 }
 
 ## construct METAL-format file
@@ -142,7 +151,7 @@ command <- paste("locuszoom",
                  ld.region,
                  "--prefix ", prefix,
                  paste0("title=\"", title, "\""),
-                 paste0("signifLine=\"", -log10(5e-8), "\" signifLineColor=\"gray\" signifLineWidth=\"2\""),
+                 paste0("signifLine=\"", -log10(config["signif_level"]), "\" signifLineColor=\"gray\" signifLineWidth=\"2\""),
                  "ylab=\"-log10(p-value) from single variant test\"")
 
 cat(paste(command, "\n"))
