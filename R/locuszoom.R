@@ -152,7 +152,7 @@ command <- paste("locuszoom",
                  ld.region,
                  "--prefix ", prefix,
                  paste0("title=\"", title, "\""),
-                 paste0("signifLine=\"", -log10(config["signif_level"]), "\" signifLineColor=\"gray\" signifLineWidth=\"2\""),
+                 paste0("signifLine=\"", -log10(as.numeric(config["signif_level"])), "\" signifLineColor=\"gray\" signifLineWidth=\"2\""),
                  "ylab=\"-log10(p-value) from single variant test\"")
 
 cat(paste(command, "\n"))
