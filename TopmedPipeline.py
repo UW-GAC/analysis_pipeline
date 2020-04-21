@@ -140,7 +140,12 @@ def chromosomeRangeToList(chromosomes):
     return list(range(start, end + 1))
 
 def parseChromosomes(chromosomes):
-    chromString = " ".join([str(x) for x in chromosomeRangeToList(chromosomes)])
+    # Calculate the ranges for each comma-separated set of chromosomes.
+    chromRanges = chromosomes.split(",")
+    l = [chromosomeRangeToList(x) for x in chromRanges]
+    # l is a list of lists, so we need to flatten it.
+    chromString = " ".join([str(item) for items in l for item in items])
+    #chromString = " ".join([str(x) for x in chromosomeRangeToList(chromosomes)])
     chromString = chromString.replace("23", "X")
     chromString = chromString.replace("24", "Y")
     return chromString
