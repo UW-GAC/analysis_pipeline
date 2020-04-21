@@ -45,9 +45,9 @@ argument  | default value | description
 
 The `--chromosomes` argument accepts the following formats:
 
-* a range of chromosomes (e.g., `1-3` submits chromosomes 1, 2, and 3);
-* a comma separated list of chromosomes (e.g., `1,3,6` submits chromosomes 1, 3, and 6);
-* a comma separated list of ranges (e.g., `1,3-6` submits chromosomes 1, 3, 4, 5, and 6).
+* a range of chromosomes (e.g., `1-3` indicates chromosomes 1, 2, and 3);
+* a comma separated list of chromosomes (e.g., `1,3,6` indicates chromosomes 1, 3, and 6);
+* a comma separated list of ranges (e.g., `1,3-6` indicates chromosomes 1, 3, 4, 5, and 6).
 
 ## Conversion to GDS
 
