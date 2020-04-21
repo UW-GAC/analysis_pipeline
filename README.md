@@ -35,7 +35,7 @@ argument  | default value | description
 `config_file` | | configuration file
 `--cluster_type` | `UW_Cluster` | type of compute cluster environment (`UW_Cluster`, `AWS_Cluster`, `AWS_Batch`)
 `--cluster_file` | `None` | JSON file containing cluster options
-`-c, --chromosomes` | `1-23` | range of chromosomes (23=X)
+`-c, --chromosomes` | `1-23` | set of chromosomes (23=X)
 `-n, --ncores` | `1-8` | number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4)
 `-e, --email` | `None` | email address to receive job completion report
 `--print_only` | `False` | print job submission commands without submitting them
@@ -43,6 +43,11 @@ argument  | default value | description
 `--version` | | show the version number and exit
 `-h, --help` | | print help message and exit
 
+The `--chromosomes` argument accepts the following formats:
+
+* a range of chromosomes (e.g., `1-3` submits chromosomes 1, 2, and 3);
+* a comma separated list of chromosomes (e.g., `1,3,6` submits chromosomes 1, 3, and 6);
+* a comma separated list of ranges (e.g., `1,3-6` submits chromosomes 1, 3, 4, 5, and 6).
 
 ## Conversion to GDS
 
@@ -148,7 +153,7 @@ The first step in evalulating relatedness and population structure is to select 
     `out_prefix` | | Prefix for files created by this script.
     `gds_file` | | GDS file with only LD pruned variants, all chromosomes.
 	`full_gds_file` | | GDS file with all variants. Include a space to insert chromosome.
-	`kinship_file` | `NA` | File containing kinship matrix to use for defining the unrelated sample set. Multiple formats are accepted, including RData or GDS from `king.py` or `pcrelate.py`. A sparse Matrix object stored as RData is recommended. 
+	`kinship_file` | `NA` | File containing kinship matrix to use for defining the unrelated sample set. Multiple formats are accepted, including RData or GDS from `king.py` or `pcrelate.py`. A sparse Matrix object stored as RData is recommended.
 	`divergence_file` | `NA` | GDS (recommended) or RData file with kinship coefficients created by `king_robust.py`. Used for ancestry divergence.
 	`kinship_threshold` | `0.04419417` | Minimum kinship estimate to use for assigning relatives (default is `2^(-9/2)` or 3rd degree relatives).
 	`divergence_threshold` | `-0.04419417` | Minimum kinship estimate to use for ancestry divergence (default is `-2^(-9/2)`).
