@@ -64,7 +64,7 @@ config["out_file"] = configdict["data_prefix"] + "_king_robust.gds"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-kinid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], request_cores=ncores, email=email, print_only=print_only)
+kinid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], request_cores=ncores, email=email, print_only=print_only)
 
 
 job = "kinship_plots"
