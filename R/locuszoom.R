@@ -21,6 +21,7 @@ optional <- c("flanking_region"=500,
               "ld_sample_include"=NA,
               "locus_type"="variant",
               "out_prefix"="locuszoom",
+              "signif_line"=5e-8,
               "track_file"=NA,
               "track_file_type"="window",
               "track_label"="",
@@ -128,6 +129,8 @@ if (!is.na(config["track_file"])) {
     track.cmd <- ""
 }
 
+signif <- as.numeric(config["signif_line"])
+
 command <- paste("locuszoom",
                  "theme=publication",
                  "--cache None",
@@ -142,7 +145,7 @@ command <- paste("locuszoom",
                  ld.region,
                  "--prefix ", prefix,
                  paste0("title=\"", title, "\""),
-                 paste0("signifLine=\"", -log10(5e-8), "\" signifLineColor=\"gray\" signifLineWidth=\"2\""),
+                 paste0("signifLine=\"", -log10(signif), "\" signifLineColor=\"gray\" signifLineWidth=\"2\""),
                  "ylab=\"-log10(p-value) from single variant test\"")
 
 cat(paste(command, "\n"))
