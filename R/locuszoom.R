@@ -25,7 +25,8 @@ optional <- c("flanking_region"=500,
               "track_file_type"="window",
               "track_label"="",
               "track_threshold"=5e-8,
-              "signif_level"=5e-8)
+              "signif_level"=5e-8,
+              "gene_rows"=4)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -153,7 +154,8 @@ command <- paste("locuszoom",
                  "--prefix ", prefix,
                  paste0("title=\"", title, "\""),
                  paste0("signifLine=\"", -log10(as.numeric(config["signif_level"])), "\" signifLineColor=\"gray\" signifLineWidth=\"2\""),
-                 "ylab=\"-log10(p-value) from single variant test\"")
+                 "ylab=\"-log10(p-value) from single variant test\"",
+                 paste0("rfrows=", as.numeric(config["gene_rows"]))
 
 cat(paste(command, "\n"))
 system(command)
