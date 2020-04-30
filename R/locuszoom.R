@@ -56,14 +56,18 @@ if (config["locus_type"] == "variant") {
     if (start < 1) start <- 1
     end <- var.pos + flank
     
-    lz.name <- paste0("chr", var.chr, ":", var.pos)
+    if("variant_label" %in% names(locus)){
+      lz.name <- locus$variant_label
+    }else{
+      lz.name <- paste0("chr", var.chr, ":", var.pos)
+    }
     ld.region <- paste0("--refsnp \"", lz.name, "\"", " --flank ", config["flanking_region"], "kb")
-    prefix <- paste0(config["out_prefix"], "_var", variant, "_ld_", pop)
-
+    
     freq <- assoc$freq[assoc$variant.id == variant]
     maf <- min(freq, 1-freq)
     mac <- assoc$MAC[assoc$variant.id == variant]
     # title <- paste(lz.name, "- MAF:", formatC(maf, digits=3), "- MAC:", mac)
+    prefix <- paste0(config["out_prefix"], "_var", variant, "_ld_", pop)
     if("locus_name" %in% names(locus)){
       prefix <- paste(prefix, locus$locus_name, sep = "_")
       # title <- paste(locus$locus_name, title, sep = " - ")
@@ -99,11 +103,11 @@ assoc <- assoc[order(assoc$pos),]
 #####
 
 assoc.filename <- tempfile()
-if("variant_label" %in% names(locus)){
-  writeMETAL(assoc, file=assoc.filename, lz.name = lz.name, variant_label = locus$variant_label)
-}else{
+# if("variant_label" %in% names(locus)){
+#   writeMETAL(assoc, file=assoc.filename, lz.name = lz.name, variant_label = locus$variant_label)
+# }else{
   writeMETAL(assoc, file=assoc.filename)
-}
+# }
 
 
 # LD
