@@ -66,11 +66,10 @@ if (config["locus_type"] == "variant") {
     freq <- assoc$freq[assoc$variant.id == variant]
     maf <- min(freq, 1-freq)
     mac <- assoc$MAC[assoc$variant.id == variant]
-    # title <- paste(lz.name, "- MAF:", formatC(maf, digits=3), "- MAC:", mac)
+
     prefix <- paste0(config["out_prefix"], "_var", variant, "_ld_", pop)
     if("locus_name" %in% names(locus)){
       prefix <- paste(prefix, locus$locus_name, sep = "_")
-      # title <- paste(locus$locus_name, title, sep = " - ")
     }
     
 } else if (config["locus_type"] == "region") {
@@ -79,13 +78,10 @@ if (config["locus_type"] == "variant") {
     end <- locus$end
 
     ld.region <- paste("--chr", var.chr, "--start", start, "--end", end)
+    
     prefix <- paste0(config["out_prefix"], "_ld_", pop)
-
     if("locus_name" %in% names(locus)){
       prefix <- paste(prefix, locus$locus_name, sep = "_")
-      # title <- locus$locus_name
-    }else{
-      # title <- ""
     }
 }
 
@@ -113,7 +109,6 @@ assoc.filename <- tempfile()
 # LD
 if (pop != "TOPMED") {
     ld.cmd <- paste("--pop", pop, "--source 1000G_Nov2014")
-    # ld.title <- paste("LD: 1000G", pop)
 } else {
     if (!is.na(config["ld_sample_include"])) {
         sample.id <- getobj(config["ld_sample_include"])
@@ -135,9 +130,7 @@ if (pop != "TOPMED") {
     writeLD(assoc, ld, ref.var, file=ld.filename)
 
     ld.cmd <- paste("--ld", ld.filename)
-    # ld.title <- "LD: TOPMed"
 }
-# title <- if (title == "") ld.title else paste(ld.title, title, sep=" - ")
 
 ## construct BED track file
 if (!is.na(config["track_file"])) {
@@ -157,16 +150,17 @@ if(config["title"]){
 
   if(config["locus_type"] == "variant"){
     title <- ifelse("locus_name" %in% names(locus), locus$locus_name, lz.name)
-    title <- paste(title, "- MAF:", formatC(maf, digits=3), "- MAC:", mac)
+    maf.title <- title <- paste("- MAF:", formatC(maf, digits=3), "- MAC:", mac)
   }else if(config["locus_type"] == "region"){
     title <- ifelse("locus_name" %in% names(locus), locus$locus_name, "")
+    maf.title <- ""
   }
-
   if(pop != "TOPMED"){
-    ld.title <- paste("LD: 1000G", pop)
+    ld.title <- paste("- LD: 1000G", pop)
   }else{
-    ld.title <- "LD: TOPMed"
+    ld.title <- "- LD: TOPMed"
   }
+  title <- paste(title, ld.title, maf.title)
   # title <- if (title == "") ld.title else paste(ld.title, title, sep=" - ")
 
 }else{
@@ -188,7 +182,6 @@ command <- paste("locuszoom",
                  ld.region,
                  "--prefix ", prefix,
                  paste0("title=\"", title, "\""),
-                 paste0("LDTitle=\"", ld.title, "\""),
                  paste0("signifLine=\"", -log10(as.numeric(config["signif_level"])), "\" signifLineColor=\"gray\" signifLineWidth=\"2\""),
                  "ylab=\"-log10(p-value) from single variant test\"",
                  paste0("rfrows=\"", as.numeric(config["gene_rows"]), "\""))
