@@ -27,11 +27,15 @@ writeBED <- function(x, file, track.label="") {
 #' 
 #' @importFrom dplyr "%>%" mutate_ rename_ select_
 #' @export
-writeMETAL <- function(x, file) {
+writeMETAL <- function(x, file, lz.name = NULL, variant_label = NULL) {
     x <- x %>%
         mutate_(MarkerName=~paste0("chr", chr, ":", pos)) %>%
         select_("MarkerName", "pval")
     names(x)[2] <- "P-value"
+
+    if(!is.null(variant_label)){
+        x$MarkerName[x$MarkerName == lz.name] <- variant_label
+    }
 
     write.table(x, file=file, quote=FALSE, row.names=FALSE, sep="\t")
 }
