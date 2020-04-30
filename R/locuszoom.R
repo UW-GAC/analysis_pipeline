@@ -155,7 +155,7 @@ command <- paste("locuszoom",
                  paste0("title=\"", title, "\""),
                  paste0("signifLine=\"", -log10(as.numeric(config["signif_level"])), "\" signifLineColor=\"gray\" signifLineWidth=\"2\""),
                  "ylab=\"-log10(p-value) from single variant test\"",
-                 paste0("rfrows=", as.numeric(config["gene_rows"]))
+                 paste0("rfrows=\"", as.numeric(config["gene_rows"]), "\"")
 
 cat(paste(command, "\n"))
 system(command)
