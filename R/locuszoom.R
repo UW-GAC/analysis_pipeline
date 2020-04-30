@@ -68,9 +68,6 @@ if (config["locus_type"] == "variant") {
     mac <- assoc$MAC[assoc$variant.id == variant]
 
     prefix <- paste0(config["out_prefix"], "_var", variant, "_ld_", pop)
-    if("locus_name" %in% names(locus)){
-      prefix <- paste(prefix, locus$locus_name, sep = "_")
-    }
     
 } else if (config["locus_type"] == "region") {
     stopifnot(all(c("start", "end") %in% names(locus)))
@@ -80,10 +77,12 @@ if (config["locus_type"] == "variant") {
     ld.region <- paste("--chr", var.chr, "--start", start, "--end", end)
     
     prefix <- paste0(config["out_prefix"], "_ld_", pop)
-    if("locus_name" %in% names(locus)){
-      prefix <- paste(prefix, locus$locus_name, sep = "_")
-    }
 }
+
+if("locus_name" %in% names(locus)){
+  prefix <- paste(prefix, locus$locus_name, sep = "_")
+}
+
 
 ## construct METAL-format file
 assoc <- assoc %>%
@@ -124,7 +123,11 @@ if (pop != "TOPMED") {
     ld <- calculateLD(gdsfile, variant.id=assoc$variant.id, ref.var=ref.var, sample.id=sample.id)
     ld.filename <- tempfile()
 
-    writeLD(assoc, ld, ref.var, file=ld.filename)
+    if("rsid" %in% names(locus)){
+      writeLD(assoc, ld, ref.var, file=ld.filename, rsid = locus$rsid)
+    }else{
+      writeLD(assoc, ld, ref.var, file=ld.filename)
+    }
 
     ld.cmd <- paste("--ld", ld.filename)
 }
