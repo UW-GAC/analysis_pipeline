@@ -3,8 +3,6 @@ library(TopmedPipeline)
 library(SeqVarTools)
 library(dplyr)
 sessionInfo()
-.libPaths()
-print(writeMETAL)
 
 argp <- arg_parser("LocusZoom plots")
 argp <- add_argument(argp, "config", help="path to config file")
