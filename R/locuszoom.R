@@ -161,7 +161,7 @@ if(config["title"]){
   }
   title <- paste(title, ld.title, maf.title)
 }else{
-  title <- " "
+  title <- NULL
 }
 
 
@@ -178,10 +178,13 @@ command <- paste("locuszoom",
                  ld.cmd,
                  ld.region,
                  "--prefix ", prefix,
-                 paste0("title=\"", title, "\""),
                  paste0("signifLine=\"", -log10(as.numeric(config["signif_level"])), "\" signifLineColor=\"gray\" signifLineWidth=\"2\""),
                  "ylab=\"-log10(p-value) from single variant test\"",
                  paste0("rfrows=\"", as.numeric(config["gene_rows"]), "\""))
+
+if(!is.null(title)){
+  command <- paste(command, paste0("title=\"", title, "\""))
+}
 
 cat(paste(command, "\n"))
 system(command)
