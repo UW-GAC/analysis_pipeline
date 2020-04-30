@@ -56,8 +56,8 @@ if (config["locus_type"] == "variant") {
     if (start < 1) start <- 1
     end <- var.pos + flank
     
-    if("variant_label" %in% names(locus)){
-      lz.name <- locus$variant_label
+    if("rsid" %in% names(locus)){
+      lz.name <- locus$rsid
     }else{
       lz.name <- paste0("chr", var.chr, ":", var.pos)
     }
@@ -99,11 +99,7 @@ assoc <- assoc[order(assoc$pos),]
 #####
 
 assoc.filename <- tempfile()
-# if("variant_label" %in% names(locus)){
-#   writeMETAL(assoc, file=assoc.filename, lz.name = lz.name, variant_label = locus$variant_label)
-# }else{
-  writeMETAL(assoc, file=assoc.filename)
-# }
+writeMETAL(assoc, file=assoc.filename)
 
 
 # LD
@@ -127,6 +123,7 @@ if (pop != "TOPMED") {
     gdsfile <- insertChromString(config["gds_file"], var.chr)
     ld <- calculateLD(gdsfile, variant.id=assoc$variant.id, ref.var=ref.var, sample.id=sample.id)
     ld.filename <- tempfile()
+
     writeLD(assoc, ld, ref.var, file=ld.filename)
 
     ld.cmd <- paste("--ld", ld.filename)
@@ -150,7 +147,7 @@ if(config["title"]){
 
   if(config["locus_type"] == "variant"){
     title <- ifelse("locus_name" %in% names(locus), locus$locus_name, lz.name)
-    maf.title <- title <- paste("- MAF:", formatC(maf, digits=3), "- MAC:", mac)
+    maf.title <- paste("- MAF:", formatC(maf, digits=3), "- MAC:", mac)
   }else if(config["locus_type"] == "region"){
     title <- ifelse("locus_name" %in% names(locus), locus$locus_name, "")
     maf.title <- ""

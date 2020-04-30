@@ -27,15 +27,11 @@ writeBED <- function(x, file, track.label="") {
 #' 
 #' @importFrom dplyr "%>%" mutate_ rename_ select_
 #' @export
-writeMETAL <- function(x, file, lz.name = NULL, variant_label = NULL) {
+writeMETAL <- function(x, file) {
     x <- x %>%
         mutate_(MarkerName=~paste0("chr", chr, ":", pos)) %>%
         select_("MarkerName", "pval")
     names(x)[2] <- "P-value"
-
-    if(!is.null(variant_label)){
-        x$MarkerName[x$MarkerName == lz.name] <- variant_label
-    }
 
     write.table(x, file=file, quote=FALSE, row.names=FALSE, sep="\t")
 }
@@ -82,10 +78,17 @@ calculateLD <- function(gdsfile, variant.id, ref.var=NULL, sample.id=NULL) {
 #' 
 #' @importFrom dplyr "%>%" mutate_ select_
 #' @export
-writeLD <- function(x, ld, ref.var, file) {
+writeLD <- function(x, ld, ref.var, file, rsid = NULL) {
     x <- x %>%
         mutate_(snp1=~paste0("chr", chr, ":", pos))
-    x$snp2 <- x$snp1[x$variant.id == ref.var]
+
+    if(!is.null(rsid)){
+        x$snp1[x$variant.id == ref.var] <- rsid
+        x$snp2 <- rsid
+    }else{
+        x$snp2 <- x$snp1[x$variant.id == ref.var]
+    }
+    
     x$dprime <- 0
     x$rsquare <- ld
     x <- x %>%
