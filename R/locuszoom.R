@@ -121,8 +121,8 @@ if (pop != "TOPMED") {
     }
     gdsfile <- insertChromString(config["gds_file"], var.chr)
     ld <- calculateLD(gdsfile, variant.id=assoc$variant.id, ref.var=ref.var, sample.id=sample.id)
+    
     ld.filename <- tempfile()
-
     if("rsid" %in% names(locus)){
       writeLD(assoc, ld, ref.var, file=ld.filename, rsid = locus$rsid)
     }else{
@@ -147,7 +147,6 @@ if (!is.na(config["track_file"])) {
 
 ## Plot Title
 if(config["title"]){
-
   if(config["locus_type"] == "variant"){
     title <- ifelse("locus_name" %in% names(locus), locus$locus_name, lz.name)
     maf.title <- paste("- MAF:", formatC(maf, digits=3), "- MAC:", mac)
@@ -161,10 +160,8 @@ if(config["title"]){
     ld.title <- "- LD: TOPMed"
   }
   title <- paste(title, ld.title, maf.title)
-  # title <- if (title == "") ld.title else paste(ld.title, title, sep=" - ")
-
 }else{
-  title <- ""
+  title <- " "
 }
 
 
