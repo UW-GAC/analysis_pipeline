@@ -61,6 +61,7 @@ if (config["locus_type"] == "variant") {
     }else{
       lz.name <- paste0("chr", var.chr, ":", var.pos)
     }
+
     ld.region <- paste0("--refsnp \"", lz.name, "\"", " --flank ", config["flanking_region"], "kb")
     
     freq <- assoc$freq[assoc$variant.id == variant]
@@ -77,6 +78,27 @@ if (config["locus_type"] == "variant") {
     ld.region <- paste("--chr", var.chr, "--start", start, "--end", end)
     
     prefix <- paste0(config["out_prefix"], "_ld_", pop)
+
+} else if (config["locus_type"] == "variant_region") {
+    stopifnot(all(c("variant.id", "start", "end") %in% names(locus)))
+    variant <- locus$variant.id
+    var.pos <- assoc$pos[assoc$variant.id == variant]
+    start <- locus$start
+    end <- locus$end
+
+    if("rsid" %in% names(locus)){
+      lz.name <- locus$rsid
+    }else{
+      lz.name <- paste0("chr", var.chr, ":", var.pos)
+    }
+
+    ld.region <- paste("--refsnp", lz.name, "--chr", var.chr, "--start", start, "--end", end)
+
+    freq <- assoc$freq[assoc$variant.id == variant]
+    maf <- min(freq, 1-freq)
+    mac <- assoc$MAC[assoc$variant.id == variant]
+
+    prefix <- paste0(config["out_prefix"], "_var", variant, "_ld_", pop)
 }
 
 if("locus_name" %in% names(locus)){
