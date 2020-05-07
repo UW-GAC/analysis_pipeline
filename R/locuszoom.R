@@ -31,7 +31,7 @@ optional <- c("flanking_region"=500,
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
-stopifnot(config["locus_type"] %in% c("variant", "region"))
+stopifnot(config["locus_type"] %in% c("variant", "region", "variant_region"))
 
 # read selected locus
 locus <- read.table(config["locus_file"], header=TRUE, as.is=TRUE)[segment,]
