@@ -27,7 +27,8 @@ optional <- c("flanking_region"=500,
               "track_threshold"=5e-8,
               "signif_level"=5e-8,
               "gene_rows"=4,
-              "title"=TRUE)
+              "title"=TRUE,
+              "marker_file"=NA)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -187,6 +188,9 @@ if(config["title"]){
 }
 
 
+
+
+
 command <- paste("locuszoom",
                  "theme=publication",
                  "--cache None",
@@ -206,6 +210,10 @@ command <- paste("locuszoom",
 
 if(!is.null(title)){
   command <- paste(command, paste0("title=\"", title, "\""))
+}
+
+if(!is.na(config["marker_file"])){
+  command <- paste(command, "--denote-markers-file", config["marker_file"])
 }
 
 cat(paste(command, "\n"))
