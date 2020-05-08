@@ -133,7 +133,7 @@ if (pop != "TOPMED") {
     } else {
         sample.id <- NULL
     }
-    if (config["locus_type"] == "variant") {
+    if (config["locus_type"] %in% c("variant", "variant_region")) {
         ref.var <- variant
     } else {
         ref.var <- filter(assoc, pval == min(pval))$variant.id

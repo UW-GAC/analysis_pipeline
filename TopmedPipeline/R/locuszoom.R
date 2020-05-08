@@ -63,8 +63,20 @@ calculateLD <- function(gdsfile, variant.id, ref.var=NULL, sample.id=NULL) {
         geno.ref <- geno[,as.character(ref.var)]
     }
 
-    # drop unnecessary dimensions (if ref.var is a single variant)
-    r <- drop(cor(geno, geno.ref, use="pairwise.complete.obs"))
+    # check to avoid long vectors
+    nr <- as.numeric(nrow(geno))
+    nc <- as.numeric(ncol(geno))
+    nblock <- ceiling(nr*nc/2^31)
+    if(nblock > 1){
+        # break into blocks to compute correlation if needed
+        blocks <- unname(split(1:nc, cut(1:nc, nblock)))
+        r <- unlist(lapply(blocks, function(b) {
+            drop(cor(geno[,b], geno.ref, use="pairwise.complete.obs"))
+        }))
+    }else{
+        # drop unnecessary dimensions (if ref.var is a single variant)
+        r <- drop(cor(geno, geno.ref, use="pairwise.complete.obs"))
+    }
     r^2
 }
 
