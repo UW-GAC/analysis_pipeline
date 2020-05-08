@@ -204,11 +204,13 @@ command <- paste("locuszoom",
                  ld.cmd,
                  ld.region,
                  "--prefix ", prefix,
-                 paste0("signifLine=\"", -log10(as.numeric(config["signif_level"])), "\" signifLineColor=\"gray\" signifLineWidth=\"2\""),
+                 paste0("signifLine=\"", -log10(as.numeric(config["signif_level"]))), 
+                 "signifLineColor=\"gray\"", 
+                 "signifLineWidth=\"2\"",
                  "ylab=\"-log10(p-value)\"",
                  "refsnpLineColor=\"black\"",
                  "refsnpLineWidth=\"2\"",
-                 "refsnpTextSize=\"2\"",
+                 "refsnpTextSize=\"1.2\"",
                  paste0("rfrows=\"", as.numeric(config["gene_rows"]), "\""))
 
 if(!is.null(title)){
