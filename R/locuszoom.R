@@ -208,7 +208,7 @@ command <- paste("locuszoom",
                  "signifLineColor=\"gray\"", 
                  "signifLineWidth=\"2\"",
                  "ylab=\"-log10(p-value)\"",
-                 "refsnpLineColor=\"black\"",
+                 "refsnpLineColor=\"green\"",
                  "refsnpLineWidth=\"2\"",
                  "refsnpTextSize=\"1.2\"",
                  paste0("rfrows=\"", as.numeric(config["gene_rows"]), "\""))
