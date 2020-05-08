@@ -28,11 +28,12 @@ optional <- c("flanking_region"=500,
               "signif_level"=5e-8,
               "gene_rows"=4,
               "title"=TRUE,
-              "marker_file"=NA)
+              "variant_label_file"=NA,
+              "variant_line_color"="transparent")
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
-stopifnot(config["locus_type"] %in% c("variant", "region", "variant_region"))
+stopifnot(config["locus_type"] %in% c("variant", "region"))
 
 # read selected locus
 locus <- read.table(config["locus_file"], header=TRUE, as.is=TRUE)[segment,]
@@ -51,20 +52,26 @@ assoc <- getobj(assocfile)
 if (config["locus_type"] == "variant") {
     stopifnot("variant.id" %in% names(locus))
     variant <- locus$variant.id
-    flank <- as.numeric(config["flanking_region"]) * 1000
     var.pos <- assoc$pos[assoc$variant.id == variant]
-    start <- var.pos - flank
-    if (start < 1) start <- 1
-    end <- var.pos + flank
-    
-    if("rsid" %in% names(locus)){
+
+    if("rsid" %in% names(locus) && !is.na(locus$rsid)){
       lz.name <- locus$rsid
     }else{
       lz.name <- paste0("chr", var.chr, ":", var.pos)
     }
 
-    ld.region <- paste0("--refsnp \"", lz.name, "\"", " --flank ", config["flanking_region"], "kb")
-    
+    if(all(c("variant.id", "start", "end") %in% names(locus))){
+      start <- locus$start
+      end <- locus$end
+      ld.region <- paste("--refsnp", lz.name, "--chr", var.chr, "--start", start, "--end", end)
+    }else{
+      flank <- as.numeric(config["flanking_region"]) * 1000
+      start <- var.pos - flank
+      if (start < 1) start <- 1
+      end <- var.pos + flank
+      ld.region <- paste0("--refsnp \"", lz.name, "\"", " --flank ", config["flanking_region"], "kb")
+    }   
+
     freq <- assoc$freq[assoc$variant.id == variant]
     maf <- min(freq, 1-freq)
     mac <- assoc$MAC[assoc$variant.id == variant]
@@ -79,33 +86,11 @@ if (config["locus_type"] == "variant") {
     ld.region <- paste("--chr", var.chr, "--start", start, "--end", end)
     
     prefix <- paste0(config["out_prefix"], "_ld_", pop)
-
-} else if (config["locus_type"] == "variant_region") {
-    stopifnot(all(c("variant.id", "start", "end") %in% names(locus)))
-    variant <- locus$variant.id
-    var.pos <- assoc$pos[assoc$variant.id == variant]
-    start <- locus$start
-    end <- locus$end
-
-    if("rsid" %in% names(locus)){
-      lz.name <- locus$rsid
-    }else{
-      lz.name <- paste0("chr", var.chr, ":", var.pos)
-    }
-
-    ld.region <- paste("--refsnp", lz.name, "--chr", var.chr, "--start", start, "--end", end)
-
-    freq <- assoc$freq[assoc$variant.id == variant]
-    maf <- min(freq, 1-freq)
-    mac <- assoc$MAC[assoc$variant.id == variant]
-
-    prefix <- paste0(config["out_prefix"], "_var", variant, "_ld_", pop)
 }
 
 if("locus_name" %in% names(locus)){
   prefix <- paste(prefix, locus$locus_name, sep = "_")
 }
-
 
 ## construct METAL-format file
 assoc <- assoc %>%
@@ -113,12 +98,10 @@ assoc <- assoc %>%
     select(variant.id, chr, pos, ends_with("pval"))
 names(assoc)[4] <- "pval"
 
-##### NOTE: i added the following two lines of code #####
 ## remove duplicate chr:pos rows, removing the variant with the less significant (higher) pvalue
 assoc <- assoc[order(assoc$pval,decreasing=FALSE),]
 assoc <- assoc[!duplicated(assoc$pos),]
 assoc <- assoc[order(assoc$pos),]
-#####
 
 assoc.filename <- tempfile()
 writeMETAL(assoc, file=assoc.filename)
@@ -133,7 +116,7 @@ if (pop != "TOPMED") {
     } else {
         sample.id <- NULL
     }
-    if (config["locus_type"] %in% c("variant", "variant_region")) {
+    if (config["locus_type"] == "variant") {
         ref.var <- variant
     } else {
         ref.var <- filter(assoc, pval == min(pval))$variant.id
@@ -146,10 +129,10 @@ if (pop != "TOPMED") {
     ld <- calculateLD(gdsfile, variant.id=assoc$variant.id, ref.var=ref.var, sample.id=sample.id)
     
     ld.filename <- tempfile()
-    if("rsid" %in% names(locus)){
+    if("rsid" %in% names(locus) && !is.na(locus$rsid)){
       writeLD(assoc, ld, ref.var, file=ld.filename, rsid = locus$rsid)
     }else{
-      writeLD(assoc, ld, ref.var, file=ld.filename)
+      writeLD(assoc, ld, ref.var, file=ld.filename, rsid = NULL)
     }
 
     ld.cmd <- paste("--ld", ld.filename)
@@ -189,8 +172,6 @@ if(config["title"]){
 
 
 
-
-
 command <- paste("locuszoom",
                  "theme=publication",
                  "--cache None",
@@ -208,7 +189,7 @@ command <- paste("locuszoom",
                  "signifLineColor=\"gray\"", 
                  "signifLineWidth=\"2\"",
                  "ylab=\"-log10(p-value)\"",
-                 "refsnpLineColor=\"green3\"",
+                 paste0("refsnpLineColor=\"", config["variant_line_color"], "\""),
                  "refsnpLineWidth=\"2\"",
                  "refsnpTextSize=\"1\"",
                  paste0("rfrows=\"", as.numeric(config["gene_rows"]), "\""))
@@ -217,8 +198,8 @@ if(!is.null(title)){
   command <- paste(command, paste0("title=\"", title, "\""))
 }
 
-if(!is.na(config["marker_file"])){
-  command <- paste(command, "--denote-markers-file", config["marker_file"])
+if(!is.na(config["variant_label_file"])){
+  command <- paste(command, "--denote-markers-file", config["variant_label_file"])
 }
 
 cat(paste(command, "\n"))
