@@ -22,6 +22,12 @@ chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 gds.files <- sapply(chr, function(c) insertChromString(gdsfile, c, "gds_file"))
 gds.list <- lapply(gds.files, seqOpen, readonly=FALSE)
 
+## exit gracefully if we only have one file
+if (length(gds.list) == 1) {
+    message("Only one GDS file; no changes needed. Exiting gracefully.")
+    q(save="no", status=0)
+}
+
 
 ## get total number of variants
 var.length <- sapply(gds.list, function(x) {
