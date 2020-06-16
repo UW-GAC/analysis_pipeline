@@ -39,3 +39,12 @@ test_that("gds2ibdobj", {
     sel2 <- SNPRelate::snpgdsIBDSelection(ibd2.sel)
     expect_equal(sel, sel2)
 })
+
+test_that("rds", {
+    rdsfile <- paste0(tempfile(), ".rds")
+    x <- 1:10
+    saveRDS(x, rdsfile)
+    x2 <- getobj(rdsfile)
+    expect_equal(x, x2)
+    unlink(rdsfile)
+})

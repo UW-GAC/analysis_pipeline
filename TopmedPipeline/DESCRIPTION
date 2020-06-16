@@ -12,4 +12,4 @@ Imports: methods, stats, tools, utils, Matrix, dplyr, lazyeval, rmarkdown,
 Suggests: roxygen2, testthat, GENESIS, GWASTools, SNPRelate, ggplot2, grid
 License: MIT + file LICENSE
 LazyLoad: no
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.0
