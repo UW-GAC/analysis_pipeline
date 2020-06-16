@@ -4,7 +4,9 @@
 \name{sample_annotation}
 \alias{sample_annotation}
 \title{Example sample annotation}
-\format{\code{\link[Biobase]{AnnotatedDataFrame}} object}
+\format{
+\code{\link[Biobase]{AnnotatedDataFrame}} object
+}
 \usage{
 sample_annotation
 }

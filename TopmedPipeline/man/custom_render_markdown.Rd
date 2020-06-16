@@ -4,8 +4,7 @@
 \alias{custom_render_markdown}
 \title{Internal function to render markdown documents}
 \usage{
-custom_render_markdown(markdown_template_name, output_file,
-  parameters = NULL)
+custom_render_markdown(markdown_template_name, output_file, parameters = NULL)
 }
 \arguments{
 \item{markdown_template_name}{The name of the markdown template, excluding ".Rmd"}

@@ -41,8 +41,6 @@ custom_render_markdown <- function(markdown_template_name, output_file, paramete
 #' @param inverse_normal indicator of whether the model was refit with inverse-normal transformed residuals
 #'
 #' @return String representing analysis model
-#'
-#' @rdname modelString
 NULL
 
 #' @describeIn modelString  Create a string for the entire model
