@@ -242,7 +242,7 @@ config parameter | default value | description
 `out_prefix` | | Prefix for files created by this script.
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes.
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
-`pca_file` | `NA` | RData file with PCA results created by `pcair.py`.
+`pca_file` | `NA` | RData file with PCA results created by `pcair.py`. A matrix or data.frame is also accepted, as long as the rownames contain sample.id.
 `relatedness_matrix_file` | `NA` | RData or GDS file with a kinship matrix or GRM.
 `binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
