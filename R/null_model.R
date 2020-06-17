@@ -17,7 +17,7 @@ required <- c("outcome",
 optional <- c("gds_file"=NA, # required for conditional variants
               "pca_file"=NA,
               "relatedness_matrix_file"=NA,
-              "binary"=FALSE,
+              "family"="gaussian",
               "conditional_variant_file"=NA,
               "covars"=NA,
               "group_var"=NA,
@@ -46,11 +46,10 @@ sample.id <- phen[["sample.id"]]
 
 save(annot, file=config["out_phenotype_file"])
 
-if (as.logical(config["binary"])) {
+family <- config["family"]
+stopifnot(family %in% c("gaussian", "binomial", "poisson"))
+if (family == "binomial") {
     stopifnot(all(annot[[outcome]] %in% c(0,1,NA)))
-    family <- binomial
-} else {
-    family <- gaussian
 }
 
 # kinship matrix or GRM
@@ -80,7 +79,7 @@ outfile <- sprintf("%s.RData", config["out_prefix"])
 
 
 ## if we need an inverse normal transform, take residuals and refit null model
-if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
+if (as.logical(config["inverse_normal"]) & family != "binomial") {
 
     if (as.logical(config["norm_bygroup"]) & !is.null(group.var)) {
         norm.option <- "by.group"

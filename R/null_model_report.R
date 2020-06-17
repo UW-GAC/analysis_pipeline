@@ -10,7 +10,7 @@ cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
 required <- c()
-optional <- c("binary"=FALSE,
+optional <- c("family"="gaussian",
               "inverse_normal"=TRUE,
               "out_prefix"="null_model")
 config <- setConfigDefaults(config, required, optional)
@@ -22,7 +22,7 @@ outfile <- sprintf("%s_report", config["out_prefix"])
 custom_render_markdown("null_model_report", outfile, parameters = p)
 
 # Generate the report for the inverse normal, if necessary.
-if (as.logical(config["inverse_normal"]) & !as.logical(config["binary"])) {
+if (as.logical(config["inverse_normal"]) & config["family"] != "binomial") {
   print('rendering report for inverse normal transform')
   p <- c(p, list(invnorm = TRUE))
   outfile <- sprintf("%s_invnorm_report", config["out_prefix"])
