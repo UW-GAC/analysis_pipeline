@@ -18,7 +18,7 @@ getPhenotypes <- function(config) {
     if (n_pcs > 0) {
         if (is.na(config["pca_file"])) stop("must specify pca_file if n_pcs > 0")
         pca <- getobj(config["pca_file"])
-        if (is(pca, "pcair")) {
+        if ("vectors" %in% names(pca)) {
             pca <- pca$vectors
         }
         pcs <- pca[,1:n_pcs,drop=FALSE]
