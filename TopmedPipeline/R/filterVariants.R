@@ -80,7 +80,7 @@ filterBySNV <- function(gds, biallelic=TRUE, verbose=TRUE) {
     pmin(ref.freq, 1-ref.freq)
 }
 
-#' @importFrom SeqVarTools alleleCount
+#' @importFrom SeqVarTools minorAlleleCount
 .calcMAC <- function(gds, sample.id, build="hg19") {
     seqSetFilter(gds, sample.id=sample.id, verbose=FALSE)
     round(.addBuild(gds, minorAlleleCount, build))

@@ -1,6 +1,6 @@
 {
     "name": "GCP_slurm_config",
-    "version": "1.0",
+    "version": "2.2",
     "verbose": false,
     "configuration": {
         "memory_limits": {
@@ -24,6 +24,7 @@
             "unique_variants":16000,
             "check_merged":16000,
     	    "pca_byrel":8000,
+            "pca_corr_vars":4000,
     	    "pca_corr":8000,
     	    "pca_corr_plots":32000,
     	    "pca_plots":2000,
@@ -64,7 +65,12 @@
         "partition_cfg": "slurm_partitions.json",
         "cluster": "tm1",
         "submit_cmd": "sbatch",
+        "submit_log_dir": null,
+        "execute_prescript": false,
+        "resume_script": "resume_analysis.py",
+        "enable_resume": true,
         "dependency_value": "afterok",
+        "submit_prescript": "runPython.sh",
         "submit_script": "runDocker.py",
         "submit_opts": {
             "--job-name": null,
@@ -88,7 +94,11 @@
             "--cost": null,
             "--verbose": false,
             "--stats": true,
-            "--pull": false
+            "--pull": false,
+            "--username": null
+        },
+        "run_cmd": {
+            "docker_image": "uwgac/topmed-roybranch:latest"
         }
     }
 }

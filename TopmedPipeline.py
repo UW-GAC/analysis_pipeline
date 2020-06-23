@@ -1,6 +1,8 @@
+#! /usr/bin/env python3
+from __future__ import division
 """Utility functions for TOPMed pipeline"""
 
-__version__ = "2.6.0"
+__version__ = "2.8.0"
 
 import os
 import sys
@@ -14,12 +16,14 @@ import math
 import collections
 import datetime
 import awsbatch
+import port_popen
 
 try:
     import boto3
-    import batchInit
 except ImportError:
-    print ("AWS batch not supported.")
+    batchSupport = False
+else:
+    batchSupport = True
 
 
 
@@ -75,7 +79,7 @@ def writeConfig(config, file):
 
     f = open(file, 'w')
     writer = csv.writer(f, delimiter=' ', quotechar='"')
-    for key, value in config.iteritems():
+    for key, value in config.items():
         writer.writerow([key, value])
     f.close()
 
@@ -95,7 +99,7 @@ def getFirstColumn(file, skipHeader=True):
     f = open(file, 'r')
     reader = csv.reader(f, delimiter="\t")
     if skipHeader:
-        dummy = reader.next()
+        dummy = next(reader)
     x = [line[0] for line in reader]
     f.close()
 
@@ -133,7 +137,7 @@ def chromosomeRangeToList(chromosomes):
     chromRange = [int(x) for x in chromosomes.split("-")]
     start = chromRange[0]
     end = start if len(chromRange) == 1 else chromRange[1]
-    return range(start, end + 1)
+    return list(range(start, end + 1))
 
 def parseChromosomes(chromosomes):
     chromString = " ".join([str(x) for x in chromosomeRangeToList(chromosomes)])
@@ -144,13 +148,13 @@ def parseChromosomes(chromosomes):
 
 def dictToString(d):
     """Construct a string from a dictionary"""
-    s = ' '.join([k + ' ' + v for k, v in d.iteritems() if v != None])
+    s = ' '.join([k + ' ' + v for k, v in d.items() if v != None])
     return s
 
 def stringToDict(s):
     """Construct a dictionary from a string"""
     ss = s.split()
-    d = dict(zip(ss[0::2], ss[1::2]))
+    d = dict(list(zip(ss[0::2], ss[1::2])))
     return d
 
 
@@ -175,7 +179,7 @@ def directorySetup(config, subdirs=["config", "data", "log", "plots", "report"])
 # https://stackoverflow.com/questions/3232943/update-value-of-a-nested-dictionary-of-varying-depth
 def update(d, u):
     ld = deepcopy(d)
-    for k, v in u.iteritems():
+    for k, v in u.items():
         if isinstance(v, collections.Mapping):
             if len(v) == 0:
                 ld[k] = u[k]
@@ -197,9 +201,13 @@ class Cluster(object):
         # set default pipeline path
         self.pipelinePath = os.path.dirname(os.path.abspath(sys.argv[0]))
         self.submitPath = self.pipelinePath
-        # set analysis name
-
+        # get cluster cfg
         self.openClusterCfg(std_cluster_file, opt_cluster_file, cfg_version, verbose)
+        # if resuming, create resume subdirectory
+        self.resumeDir = "./resume/"
+        if self.clusterCfg["enable_resume"]:
+            if not os.path.exists(self.resumeDir):
+                os.mkdir(self.resumeDir)
 
     def analysisInit(self, print_only=False):
         # get analysis name
@@ -212,7 +220,8 @@ class Cluster(object):
         tFmt = "%a, %d %b %Y %I:%M:%S %p"
         starttime = datetime.datetime.utcnow()
         self.analysisStart = starttime.strftime(tFmt)
-        self.analysisStartSec = "'" + self.analysisStart + "'"
+        # for python/shell need "'feb 22 2022'"
+        self.analysisStartSec = self.analysisStart.replace(" ", "_")
         # tag for analysis log file name
         self.analysisTag = str(int(time.time()*100))
         # analysis log file
@@ -283,7 +292,7 @@ class Cluster(object):
         self.clusterCfg = clusterCfg["configuration"]
         if debugCfg:
             print("0>>> Dump of " + clusterCfg["name"] + " ... \n")
-            print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
+            print(json.dumps(self.clusterCfg, indent=3, sort_keys=True))
         if optCfgFile != None:
             self.printVerbose("reading user cfg file: " + optCfgFile)
 
@@ -291,13 +300,13 @@ class Cluster(object):
                 clusterCfg = json.load(cfgFileHandle)
             optCfg = clusterCfg["configuration"]
             if debugCfg:
-                print("0>>> Dump of " + clusterCfg["name"] + " ... \n")
-                print json.dumps(optCfg, indent=3, sort_keys=True)
+                print("0>>> Dump of opt cfg file " + optCfgFile + " ... \n")
+                print(json.dumps(optCfg, indent=3, sort_keys=True))
             # update
             self.clusterCfg = update(self.clusterCfg, optCfg)
             if debugCfg:
                 print("0>>> Dump of updated cluster cfg ... \n")
-                print json.dumps(self.clusterCfg, indent=3, sort_keys=True)
+                print(json.dumps(self.clusterCfg, indent=3, sort_keys=True))
         key = "memory_limits"
         if key not in self.clusterCfg:
             self.clusterCfg[key] = None
@@ -322,18 +331,18 @@ class Cluster(object):
         if memLimits is None:
             return memlim
         # find a dicitionary of all partial match with job_name
-        fd = dict(filter(lambda elem: job_name.find(elem[0]) !=-1,memLimits.items()))
+        fd = dict([elem for elem in list(memLimits.items()) if job_name.find(elem[0]) !=-1])
         # if we have an exact match
-        if job_name in fd.keys():
+        if job_name in list(fd.keys()):
             memlim = fd[job_name]
         # else we have a partial match
         else:
-            jobMem = [ v for k,v in fd.iteritems() if job_name.find(k) != -1 ]
+            jobMem = [ v for k,v in fd.items() if job_name.find(k) != -1 ]
             if len(jobMem):
                 # find if there is an exact match with jobname and memlimit's key
                 # just find the first match to job_name
                 memlim = jobMem[0]
-        self.printVerbose('\t>>> Memory Limit - job: ' + job_name + " memlim: " +
+        self.printVerbose('Memory Limit - job: ' + job_name + " memlim: " +
                           str(memlim) + "MB")
         return memlim
 
@@ -342,13 +351,40 @@ class Cluster(object):
             print(">>> " + self.class_name + ": " + message)
 
 
-class AWS_Batch(Cluster):
+class Docker_Cluster(Cluster):
+    def __init__(self, std_cluster_file, opt_cluster_file=None, cfg_version="3", verbose=True):
+        self.class_name = self.__class__.__name__
+        self.std_cluster_file = std_cluster_file
+        super(Docker_Cluster, self).__init__(std_cluster_file, opt_cluster_file, cfg_version, verbose)
+
+    def runCmd(self, job_name, cmd, logfile=None):
+        # get the docker image
+        rc = self.clusterCfg["run_cmd"]
+        dockerimage = rc["docker_image"]
+        # build the docker run command to run the R driver and all it's args
+        working_dir = os.getenv('PWD')
+        drun = "docker run --rm -it -v /projects:/projects -w " + working_dir + " " + \
+                dockerimage + " "
+        dargs = cmd[0] + ' ' + " ".join(cmd[1:])
+        dcmd = drun + dargs
+
+        self.printVerbose("docker run cmd:\n\t" + dcmd)
+        (pmsg, status) = port_popen.popen_stdout(dcmd, logfile, jobname="run_cmd")
+        if status != 0:
+            print(">>> Error: Docker_Cluster/runCmd executing popen\nStatus: " + str(status) + " Msg: " + pmsg)
+            sys.exit(status)
+
+
+class AWS_Batch(Docker_Cluster):
 
     def __init__(self, opt_cluster_file=None, verbose=False):
+        if not batchSupport:
+            print('AWS_Batch: AWS Batch is not supported (boto3 is not available)')
+            sys.exit(2)
         self.class_name = self.__class__.__name__
         self.std_cluster_file = "./aws_batch_cfg.json"
         self.opt_cluster_file = opt_cluster_file
-        cfgVersion = "3.2"
+        cfgVersion = "3.3"
         super(AWS_Batch, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
 
         # get the job parameters
@@ -391,95 +427,21 @@ class AWS_Batch(Cluster):
         super(AWS_Batch, self).analysisInit(print_only)
         # jobinfo file name
         self.jiFileName = self.analysis + "_" + self.analysisTag + "_jobinfo.txt"
-        # analysis log file and autogen stuff
+        # analysis log file
         profile = self.clusterCfg["aws_profile"]
-        # autogen (for auto generation of queue and ce)
-        self.autogen_ce = False
-        if self.clusterCfg["autogen_ce"].lower() == "yes":
-            self.autogen_ce = True
-        if self.autogen_ce:
-            # pricing
-            pricing = self.clusterCfg["pricing"]
-            # create an aws tag for costs
-            self.awstag = self.analysis + "_" + self.username + "_" + self.analysisTag
-            # create ce name
-            ceName = "ag_ce" + "_" + pricing + "_" + self.analysis + "_" + self.username
-            # create costing queue name
-            awsqueue = "ag_queue" + "_" + pricing + "_" + self.analysis + "_" + self.username
-            self.queue = awsqueue
-            print("Creating batch env ...")
-            # if print_only
-            if print_only:
-                print("+++++++++  Print Only +++++++++++")
-                print("AWS autogen: " + str(self.autogen_ce))
-                print("AWS tag: " + self.awstag)
-                print("AWS profile: " + profile)
-                print("AWS batch queue: " + self.queue)
-                print("AWS batch ce: " + ceName)
-                print("AWS job def: " + self.submitOpts["jobdef"])
-                print("Check AWS batch queue to verify ...")
-            else:
-                with open(self.analysisLogFile, "a") as afile:
-                    afile.write("AWS profile: " + profile + "\n")
-                    afile.write("AWS batch queue: " + self.queue + "\n")
-                    afile.write("AWS batch ce: " + ceName + "\n")
-                    afile.write("AWS tag: " + self.awstag + "\n")
-            # set default instance types
-            instanceTypes = None
-            if len(self.clusterCfg["batch_instances"]) > 0:
-                instanceTypes = self.clusterCfg["batch_instances"]
-            # init batch by creating ce and queue based on batch pricing
-            if not print_only:
-                self.printVerbose("AWS tag: " + self.awstag)
-                self.printVerbose("AWS profile: " + profile)
-                self.printVerbose("batch queue: " + self.queue)
-                self.printVerbose("batch pricing: " + self.clusterCfg["pricing"])
-                self.printVerbose("AWS job def: " + self.submitOpts["jobdef"])
-                self.printVerbose("instance types: " + str(instanceTypes))
-                self.printVerbose("compute environment name: " + ceName)
-                self.printVerbose("aws profile: " + profile)
-            batchInit.createEnv(self.batchC,
-                                self.queue,
-                                self.clusterCfg["pricing"],
-                                instanceTypes,
-                                ceName,
-                                self.awstag,
-                                profile,
-                                self.verbose)
+        if print_only:
+            print("+++++++++  Print Only +++++++++++")
+            print("AWS profile: " + profile)
+            print("AWS job def: " + self.submitOpts["jobdef"])
+            print("AWS batch queue: " + self.queue)
         else:
-            if print_only:
-                print("+++++++++  Print Only +++++++++++")
-                print("AWS profile: " + profile)
-                print("AWS job def: " + self.submitOpts["jobdef"])
-                print("AWS batch queue: " + self.queue)
-            else:
-                self.printVerbose("AWS profile: " + profile)
-                self.printVerbose("AWS job def: " + self.submitOpts["jobdef"])
-                self.printVerbose("AWS batch queue: " + self.queue)
-                with open(self.analysisLogFile, "a") as afile:
-                    afile.write("AWS profile: " + profile + "\n")
-                    afile.write("AWS job def: " + self.submitOpts["jobdef"] + "\n")
-                    afile.write("AWS batch queue: " + self.queue + "\n")
-
-    def runCmd(self, job_name, cmd, logfile=None):
-        # redirect stdout/stderr
-        self.printVerbose("runCmd: " + str(cmd))
-        if logfile != None:
-            sout = sys.stdout
-            serr = sys.stderr
-            flog = open ( logfile, 'w' )
-            sys.stderr = sys.stdout = flog
-        # spawn
-        process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=False)
-        status = process.wait()
-        # redirect stdout back
-        if logfile != "":
-            sys.stdout = sout
-            sys.stderr = serr
-        if status:
-            print( "Error running job: " + job_name + " (" + str(status) + ") for command:" )
-            print( "\t> " + str(cmd) )
-            sys.exit(2)
+            self.printVerbose("AWS profile: " + profile)
+            self.printVerbose("AWS job def: " + self.submitOpts["jobdef"])
+            self.printVerbose("AWS batch queue: " + self.queue)
+            with open(self.analysisLogFile, "a") as afile:
+                afile.write("AWS profile: " + profile + "\n")
+                afile.write("AWS job def: " + self.submitOpts["jobdef"] + "\n")
+                afile.write("AWS batch queue: " + self.queue + "\n")
 
     def submitJob(self, job_name, cmd, args=None, holdid=None, array_range=None,
                   request_cores=None, print_only=False, **kwargs):
@@ -523,7 +485,7 @@ class SGE_Cluster(Cluster):
     def runCmd(self, job_name, cmd, logfile=None):
         # get and set the env
         key = "-v"
-        if key in self.clusterCfg["submit_opts"].keys():
+        if key in list(self.clusterCfg["submit_opts"].keys()):
             vopt = self.clusterCfg["submit_opts"][key]
             envVars = vopt.split(",")
             for var in envVars:
@@ -535,23 +497,11 @@ class SGE_Cluster(Cluster):
                     os.environ[varVal[0]] = np + cp
                 else:
                     os.environ[varVal[0]] = varVal[1]
-        # redirect stdout/stderr
-        if logfile != None:
-            sout = sys.stdout
-            serr = sys.stderr
-            flog = open ( logfile, 'w' )
-            sys.stderr = sys.stdout = flog
-        # spawn
-        process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=False)
-        status = process.wait()
-        # redirect stdout back
-        if logfile != "":
-            sys.stdout = sout
-            sys.stderr = serr
-        if status:
-            print( "Error running job: " + job_name + " (" + str(status) + ") for command:" )
-            print( "\t> " + str(cmd) )
-            sys.exit(2)
+
+        (pmsg, status) = port_popen.popen_stdout(cmd, logfile, jobname=job_name, shell=False)
+        if status != 0:
+            print(">>> Error: SGE_Cluster:runCmd executing popen\nStatus: " + str(status) + " Msg: " + str(pmsg))
+            sys.exit(status)
 
     def submitJob(self, binary=False, hold_array=None, **kwargs):
         subOpts = deepcopy(self.clusterCfg["submit_opts"])
@@ -597,7 +547,7 @@ class SGE_Cluster(Cluster):
         # get memory limit option (adjust based on specifying a specific number of cores)
         key = "memory_limits"
         lmsg_mem = "not provided"
-        if key in self.clusterCfg.keys():
+        if key in list(self.clusterCfg.keys()):
             memlim = super(SGE_Cluster, self).memoryLimit(job_name)
             if memlim != None:
                 memlim = memlim/memcoreFactor
@@ -614,25 +564,46 @@ class SGE_Cluster(Cluster):
         if not key in kwargs:
             kwargs[key] = []
         argStr = " ".join(kwargs[key])
+        # check for eqw
+        if self.clusterCfg["enable_eqw"]:
+            eqwVal = "ENABLE_EQW=1"
+            key = "-v"
+            if key in subOpts:
+                subOpts[key] = subOpts[key] + "," + eqwVal
+            else:
+                subOpts[key] = eqwVal
         # create a string for the submit options
         optStr = dictToString(subOpts)
         # create the entire submit command
         sub_cmd = " ".join([submit_cmd, optStr, kwargs["cmd"], argStr])
+        # check for resume
+        if self.clusterCfg["enable_resume"]:
+            rscript = self.clusterCfg["resume_script"]
+            spath = super(SGE_Cluster, self).getSubmitPath()
+            rscript = spath + "/" + rscript + " sge " + job_name
+            # update submit opts -N
+            subOpts["-N"] = "resume_" + subOpts["-N"]
+            subOpts["-b"] = "y"
+            subOpts["-o"] = self.resumeDir
+            optStr = dictToString(subOpts)
+            # update sub_cmd
+            sub_cmd = " ".join([submit_cmd, optStr, rscript, kwargs["cmd"], argStr])
 
         key = "print_only"
         if key in kwargs and kwargs[key] == True:
-            print sub_cmd
+            print(sub_cmd)
             return "000000"
         self.printVerbose("submitting job: " + sub_cmd)
-        super(SGE_Cluster, self).analysisLog(lmsg)
-        process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE)
-        pipe = process.stdout
-        sub_out = pipe.readline()
-        jobid = sub_out.strip(' \t\n\r')
+        (jobid, status) = port_popen.popen(sub_cmd)
+        if status != 0:
+            print(">>> Error: SGE_Cluster:submitJob executing popen\nStatus: " + str(status) + " Msg: " + str(jobid))
+            sys.exit(status)
 
         if array_job:
             jobid = jobid.split(".")[0]
-        print("Submitting job " + jobid + " (" + job_name + ")")
+        print("Submitting job " + jobid + " (" + subOpts["-N"] + ")")
+        lmsg += " /jobid: " + str(jobid)
+        super(SGE_Cluster, self).analysisLog(lmsg)
 
         return jobid
 
@@ -659,20 +630,20 @@ class AWS_Cluster(SGE_Cluster):
         jobid = super(AWS_Cluster, self).submitJob(**kwargs)
         return jobid
 
-class Slurm_Cluster(Cluster):
+class Slurm_Cluster(Docker_Cluster):
 
     def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
         self.std_cluster_file = "./slurm_cfg.json"
         self.opt_cluster_file = opt_cluster_file
 
-        cfgVersion = "1.0"
+        cfgVersion = "2.2"
         super(Slurm_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
         # open slurm partitions cfg
         self.openPartitionCfg(self.pipelinePath + "/" + self.clusterCfg["partition_cfg"])
         # update pipelinePath
         key = "pipeline_path_docker"
-        if key in self.clusterCfg.keys():
+        if key in list(self.clusterCfg.keys()):
             self.pipelinePath = self.clusterCfg[key]
 
     def openPartitionCfg(self, a_pcfg):
@@ -680,11 +651,11 @@ class Slurm_Cluster(Cluster):
         with open(a_pcfg) as cfgFileHandle:
             partitionCfg = json.load(cfgFileHandle)
         cname = self.clusterCfg["cluster"]
-        if cname not in partitionCfg["clusters"].keys():
+        if cname not in list(partitionCfg["clusters"].keys()):
             print("Cluster " + cname + " not found in " + a_pcfg)
             sys.exit(2)
         self.partitions = partitionCfg["clusters"][cname]
-        self.partition_names = self.partitions.keys()
+        self.partition_names = list(self.partitions.keys())
 
     def analysisInit(self, print_only=False):
         # analysis log file and analysis info
@@ -694,59 +665,33 @@ class Slurm_Cluster(Cluster):
         super(Slurm_Cluster, self).analysisLog("Slurm submit script: " +
                                                self.clusterCfg["submit_script"] + "\n", print_only)
 
-    def getPartition(self, a_jobname, a_memsize, a_reqcores):
-        # get tasks per partition for job
-        tasksPerPartition = 1;
-        tpDict = self.clusterCfg["tasks_per_partition"]
-        jobPart = [ v for k,v in tpDict.iteritems() if a_jobname.find(k) != -1]
-        if len(jobPart):
-            # just find the first match to jobname
-            tasksPerPartition = jobPart[0]
-        self.printVerbose("tasks per partition for job " + a_jobname + ": " +
-                          str(tasksPerPartition))
-        # find all partitions with mem > a_memsize*tpp
-        memcheck = a_memsize*tasksPerPartition
+    def getPartition(self, a_jobname, a_memsize, a_reqcores, a_tasksPerPartition):
+        # find all partitions with mem >= a_memsize*tpp
+        memcheck = a_memsize*a_tasksPerPartition
         pmem = [ k for k in self.partition_names if self.partitions[k]["mem"] > memcheck ]
         if len(pmem) == 0:
             print("Error: cannot find partition with sufficient memory (" + str(memcheck) + "MB)")
             sys.exit(2)
         # from partitions with mem, find partitions with cores >= a_reqcores*tpp
-        corecheck = a_reqcores*tasksPerPartition
-        pmemcore = [ k for k in pmem if self.partitions[k]["cores"] > corecheck ]
+        corecheck = a_reqcores*a_tasksPerPartition
+        pmemcore = [ k for k in pmem if self.partitions[k]["cores"] >= corecheck ]
         if len(pmemcore) == 0:
             print("Error: cannot find partition with enough cores (" + str(corecheck) +
                  ") for "+ str(memcheck) + "MB memory")
             sys.exit(2)
 
-        # from partitions with mem & core, find partition with min cores
+        # from partitions with mem & core, find partition with min memory
         thepart = pmemcore[0]
+        themem = self.partitions[thepart]["mem"]
         nop = len(pmemcore)
         if nop > 1 :
             for i in range(1,nop):
                 pcheck = pmemcore[i]
-                if self.partitions[pcheck]["cores"] < self.partitions[thepart]["cores"]:
+                mcheck = self.partitions[pcheck]["mem"]
+                if mcheck < themem:
                     thepart = pcheck
+                    themem = mcheck
         return thepart
-
-    def runCmd(self, job_name, cmd, logfile=None):
-        # redirect stdout/stderr
-        self.printVerbose("runCmd: " + str(cmd))
-        if logfile != None:
-            sout = sys.stdout
-            serr = sys.stderr
-            flog = open ( logfile, 'w' )
-            sys.stderr = sys.stdout = flog
-        # spawn
-        process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=False)
-        status = process.wait()
-        # redirect stdout back
-        if logfile != "":
-            sys.stdout = sout
-            sys.stderr = serr
-        if status:
-            print( "Error running job: " + job_name + " (" + str(status) + ") for command:" )
-            print( "\t> " + str(cmd) )
-            sys.exit(2)
 
     def submitJob(self, **kwargs):
         # get the various config attributes
@@ -755,14 +700,20 @@ class Slurm_Cluster(Cluster):
         cluster = self.clusterCfg["cluster"]
         job_cmd = self.clusterCfg["submit_cmd"]
         dependency_value = self.clusterCfg["dependency_value"]
-        submit_script = self.clusterCfg["submit_script"]
         pipeline_path_docker = self.clusterCfg["pipeline_path_docker"]
-        tasks_per_partition = self.clusterCfg["tasks_per_partition"]
-        # set full path of submit script
-        submit_script = self.submitPath + "/" + submit_script
+        # get tasks per partition based on job name
+        tasksPerPartition = 1;
+        tppDict = self.clusterCfg["tasks_per_partition"]
+        jobName = kwargs["job_name"]
+        jobPart = [ v for k,v in tppDict.items() if jobName.find(k) != -1]
+        if len(jobPart):
+            # just find the first match to jobname
+            tasksPerPartition = jobPart[0]
+        self.printVerbose("tasks per partition for job " + jobName + ": " +
+                          str(tasksPerPartition))
         # process kwargs for submit options
-        submitOpts["--job-name"] = kwargs["job_name"]
-        lmsg = "Job: " + kwargs["job_name"]
+        submitOpts["--job-name"] = jobName
+        lmsg = "Job: " + jobName
 
         key = "holdid"
         if key in kwargs and kwargs[key] != []:
@@ -791,7 +742,7 @@ class Slurm_Cluster(Cluster):
         # get memory limit option
         key = "memory_limits"
         lmsg_mem = "not provided"
-        if key in self.clusterCfg.keys():
+        if key in list(self.clusterCfg.keys()):
             memlim = super(Slurm_Cluster, self).memoryLimit(kwargs["job_name"])
             if memlim == None:
                 memlim = 8000
@@ -801,19 +752,23 @@ class Slurm_Cluster(Cluster):
         dockerOpts["--mem_limit"] = str(int(math.ceil(float(memlim)/1000)))
 
         # get partition
-        thePartition = self.getPartition(kwargs["job_name"], memlim, int(reqCores))
+        thePartition = self.getPartition(kwargs["job_name"], memlim, int(reqCores), tasksPerPartition)
         submitOpts["--partition"] = thePartition
         lmsg = lmsg + " /cluster: " + cluster
         lmsg = lmsg + " /parition: " + submitOpts["--partition"]
+        lmsg = lmsg + " /tasks_per_partition: " + str(tasksPerPartition)
         # get the machine and cost
         theMachine = self.partitions[thePartition]["machine"]
-        theCost = str(self.partitions[thePartition]["cost"])
-        lmsg = lmsg + "/machine: " + theMachine + " ( " + theCost + "/hr )"
-        # output (log)
+        theCost = str((self.partitions[thePartition]["cost"]/tasksPerPartition))
+        lmsg = lmsg + "/machine: " + theMachine + " ( " + theCost + "/hr for " + str(tasksPerPartition) + " task(s))"
+        # submit output (log)
+        submit_logdir = ""
+        if self.clusterCfg["submit_log_dir"] != None:
+            submit_logdir = self.clusterCfg["submit_log_dir"] + "/sbatch_"
         if submitOpts["--array"] == None:
-            submitOpts["--output"] = submitOpts["--job-name"] + "_%j.log"
+            submitOpts["--output"] = submit_logdir + submitOpts["--job-name"] + "_%j.log"
         else:
-            submitOpts["--output"] = submitOpts["--job-name"] + "_%A_%a.log"
+            submitOpts["--output"] = submit_logdir + submitOpts["--job-name"] + "_%A_%a.log"
 
         # set the docker options
         # -- cmd (change path associated within docker)
@@ -827,6 +782,8 @@ class Slurm_Cluster(Cluster):
         # -- cost
         dockerOpts["--machine"] = theMachine
         dockerOpts["--cost"] = theCost
+        # -- working_dir
+        dockerOpts["--working_dir"] = os.getenv('PWD')
         # dockerOpts - boolean options.  All boolean options are default to false
         # in runDocker.py.  A boolean option does not have a value.
         # If a boolean option is passed then that option in runDocker is set true.
@@ -861,6 +818,26 @@ class Slurm_Cluster(Cluster):
         # convert opts to strings
         suboptStr = dictToString(submitOpts)
         dockeroptStr = dictToString(dockerOpts)
+        # submit scripts
+        submit_script = self.submitPath + "/" + self.clusterCfg["submit_script"]
+        submit_prescript = self.submitPath + "/" + self.clusterCfg["submit_prescript"]
+        resume_script = self.submitPath + "/" + self.clusterCfg["resume_script"]
+        if self.clusterCfg["enable_resume"]:
+            # resume
+            submit_script = submit_prescript + " " + resume_script + " slurm " + jobName + " " + submit_script
+            # update submit opts - batch job name and log file
+            rpre = "resume_"
+            submitOpts["--job-name"] = rpre + jobName
+            # either a single job or an array job
+            if submitOpts["--array"] == None:
+                submitOpts["--output"] = self.resumeDir + submitOpts["--job-name"] + "_%j.log"
+            else:
+                submitOpts["--output"] = self.resumeDir + submitOpts["--job-name"] + "_%A_%a.log"
+
+            suboptStr = dictToString(submitOpts)
+        else:
+            self.clusterCfg["execute_prescript"]
+            submit_script = submit_prescript + " " + submit_script
 
         sub_cmd = " ".join([job_cmd, suboptStr, submit_script, dockeroptStr])
 
@@ -876,14 +853,15 @@ class Slurm_Cluster(Cluster):
         else:
             self.printVerbose("submitting job: " + sub_cmd)
             super(Slurm_Cluster, self).analysisLog("> sbatch: " + sub_cmd)
-            process = subprocess.Popen(sub_cmd, shell=True, stdout=subprocess.PIPE)
-            pipe = process.stdout
-            sub_out = pipe.readline()
+            (sub_out, status) = port_popen.popen(sub_cmd)
+            if status != 0:
+                print(">>> Error: Slurm_Cluster:submitJob executing popen\nStatus: " + \
+                      str(status) + " Msg: " + str(sub_out))
+                sys.exit(status)
             jobid = sub_out.split(" ")[3].strip()
             super(Slurm_Cluster, self).analysisLog("> jobid: " + str(jobid) + "\n")
-            print("Sbatch to cluster: " + cluster + " / job: " + submitOpts["--job-name"] +
+            print(sub_out + " cluster: " + cluster + " / job: " + submitOpts["--job-name"] +
                   " / job id: " + jobid)
-
         return jobid
 
 class GCP_Cluster(Slurm_Cluster):

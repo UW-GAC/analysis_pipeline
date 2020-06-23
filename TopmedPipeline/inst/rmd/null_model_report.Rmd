@@ -54,7 +54,7 @@ if (params$invnorm) {
   nullmod_file <- sprintf("%s_invnorm_reportonly.RData", config["out_prefix"])
 }
 nullmod <- getobj(nullmod_file)
-is_binary <- as.logical(config["binary"])
+is_binary <- config["family"] == "binomial"
 
 is_invnorm <- !is_binary & params$invnorm & as.logical(config["inverse_normal"])
 

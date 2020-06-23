@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3
 
 """LD Pruning"""
 
@@ -47,7 +47,8 @@ version = "--version " + TopmedPipeline.__version__
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = cluster.getPipelinePath()
-driver = os.path.join(pipeline, "runRscript.sh")
+submitPath = cluster.getSubmitPath()
+driver = os.path.join(submitPath, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots"])
@@ -106,13 +107,12 @@ jobid = cluster.submitJob(job_name=job, cmd=driver, args=["-c", rscript, configf
 # remove temporary files (per-chr subset)
 tmpid = cluster.submitJob(binary=True, job_name="rm_tmp_files", cmd="rm", args=[configdict["subset_gds_file"] + ".chr*.tmp"], holdid=[jobid], email=email, print_only=print_only)
 
-
 # post analysis
-job = "post_analysis"
-jobpy = job + ".py"
-pcmd=os.path.join(pipeline, jobpy)
-argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
+bname = "post_analysis"
+job = "ld_pruning" + "_" + bname
+jobpy = bname + ".py"
+pcmd=os.path.join(submitPath, jobpy)
+argList = ["-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
-pdriver=os.path.join(pipeline, "run_python.sh")
-cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
+cluster.submitJob(binary=True, job_name=job, cmd=pcmd, args=argList,
                   holdid=[jobid], print_only=print_only)

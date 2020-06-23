@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3
 
 """Identity By Descent"""
 
@@ -12,7 +12,7 @@ description = """
 Identity by Descent with the following steps:
 1) Convert GDS to BED for use with KING
 2) KING --ibdseg to get initial kinship estimates
-3) KING --kinship to get divergence matrix
+3) Convert KING output to sparse matrix
 """
 
 parser = ArgumentParser(description=description)
@@ -47,7 +47,8 @@ version = "--version " + TopmedPipeline.__version__
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = cluster.getPipelinePath()
-driver = os.path.join(pipeline, "runRscript.sh")
+submitPath = cluster.getSubmitPath()
+driver = os.path.join(submitPath, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log", "plots"])
@@ -127,44 +128,13 @@ TopmedPipeline.writeConfig(config, configfile)
 segmatid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[segid], email=email, print_only=print_only)
 
 
-
-job = "ibd_king"
-
-rscript = os.path.join(pipeline, "R", job + ".R")
-
-config = deepcopy(configdict)
-config["out_file"] = configdict["data_prefix"] + "_king_robust.gds"
-configfile = configdict["config_prefix"] + "_" + job + ".config"
-TopmedPipeline.writeConfig(config, configfile)
-
-kinid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[jobid], request_cores=ncores, email=email, print_only=print_only)
-
-
-## fails for large sample sizes (~50k)
-## https://github.com/zhengxwen/SNPRelate/issues/57
-
-# job = "kinship_plots"
-
-# rscript = os.path.join(pipeline, "R", job + ".R")
-
-# config = deepcopy(configdict)
-# config["kinship_file"] = configdict["data_prefix"] + "_king_robust.gds"
-# config["kinship_method"] = "king"
-# config["out_file_all"] = configdict["plots_prefix"] + "_king_robust_kinship_all.pdf"
-# config["out_file_study"] = configdict["plots_prefix"] + "_king_robust_kinship_study.pdf"
-# configfile = configdict["config_prefix"] + "_" + job + "_robust.config"
-# TopmedPipeline.writeConfig(config, configfile)
-
-# kinid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[kinid], email=email, print_only=print_only)
-
-
-
 # post analysis
-job = "post_analysis"
-jobpy = job + ".py"
-pcmd=os.path.join(pipeline, jobpy)
-argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
+bname = "post_analysis"
+job = "king" + "_" + bname
+jobpy = bname + ".py"
+pcmd=os.path.join(submitPath, jobpy)
+holdlist = [segplotid, segmatid]
+argList = ["-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
-pdriver=os.path.join(pipeline, "run_python.sh")
-holdlist = [segplotid, segmatid, kinid]
-cluster.submitJob(job_name=job, cmd=pdriver, args=argList, holdid=holdlist, print_only=print_only)
+cluster.submitJob(binary=True, job_name=job, cmd=pcmd, args=argList,
+                  holdid=holdlist, print_only=print_only)

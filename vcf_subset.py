@@ -1,4 +1,4 @@
-#! /usr/bin/env python2.7
+#! /usr/bin/env python3
 
 """Generate subset of VCF files based on sample list"""
 
@@ -7,7 +7,6 @@ import sys
 import os
 from argparse import ArgumentParser
 from copy import deepcopy
-from string import replace
 
 description = """
 
@@ -45,7 +44,8 @@ version = "--version " + TopmedPipeline.__version__
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = os.path.dirname(os.path.abspath(sys.argv[0]))
-driver = os.path.join(pipeline, "runRscript.sh")
+submitPath = cluster.getSubmitPath()
+driver = os.path.join(submitPath, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "log"])
@@ -55,7 +55,7 @@ cluster.analysisInit(print_only=print_only)
 
 # submit job for each chromosome
 job = "vcf_subset"
-driver = os.path.join(pipeline, job + ".sh")
+driver = os.path.join(submitPath, job + ".sh")
 samp_file = configdict["sample_file"]
 in_file = configdict["vcf_file"].split(" ")
 out_file = configdict["out_file"].split(" ")
@@ -64,13 +64,13 @@ jobid = cluster.submitJob(job_name=job, cmd=driver, args=args, array_range=chrom
 
 # md5 checksums
 job = "vcf_md5"
-driver = os.path.join(pipeline, job + ".sh")
+driver = os.path.join(submitPath, job + ".sh")
 args = [os.path.dirname(configdict["out_file"])]
 md5id = cluster.submitJob(job_name=job, cmd=driver, args=args, holdid=[jobid], email=email, print_only=print_only)
 
 # check file
 job = "check_gds"
-driver = os.path.join(pipeline, "runRscript.sh")
+driver = os.path.join(submitPath, "runRscript.sh")
 rscript = os.path.join(pipeline, "R", job + ".R")
 
 config = deepcopy(configdict)
@@ -84,10 +84,11 @@ args = ["-c", rscript, configfile]
 jobid = cluster.submitJob(binary=True, hold_array = jobid, job_name=job, cmd=driver, args=args, array_range=chromosomes, email=email, print_only=print_only)
 
 # post analysis
-job = "post_analysis"
-jobpy = job + ".py"
-pcmd=os.path.join(pipeline, jobpy)
-argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
+bname = "post_analysis"
+job = "vcf_subset" + "_" + bname
+jobpy = bname + ".py"
+pcmd=os.path.join(submitPath, jobpy)
+argList = ["-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
-pdriver=os.path.join(pipeline, "run_python.sh")
-cluster.submitJob(job_name=job, cmd=pdriver, args=argList, holdid=[jobid, md5id], print_only=print_only)
+cluster.submitJob(binary=True, job_name=job, cmd=pcmd, args=argList,
+                  holdid=[jobid, md5id], print_only=print_only)

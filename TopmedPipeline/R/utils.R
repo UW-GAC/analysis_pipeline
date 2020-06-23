@@ -4,6 +4,7 @@
 #'
 #' Loads an R object and stores it under a new name without creating a duplicate copy.
 #' If multiple objects are stored in the same file, only the first one will be returned.
+#' Supports files saved with \code{\link{saveRDS}}, provided the file extension ".rds" is used.
 #' 
 #' @param Rdata path to an Rdata file containing a single R object to load
 #' @return The R object stored in \code{Rdata}
@@ -14,8 +15,12 @@
 #' y <- getobj(file)
 #' unlink(file)
 #'
+#' @importFrom tools file_ext
 #' @export
 getobj <- function(Rdata) {
+  if (tolower(file_ext(Rdata)) == "rds") {
+    return(readRDS(Rdata))
+  }
   objname <- load(Rdata)
   if (length(objname) > 1) {
     warning(paste("Multiple objects stored in file", Rdata,

@@ -15,8 +15,7 @@
 \alias{checkSelectedVariants}
 \title{Filter SeqVarGDSClass objects}
 \usage{
-filterBySegment(gds, segment, segment.file, pad.right = 0,
-  verbose = TRUE)
+filterBySegment(gds, segment, segment.file, pad.right = 0, verbose = TRUE)
 
 filterByFile(gds, idfile, verbose = TRUE)
 
@@ -26,17 +25,25 @@ filterByPass(gds, verbose = TRUE)
 
 filterBySNV(gds, biallelic = TRUE, verbose = TRUE)
 
-filterByMAF(gds, sample.id = NULL, maf.min = 0, build = "hg19",
-  verbose = TRUE)
+filterByMAF(gds, sample.id = NULL, maf.min = 0, build = "hg19", verbose = TRUE)
 
-filterByMAC(gds, sample.id = NULL, mac.min = 1, build = "hg19",
-  verbose = TRUE)
+filterByMAC(gds, sample.id = NULL, mac.min = 1, build = "hg19", verbose = TRUE)
 
-filterByEffN(gds, sample.id = NULL, effN.min = 1, build = "hg19",
-  verbose = TRUE)
+filterByEffN(
+  gds,
+  sample.id = NULL,
+  effN.min = 1,
+  build = "hg19",
+  verbose = TRUE
+)
 
-filterByRare(gds, sample.id = NULL, af.max = 0.01, build = "hg19",
-  verbose = TRUE)
+filterByRare(
+  gds,
+  sample.id = NULL,
+  af.max = 0.01,
+  build = "hg19",
+  verbose = TRUE
+)
 
 filterByPCAcorr(gds, build = "hg19", verbose = TRUE)
 

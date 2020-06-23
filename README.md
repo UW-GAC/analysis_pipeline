@@ -67,7 +67,7 @@ config parameter | default value | description
 
 ## Relatedness and Population structure
 
-The first step in evalulating relatedness and population structure is to select a subset of variants with LD pruning and create a GDS file containing only these variants. KING is used to get initial estimates of kinship for close relatives (using the "IBDSeg" methed) and a full matrix of population divergence estimates for all sample pairs (using the "robust" method). These two matrices are used by PC-AiR to identify a set of unrelated samples, run Principal Component Analysis on unrelated samples, and project relatives. Finally, PC-Relate estimates kinship accounting for population structure.
+The first step in evalulating relatedness and population structure is to select a subset of variants with LD pruning and create a GDS file containing only these variants. KING is used to get initial estimates of kinship for close relatives (using the "IBDSeg" methed) and a full matrix of population divergence estimates for all sample pairs (using the "robust" method). These two matrices are used by PC-AiR to identify a set of unrelated samples, run Principal Component Analysis (PCA) on unrelated samples, and project relatives. (Note that for very large sample sizes, it is recommended to omit the KING-robust step and ignore ancestry divergence when selecting an unrelated set.) Finally, PC-Relate estimates kinship accounting for population structure.
 
 1. LD pruning to select variants
 
@@ -98,22 +98,38 @@ The first step in evalulating relatedness and population structure is to select 
     1. `gds2bed.R`
 	2. `plink --make-bed`
 	3. `king --ibdseg`
-	    - `kinship_plots.R`
-	    - `king_to_matrix.R`
-	4. `ibd_king.R`
+	4. `kinship_plots.R`
+	5. `king_to_matrix.R`
 
     config parameter | default value | description
     --- | --- | ---
     `out_prefix` | | Prefix for files created by this script.
     `gds_file` | | GDS file with only LD pruned variants, all chromosomes.
 	`bed_file` | | Output BED file.
-	`sample_include_file` | | RData file with vector of sample.id to include. Required to ensure that the two output matrices have the same dimensions.
+	`sample_include_file` | | RData file with vector of sample.id to include. Required to ensure that the output matrix includes all samples for later analysis.
 	`variant_include_file` | `NA` | RData file with vector of variant.id to include.
 	`sparse_threshold` | `0.01104854` | Minimum kinship to use for creating the sparse matrix from `king --ibdseg` output (default is `2^(-13/2)` or 5th degree relatives). A block diagonal matrix will be created such that any pair of samples with a kinship greater than the threshold is in the same block, and pairwise kinship between blocks is 0. Not used for the output of `king --kinship`, which is always saved as a dense GDS file.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
 	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
 
-3. [PC-AiR](http://www.ncbi.nlm.nih.gov/pubmed/25810074) to select an informative set of unrelated samples, do PCA on unrelated, project into relatives
+3. (optional) [KING](http://www.ncbi.nlm.nih.gov/pubmed/20926424) to get population divergence estimates
+
+    `king_robust.py`
+    1. `ibd_king.R`
+	2. `kinship_plots.R`
+
+	This analysis is very slow and memory-intensive for large sample sizes, as it calculates `N^2` pairwise divergence estimates.
+
+    config parameter | default value | description
+    --- | --- | ---
+    `out_prefix` | | Prefix for files created by this script.
+    `gds_file` | | GDS file with only LD pruned variants, all chromosomes.
+	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
+	`variant_include_file` | `NA` | RData file with vector of variant.id to include.
+	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for plotting kinship estimates separately by study.
+	`study` | `NA` | Name of column in `phenotype_file` containing study variable.
+
+4. [PC-AiR](http://www.ncbi.nlm.nih.gov/pubmed/25810074) to select an informative set of unrelated samples, do PCA on unrelated, project into relatives
 
     `pcair.py`
     1. `find_unrelated.R`
@@ -132,8 +148,8 @@ The first step in evalulating relatedness and population structure is to select 
     `out_prefix` | | Prefix for files created by this script.
     `gds_file` | | GDS file with only LD pruned variants, all chromosomes.
 	`full_gds_file` | | GDS file with all variants. Include a space to insert chromosome.
-	`king_file` | | GDS (recommended) or RData file with kinship coefficients created by `king.py`. Used for ancestry divergence, and optionally for kinship if `kinship_file` is not specified.
-	`kinship_file` | `NA` | File containing kinship matrix to use for defining the unrelated sample set. Multiple formats are accepted, including RData or GDS from `king.py` or `pcrelate.py`. A sparse Matrix object stored as RData is recommended.
+	`kinship_file` | `NA` | File containing kinship matrix to use for defining the unrelated sample set. Multiple formats are accepted, including RData or GDS from `king.py` or `pcrelate.py`. A sparse Matrix object stored as RData is recommended. 
+	`divergence_file` | `NA` | GDS (recommended) or RData file with kinship coefficients created by `king_robust.py`. Used for ancestry divergence.
 	`kinship_threshold` | `0.04419417` | Minimum kinship estimate to use for assigning relatives (default is `2^(-9/2)` or 3rd degree relatives).
 	`divergence_threshold` | `-0.04419417` | Minimum kinship estimate to use for ancestry divergence (default is `-2^(-9/2)`).
 	`sample_include_file` | `NA` | RData file with vector of sample.id to include.
@@ -151,7 +167,7 @@ The first step in evalulating relatedness and population structure is to select 
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for color-coding PCA plots by group.
 	`group` | `NA` | Name of column in `phenotype_file` containing group variable.
 
-4. [PC-Relate](http://www.ncbi.nlm.nih.gov/pubmed/26748516) to estimate kinship coefficients adjusted for population structure and admixture using PCs
+5. [PC-Relate](http://www.ncbi.nlm.nih.gov/pubmed/26748516) to estimate kinship coefficients adjusted for population structure and admixture using PCs
 
     `pcrelate.py`
     1. `pcrelate_beta.R`
@@ -226,9 +242,9 @@ config parameter | default value | description
 `out_prefix` | | Prefix for files created by this script.
 `phenotype_file` | | RData file with AnnotatedDataFrame of phenotypes.
 `outcome` | | Name of column in `phenotype_file` containing outcome variable.
-`pca_file` | `NA` | RData file with PCA results created by `pcair.py`.
+`pca_file` | `NA` | RData file with PCA results created by `pcair.py`. A matrix or data.frame is also accepted, as long as the rownames contain sample.id.
 `relatedness_matrix_file` | `NA` | RData or GDS file with a kinship matrix or GRM.
-`binary` | `FALSE` | `TRUE` if `outcome` is a binary (case/control) variable; `FALSE` if `outcome` is a continuous variable.
+`family` | `gaussian` | The error distribution to be used in the model. Allowed values are `gaussian` (continuous outcome), `binomial` (binary or case/control outcome), or `poisson` (count outcome).
 `covars` | `NA` | Names of columns `phenotype_file` containing covariates, quoted and separated by spaces.
 `group_var` | `NA` | Name of covariate to provide groupings for heterogeneous residual error variances in the mixed model.
 `inverse_normal` | `TRUE` | `TRUE` if an inverse-normal transform should be applied to the outcome variable.
@@ -260,7 +276,7 @@ config parameter | default value | description
 `thin` | `TRUE` | Logical for whether to thin points in the QQ and manhattan plots.
 `thin_nbins` | `10` | Number of bins to use for thinning.
 `thin_npoints` | `10000` | Number of points in each bin after thinning.
-
+`truncate_pval_threshold` | `1e-12` | Minimum p-value to display in truncated QQ and manhattan plots.
 
 ### Single-variant
 
@@ -276,7 +292,7 @@ config parameter | default value | description
 --- | --- | ---
 `mac_threshold` | `5` | Minimum minor allele count for variants to include in test. Use a higher threshold when outcome is binary.
 `maf_threshold` | `0.001` | Minimum minor allele frequency for variants to include in test. Only used if `mac_threshold` is `NA`.
-`test_type` | `score` | Type of test to perform. If samples are related (mixed model), options are `score` if `binary` is `FALSE`, `score` and `score.spa` if `binary` is `TRUE`. 
+`test_type` | `score` | Type of test to perform. If samples are related (mixed model), options are `score` if `family` is `gaussian`, `score` and `score.spa` if `family` is `binomial`.
 `conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` (or `chr`) and `variant.id`. If provided, these variants will be omitted from the association test output.
 `known_hits_file` | `NA` | RData file with data.frame containing columns `chr` and `pos`. If provided, 1 Mb regions surrounding each variant listed will be omitted from the QQ and manhattan plots.
 
@@ -381,3 +397,32 @@ config parameter | default value | description
 `vcf_file` | | Name of the input VCF (or BCF) file. Include a space to insert chromosome number.
 `out_file` | | Name of output VCF file (should end in ".vcf.gz"). Include a space to insert chromosome number.
 `gds_file` | | Name of GDS file used to check genotypes. Include a space to insert chromosome number.
+
+## Submitting Jobs on SGE
+When running analysis pipeline on an SGE cluster, there is a json configuration file that can be editted for customizing how an SGE job is run.  The configuration file is named `cluster_cfg.json` and is located in the root directory of the code for the analysis pipeline (e.g., `/projects/topmed/working_code/analysis_pipeline`).  The json configuration file includes the following options (and many more):
+1. Maximum memory of jobs
+2. R library path
+3. Name of the SGE queue
+4. Holding dependent jobs when a parent job fails
+5. Resuming jobs that partially completed from a previous run
+
+This configuration file can be copied to a user's working directory, edited, and specified when running the pipeline using the `--cluster_file` option.
+
+#### Holding Dependent Jobs
+The configuration option `enable_eqw` controls this feature.  By default, the option is `false`.  As a result, if a parent job fails, all the dependent jobs will still be submitted (and most likely fail).
+
+If `enable_eqw` is set to `true`, when a parent job fails all the dependent jobs will be in a hold state (i.e., `hqw`) and the failed parent job will be in an error state (i.e., 'Eqw').
+
+If the error is fixable (and only very few errors are fixable), once fixed users can resubmit the failed job by entering the command `qmod -cj <jobid>`. The parent job will be resubmitted (with the same arguments) and, if fixed, the dependent jobs will now run.  If the parent job still encounters an error, it will enter the same error state and the dependent jobs will remain in a hold state.
+
+If the error cannot be fixed, then users can either delete all the dependent jobs manually or run the script `deljobs.sh` located in the analysis pipeline's root directory.
+
+(Note: Running 'deljobs.sh' requires one argument that specifies the analysis pipeline log file that's created in the working directory where the pipeline was run.  The analysis pipeline log file is named using the name of the analysis, the user's name, and a timestamp.  For example
+
+`analysis_null_model_User1_158041804837.log`
+)
+
+### Resuming Jobs
+The configuration option `enable_resume` controls this feature.  By default, the option is 'false'.  As a result, after a job fails and users re-run the pipeline, all jobs (even the jobs that previously completed) will run again.
+
+If `enable_resume` is set to `true`, completed jobs are tracked.  When running the analysis pipeline (e.g., `assoc single`), if a job fails all previous jobs are tracked as `completed`.  When a user fixes the job that failed and re-runs the analysis pipeline, then only the previously failed job (and subsequent jobs) will run.

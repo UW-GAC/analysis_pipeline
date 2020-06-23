@@ -17,6 +17,7 @@ library(gdsfmt)
     save(phen, file=phenfile)
 
     pcs <- list(vectors=matrix(rnorm(n*2), nrow=n, ncol=2, dimnames=list(phen$sample.id), 1:2))
+    class(pcs) <- "pcair"
     pcfile <- tempfile()
     save(pcs, file=pcfile)
 
@@ -274,4 +275,22 @@ test_that("fewer samples in phenotype file", {
     svd <- SeqVarData(insertChromString(config["gds_file"], 1), phen$annot)
     seqClose(svd)
     .cleanupSmallConfig(config)
+})
+
+
+test_that("pca_file is matrix or data.frame", {
+    config <- .testConfig(covars=NA, n_pcs=2)
+    pcafile <- config["pca_file"]
+    pcs <- getobj(pcafile)
+    pcs <- pcs$vectors
+    save(pcs, file=pcafile)
+    phen <- getPhenotypes(config)
+    expect_equivalent(as.matrix(pData(phen$annot)[,c("PC1", "PC2")]), pcs)
+
+    pcs <- as.data.frame(pcs)
+    save(pcs, file=pcafile)
+    phen <- getPhenotypes(config)
+    expect_equivalent(pData(phen$annot)[,c("PC1", "PC2")], pcs)
+    
+    .cleanupConfig(config)
 })

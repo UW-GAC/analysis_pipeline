@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 import     time
 import     csv
 import     sys
@@ -16,14 +16,14 @@ debugPrefix='>>> Debug: '
 
 # def functions
 def pInfo(msg):
-    print msgInfoPrefix+msg
+    print(msgInfoPrefix+msg)
 
 def pError(msg):
-    print msgErrPrefix+msg
+    print(msgErrPrefix+msg)
 
 def pDebug(msg):
     if debug:
-        print debugPrefix+msg
+        print(debugPrefix+msg)
 def Summary(hdr):
     pInfo(hdr)
     pInfo( '\tVersion: ' + version)

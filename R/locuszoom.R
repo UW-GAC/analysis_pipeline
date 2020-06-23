@@ -21,6 +21,7 @@ optional <- c("flanking_region"=500,
               "ld_sample_include"=NA,
               "locus_type"="variant",
               "out_prefix"="locuszoom",
+              "signif_line"=5e-8,
               "track_file"=NA,
               "track_file_type"="window",
               "track_label"="",
@@ -76,6 +77,14 @@ assoc <- assoc %>%
     filter(chr == var.chr, pos > start, pos < end) %>%
     select(variant.id, chr, pos, ends_with("pval"))
 names(assoc)[4] <- "pval"
+
+##### NOTE: i added the following two lines of code #####
+## remove duplicate chr:pos rows, removing the variant with the less significant (higher) pvalue
+assoc <- assoc[order(assoc$pval,decreasing=FALSE),]
+assoc <- assoc[!duplicated(assoc$pos),]
+assoc <- assoc[order(assoc$pos),]
+#####
+
 assoc.filename <- tempfile()
 writeMETAL(assoc, file=assoc.filename)
 
@@ -120,6 +129,8 @@ if (!is.na(config["track_file"])) {
     track.cmd <- ""
 }
 
+signif <- as.numeric(config["signif_line"])
+
 command <- paste("locuszoom",
                  "theme=publication",
                  "--cache None",
@@ -134,7 +145,7 @@ command <- paste("locuszoom",
                  ld.region,
                  "--prefix ", prefix,
                  paste0("title=\"", title, "\""),
-                 paste0("signifLine=\"", -log10(5e-8), "\" signifLineColor=\"gray\" signifLineWidth=\"2\""),
+                 paste0("signifLine=\"", -log10(signif), "\" signifLineColor=\"gray\" signifLineWidth=\"2\""),
                  "ylab=\"-log10(p-value) from single variant test\"")
 
 cat(paste(command, "\n"))
