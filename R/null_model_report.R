@@ -22,7 +22,7 @@ outfile <- sprintf("%s_report", config["out_prefix"])
 custom_render_markdown("null_model_report", outfile, parameters = p)
 
 # Generate the report for the inverse normal, if necessary.
-if (as.logical(config["inverse_normal"]) & config["family"] != "binomial") {
+if (as.logical(config["inverse_normal"]) & config["family"] == "gaussian") {
   print('rendering report for inverse normal transform')
   p <- c(p, list(invnorm = TRUE))
   outfile <- sprintf("%s_invnorm_report", config["out_prefix"])

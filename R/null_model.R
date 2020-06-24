@@ -50,6 +50,8 @@ family <- config["family"]
 stopifnot(family %in% c("gaussian", "binomial", "poisson"))
 if (family == "binomial") {
     stopifnot(all(annot[[outcome]] %in% c(0,1,NA)))
+} else if (family == "poisson") {
+    stopifnot(any(na.omit(annot[[outcome]]) < 0))
 }
 
 # kinship matrix or GRM
@@ -79,7 +81,7 @@ outfile <- sprintf("%s.RData", config["out_prefix"])
 
 
 ## if we need an inverse normal transform, take residuals and refit null model
-if (as.logical(config["inverse_normal"]) & family != "binomial") {
+if (as.logical(config["inverse_normal"]) & family == "gaussian") {
 
     if (as.logical(config["norm_bygroup"]) & !is.null(group.var)) {
         norm.option <- "by.group"
