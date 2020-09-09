@@ -199,9 +199,10 @@ if (is_binary) {
     "For continuous covariates, plots of marginal residuals vs covariates
     should have a red linear trend line near the `y = 0` line and a blue
     smoothed (cubic regression spline) curve near the y = 0 line. For
-    categorical covariates, the mean of each group should be near 0. A distinct
-    trend could indicate that a more complex term for that covariate is needed
-    (e.g. quadratic, spline, etc.)."
+    categorical covariates, the mean of each group should be near 0. Linear
+    covariates with a small number of unique values are shown using boxplots.
+    A distinct trend could indicate that a more complex term for that covariate
+    is needed (e.g. quadratic, spline, etc.)."
   )
 } else {
   text <- paste(
@@ -209,8 +210,9 @@ if (is_binary) {
     pattern, appearing as random noise. For continuous covariates, the red
     linear trend line and the blue smoothed curve (cubic regression spline)
     should be near the y = 0 line. For categorical covariates, the black cross
-    indicating the group mean should be near 0. A distinct pattern or trend
-    could indicate that a more complex term for that covariate is needed,
+    indicating the group mean should be near 0. Linear covariates with a small
+    number of unique values are shown using boxplots. A distinct pattern or
+    trend could indicate that a more complex term for that covariate is needed,
     (e.g. quadratic, spline, etc.)."
   )
 }
@@ -228,7 +230,7 @@ for (x in covars) {
         geom_smooth(color = 'blue', linetype = 'dashed', fill = 'blue')
     } else {
       p <- p +
-        geom_boxplot() +
+        geom_boxplot(varwidth = TRUE) +
         geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
         # Means by group.
         stat_summary(fun.y=mean, color="black", shape = 4, geom="point", size = 3)
@@ -318,7 +320,7 @@ if (!is.null(group_var)) {
 ```{r variance-adjustment-plots}
 if (!is.null(group_var)) {
   p <- ggplot(dat, aes(x = group, y = workingY)) +
-    geom_boxplot() +
+    geom_boxplot(varwidth = TRUE) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     # Means by group.
     stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point")
@@ -326,7 +328,7 @@ if (!is.null(group_var)) {
 
   p <- ggplot(dat, aes(x = group, y = Ytilde))
   p <- p +
-    geom_boxplot() +
+    geom_boxplot(varwidth = TRUE) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
     stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point")
