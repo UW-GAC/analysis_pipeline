@@ -64,9 +64,9 @@ outcome_string <- modelOutcomeString(outcome, inverse_normal = is_invnorm)
 ```
 
 ```{r prepare-data}
-# Fix 0/1 covariates so they display as categorical.
+# Display any covariate with < 10 values using boxplots instead of scatterplots.
 for (covar in covars) {
-  if (!is.numeric(annot[[covar]]) | length(setdiff(annot[[covar]], c(0, 1, NA))) == 0) {
+  if (!is.numeric(annot[[covar]]) || length(unique(annot[[covar]])) < 10) {
     annot[[covar]] <- as.factor(annot[[covar]])
   }
 }
