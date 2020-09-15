@@ -117,16 +117,16 @@ configTable(config[disp])
 
 ```{r outcome-distribution-plot}
 if (is_binary) {
-    ggplot(dat, aes(model_outcome)) +
+    p <- ggplot(dat, aes(model_outcome)) +
       geom_bar() +
       stat_count(geom="text", aes_string(label="..count..", vjust=-0.5)) +
       xlab(outcome_string)
 } else {
-    ggplot(dat, aes(model_outcome)) +
+    p <- ggplot(dat, aes(model_outcome)) +
       geom_histogram() +
       xlab(outcome_string)
-
 }
+print(p)
 ```
 
 ```{r covariate-distribution-plot}
