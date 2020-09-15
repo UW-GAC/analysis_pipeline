@@ -157,7 +157,9 @@ for (x in covars) {
         geom_boxplot(varwidth = TRUE) +
         #geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
         ## Means by group.
-        stat_summary(fun.y=mean, color="black", shape = 4, geom="point", size = 3)
+        stat_summary(fun.y=mean, color="black", shape = 4, geom="point", size = 3) +
+        # Rotate axis labels.
+        theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust = 1))
     }
     print(p)
 }
@@ -257,7 +259,9 @@ for (x in covars) {
         geom_boxplot(varwidth = TRUE) +
         geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
         # Means by group.
-        stat_summary(fun.y=mean, color="black", shape = 4, geom="point", size = 3)
+        stat_summary(fun.y=mean, color="black", shape = 4, geom="point", size = 3) +
+        # Rotate axis labels.
+        theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust = 1))
     }
     print(p)
 }
@@ -347,7 +351,9 @@ if (!is.null(group_var)) {
     geom_boxplot(varwidth = TRUE) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     # Means by group.
-    stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point")
+    stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point") +
+    # Rotate axis labels.
+    theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust = 1))
   print(p)
 
   p <- ggplot(dat, aes(x = group, y = Ytilde))
@@ -355,7 +361,9 @@ if (!is.null(group_var)) {
     geom_boxplot(varwidth = TRUE) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
-    stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point")
+    stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point") +
+    # Rotate axis labels.
+    theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust = 1))
   print(p)
 
 }
