@@ -113,7 +113,9 @@ if (as.logical(config["inverse_normal"])) {
 configTable(config[disp])
 ```
 
-## Phenotype distributions
+## Phenotypes
+
+### Distributions
 
 ```{r outcome-distribution-plot}
 if (is_binary) {
@@ -136,6 +138,28 @@ for (x in covars[-grep("^PC[[:digit:]]+", covars)]) {
     } else {
         print(ggplot(annot, aes_string(x)) + geom_bar() + stat_count(geom="text", aes_string(label="..count..", vjust=-0.5)))
     }
+}
+```
+
+### Outcome vs. covariates
+
+```{r outcome-covar-plots}
+for (x in covars) {
+    p <- ggplot(dat, aes_string(x = x, y = "model_outcome"))
+    if (is.numeric(annot[[x]] )) {
+      p <- p +
+        geom_point(alpha = 0.1) +
+        #geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
+        geom_smooth(method = 'lm', color = 'red', fill = 'red') +
+        geom_smooth(color = 'blue', linetype = 'dashed', fill = 'blue')
+    } else {
+      p <- p +
+        geom_boxplot(varwidth = TRUE) +
+        #geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
+        ## Means by group.
+        stat_summary(fun.y=mean, color="black", shape = 4, geom="point", size = 3)
+    }
+    print(p)
 }
 ```
 
