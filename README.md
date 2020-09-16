@@ -254,7 +254,7 @@ config parameter | default value | description
 `conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` (or `chr`) and `variant.id`. The alternate allele dosage of these variants will be included as covariates in the analysis.
 `gds_file` | `NA` | GDS file. Include a space to insert chromosome. Required if `conditional_variant_file` is specified.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include.
-`n_categories_boxplot` | `10` | If a covariate has fewer than the specific value, boxplots will be used instead of scatter plots for that covariate in the null model report.
+`n_categories_boxplot` | `10` | If a covariate has fewer than the specified value, boxplots will be used instead of scatter plots for that covariate in the null model report.
 
 
 ### Parameters common to all association tests
