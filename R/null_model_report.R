@@ -12,12 +12,16 @@ config <- readConfig(argv$config)
 required <- c()
 optional <- c("family"="gaussian",
               "inverse_normal"=TRUE,
-              "out_prefix"="null_model")
+              "out_prefix"="null_model",
+              "n_categories_boxplot" = 10)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
 print('rendering report for original null model')
-p <- list(pipeline_version = argv$version)
+p <- list(
+  pipeline_version = argv$version,
+  n_categories_boxplot = config["n_categories_boxplot"]
+)
 outfile <- sprintf("%s_report", config["out_prefix"])
 custom_render_markdown("null_model_report", outfile, parameters = p)
 

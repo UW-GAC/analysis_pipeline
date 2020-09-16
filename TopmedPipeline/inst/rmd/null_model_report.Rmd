@@ -5,6 +5,7 @@ output:
     toc: true
 params:
   invnorm: FALSE
+  n_categories_boxplot: 10
   pipeline_version: 0
 ---
 
@@ -30,6 +31,11 @@ configTable <- function(x) {
 }
 
 COLOR_ZERO_LINE = "grey60"
+n_categories_boxplot = as.numeric(params$n_categories_boxplot)
+```
+
+```{r, results = 'asis'}
+print(n_categories_boxplot)
 ```
 
 ```{r}
@@ -66,7 +72,7 @@ outcome_string <- modelOutcomeString(outcome, inverse_normal = is_invnorm)
 ```{r prepare-data}
 # Display any covariate with < 10 values using boxplots instead of scatterplots.
 for (covar in covars) {
-  if (!is.numeric(annot[[covar]]) || length(unique(annot[[covar]])) < 10) {
+  if (!is.numeric(annot[[covar]]) || length(unique(annot[[covar]])) < n_categories_boxplot) {
     annot[[covar]] <- as.factor(annot[[covar]])
   }
 }
