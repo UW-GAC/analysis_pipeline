@@ -226,8 +226,10 @@ cat(text)
 ```{r residual-plots, results = "asis"}
 for (x in covars) {
     cat(sprintf("\n\n### %s {.unlisted .unnumbered}\n\n", x))
-    p_out <- ggplot(dat, aes_string(x = x, y = "model_outcome"))
-    p_res <- ggplot(dat, aes_string(x = x, y = "resid.marginal"))
+    p_out <- ggplot(dat, aes_string(x = x, y = "model_outcome")) +
+      ggtitle(outcome_string)
+    p_res <- ggplot(dat, aes_string(x = x, y = "resid.marginal")) +
+      ggtitle(sprintf("%s - residuals", outcome_string))
     if (is.numeric(annot[[x]] )) {
       p_res <- p_res +
         geom_point(alpha = 0.1) +
