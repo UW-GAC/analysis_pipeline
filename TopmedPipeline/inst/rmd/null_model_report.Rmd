@@ -34,10 +34,6 @@ COLOR_ZERO_LINE = "grey60"
 n_categories_boxplot = as.numeric(params$n_categories_boxplot)
 ```
 
-```{r, results = 'asis'}
-print(n_categories_boxplot)
-```
-
 ```{r}
 files <- list.files(pattern=".+params$")
 scripts <- sapply(files, function(x) {
