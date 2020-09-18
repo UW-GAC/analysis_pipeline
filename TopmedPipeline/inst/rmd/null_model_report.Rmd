@@ -92,6 +92,7 @@ for(i in 1:g){
 dat$group <- group
 dat <- left_join(dat, annot, by = "sample.id")
 
+dat$outcome_numeric <- dat[[outcome]]
 if (is_binary) {
   dat[[outcome]] <- as.factor(dat[[outcome]])
   dat$model_outcome <- as.factor(dat$model_outcome)
@@ -226,8 +227,9 @@ cat(text)
 ```{r residual-plots, results = "asis"}
 for (x in covars) {
     cat(sprintf("\n\n### %s {.unlisted .unnumbered}\n\n", x))
-    p_out <- ggplot(dat, aes_string(x = x, y = "model_outcome")) +
-      ggtitle(outcome_string)
+    p_out <- ggplot(dat, aes_string(x = x, y = "outcome_numeric")) +
+      ggtitle(outcome_string) +
+      ylab(outcome_string)
     p_res <- ggplot(dat, aes_string(x = x, y = "resid.marginal")) +
       ggtitle(sprintf("%s - residuals", outcome_string))
     if (is.numeric(annot[[x]] )) {
