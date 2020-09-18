@@ -221,6 +221,7 @@ if (is_binary) {
     (e.g. quadratic, spline, etc.)."
   )
 }
+text <- paste(text, "Plots of the outcome versus each covariate are also shown for reference.")
 cat(text)
 ```
 
