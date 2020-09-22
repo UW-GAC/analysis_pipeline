@@ -2,7 +2,7 @@
 from __future__ import division
 """Utility functions for TOPMed pipeline"""
 
-__version__ = "2.8.0"
+__version__ = "2.8.1"
 
 import os
 import sys
