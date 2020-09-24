@@ -148,7 +148,7 @@ The first step in evalulating relatedness and population structure is to select 
     `out_prefix` | | Prefix for files created by this script.
     `gds_file` | | GDS file with only LD pruned variants, all chromosomes.
 	`full_gds_file` | | GDS file with all variants. Include a space to insert chromosome.
-	`kinship_file` | `NA` | File containing kinship matrix to use for defining the unrelated sample set. Multiple formats are accepted, including RData or GDS from `king.py` or `pcrelate.py`. A sparse Matrix object stored as RData is recommended. 
+	`kinship_file` | `NA` | File containing kinship matrix to use for defining the unrelated sample set. Multiple formats are accepted, including RData or GDS from `king.py` or `pcrelate.py`. A sparse Matrix object stored as RData is recommended.
 	`divergence_file` | `NA` | GDS (recommended) or RData file with kinship coefficients created by `king_robust.py`. Used for ancestry divergence.
 	`kinship_threshold` | `0.04419417` | Minimum kinship estimate to use for assigning relatives (default is `2^(-9/2)` or 3rd degree relatives).
 	`divergence_threshold` | `-0.04419417` | Minimum kinship estimate to use for ancestry divergence (default is `-2^(-9/2)`).
@@ -254,6 +254,7 @@ config parameter | default value | description
 `conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` (or `chr`) and `variant.id`. The alternate allele dosage of these variants will be included as covariates in the analysis.
 `gds_file` | `NA` | GDS file. Include a space to insert chromosome. Required if `conditional_variant_file` is specified.
 `sample_include_file` | `NA` | RData file with vector of sample.id to include.
+`n_categories_boxplot` | `10` | If a covariate has fewer than the specified value, boxplots will be used instead of scatter plots for that covariate in the null model report.
 
 
 ### Parameters common to all association tests
