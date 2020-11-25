@@ -56,20 +56,12 @@ if (family == "binomial") {
 
 # kinship matrix or GRM
 grm <- getGRM(config, sample.id)
-
-# print model
-random <- if (!is.na(config["relatedness_matrix_file"])) "relatedness" else NULL
-model.string <- modelString(outcome, covars, random, group.var)
-message("Model: ", model.string)
-message(length(sample.id), " samples")
+if (!is.null(grm) && length(grm) == 1) names(grm) <- "relatedness"
 
 ## fit null model allowing heterogeneous variances among studies
 nullmod <- fitNullModel(annot, outcome=outcome, covars=covars,
                         cov.mat=grm, sample.id=sample.id,
                         family=family, group.var=group.var)
-
-# Add the model string as a temporary fix until it can be added to GENESIS null models.
-nullmod$model.string <- model.string
 
 # Save a smaller version of the original null model.
 nullmod_small <- smallNullModel(nullmod)
@@ -96,18 +88,12 @@ if (as.logical(config["inverse_normal"]) & family == "gaussian") {
         rescale <- "none"
     }
 
-    model.string <- modelString(outcome, covars, random, group.var,
-                                inverse_normal = TRUE)
-    message("Refitting model: ", model.string)
+    message("Refitting model with inverse normal transformation.")
     message(length(sample.id), " samples")
 
     nullmod <- nullModelInvNorm(nullmod, cov.mat=grm,
                                 norm.option=norm.option,
                                 rescale=rescale)
-
-    # Update the model string so it has the inverse normal outcome.
-    # This is a temporary fix until the model.string can be added to GENESIS null models.
-    nullmod$model.string <- model.string
 
     # Save a smaller version of the null model.
     nullmod_small <- smallNullModel(nullmod)
