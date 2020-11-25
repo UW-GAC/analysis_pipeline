@@ -22,6 +22,7 @@ library(Biobase)
 library(dplyr)
 library(ggplot2)
 library(grid)
+library(stringr)
 theme_set(theme_bw())
 
 configTable <- function(x) {
@@ -60,9 +61,8 @@ is_binary <- config["family"] == "binomial"
 
 is_invnorm <- !is_binary & params$invnorm & as.logical(config["inverse_normal"])
 
-model_string <- modelString(outcome, covars, random, group_var,
-                            inverse_normal = is_invnorm)
-outcome_string <- modelOutcomeString(outcome, inverse_normal = is_invnorm)
+model_string <- nullmod$model$formula
+outcome_string <- str_trim(str_split(model_string, "~")[[1]][1])
 ```
 
 ```{r prepare-data}
@@ -73,16 +73,19 @@ for (covar in covars) {
   }
 }
 
-dat <- data.frame(sample.id = nullmod$sample.id,
-                  # Need as.vector here because sometimes it's a matrix (but not always)
-                  workingY = as.vector(nullmod$workingY),
-                  # Need as.vector here because sometimes it's a matrix (but not always)
-                  model_outcome = as.vector(nullmod$outcome),
-                  fitted.values = nullmod$fitted.values,
-                  resid.marginal = nullmod$resid.marginal,
-                  PY = as.vector(nullmod$resid),
-                  Ytilde = as.vector(nullmod$Ytilde),
-                  stringsAsFactors = FALSE)
+dat <- nullmod$fit
+names(dat)[names(dat) == "outcome"] <- "model_outcome"
+
+# dat <- data.frame(sample.id = nullmod$sample.id,
+#                   # Need as.vector here because sometimes it's a matrix (but not always)
+#                   workingY = as.vector(nullmod$workingY),
+#                   # Need as.vector here because sometimes it's a matrix (but not always)
+#                   model_outcome = as.vector(nullmod$outcome),
+#                   fitted.values = nullmod$fitted.values,
+#                   resid.marginal = nullmod$resid.marginal,
+#                   PY = as.vector(nullmod$resid),
+#                   Ytilde = as.vector(nullmod$Ytilde),
+#                   stringsAsFactors = FALSE)
 # TODO: Add group_var check.
 g <- length(nullmod$group.idx)
 group <- rep(NA, length(nullmod$sample.id))
@@ -334,9 +337,9 @@ if (!is.null(group_var)) {
   cat('\n\n')
   text <- paste(
     "Boxplots of the original phenotype values (`workingY`) and the adjusted phenotype
-    values (`Ytilde`) by heterogeneous residual variance group. The `Ytilde` values
+    values (`resid.cholesky`) by heterogeneous residual variance group. The `resid.cholesky` values
     are adjusted for fixed effect covariates, random effects, and heterogeneous
-    residual variances. The variation of `Ytilde` within each group should be
+    residual variances. The variation of `resid.cholesky` within each group should be
     similar."
   )
   cat(text)
@@ -354,7 +357,7 @@ if (!is.null(group_var)) {
     theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust = 1))
   print(p)
 
-  p <- ggplot(dat, aes(x = group, y = Ytilde))
+  p <- ggplot(dat, aes(x = group, y = resid.cholesky))
   p <- p +
     geom_boxplot(varwidth = TRUE) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
@@ -369,7 +372,7 @@ if (!is.null(group_var)) {
 
 ## Adjusted phenotype
 
-The adjusted phenotype values (`Ytilde`) are adjusted for fixed effect covariates,
+The adjusted phenotype values (`resid.cholesky`) are adjusted for fixed effect covariates,
 random effects, and heterogeneous residual variances (if applicable); they
 should be approximately distributed as N(0,1). The square of these values should
 have a trend line near the y = 1 line, indicating homoskedasticity after
@@ -379,7 +382,7 @@ inadequate.
 
 ```{r adjusted-phenotype-plots}
 
-p <- ggplot(dat, aes(x = fitted.values, y = Ytilde^2)) +
+p <- ggplot(dat, aes(x = fitted.values, y = resid.cholesky^2)) +
   geom_point(alpha = 0.1) +
   geom_hline(yintercept = 1, color = COLOR_ZERO_LINE) +
   geom_smooth(method = 'lm', color = 'red', fill = 'red') +
@@ -388,11 +391,11 @@ print(p)
 
 p <- p +
   coord_cartesian(ylim = c(0, 5)) +
-  ylab("Ytilde^2 zoomed in")
+  ylab("resid.cholesky^2 zoomed in")
 print(p)
 ```
 
-The projected phenotype values (`PY`) are the phenotype values after adjusting
+The projected phenotype values (`resid.PY`) are the phenotype values after adjusting
 for the fixed effect covariates, random effects, and heterogenous residual
 variances (if applicable); these are the values that are correlated with
 genotype to test for association.
@@ -405,13 +408,13 @@ if (is_binary) {
     extra_text <- "The density curve for each group is shown; the heavy black
                    line is the density curve pooled across all groups."
   } else {
-    extra_text <- "A histogram of `PY` values is shown below."
+    extra_text <- "A histogram of `resid.PY` values is shown below."
   }
   if(!is_invnorm) {
     extra_text <- paste(
       extra_text,
       "\n\nIt may be problematic for association testing if this distribution is far
-      from Gaussian. This problem can be alleviated by rank normalizing `PY` and
+      from Gaussian. This problem can be alleviated by rank normalizing `resid.PY` and
       re-fitting the null model with the rank-normalized values as the outcome
       (i.e. a two stage procedure)."
     )
@@ -421,7 +424,7 @@ cat(extra_text)
 ```
 
 ```{r}
-p <- ggplot(dat, aes(x = PY))
+p <- ggplot(dat, aes(x = resid.PY))
 if (!is.null(group_var)) {
   p <- p +
     stat_density(aes(color = group), geom = "line", position = "identity") +
