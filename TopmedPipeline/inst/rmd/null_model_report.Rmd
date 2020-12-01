@@ -88,8 +88,8 @@ names(dat)[names(dat) == "outcome"] <- "model_outcome"
 #                   stringsAsFactors = FALSE)
 # TODO: Add group_var check.
 g <- length(nullmod$group.idx)
-group <- rep(NA, length(nullmod$sample.id))
-for(i in 1:g){
+group <- rep(NA, length(nullmod$fit$sample.id))
+for(i in seq_len(g)){
     group[nullmod$group.idx[[i]]] <- names(nullmod$group.idx)[i]
 }
 dat$group <- group
