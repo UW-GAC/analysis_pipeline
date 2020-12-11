@@ -5,11 +5,7 @@
 \alias{chromosomes_hg19}
 \alias{chromosomes_hg38}
 \title{Start and end positions of each chromosome}
-\format{
-\code{\link[GenomicRanges]{GRanges}} object
-
-An object of class \code{GRanges} of length 23.
-}
+\format{\code{\link[GenomicRanges]{GRanges}} object}
 \source{
 UCSC Genome Browser
 }

@@ -18,6 +18,7 @@ Returns an R object stored in an Rdata file
 \details{
 Loads an R object and stores it under a new name without creating a duplicate copy.
 If multiple objects are stored in the same file, only the first one will be returned.
+Supports files saved with \code{\link{saveRDS}}, provided the file extension ".rds" is used.
 }
 \examples{
 x <- 1:10
