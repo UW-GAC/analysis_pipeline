@@ -63,6 +63,8 @@ nullmod <- fitNullModel(annot, outcome=outcome, covars=covars,
                         cov.mat=grm, sample.id=sample.id,
                         family=family, group.var=group.var)
 
+message(sprintf("Fit model with model: %s", nullmod$model$formula))
+
 # Save a smaller version of the original null model.
 nullmod_small <- smallNullModel(nullmod)
 outfile <- sprintf("%s_reportonly.RData", config["out_prefix"])
