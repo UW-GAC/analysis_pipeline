@@ -12,6 +12,10 @@ getPhenotypes <- function(config) {
 
     ## get phenotypes
     annot <- getobj(config["phenotype_file"])
+    if (!is(annot, "AnnotatedDataFrame")) {
+        annot <- AnnotatedDataFrame(annot)
+    }
+    stopifnot("sample.id" %in% varLabels(annot))
 
     ## get PCs
     n_pcs <- as.integer(config["n_pcs"])
