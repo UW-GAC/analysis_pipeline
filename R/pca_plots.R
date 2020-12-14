@@ -43,9 +43,11 @@ ggsave(config["out_file_scree"], plot=p, width=6, height=6)
 if (!is.na(config["phenotype_file"]) & !is.na(config["group"])) {
     group <- config["group"]
     annot <- getobj(config["phenotype_file"])
-    stopifnot(group %in% varLabels(annot))
-    annot <- pData(annot) %>%
-        select_("sample.id", group)
+    if (is(annot, "AnnotatedDataFrame")) {
+        annot <- pData(annot)
+    }
+    stopifnot(group %in% names(annot))
+    annot <- select_(annot, "sample.id", group)
     pcs <- left_join(pcs, annot, by="sample.id")
 } else {
     ## make up dummy group
