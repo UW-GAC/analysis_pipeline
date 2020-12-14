@@ -42,7 +42,10 @@ getPhenotypes <- function(config) {
     group.var <- unname(config["group_var"])
     if (is.na(group.var)) group.var <- NULL
 
-    annot <- annot[,unique(c("sample.id", outcome, covars, group.var))]
+    ## keep sex in annot for allele calculations, even if not a covariate
+    keep.vars <- unique(c("sample.id", outcome, covars, group.var))
+    if ("sex" %in% varLabels(annot)) keep.vars <- unique(c(keep.vars, "sex"))
+    annot <- annot[,keep.vars]
 
     ## select samples
     if (!is.na(config["sample_include_file"])) {
