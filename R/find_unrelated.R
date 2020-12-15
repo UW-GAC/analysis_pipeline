@@ -53,8 +53,11 @@ if (!is.na(config["study"]) & !is.na(config["phenotype_file"])) {
     
     study <- config["study"]
     annot <- getobj(config["phenotype_file"])
-    stopifnot(study %in% varLabels(annot))
-    annot <- pData(annot)[,c("sample.id", study)]
+    if (is(annot, "AnnotatedDataFrame")) {
+        annot <- pData(annot)
+    }
+    stopifnot(study %in% names(annot))
+    annot <- annot[,c("sample.id", study)]
     names(annot)[2] <- "study"
     if (!is.null(sample.id)) {
         annot <- annot[annot$sample.id %in% sample.id,]
