@@ -58,12 +58,14 @@ if (family == "binomial") {
 grm <- getGRM(config, sample.id)
 if (!is.null(grm) && length(grm) == 1) names(grm) <- "relatedness"
 
+
 ## fit null model allowing heterogeneous variances among studies
 nullmod <- fitNullModel(annot, outcome=outcome, covars=covars,
                         cov.mat=grm, sample.id=sample.id,
                         family=family, group.var=group.var)
 
 message(sprintf("Fit model with model: %s", nullmod$model$formula))
+message(sprintf("%d samples.", nrow(nullmod$fit)))
 
 # Save a smaller version of the original null model.
 nullmod_small <- smallNullModel(nullmod)
