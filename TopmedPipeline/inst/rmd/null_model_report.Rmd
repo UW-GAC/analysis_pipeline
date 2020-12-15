@@ -331,90 +331,46 @@ if (show_varcomp) {
 }
 ```
 
-```{r variance-adjustment-header, results = 'asis'}
-if (!is.null(group_var)) {
-  cat("## Variance adjustment")
-  cat('\n\n')
-  text <- paste(
-    "Boxplots of the original phenotype values (`workingY`) and the adjusted phenotype
-    values (`resid.cholesky`) by heterogeneous residual variance group. The `resid.cholesky` values
-    are adjusted for fixed effect covariates, random effects, and heterogeneous
-    residual variances. The variation of `resid.cholesky` within each group should be
-    similar."
-  )
-  cat(text)
-}
-```
-
-```{r variance-adjustment-plots}
-if (!is.null(group_var)) {
-  p <- ggplot(dat, aes(x = group, y = workingY)) +
-    geom_boxplot(varwidth = TRUE) +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    # Means by group.
-    stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point") +
-    # Rotate axis labels.
-    theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust = 1))
-  print(p)
-
-  p <- ggplot(dat, aes(x = group, y = resid.cholesky))
-  p <- p +
-    geom_boxplot(varwidth = TRUE) +
-    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
-    stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point") +
-    # Rotate axis labels.
-    theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust = 1))
-  print(p)
-
-}
-```
-
 ## Adjusted phenotype
 
-The adjusted phenotype values (`resid.cholesky`) are adjusted for fixed effect covariates,
-random effects, and heterogeneous residual variances (if applicable); they
-should be approximately distributed as N(0,1). The square of these values should
-have a trend line near the y = 1 line, indicating homoskedasticity after
-adjustment. Deviation from this trend could indicate that the variance model is
-inadequate.
-
-
-```{r adjusted-phenotype-plots}
-
-p <- ggplot(dat, aes(x = fitted.values, y = resid.cholesky^2)) +
-  geom_point(alpha = 0.1) +
-  geom_hline(yintercept = 1, color = COLOR_ZERO_LINE) +
-  geom_smooth(method = 'lm', color = 'red', fill = 'red') +
-  geom_smooth(color = 'blue', linetype = 'dashed', fill = 'blue')
-print(p)
-
-p <- p +
-  coord_cartesian(ylim = c(0, 5)) +
-  ylab("resid.cholesky^2 zoomed in")
-print(p)
+The Cholesky residuals (`resid.cholesky`) are adjusted for fixed effect covariates,
+random effects, and heterogeneous residual variances (if applicable).
+```{r results = 'asis'}
+if (is_binary) {
+  cat("Linear regression of the Cholesky residual vector on an equivalently
+       transformed genotype vector provides the same estimates as fitting the
+       full GLS model using `workingY` as the outcome variable (by the
+        Frisch-Waugh-Lovell theorem). The Cholesky residuals can be viewed as
+        the adjusted phenotype values.")
+} else {
+  cat("Linear regression of the Cholesky residual vector on an equivalently
+       transformed genotype vector provides the same estimates as fitting the
+       full GLS model (by the Frisch-Waugh-Lovell theorem). The Cholesky
+       residuals can be viewed as the adjusted phenotype values.")
+}
 ```
 
-The projected phenotype values (`resid.PY`) are the phenotype values after adjusting
-for the fixed effect covariates, random effects, and heterogenous residual
-variances (if applicable); these are the values that are correlated with
-genotype to test for association.
+The Cholesky residuals are a transformation of the marginal residuals using the
+estimated model covariance structure such that they should be uncorrelated.
 ```{r, results = 'asis'}
 extra_text <- ""
 if (is_binary) {
   extra_text <- "A histogram color-coded by outcome status is shown below."
 } else {
+  extra_text <- "For linear outcomes, they follow a standard multivariate
+                 Normal distribution with mean 0 and identity covariance matrix
+                asymptotically."
   if (!is.null(group_var)) {
-    extra_text <- "The density curve for each group is shown; the heavy black
-                   line is the density curve pooled across all groups."
+    extra_text <- paste(extra_text, "The density curve for each group is shown; the heavy black
+                   line is the density curve pooled across all groups.")
   } else {
-    extra_text <- "A histogram of `resid.PY` values is shown below."
+    extra_text <- paste(extra_text, "A histogram of `resid.cholesky` values is shown below.")
   }
   if(!is_invnorm) {
     extra_text <- paste(
       extra_text,
       "\n\nIt may be problematic for association testing if this distribution is far
-      from Gaussian. This problem can be alleviated by rank normalizing `resid.PY` and
+      from Gaussian. This problem can be alleviated by rank normalizing `resid.marginal` and
       re-fitting the null model with the rank-normalized values as the outcome
       (i.e. a two stage procedure)."
     )
@@ -424,7 +380,7 @@ cat(extra_text)
 ```
 
 ```{r}
-p <- ggplot(dat, aes(x = resid.PY))
+p <- ggplot(dat, aes(x = resid.cholesky))
 if (!is.null(group_var)) {
   p <- p +
     stat_density(aes(color = group), geom = "line", position = "identity") +
@@ -451,6 +407,55 @@ if (!is.null(group_var)) {
   }
   print(p)
 }
+```
+
+```{r variance-adjustment-header, results = 'asis'}
+if (!is.null(group_var)) {
+  cat(
+    "Boxplots of the original phenotype values (`workingY`) and the Cholestky
+    residuals (`resid.cholesky`) by heterogeneous residual variance group. The
+    variation of `resid.cholesky` within each group should be similar."
+  )
+
+  p <- ggplot(dat, aes(x = group, y = workingY)) +
+    geom_boxplot(varwidth = TRUE) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    # Means by group.
+    stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point") +
+    # Rotate axis labels.
+    theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust = 1))
+  print(p)
+
+  p <- ggplot(dat, aes(x = group, y = resid.cholesky))
+  p <- p +
+    geom_boxplot(varwidth = TRUE) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    geom_hline(yintercept = 0, color = COLOR_ZERO_LINE) +
+    stat_summary(fun.y=mean, color="black", shape = 4, size = 3, geom="point") +
+    # Rotate axis labels.
+    theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust = 1))
+  print(p)
+
+}
+```
+
+
+The square of these values should have a trend line near the y = 1 line, indicating homoskedasticity after adjustment.
+Deviation from this trend could indicate that the variance model is inadequate.
+
+```{r adjusted-phenotype-plots}
+
+p <- ggplot(dat, aes(x = fitted.values, y = resid.cholesky^2)) +
+  geom_point(alpha = 0.1) +
+  geom_hline(yintercept = 1, color = COLOR_ZERO_LINE) +
+  geom_smooth(method = 'lm', color = 'red', fill = 'red') +
+  geom_smooth(color = 'blue', linetype = 'dashed', fill = 'blue')
+print(p)
+
+p <- p +
+  coord_cartesian(ylim = c(0, 5)) +
+  ylab("resid.cholesky^2 zoomed in")
+print(p)
 ```
 
 # Session information
