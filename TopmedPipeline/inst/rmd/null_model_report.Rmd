@@ -379,7 +379,7 @@ if (is_binary) {
 cat(extra_text)
 ```
 
-```{r}
+```{r, fig.height=8}
 p <- ggplot(dat, aes(x = resid.cholesky))
 if (!is.null(group_var)) {
   p <- p +
@@ -388,17 +388,7 @@ if (!is.null(group_var)) {
     geom_density(size = 2) +
     theme(legend.position = "top", legend.justification = c(0.5, 1)) +
     guides(color = guide_legend(title.position="top", title.hjust = 0.5))
-  print(p + theme(legend.position = "none"))
-
-  # Put the legend in a separate plot in case there is a large number of groups.
-  g_legend <- function(my_ggplot) {
-    tmp <- ggplot_gtable(ggplot_build(my_ggplot))
-    leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-    legend <- tmp$grobs[[leg]]
-    legend
-  }
-  grid.newpage()
-  grid.draw(g_legend(p))
+  print(p)
 } else {
   if (is_binary) {
     p <- p + geom_histogram(aes_string(fill = outcome))
