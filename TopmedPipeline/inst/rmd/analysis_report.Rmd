@@ -44,9 +44,9 @@ nullmod_file <- gsub("\\.RData", "_reportonly.RData", config["null_model_file"])
 nullmod <- getobj(nullmod_file)
 ```
 
-Number of samples: `r length(nullmod$sample.id)`
+Number of samples: `r nrow(nullmod$fit)`
 
-Model: `r nullmod$model.string`
+Model: `r nullmod$model$formula`
 
 
 ## Association test

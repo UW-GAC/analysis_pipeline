@@ -4,9 +4,7 @@
 \name{grm}
 \alias{grm}
 \title{Example GRM}
-\format{
-90 x 90 matrix
-}
+\format{90 x 90 matrix}
 \usage{
 grm
 }
