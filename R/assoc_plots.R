@@ -22,11 +22,14 @@ optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
               "thin"=TRUE,
               "thin_npoints"=10000,
               "thin_nbins"=10,
-              "truncate_pval_threshold" = 1e-12)
+              "truncate_pval_threshold" = 1e-12,
+              "plot_qq_by_chrom" = FALSE)
 
 config <- setConfigDefaults(config, required, optional)
 print(config)
 writeConfig(config, paste0(basename(argv$config), ".assoc_plots.params"))
+
+plot_by_chrom <- config["plot_by_chrom"]
 
 chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 files <- sapply(chr, function(c) insertChromString(config["assoc_file"], c, "assoc_file"))
@@ -84,37 +87,6 @@ dat <- assoc %>%
   ) %>%
   select(-x)
 
-## Calculate QQ values separately for each chromosome.
-dat_by_chr <- assoc %>%
-  select(
-    chr = chr,
-    obs = pval
-  ) %>%
-  group_by(chr) %>%
-  arrange(obs) %>%
-  mutate(
-    x = row_number(),
-    exp = x / n(),
-    upper = qbeta(0.025, x, rev(x)),
-    lower = qbeta(0.975, x, rev(x))
-  ) %>%
-  select(-x) %>%
-  ungroup()
-
-
-thin.n <- as.integer(config["thin_npoints"])
-thin.bins <- as.integer(config["thin_nbins"])
-if (as.logical(config["thin"])) {
-    dat <- mutate(dat, logp=-log10(obs)) %>%
-        thinPoints("logp", n=thin.n, nbins=thin.bins)
-
-    dat_by_chr <- dat_by_chr %>%
-      mutate(logp = -log10(obs)) %>%
-      group_by(chr) %>%
-      thinPoints("logp", n=thin.n, nbins=thin.bins) %>%
-      ungroup()
-}
-
 gg_qq <- list(
   geom_abline(intercept=0, slope=1, color="red"),
   geom_line(aes(-log10(exp), -log10(upper)), color="gray"),
@@ -124,25 +96,19 @@ gg_qq <- list(
   theme_bw()
 )
 
+thin.n <- as.integer(config["thin_npoints"])
+thin.bins <- as.integer(config["thin_nbins"])
+if (as.logical(config["thin"])) {
+    dat <- mutate(dat, logp=-log10(obs)) %>%
+        thinPoints("logp", n=thin.n, nbins=thin.bins)
+}
+
 p <- ggplot(dat, aes(-log10(exp), -log10(obs))) +
     ggtitle(paste("lambda =", format(lambda, digits=4, nsmall=3))) +
     gg_qq +
     theme(plot.title = element_text(size = 22)) +
     geom_point()
 ggsave(config["out_file_qq"], plot=p, width=6, height=6)
-
-# QQ plots by chromosome.
-p_by_chr <- ggplot(dat_by_chr, aes(-log10(exp), -log10(obs))) +
-    gg_qq +
-    ggtitle(paste("lambda =", format(lambda, digits=4, nsmall=3))) +
-    theme(plot.title = element_text(size = 22)) +
-    geom_point(size = 0.5) +
-    facet_wrap(~ chr) +
-    # Add lambda by chromosome.
-    geom_text(data = lambda_by_chr, aes(label = sprintf("lambda == %4.3f", lambda)),
-              x = -Inf, y = Inf, hjust = -0.2, vjust = 1.2, parse=T)
-outfile <- gsub(".", "_bychr.", config["out_file_qq"], fixed=TRUE)
-ggsave(outfile, plot = p_by_chr, width = 10, height = 9)
 
 if (truncate) {
   p <- p +
@@ -155,19 +121,66 @@ if (truncate) {
   outfile <- gsub(".", "_truncated.", config["out_file_qq"], fixed=TRUE)
   ggsave(outfile, plot=p, width=6, height=6)
 
-  # QQ plots by chromosome, truncated.
-  p_by_chr <- p_by_chr +
-    scale_y_continuous(
-      oob = scales::squish,
-      limits = c(0, -log10(truncate_pval_threshold)),
-      expand = c(0,0)
-    ) +
-    ylab(expression(paste(-log[10], "(observed P)") ~ " (truncated)"))
-  outfile <- gsub(".", "_truncated_bychr.", config["out_file_qq"], fixed=TRUE)
-  ggsave(outfile, plot = p_by_chr, width = 6, height = 6)
 }
 
 rm(dat)
+
+
+if (plot_by_chrom) {
+  ## Calculate QQ values separately for each chromosome.
+  dat_by_chr <- assoc %>%
+    select(
+      chr = chr,
+      obs = pval
+    ) %>%
+    group_by(chr) %>%
+    arrange(obs) %>%
+    mutate(
+      x = row_number(),
+      exp = x / n(),
+      upper = qbeta(0.025, x, rev(x)),
+      lower = qbeta(0.975, x, rev(x))
+    ) %>%
+    select(-x) %>%
+    ungroup()
+
+
+  if (as.logical(config["thin"])) {
+      dat_by_chr <- dat_by_chr %>%
+        mutate(logp = -log10(obs)) %>%
+        group_by(chr) %>%
+        thinPoints("logp", n=thin.n, nbins=thin.bins) %>%
+        ungroup()
+  }
+
+  # QQ plots by chromosome.
+  p_by_chr <- ggplot(dat_by_chr, aes(-log10(exp), -log10(obs))) +
+      gg_qq +
+      ggtitle(paste("lambda =", format(lambda, digits=4, nsmall=3))) +
+      theme(plot.title = element_text(size = 22)) +
+      geom_point(size = 0.5) +
+      facet_wrap(~ chr) +
+      # Add lambda by chromosome.
+      geom_text(data = lambda_by_chr, aes(label = sprintf("lambda == %4.3f", lambda)),
+                x = -Inf, y = Inf, hjust = -0.2, vjust = 1.2, parse=T)
+  outfile <- gsub(".", "_bychr.", config["out_file_qq"], fixed=TRUE)
+  ggsave(outfile, plot = p_by_chr, width = 10, height = 9)
+
+  if (truncate) {
+    # QQ plots by chromosome, truncated.
+    p_by_chr <- p_by_chr +
+      scale_y_continuous(
+        oob = scales::squish,
+        limits = c(0, -log10(truncate_pval_threshold)),
+        expand = c(0,0)
+      ) +
+      ylab(expression(paste(-log[10], "(observed P)") ~ " (truncated)"))
+    outfile <- gsub(".", "_truncated_bychr.", config["out_file_qq"], fixed=TRUE)
+    ggsave(outfile, plot = p_by_chr, width = 6, height = 6)
+  }
+
+  rm(dat_by_chr)
+}
 
 
 ## manhattan plot
