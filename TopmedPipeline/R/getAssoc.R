@@ -15,12 +15,12 @@
 
 
 #' Combine association test results
-#' 
+#'
 #' Combine association test results from multiple files into a single object.
-#' 
+#'
 #' Useful for combining per-segment results into a single file per chromosome.
 #' Assumes files are already ordered by segment.
-#' 
+#'
 #' @param files Vector of file names with association test results
 #' @param assoc_type Type of association test ("single", "aggregate", "window")
 #' @param ordered Logical for whether to order the output by chromosome and position
@@ -78,7 +78,7 @@ combineAssoc <- function(files, assoc_type, ordered=FALSE) {
 #' data frame with standard column names.
 #'
 #' If a single aggregate unit contains variants from multiple chromosomes, each chromosome will have its own row in the output.
-#' 
+#'
 #' @inheritParams combineAssoc
 #' @return data.frame including standard columns ("chr", "pos", "start", "end", "stat", "pval", "MAC")
 #'
@@ -110,7 +110,7 @@ getAssoc <- function(files, assoc_type) {
         }
         x
     }))
-    
+
     if ("pval" %in% names(assoc)) {
         ## SKAT or fastSKAT
         pval.col <- "pval"

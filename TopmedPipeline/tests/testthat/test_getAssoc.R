@@ -23,7 +23,7 @@ library(GenomicRanges)
     }
     fitNullModel(sampleData(seqData), outcome="outcome", covars="sex", cov.mat=grm, verbose=FALSE)
 }
-        
+
 
 test_that("single related", {
     seqData <- SeqVarBlockIterator(.testData(), verbose=FALSE)
@@ -162,7 +162,7 @@ test_that("combine single", {
     save(a2, file=files[2])
 
     assoc <- combineAssoc(files, "single")
-    
+
     seqSetFilterChrom(seqData, include=1:2, verbose=FALSE)
     a <- assocTestSingle(seqData, nullmod, verbose=FALSE)
     expect_true(all(a == assoc, na.rm=TRUE))
@@ -186,7 +186,7 @@ test_that("combine window", {
     save(a2, file=files[2])
 
     assoc <- combineAssoc(files, "window")
-    
+
     seqData <- .testData()
     seqSetFilterChrom(seqData, include=1:2, verbose=FALSE)
     seqData <- SeqVarWindowIterator(seqData, verbose=FALSE)
@@ -213,7 +213,7 @@ test_that("combine aggregate", {
     save(a2, file=files[2])
 
     assoc <- combineAssoc(files, "aggregate")
-    
+
     seqResetFilter(seqData, verbose=FALSE)
     seqData <- SeqVarListIterator(seqData, variantRanges=c(agg1, agg2), verbose=FALSE)
     a <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
@@ -239,7 +239,7 @@ test_that("combine aggregate - empty set", {
     save(a2, file=files[2])
 
     assoc <- combineAssoc(files, "aggregate")
-    
+
     seqResetFilter(seqData, verbose=FALSE)
     seqData <- SeqVarListIterator(seqData, variantRanges=c(agg1, agg2), verbose=FALSE)
     a <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
@@ -266,7 +266,7 @@ test_that("index_chr_pos", {
     xa <- lapply(x, function(xx) {names(xx) <- c("a", "b"); xx})
     expect_equal(.index_chr_pos(xa, chr="a", pos="b"), c(4,2,1,3))
 })
-    
+
 test_that("combine out of order", {
     seqData <- .testData()
     nullmod <- .testNullModel(seqData, MM=TRUE)
@@ -293,7 +293,7 @@ test_that("combine out of order", {
     save(a1, file=files[1])
     save(a2, file=files[2])
     assoc <- combineAssoc(files, "window", ordered=TRUE)
-    a <- combineAssoc(files[c(2,1)], "window", ordered=TRUE) 
+    a <- combineAssoc(files[c(2,1)], "window", ordered=TRUE)
     expect_equal(a, assoc)
 
     seqResetFilter(seqData, verbose=FALSE)
@@ -314,7 +314,7 @@ test_that("combine out of order", {
     seqData <- SeqVarListIterator(seqData, variantRanges=agg, verbose=FALSE)
     a <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
     expect_equal(a, assoc)
-    
+
     seqClose(seqData)
     unlink(files)
 })
@@ -327,7 +327,7 @@ test_that("omitKnownHits", {
     res <- omitKnownHits(assoc, hits, flank=0)
     .pos <- function(x) paste0(x$chr, x$pos)
     expect_equal(setdiff(.pos(assoc), .pos(hits)), .pos(res))
-    
+
     res <- omitKnownHits(assoc, hits, flank=1)
     expect_true(nrow(res) < nrow(assoc))
 })
@@ -341,12 +341,12 @@ test_that("MAC - single", {
     a <- assocTestSingle(seqData, nullmod, verbose=FALSE)
     a <- addMAC(a, "single")
     expect_true("MAC" %in% names(a))
-    
+
     files <- tempfile()
     save(a, file=files)
     assoc <- getAssoc(files, "single")
     expect_true("MAC" %in% names(assoc))
-    
+
     seqClose(seqData)
     unlink(files)
 })
@@ -365,12 +365,12 @@ test_that("MAC - window", {
     # for variants where alt is minor allele, n.alt should be MAC
     alt.min <- which(sapply(a$variantInfo, function(x) all(x$freq < 0.5)))
     expect_equal(a$results$n.alt[alt.min], a$results$MAC[alt.min])
-    
+
     files <- tempfile()
     save(a, file=files)
     assoc <- getAssoc(files, "window")
     expect_true("MAC" %in% names(assoc))
-    
+
     seqClose(seqData)
     unlink(files)
 })
