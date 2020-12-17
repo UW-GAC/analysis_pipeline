@@ -90,50 +90,45 @@ getAssoc <- function(files, assoc_type) {
         x <- getobj(f)
         if (assoc_type == "aggregate") {
             tmp <- x$results %>%
-                mutate_(group_id=~(1:n())) %>%
-                filter_(~(n.site > 0))
+                mutate(group_id=1:n()) %>%
+                filter(n.site > 0)
             group.info <- bind_rows(lapply(tmp$group_id, function(g) {
                 x$variantInfo[[g]] %>%
-                    group_by_("chr") %>%
-                    summarise_(start=~min(pos),
-                               end=~max(pos),
-                               pos=~(floor((min(pos) + max(pos))/2))) %>%
+                    group_by(chr) %>%
+                    summarise(start=min(pos),
+                               end=max(pos),
+                               pos=(floor((min(pos) + max(pos))/2))) %>%
                     mutate_(group_id=g) %>%
                     as.data.frame()
             }))
             x <- left_join(tmp, group.info, by="group_id")
         } else if (assoc_type == "window") {
-            x <- filter_(x$results, ~(n.site > 0)) %>%
-                mutate_(pos=~(floor((start + end)/2)))
+            x <- filter(x$results, (n.site > 0)) %>%
+                mutate(pos=(floor((start + end)/2)))
         } else {
-            x <- mutate_(x, start="pos", end="pos")
+            x <- mutate(x, start=pos, end=pos)
         }
         x
     }))
 
     if ("pval" %in% names(assoc)) {
         ## SKAT or fastSKAT
-        pval.col <- "pval"
-        assoc <- select_(assoc, "chr", "pos", "start", "end", pval.col, ~suppressWarnings(one_of("MAC"))) %>%
-            rename_(pval=pval.col)
+        assoc <- select(assoc, chr, pos, start, end, pval, suppressWarnings(one_of("MAC")))
     } else if ("pval_SKATO" %in% names(assoc)) {
         ## SKATO
         pval.col <- "pval_SKATO"
-        assoc <- select_(assoc, "chr", "pos", "start", "end", pval.col, ~suppressWarnings(one_of("MAC"))) %>%
-            rename_(pval=pval.col)
+        assoc <- select(assoc, chr, pos, start, end, pval=pval_SKATO, suppressWarnings(one_of("MAC")))
     } else if ("pval_SMMAT" %in% names(assoc)) {
         ## SMMAT
-        pval.col <- "pval_SMMAT"
-        assoc <- select_(assoc, "chr", "pos", "start", "end", pval.col, ~suppressWarnings(one_of("MAC"))) %>%
-            rename_(pval=pval.col)
+        assoc <- select(assoc, chr, pos, start, end, pval=pval_SMMAT, suppressWarnings(one_of("MAC")))
     } else {
         ## burden or single
-        assoc <- select_(assoc, "chr", "pos", "start", "end", ~ends_with("Stat"), ~ends_with("pval"),
-                         ~suppressWarnings(one_of("MAC")))
+        assoc <- select(assoc, chr, pos, start, end, ends_with("Stat"), ends_with("pval"),
+                         suppressWarnings(one_of("MAC")))
         names(assoc)[5:6] <- c("stat", "pval")
     }
-    assoc <- filter_(assoc, ~(!is.na(pval))) %>%
-        mutate_(chr=~factor(chr, levels=c(1:22, "X")))
+    assoc <- filter(assoc, !is.na(pval)) %>%
+        mutate(chr=ordered(chr, levels=c(1:22, "X")))
     assoc
 }
 
