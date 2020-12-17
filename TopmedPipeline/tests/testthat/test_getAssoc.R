@@ -39,6 +39,8 @@ test_that("single related", {
         filter_(~!is.na(Score.pval))
 
     assoc <- getAssoc(files, "single")
+    expect_equal(nrow(assoc), nrow(a))
+    expect_equal(assoc$id, a$variant.id)
     expect_equal(as.character(assoc$chr), a$chr)
     expect_equal(assoc$pos, a$pos)
     expect_equal(assoc$start, assoc$pos)
@@ -64,9 +66,12 @@ test_that("window, burden", {
     save(a1, file=files[1])
     save(a2, file=files[2])
     a <- rbind(a1$results, a2$results) %>%
-        filter_(~(n.site > 0))
+        filter(n.site > 0) %>%
+        mutate(id = sprintf("chr%s_%d", chr, start))
 
     assoc <- getAssoc(files, "window")
+    expect_equal(nrow(assoc), nrow(a))
+    expect_equal(assoc$id, a$id)
     expect_equal(assoc$stat, a$Score.Stat)
     expect_equal(assoc$pval, a$Score.pval)
 
@@ -80,19 +85,24 @@ test_that("aggregate, skat", {
     nullmod <- .testNullModel(seqData)
     gr <- granges(seqData)
     agg <- GRangesList(gr[1:100], gr[101:200], gr[201:300])
+    names(agg) <- letters[1:3]
     seqData <- SeqVarListIterator(seqData, variantRanges=agg, verbose=FALSE)
     a1 <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
     seqResetFilter(seqData, verbose=FALSE)
     agg <- GRangesList(gr[301:400], gr[401:500], gr[501:600])
+    names(agg) <- letters[4:6]
     seqData <- SeqVarListIterator(seqData, variantRanges=agg, verbose=FALSE)
     a2 <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
     files <- c(tempfile(), tempfile())
     save(a1, file=files[1])
     save(a2, file=files[2])
     a <- rbind(a1$results, a2$results) %>%
-        filter_(~(n.site > 0))
+        filter(n.site > 0) %>%
+        mutate(id = c(names(a1$variantInfo), names(a2$variantInfo)))
 
     assoc <- getAssoc(files, "aggregate")
+    expect_equal(nrow(assoc), nrow(a))
+    expect_equal(assoc$id, a$id)
     expect_true(setequal(assoc$pval, a$pval))
     expect_equal(as.character(assoc$chr[1]), a1$variantInfo[[1]]$chr[1])
     expect_true(assoc$pos[1] > a1$variantInfo[[1]]$pos[1] & assoc$pos[1] < max(a1$variantInfo[[1]]$pos))
@@ -103,6 +113,46 @@ test_that("aggregate, skat", {
     unlink(files)
 })
 
+test_that("aggregate, multiple chromosomes in one aggregation unit", {
+  seqData <- .testData()
+  nullmod <- .testNullModel(seqData)
+  gr <- granges(seqData)
+  gr_chr1 <- gr[(seqnames(gr) == 1)][1:10]
+  gr_chr2 <- gr[(seqnames(gr) == 2)]
+  agg <- GRangesList(c(gr_chr1, gr_chr2))
+  names(agg) <- "a"
+  seqData <- SeqVarListIterator(seqData, variantRanges=agg, verbose=FALSE)
+  a <- assocTestAggregate(seqData, nullmod, test="SKAT", verbose=FALSE)
+  file <- tempfile()
+  save(a, file = file)
+
+  assoc <- getAssoc(file, "aggregate")
+
+  tmp <- a$variantInfo[[1]] %>%
+    filter(chr == 2)
+  expected_pos <- floor((min(tmp$pos) + max(tmp$pos)) / 2)
+  expect_equal(nrow(assoc), 1)
+  expect_equal(assoc$id, "a")
+  expect_equal(as.character(assoc$chr), "2")
+  expect_equal(assoc$pos, expected_pos)
+
+  # Chooses first chromosome if there is an equal number of variants on each chromosome.
+  a$variantInfo[[1]] <- a$variantInfo[[1]] %>%
+    group_by(chr) %>%
+    sample_n(2) %>%
+    ungroup()
+  save(a, file = file)
+
+  tmp <- a$variantInfo[[1]] %>%
+    filter(chr == chr[1])
+  expected_pos <- floor((min(tmp$pos) + max(tmp$pos)) / 2)
+  assoc <- getAssoc(file, "aggregate")
+  expect_equal(nrow(assoc), 1)
+  expect_equal(assoc$id, "a")
+  expect_equal(as.character(assoc$chr), "1")
+  expect_equal(assoc$pos, expected_pos)
+
+})
 
 test_that("window, smmat", {
     seqData <- .testData()

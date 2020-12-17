@@ -90,42 +90,48 @@ getAssoc <- function(files, assoc_type) {
         x <- getobj(f)
         if (assoc_type == "aggregate") {
             tmp <- x$results %>%
-                mutate(group_id=1:n()) %>%
+                mutate(group_id=names(x$variantInfo)) %>%
                 filter(n.site > 0)
-            group.info <- bind_rows(lapply(tmp$group_id, function(g) {
-                x$variantInfo[[g]] %>%
-                    group_by(chr) %>%
-                    summarise(start=min(pos),
-                               end=max(pos),
-                               pos=(floor((min(pos) + max(pos))/2))) %>%
-                    mutate_(group_id=g) %>%
-                    as.data.frame()
-            }))
-            x <- left_join(tmp, group.info, by="group_id")
+            group.info <- x$variantInfo %>%
+              bind_rows(.id="group_id") %>%
+              group_by(group_id, chr) %>%
+              summarise(n_chr = n(),
+                        start=min(pos),
+                        end=max(pos),
+                        pos=(floor((min(pos) + max(pos))/2))) %>%
+              ungroup() %>%
+              group_by(group_id) %>%
+              # Choose the chromosome with the most variants as the one to return.
+              arrange(desc(n_chr)) %>%
+              dplyr::slice(1) %>%
+              ungroup()
+            x <- left_join(tmp, group.info, by="group_id") %>%
+              mutate(id=group_id)
         } else if (assoc_type == "window") {
             x <- filter(x$results, (n.site > 0)) %>%
-                mutate(pos=(floor((start + end)/2)))
+                mutate(pos=(floor((start + end)/2))) %>%
+                mutate(id = sprintf("chr%s_%d", chr, start))
         } else {
-            x <- mutate(x, start=pos, end=pos)
+            x <- mutate(x, start=pos, end=pos) %>%
+              dplyr::rename(id = variant.id)
         }
         x
     }))
 
     if ("pval" %in% names(assoc)) {
         ## SKAT or fastSKAT
-        assoc <- select(assoc, chr, pos, start, end, pval, suppressWarnings(one_of("MAC")))
+        assoc <- select(assoc, id, chr, pos, start, end, pval, suppressWarnings(one_of("MAC")))
     } else if ("pval_SKATO" %in% names(assoc)) {
         ## SKATO
-        pval.col <- "pval_SKATO"
-        assoc <- select(assoc, chr, pos, start, end, pval=pval_SKATO, suppressWarnings(one_of("MAC")))
+        assoc <- select(assoc, id, chr, pos, start, end, pval=pval_SKATO, suppressWarnings(one_of("MAC")))
     } else if ("pval_SMMAT" %in% names(assoc)) {
         ## SMMAT
-        assoc <- select(assoc, chr, pos, start, end, pval=pval_SMMAT, suppressWarnings(one_of("MAC")))
+        assoc <- select(assoc, id, chr, pos, start, end, pval=pval_SMMAT, suppressWarnings(one_of("MAC")))
     } else {
         ## burden or single
-        assoc <- select(assoc, chr, pos, start, end, ends_with("Stat"), ends_with("pval"),
+        assoc <- select(assoc, id, chr, pos, start, end, ends_with("Stat"), ends_with("pval"),
                          suppressWarnings(one_of("MAC")))
-        names(assoc)[5:6] <- c("stat", "pval")
+        names(assoc)[6:7] <- c("stat", "pval")
     }
     assoc <- filter(assoc, !is.na(pval)) %>%
         mutate(chr=ordered(chr, levels=c(1:22, "X")))
