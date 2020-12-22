@@ -82,7 +82,7 @@ combineAssoc <- function(files, assoc_type, ordered=FALSE) {
 #' @inheritParams combineAssoc
 #' @return data.frame including standard columns ("chr", "pos", "start", "end", "stat", "pval", "MAC")
 #'
-#' @importFrom dplyr "%>%" bind_rows ends_with filter_ group_by_ left_join mutate_ n rename_ select_ summarise_
+#' @importFrom dplyr "%>%" bind_rows ends_with filter group_by left_join mutate n rename select summarise
 #' @export
 getAssoc <- function(files, assoc_type) {
     stopifnot(assoc_type %in% c("single", "aggregate", "window"))
