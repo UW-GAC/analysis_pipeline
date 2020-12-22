@@ -82,7 +82,7 @@ combineAssoc <- function(files, assoc_type, ordered=FALSE) {
 #' @inheritParams combineAssoc
 #' @return data.frame including standard columns ("chr", "pos", "start", "end", "stat", "pval", "MAC")
 #'
-#' @importFrom dplyr "%>%" bind_rows ends_with filter group_by left_join mutate n rename select summarise
+#' @importFrom dplyr "%>%" bind_rows ends_with filter group_by left_join mutate n rename select summarise .data arrange desc
 #' @export
 getAssoc <- function(files, assoc_type) {
     stopifnot(assoc_type %in% c("single", "aggregate", "window"))
@@ -91,50 +91,50 @@ getAssoc <- function(files, assoc_type) {
         if (assoc_type == "aggregate") {
             tmp <- x$results %>%
                 mutate(group_id=names(x$variantInfo)) %>%
-                filter(n.site > 0)
+                filter(.data$n.site > 0)
             group.info <- x$variantInfo %>%
               bind_rows(.id="group_id") %>%
-              group_by(group_id, chr) %>%
+              group_by(.data$group_id, .data$chr) %>%
               summarise(n_chr = n(),
-                        start=min(pos),
-                        end=max(pos),
-                        pos=(floor((min(pos) + max(pos))/2))) %>%
+                        start=min(.data$pos),
+                        end=max(.data$pos),
+                        pos=(floor((min(.data$pos) + max(.data$pos))/2))) %>%
               ungroup() %>%
-              group_by(group_id) %>%
+              group_by(.data$group_id) %>%
               # Choose the chromosome with the most variants as the one to return.
-              arrange(desc(n_chr)) %>%
+              arrange(desc(.data$n_chr)) %>%
               dplyr::slice(1) %>%
               ungroup()
             x <- left_join(tmp, group.info, by="group_id") %>%
-              mutate(id=group_id)
+              mutate(id=.data$group_id)
         } else if (assoc_type == "window") {
-            x <- filter(x$results, (n.site > 0)) %>%
-                mutate(pos=(floor((start + end)/2))) %>%
-                mutate(id = sprintf("chr%s_%d", chr, start))
+            x <- filter(x$results, (.data$n.site > 0)) %>%
+                mutate(pos=(floor((.data$start + .data$end)/2))) %>%
+                mutate(id = sprintf("chr%s_%d", .data$chr, .data$start))
         } else {
-            x <- mutate(x, start=pos, end=pos) %>%
-              dplyr::rename(id = variant.id)
+            x <- mutate(x, start=.data$pos, end=.data$pos) %>%
+              dplyr::rename(id = .data$variant.id)
         }
         x
     }))
 
     if ("pval" %in% names(assoc)) {
         ## SKAT or fastSKAT
-        assoc <- select(assoc, id, chr, pos, start, end, pval, suppressWarnings(one_of("MAC")))
+        assoc <- select(assoc, .data$id, .data$chr, .data$pos, .data$start, .data$end, .data$pval, suppressWarnings(one_of("MAC")))
     } else if ("pval_SKATO" %in% names(assoc)) {
         ## SKATO
-        assoc <- select(assoc, id, chr, pos, start, end, pval=pval_SKATO, suppressWarnings(one_of("MAC")))
+        assoc <- select(assoc, .data$id, .data$chr, .data$pos, .data$start, .data$end, pval=.data$pval_SKATO, suppressWarnings(one_of("MAC")))
     } else if ("pval_SMMAT" %in% names(assoc)) {
         ## SMMAT
-        assoc <- select(assoc, id, chr, pos, start, end, pval=pval_SMMAT, suppressWarnings(one_of("MAC")))
+        assoc <- select(assoc, .data$id, .data$chr, .data$pos, .data$start, .data$end, pval=.data$pval_SMMAT, suppressWarnings(one_of("MAC")))
     } else {
         ## burden or single
-        assoc <- select(assoc, id, chr, pos, start, end, ends_with("Stat"), ends_with("pval"),
+        assoc <- select(assoc, .data$id, .data$chr, .data$pos, .data$start, .data$end, ends_with("Stat"), ends_with("pval"),
                          suppressWarnings(one_of("MAC")))
         names(assoc)[6:7] <- c("stat", "pval")
     }
-    assoc <- filter(assoc, !is.na(pval)) %>%
-        mutate(chr=ordered(chr, levels=c(1:22, "X")))
+    assoc <- filter(assoc, !is.na(.data$pval)) %>%
+        mutate(chr=ordered(.data$chr, levels=c(1:22, "X")))
     assoc
 }
 
