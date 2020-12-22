@@ -29,7 +29,7 @@ config <- setConfigDefaults(config, required, optional)
 print(config)
 writeConfig(config, paste0(basename(argv$config), ".assoc_plots.params"))
 
-plot_by_chrom <- config["plot_by_chrom"]
+plot_by_chrom <- config["plot_qq_by_chrom"]
 
 chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 files <- sapply(chr, function(c) insertChromString(config["assoc_file"], c, "assoc_file"))
