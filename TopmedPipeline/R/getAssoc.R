@@ -201,3 +201,33 @@ removeConditional <- function(assoc, varfile) {
     dat$chr <- as.character(dat$chr)
     anti_join(assoc, dat, by=c("variant.id", "chr"))
 }
+
+#' Filter association test results to just thsose specified by the user.
+#' @param assoc results from \code{\link{getAssoc}}
+#' @param varfile RData file containing vector of \code{id} values from \code{assoc} to keep. See details.
+#'
+#' @return \code{assoc} with only the specified identifiers
+#'
+#' @details If \code{varfile} contains a space, `chromosome` will be inserted and the variant ids included will be assumed to be from that chromosome.
+#'
+#' @importFrom dplyr inner_join mutate filter
+#'
+#'
+assocFilterByFile <- function(assoc, varfile) {
+  # Is the variant include file by chromosome?
+  if (grepl(" ", varfile)) {
+    chrs <- as.character(unique(assoc$chr))
+    keep <- lapply(chrs, function(x) {
+      tmp <- getobj(insertChromString(varfile, x))
+      data.frame(id = tmp, chr = x, stringsAsFactors = FALSE)
+    }) %>%
+      bind_rows() %>%
+      mutate(chr = ordered(chr, levels = c(!!chr)))
+    assoc <- assoc %>%
+      inner_join(keep, by = c("id", "chr"))
+  } else {
+    var_include <- getobj(varfile)
+    assoc <- assoc %>%
+      filter(id %in% var_include)
+  }
+}

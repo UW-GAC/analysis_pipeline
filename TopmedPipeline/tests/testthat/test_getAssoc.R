@@ -24,6 +24,23 @@ library(GenomicRanges)
     fitNullModel(sampleData(seqData), outcome="outcome", covars="sex", cov.mat=grm, verbose=FALSE)
 }
 
+.testAssoc <- function(n = 100, nchr = 23) {
+  data.frame(
+    chr = sort(rep_len(1:nchr, n)),
+    pos = sample(1e8, n),
+    start = sample(1e8, n),
+    end = sample(1e8, n),
+    stat = rnorm(n),
+    pval = runif(n),
+    MAC = sample(1:1000, n),
+    stringsAsFactors = FALSE
+  ) %>%
+  mutate(chr = ifelse(chr == 23, "X", chr)) %>%
+  mutate(chr = ordered(chr, levels = c(1:22, "X"))) %>%
+  arrange(chr, pos) %>%
+  mutate(id = 1:n()) %>%
+  select(id, everything())
+}
 
 test_that("single related", {
     seqData <- SeqVarBlockIterator(.testData(), verbose=FALSE)
@@ -439,4 +456,78 @@ test_that("remove conditional", {
     a2 <- removeConditional(a1, cvfile)
     expect_equivalent(a1[4:nrow(a1),], a2)
     unlink(cvfile)
+})
+
+## Test the following
+# DONE - One varfile, multiple chromosomes, no repeated ids in assoc
+# DONE - One varfile, multiple chromosomes, repeated ids in assoc
+# DONE - no ids selected, one varfile
+
+test_that("assocFilterByFile with one varfile", {
+  filename <- tempfile()
+  assoc <- .testAssoc()
+
+  # All ids selected
+  tmp <- assoc$id
+  save(tmp, file=filename)
+  out <- assocFilterByFile(assoc, filename)
+  expect_equal(out$id, tmp)
+  expect_equal(out, assoc)
+
+  # Only keep ids on chromosome 1
+  tmp <- assoc %>%
+    filter(chr == 1) %>%
+    pull(id)
+    tmp <- assoc$id
+  save(tmp, file=filename)
+  out <- assocFilterByFile(assoc, filename)
+  expect_equal(out$id, tmp)
+
+  # Assoc has fewer ids than in file.
+  tmp <- assoc$id
+  save(tmp, file = filename)
+  assoc_subset <- assoc %>%
+    filter(row_number() %in% 1:3)
+  out <- assocFilterByFile(assoc_subset, filename)
+  expect_equal(out$id, assoc_subset$id)
+
+  # Assoc has repeated ids
+  assoc_rep <- assoc %>%
+    group_by(chr) %>%
+    mutate(id = 1:n()) %>%
+    ungroup()
+  tmp <- assoc_rep$id[1:3]
+  save(tmp, file = filename)
+  chk <- assoc_rep %>%
+    filter(id %in% tmp)
+  out <- assocFilterByFile(assoc_rep, filename)
+  expect_equal(out$id, chk$id)
+  expect_equal(nrow(out), nrow(chk))
+  expect_equal(out, chk)
+
+  # No records in varfile
+  tmp <- c()
+  save(tmp, file = filename)
+  out <- assocFilterByFile(assoc, filename)
+  expect_equal(nrow(out), 0)
+
+  # Different ids in varfile
+  tmp <- max(assoc$id) + 1
+  save(tmp, file = filename)
+  out <- assocFilterByFile(assoc, filename)
+  expect_equal(nrow(out), 0)
+
+  unlink(filename)
+
+})
+
+## Test the following:
+# Multiple varfiles, multiple chromosomes, no repeated ids
+# Multiple varfiles, one chromosome, no repeated ids
+# Missing varfile
+# Only varfiles for the set of chromosomes in assoc
+# no ids selected, mulitple varfiles
+
+test_that("assocFilterByFile with multiple varfiles", {
+  fail("not implemented")
 })
