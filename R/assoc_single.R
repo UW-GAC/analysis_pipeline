@@ -26,6 +26,7 @@ optional <- c("genome_build"="hg38",
               "pass_only"=TRUE,
               "segment_file"=NA,
               "test_type"="score",
+              "approx_scoreSE"=FALSE,
               "variant_include_file"=NA,
               "variant_block_size"=1024)
 config <- setConfigDefaults(config, required, optional)
@@ -93,7 +94,7 @@ test <- switch(tolower(config["test_type"]),
                score="Score",
                score.spa="Score.SPA")
 
-assoc <- assocTestSingle(iterator, nullModel, test=test, genome.build=build)
+assoc <- assocTestSingle(iterator, nullModel, test=test, approx.score.SE=config["approx_scoreSE"], genome.build=build)
 
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 
