@@ -94,7 +94,10 @@ test <- switch(tolower(config["test_type"]),
                score="Score",
                score.spa="Score.SPA")
 
-assoc <- assocTestSingle(iterator, nullModel, test=test, approx.score.SE=config["approx_scoreSE"], genome.build=build)
+assoc <- assocTestSingle(iterator, nullModel, 
+                         test=test, 
+                         approx.score.SE=as.logical(config["approx_scoreSE"]), 
+                         genome.build=build)
 
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 
