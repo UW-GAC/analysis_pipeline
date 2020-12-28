@@ -12,14 +12,9 @@ argv <- parse_args(argp)
 cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 
-required <- c("gds_file",
-			  "null_model_file",
-			  "phenotype_file")
-optional <- c("genome_build"="hg38",
-			  "n_variants"=10,
-			  "mac_threshold"=20,
-			  "pass_only"=TRUE,
-			  "out_prefix"="null_model")
+required <- c("null_model_file",
+			  "variant_score_file")
+optional <- c("out_prefix"="null_model")
 config <- setConfigDefaults(config, required, optional)
 print(config)
 writeConfig(config, paste0(basename(argv$config), ".null_model_fast_scoreSE.params"))
@@ -27,40 +22,11 @@ writeConfig(config, paste0(basename(argv$config), ".null_model_fast_scoreSE.para
 # get null model
 nullModel <- getobj(config["null_model_file"])
 
-# compute se.ratio for a random subset of variants from each chr
-tab <- NULL
-# loop through chromosomes
-for(chr in 1:22){
-	# gds file
-	gdsfile <- config["gds_file"]
-	gdsfile <- insertChromString(gdsfile, chr)
-	gds <- seqOpen(gdsfile)
-
-	# get phenotypes
-	annot <- getobj(config["phenotype_file"])
-
-	# createSeqVarData object
-	annot <- matchAnnotGds(gds, annot)
-	seqData <- SeqVarData(gds, sampleData=annot)
-
-	if (as.logical(config["pass_only"])) {
-	    filterByPass(seqData)
-	}
-
-	checkSelectedVariants(seqData)
-
-	chr.tab <- calcScore(seqData, 
-						 nullModel, 
-						 nvar = config["n_variants"],
-						 min.mac = config["mac_threshold"],
-						 genome.build = config["genome_build"])
-	tab <- rbind(tab, chr.tab)
-
-	seqClose(seqData)
-}
+# get variant score table
+variantTable <- getobj(config["variant_score_file"])
 
 # update the null model
-nullModel <- nullModelFastScore(nullModel, tab)
+nullModel <- nullModelFastScore(nullModel, variantTable)
 outfile <- sprintf("%s_fast_scoreSE.RData", config["out_prefix"])
 save(nullModel, file = outfile)
 
