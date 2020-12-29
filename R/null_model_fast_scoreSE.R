@@ -34,7 +34,7 @@ if(bychrfile){
 }
 
 # combine chr files
-variantTable <- data.table::rbindlist(lapply(unname(files), getobj))
+variantTable <- lapply(unname(files), getobj)
 
 # get null model
 nullModel <- getobj(config["null_model_file"])
