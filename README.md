@@ -67,7 +67,7 @@ config parameter | default value | description
 
 ## Relatedness and Population structure
 
-The first step in evalulating relatedness and population structure is to select a subset of variants with LD pruning and create a GDS file containing only these variants. KING is used to get initial estimates of kinship for close relatives (using the "IBDSeg" methed) and a full matrix of population divergence estimates for all sample pairs (using the "robust" method). These two matrices are used by PC-AiR to identify a set of unrelated samples, run Principal Component Analysis (PCA) on unrelated samples, and project relatives. (Note that for very large sample sizes, it is recommended to omit the KING-robust step and ignore ancestry divergence when selecting an unrelated set.) Finally, PC-Relate estimates kinship accounting for population structure.
+The first step in evalulating relatedness and population structure is to select a subset of variants with LD pruning and create a GDS file containing only these variants. KING is used to get initial estimates of kinship for close relatives (using the "IBDSeg" method) and a full matrix of population divergence estimates for all sample pairs (using the "robust" method). These two matrices are used by PC-AiR to identify a set of unrelated samples, run Principal Component Analysis (PCA) on unrelated samples, and project relatives. (Note that for very large sample sizes, it is recommended to omit the KING-robust step and ignore ancestry divergence when selecting an unrelated set.) Finally, PC-Relate estimates kinship accounting for population structure.
 
 1. LD pruning to select variants
 

@@ -103,9 +103,11 @@ if (!is.na(config["phenotype_file"]) & !is.na(config["study"])) {
     message("Plotting by study variable ", study)
 
     annot <- getobj(config["phenotype_file"])
-    stopifnot(study %in% varLabels(annot))
-    annot <- pData(annot) %>%
-        select_("sample.id", study)
+    if (is(annot, "AnnotatedDataFrame")) {
+        annot <- pData(annot)
+    }
+    stopifnot(study %in% names(annot))
+    annot <- select_(annot, "sample.id", study)
 
     kinship <- kinship %>%
         left_join(annot, by=c(ID1="sample.id")) %>%

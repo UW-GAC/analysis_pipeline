@@ -4,9 +4,7 @@
 \name{segments}
 \alias{segments}
 \title{Example segments}
-\format{
-\code{\link[GenomicRanges]{GRanges}} object
-}
+\format{\code{\link[GenomicRanges]{GRanges}} object}
 \usage{
 segments
 }

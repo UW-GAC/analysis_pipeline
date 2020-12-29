@@ -26,7 +26,10 @@ config <- setConfigDefaults(config, required, optional)
 print(config)
 
 annot <- getobj(config["phenotype_file"])
-annot <- pData(annot) %>%
+if (is(annot, "AnnotatedDataFrame")) {
+    annot <- pData(annot)
+}
+annot <- annot %>%
     select(sample.id, Individ=!!config["subjectID"])
 
 if (!is.na(config["sample_include_file"])) {
