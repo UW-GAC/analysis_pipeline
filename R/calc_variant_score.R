@@ -5,7 +5,7 @@ library(SeqVarTools)
 library(GENESIS)
 sessionInfo()
 
-argp <- arg_parser("Variant score and SE - calculate")
+argp <- arg_parser("Calculate variant score and SE")
 argp <- add_argument(argp, "config", help="path to config file")
 argp <- add_argument(argp, "--chromosome", help="chromosome (1-22)", type="character")
 argp <- add_argument(argp, "--version", help="pipeline version number")
