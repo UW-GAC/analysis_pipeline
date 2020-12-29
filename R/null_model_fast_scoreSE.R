@@ -15,7 +15,7 @@ config <- readConfig(argv$config)
 required <- c("null_model_file",
 			  "variant_score_file")
 optional <- c("out_prefix"="null_model",
-							"chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X")
+			  "chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22")
 config <- setConfigDefaults(config, required, optional)
 print(config)
 writeConfig(config, paste0(basename(argv$config), ".null_model_fast_scoreSE.params"))

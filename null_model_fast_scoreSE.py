@@ -20,7 +20,7 @@ default_segment_length = "10000"
 
 parser = ArgumentParser(description=description)
 parser.add_argument("config_file", help="configuration file")
-parser.add_argument("-c", "--chromosomes", default="1-23",
+parser.add_argument("-c", "--chromosomes", default="1-22",
                     help="range of chromosomes [default %(default)s]")
 parser.add_argument("--cluster_type", default="UW_Cluster",
                     help="type of compute cluster environment [default %(default)s]")
