@@ -71,14 +71,14 @@ if(!is.na(varfile)){
 	variant.id <- NULL
 }
 
-# compute se.ratio 
+# compute se.ratio
 # if is.na(varfile): for a random subset of variants
 # if !is.na(varfile): for specified variants
-tab <- calcScore(seqData, 
+tab <- calcScore(seqData,
 				 nullModel,
 				 variant.id = variant.id,
-				 nvar = config["n_variants"],
-				 min.mac = config["mac_threshold"],
+				 nvar = as.numeric(config["n_variants"]),
+				 min.mac = as.numeric(config["mac_threshold"]),
 				 genome.build = config["genome_build"])
 
 save(tab, file = constructFilename(config["out_prefix"], chr, NA))
