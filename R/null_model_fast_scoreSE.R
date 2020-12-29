@@ -14,7 +14,8 @@ config <- readConfig(argv$config)
 
 required <- c("null_model_file",
 			  "variant_score_file")
-optional <- c("out_prefix"="null_model")
+optional <- c("out_prefix"="null_model",
+							"chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X")
 config <- setConfigDefaults(config, required, optional)
 print(config)
 writeConfig(config, paste0(basename(argv$config), ".null_model_fast_scoreSE.params"))
@@ -24,12 +25,10 @@ writeConfig(config, paste0(basename(argv$config), ".null_model_fast_scoreSE.para
 scorefile <- config["variant_score_file"]
 bychrfile <- grepl(" ", scorefile) # do we have one file per chromosome?
 
-if(bychrfile){
-	file.pattern <- gsub(" ", "[[:digit:]]+", basename(scorefile))
-	files <- list.files(path=dirname(scorefile), pattern=file.pattern, full.names=TRUE)
-	chrs <- sub("_chr", "", regmatches(basename(files), regexpr("_chr[[:digit:]]+", basename(files))))
-	files <- files[order(as.integer(chrs))]
-}else{
+if (bychrfile){
+	chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
+	files <- sprintf(gsub(" ", "%s", config["variant_score_file"]), chr)
+} else{
 	files <- scorefile
 }
 
@@ -41,7 +40,7 @@ nullModel <- getobj(config["null_model_file"])
 
 # update the null model
 nullModel <- nullModelFastScore(nullModel, variantTable)
-outfile <- sprintf("%s_fast_scoreSE.RData", config["out_prefix"])
+outfile <- sprintf("%s.RData", config["out_prefix"])
 save(nullModel, file = outfile)
 
 # delete chr files
