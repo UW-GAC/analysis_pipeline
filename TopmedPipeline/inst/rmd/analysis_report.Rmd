@@ -41,6 +41,11 @@ types <- c("single", "window", "aggregate")
 unit <- intersect(sub("assoc_", "", names(param_files)), types)
 config <- param_files[[paste0("assoc_", unit)]]
 nullmod_file <- gsub("\\.RData", "_reportonly.RData", config["null_model_file"])
+# If the "reportonly" version fo the null mdoel file doesn't exist, use the full file.
+# This is mainly to handle null models for the fast score approximation, which are already small.
+if (!file.exists(nullmod_file)) {
+  nullmod_file <- config["null_model_file"]
+}
 nullmod <- getobj(nullmod_file)
 ```
 
