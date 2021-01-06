@@ -212,6 +212,7 @@ removeConditional <- function(assoc, varfile) {
 #'
 #' @importFrom dplyr inner_join mutate filter
 #'
+#' @export
 #'
 assocFilterByFile <- function(assoc, varfile) {
   # Is the variant include file by chromosome?
