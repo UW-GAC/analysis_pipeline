@@ -202,7 +202,7 @@ removeConditional <- function(assoc, varfile) {
     anti_join(assoc, dat, by=c("variant.id", "chr"))
 }
 
-#' Filter association test results to just thsose specified by the user.
+#' Filter association test results to just the ids specified in a file.
 #' @param assoc results from \code{\link{getAssoc}}
 #' @param varfile RData file containing vector of \code{id} values from \code{assoc} to keep. See details.
 #'

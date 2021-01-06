@@ -2,7 +2,7 @@
 % Please edit documentation in R/getAssoc.R
 \name{assocFilterByFile}
 \alias{assocFilterByFile}
-\title{Filter association test results to just thsose specified by the user.}
+\title{Filter association test results to just the ids specified in a file.}
 \usage{
 assocFilterByFile(assoc, varfile)
 }
@@ -15,7 +15,7 @@ assocFilterByFile(assoc, varfile)
 \code{assoc} with only the specified identifiers
 }
 \description{
-Filter association test results to just thsose specified by the user.
+Filter association test results to just the ids specified in a file.
 }
 \details{
 If \code{varfile} contains a space, `chromosome` will be inserted and the variant ids included will be assumed to be from that chromosome.
