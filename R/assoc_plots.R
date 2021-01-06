@@ -23,7 +23,9 @@ optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
               "thin_npoints"=10000,
               "thin_nbins"=10,
               "truncate_pval_threshold" = 1e-12,
-              "plot_qq_by_chrom" = FALSE)
+              "plot_qq_by_chrom" = FALSE,
+              "plot_variant_include_file" = NA
+            )
 
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -37,6 +39,12 @@ files <- sapply(chr, function(c) insertChromString(config["assoc_file"], c, "ass
 truncate_pval_threshold = as.numeric(config["truncate_pval_threshold"])
 
 assoc <- getAssoc(files, config["assoc_type"])
+
+# Handle excluding specific ids.
+var_include_file <- config["plot_variant_include_file"]
+if (!is.na(var_include_file)) {
+  assoc <- assocFilterByFile(assoc, var_include_file)
+}
 
 ## change p-value from 0 to very small number for extreme test statistics
 if ("stat" %in% names(assoc)) {
