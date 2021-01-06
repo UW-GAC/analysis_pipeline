@@ -19,4 +19,5 @@ Filter association test results to just the ids specified in a file.
 }
 \details{
 If \code{varfile} contains a space, `chromosome` will be inserted and the variant ids included will be assumed to be from that chromosome.
+Ids should match the \code{id} column returned by \code{\link{getAssoc}}.
 }

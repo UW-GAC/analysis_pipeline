@@ -77,10 +77,17 @@ combineAssoc <- function(files, assoc_type, ordered=FALSE) {
 #' Read association test results in multiple files and combine all into a single
 #' data frame with standard column names.
 #'
-#' If a single aggregate unit contains variants from multiple chromosomes, each chromosome will have its own row in the output.
+#' The \code{id} values in this file should be either:
+#' \itemize{
+#'   \item{single-variant tests: }{\code{variant.id}}
+#'   \item{aggregate tests: }{the name of the aggregation unit from the variant grouping file}
+#'   \item{window tests: }{\code{<chr>_<pos>} of the first variant, e.g., 2_20001 for a window on chr2 starting at position 200001}
+#' }
+#'
+#' If a single aggregate unit contains variants from multiple chromosomes, the result will be returned only once on the chromosome with the most variants.
 #'
 #' @inheritParams combineAssoc
-#' @return data.frame including standard columns ("chr", "pos", "start", "end", "stat", "pval", "MAC")
+#' @return data.frame including standard columns ("id", "chr", "pos", "start", "end", "stat", "pval", "MAC")
 #'
 #' @importFrom dplyr "%>%" bind_rows ends_with filter group_by left_join mutate n rename select summarise .data arrange desc
 #' @export
@@ -208,7 +215,9 @@ removeConditional <- function(assoc, varfile) {
 #'
 #' @return \code{assoc} with only the specified identifiers
 #'
-#' @details If \code{varfile} contains a space, `chromosome` will be inserted and the variant ids included will be assumed to be from that chromosome.
+#' @details
+#' If \code{varfile} contains a space, `chromosome` will be inserted and the variant ids included will be assumed to be from that chromosome.
+#' Ids should match the \code{id} column returned by \code{\link{getAssoc}}.
 #'
 #' @importFrom dplyr inner_join mutate filter
 #'
