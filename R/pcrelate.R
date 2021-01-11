@@ -22,7 +22,8 @@ optional <- c("n_pcs"=3,
               #"sample_block_size"=10000,
               "sample_include_file"=NA,
               "variant_block_size"=1024,
-              "variant_include_file"=NA)
+              "variant_include_file"=NA,
+              "ibd_probs"=TRUE)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -78,7 +79,8 @@ out <- pcrelateSampBlock(iterator,
                          betaobj=beta,
                          pcs=pcs,
                          sample.include.block1=samp.blocks[[i]],
-                         sample.include.block2=samp.blocks[[j]])
+                         sample.include.block2=samp.blocks[[j]],
+                         ibd.probs=as.logical(config["ibd_probs"]))
 
 save(out, file=paste0(config["out_prefix"], "_block_", i, "_", j, ".RData"))
 
