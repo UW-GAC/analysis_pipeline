@@ -228,11 +228,20 @@ assocFilterByFile <- function(assoc, varfile) {
   if (grepl(" ", varfile)) {
     chrs <- as.character(unique(assoc$chr))
     keep <- lapply(chrs, function(x) {
-      tmp <- getobj(insertChromString(varfile, x))
-      data.frame(id = tmp, chr = x, stringsAsFactors = FALSE)
+      varfile_chr <- insertChromString(varfile, x)
+      if (file.exists(varfile_chr)) {
+        tmp <- getobj(varfile_chr)
+      } else {
+        tmp <- NULL
+      }
+      # Create an empty vector for cases when there are no variants specified in this file.
+      if (is.null(tmp)) tmp <- get(class(assoc$id))()
+      data.frame(id = tmp, chr = rep(x, length(tmp)), stringsAsFactors = FALSE)
     }) %>%
-      bind_rows() %>%
-      mutate(chr = ordered(chr, levels = c(!!chr)))
+      bind_rows()
+    keep <- keep %>%
+      # Convert to factor ordering for the chromosome.
+      mutate(chr = ordered(chr, levels = levels(assoc$chr)))
     assoc <- assoc %>%
       inner_join(keep, by = c("id", "chr"))
   } else {
@@ -240,4 +249,6 @@ assocFilterByFile <- function(assoc, varfile) {
     assoc <- assoc %>%
       filter(id %in% var_include)
   }
+
+  assoc
 }

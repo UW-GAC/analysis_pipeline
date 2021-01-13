@@ -458,10 +458,6 @@ test_that("remove conditional", {
     unlink(cvfile)
 })
 
-## Test the following
-# DONE - One varfile, multiple chromosomes, no repeated ids in assoc
-# DONE - One varfile, multiple chromosomes, repeated ids in assoc
-# DONE - no ids selected, one varfile
 
 test_that("assocFilterByFile with one varfile", {
   filename <- tempfile()
@@ -478,7 +474,7 @@ test_that("assocFilterByFile with one varfile", {
   tmp <- assoc %>%
     filter(chr == 1) %>%
     pull(id)
-    tmp <- assoc$id
+    #tmp <- assoc$id
   save(tmp, file=filename)
   out <- assocFilterByFile(assoc, filename)
   expect_equal(out$id, tmp)
@@ -522,12 +518,119 @@ test_that("assocFilterByFile with one varfile", {
 })
 
 ## Test the following:
-# Multiple varfiles, multiple chromosomes, no repeated ids
+# DONE - Multiple varfiles, multiple chromosomes, no repeated ids
 # Multiple varfiles, one chromosome, no repeated ids
-# Missing varfile
-# Only varfiles for the set of chromosomes in assoc
-# no ids selected, mulitple varfiles
+# IN PROGRESS - Missing varfile
+# extra varfiles
+# DONE - Only varfiles for the set of chromosomes in assoc
+# DONE - no ids selected, mulitple varfiles
+# DONE - extra ids in varfile
 
 test_that("assocFilterByFile with multiple varfiles", {
-  fail("not implemented")
+  file_pattern <- tempfile("assoc_chr _")
+  assoc <- .testAssoc(nchr = 2, n = 6)
+
+  tmp <- assoc %>%
+    group_by(chr) %>%
+    group_split()
+  lapply(seq_along(tmp), function(x) {
+    ids = tmp[[x]]$id
+    chr = unique(tmp[[x]]$chr) %>% as.character()
+    save(ids, file = insertChromString(file_pattern, chr))
+  })
+  out <- assocFilterByFile(assoc, file_pattern)
+  expect_equal(out, assoc)
+
+  # Extra var file
+  extra_ids <- max(assoc$id) + 1
+  extra_chr <- as.integer(as.character(max(assoc$chr))) + 1
+  save(extra_ids, file=insertChromString(file_pattern, extra_chr))
+  out <- assocFilterByFile(assoc, file_pattern)
+  expect_equal(out$id, assoc$id)
+  expect_equal(names(out), names(assoc))
+  unlink(insertChromString(file_pattern, extra_chr))
+
+  # Some ids selected.
+  tmp <- assoc %>%
+    group_by(chr) %>%
+    dplyr::slice(1:2) %>%
+    group_split()
+  lapply(seq_along(tmp), function(x) {
+    ids = tmp[[x]]$id
+    chr = unique(tmp[[x]]$chr) %>% as.character()
+    save(ids, file = insertChromString(file_pattern, chr))
+  })
+
+  out <- assocFilterByFile(assoc, file_pattern)
+  expect_equal(out$id, tmp %>% bind_rows() %>% pull(id))
+  expect_equal(names(out), names(assoc))
+
+  # Only one chromosome in assoc but varfiles for other chromosomes exist.
+  out <- assocFilterByFile(tmp[[1]], file_pattern)
+  expect_equal(out$id, tmp[[1]]$id)
+  expect_equal(names(out), names(assoc))
+
+  # Assoc has fewer ids than in file across all chromosomes
+  assoc_subset <- assoc %>%
+    dplyr::group_by(chr) %>%
+    dplyr::slice(1) %>%
+    dplyr::ungroup()
+  out <- assocFilterByFile(assoc_subset, file_pattern)
+  expect_equal(out$id, assoc_subset$id)
+  expect_equal(names(out), names(assoc))
+
+  # Only chr1 varfile exists.
+  unlink(insertChromString(file_pattern, 2))
+  out <- assocFilterByFile(assoc, file_pattern)
+  expect_equal(out$id, assoc %>% filter(chr == 1) %>% dplyr::slice(1:2) %>% pull(id))
+  expect_equal(names(out), names(assoc))
+  #fail("Should there be a warning if a varfile is missing?")
+
+  # No records in varfiles
+  lapply(1:2, function(x) {
+    ids = c()
+    save(ids, file = insertChromString(file_pattern, x))
+  })
+  out <- assocFilterByFile(assoc, file_pattern)
+  expect_equal(names(out), names(assoc))
+  expect_equal(nrow(out), 0)
+
+  # Chr1 file has chr2 ids and vice versa
+  r = 1:2
+  lapply(r, function(x) {
+    ids <- tmp[[x]]$id
+    save(ids, file = insertChromString(file_pattern, rev(r)[x]))
+  })
+  out <- assocFilterByFile(assoc, file_pattern)
+  expect_equal(nrow(out), 0)
+
+  # Different ids in varfiles
+  tmp <- max(assoc$id) + c(1,2)
+  lapply(seq_along(tmp), function(x) {
+    ids <- tmp[x]
+    save(ids, file = insertChromString(file_pattern, x))
+  })
+  out <- assocFilterByFile(assoc, file_pattern)
+  expect_equal(names(out), names(assoc))
+  expect_equal(nrow(out), 0)
+
+  # Assoc has repeated ids
+  assoc <- assoc %>%
+    group_by(chr) %>%
+    mutate(id = 1:n()) %>%
+    ungroup()
+  tmp <- assoc %>%
+    group_by(chr) %>%
+    dplyr::slice(1:2) %>%
+    group_split()
+  lapply(seq_along(tmp), function(x) {
+    ids = tmp[[x]]$id
+    chr = unique(tmp[[x]]$chr) %>% as.character()
+    save(ids, file = insertChromString(file_pattern, chr))
+  })
+
+  out <- assocFilterByFile(assoc, file_pattern)
+  expect_equal(names(out), names(assoc))
+  expect_equal(out, tmp %>% bind_rows())
+
 })
