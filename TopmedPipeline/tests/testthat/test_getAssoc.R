@@ -519,14 +519,6 @@ test_that("assocFilterByFile with one varfile", {
 
 })
 
-## Test the following:
-# DONE - Multiple varfiles, multiple chromosomes, no repeated ids
-# Multiple varfiles, one chromosome, no repeated ids
-# IN PROGRESS - Missing varfile
-# extra varfiles
-# DONE - Only varfiles for the set of chromosomes in assoc
-# DONE - no ids selected, mulitple varfiles
-# DONE - extra ids in varfile
 
 test_that("assocFilterByFile with multiple varfiles", {
   file_pattern <- tempfile("assoc_chr _")
