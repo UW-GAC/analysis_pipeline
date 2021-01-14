@@ -202,8 +202,8 @@ cmap <- setNames(rep_len(brewer.pal(8, "Dark2"), length(chr)), chr)
 signif_type <- config["signif_type"]
 # Print a warning if it's not one of the allowed types and set based on the
 # default for this analysis type.
-if (!(signif_type %in% c("fixed", "bonferroni", NA))) {
-  warning("signif_type must be `fixed` or `bonferroni`; using default for this analysis type.")
+if (!(signif_type %in% c("fixed", "bonferroni", "none", NA))) {
+  warning("signif_type must be `fixed`, `bonferroni`, or `none`; using default for this analysis type.")
   signif_type <- NA
 }
 
@@ -219,6 +219,7 @@ if (is.na(signif_type)) {
 # Caclulate the significance line.
 signif <- switch(
   signif_type,
+  none = NA,
   fixed = as.numeric(config["signif_line_fixed"]),
   bonferroni = 0.05 / nrow(assoc),
   NA
