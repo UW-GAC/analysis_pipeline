@@ -169,6 +169,7 @@ test_that("aggregate, multiple chromosomes in one aggregation unit", {
   expect_equal(as.character(assoc$chr), "1")
   expect_equal(assoc$pos, expected_pos)
 
+  seqClose(seqData)
 })
 
 test_that("window, smmat", {
@@ -455,6 +456,7 @@ test_that("remove conditional", {
     save(dat, file=cvfile)
     a2 <- removeConditional(a1, cvfile)
     expect_equivalent(a1[4:nrow(a1),], a2)
+    seqClose(seqData)
     unlink(cvfile)
 })
 
