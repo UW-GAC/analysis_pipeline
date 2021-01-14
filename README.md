@@ -279,6 +279,7 @@ config parameter | default value | description
 `thin_npoints` | `10000` | Number of points in each bin after thinning.
 `truncate_pval_threshold` | `1e-12` | Minimum p-value to display in truncated QQ and manhattan plots.
 `plot_qq_by_chrom` | FALSE |  Logical indicator for whether to generate QQ plots faceted by chromosome.
+`plot_variant_include_file` | `NA` | RData file with vector of ids to include. See `TopmedPipeline::assocFilterByFile` for format requirements.
 
 ### Single-variant
 
