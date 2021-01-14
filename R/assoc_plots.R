@@ -24,7 +24,9 @@ optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
               "thin_nbins"=10,
               "truncate_pval_threshold" = 1e-12,
               "plot_qq_by_chrom" = FALSE,
-              "plot_variant_include_file" = NA
+              "plot_variant_include_file" = NA,
+              "signif_type" = NA,
+              signif_line_fixed = 5e-9
             )
 
 config <- setConfigDefaults(config, required, optional)
@@ -195,14 +197,44 @@ if (plot_by_chrom) {
 chr <- levels(assoc$chr)
 cmap <- setNames(rep_len(brewer.pal(8, "Dark2"), length(chr)), chr)
 
-# significance level
-if (config["assoc_type"] == "single") {
-    ## genome-wide significance
-    signif <- c(5e-8, 5e-9, 1e-9)
-} else {
-    ## bonferroni
-    signif <- 0.05/nrow(assoc)
+# Use the user-specified significance type if it's not missing.
+# Otherwise, set it based on the analysis type.
+signif_type <- config["signif_type"]
+# Print a warning if it's not one of the allowed types and set based on the
+# default for this analysis type.
+if (!(signif_type %in% c("fixed", "bonferroni", NA))) {
+  warning("signif_type must be `fixed` or `bonferroni`; using default for this analysis type.")
+  signif_type <- NA
 }
+
+# If not user-specified or missing, set the significance type based on
+# the analysis type.
+if (is.na(signif_type)) {
+  signif_type <- switch(
+    config["assoc_type"],
+    "single" = "fixed",
+    "bonferroni")
+}
+
+# Caclulate the significance line.
+signif <- switch(
+  signif_type,
+  fixed = as.numeric(config["signif_line_fixed"]),
+  bonferroni = 0.05 / nrow(assoc),
+  NA
+)
+print(config["assoc_type"])
+print(signif_type)
+print(signif)
+
+# # significance level
+# if (config["assoc_type"] == "single") {
+#     ## genome-wide significance
+#     signif <- c(5e-8, 5e-9, 1e-9)
+# } else {
+#     ## bonferroni
+#     signif <- 0.05/nrow(assoc)
+# }
 
 if (as.logical(config["thin"])) {
     assoc <- mutate(assoc, logp=-log10(pval)) %>%
