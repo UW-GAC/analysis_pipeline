@@ -48,3 +48,22 @@ test_that("rds", {
     expect_equal(x, x2)
     unlink(rdsfile)
 })
+
+test_that("calculateLambda", {
+  # Null hypothesis.
+  null_stat <- qchisq((0:1000) / 1000, 1)
+  expect_equal(calculateLambda(null_stat, df = 1), 1)
+  expect_equal(calculateLambda(null_stat * 0.9, df = 1), 0.9)
+  expect_equal(calculateLambda(null_stat * 1.1, df = 1), 1.1)
+
+  # Largest stats are inflated.
+  null_stat[800:999] <- null_stat[800:999]*2
+  expect_equal(calculateLambda(null_stat, df = 1), 1)
+
+  # More degrees of freedom
+  null_stat <- qchisq((0:1000) / 1000, 3)
+  expect_equal(calculateLambda(null_stat, df = 3), 1)
+  expect_equal(calculateLambda(null_stat * 0.9, df = 3), 0.9)
+  expect_equal(calculateLambda(null_stat * 1.1, df = 3), 1.1)
+
+})
