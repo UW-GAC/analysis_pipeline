@@ -38,13 +38,13 @@ print(config)
 writeConfig(config, paste0(basename(argv$config), ".assoc_plots.params"))
 
 plot_by_chrom <- config["plot_qq_by_chrom"]
+plot_by_mac = !is.na(config["qq_mac_bins"])
 
 chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 files <- sapply(chr, function(c) insertChromString(config["assoc_file"], c, "assoc_file"))
 
 truncate_pval_threshold = as.numeric(config["truncate_pval_threshold"])
 
-plot_by_mac = !is.na(config["qq_mac_bins"])
 
 assoc <- getAssoc(files, config["assoc_type"])
 
@@ -70,14 +70,6 @@ if (!is.na(config["plot_mac_threshold"])) {
 if (!is.na(config["known_hits_file"]) & config["assoc_type"] == "single") {
     hits <- getobj(config["known_hits_file"])
     assoc <- omitKnownHits(assoc, hits, flank=500)
-}
-
-if (plot_by_mac) {
-  qq_mac_bins <- stringr::str_split(config["qq_mac_bins"], pattern = "\\s+")[[1]] %>%
-    as.numeric()
-  labels <- sprintf("%s <= MAC < %s", qq_mac_bins, c(qq_mac_bins[-1], Inf))
-  assoc <- assoc %>%
-    mutate(mac_bin = cut(MAC, breaks = c(qq_mac_bins, Inf), right=F, labels = labels))
 }
 
 # Compute stat from p-values if necessary.
@@ -111,17 +103,6 @@ if (!is.na(config["lambda_quantiles"])) {
   readr::write_tsv(tmp, path = config["out_file_lambdas"])
 }
 
-if (plot_by_chrom) {
-  lambda_by_chr <- assoc %>%
-    group_by(chr) %>%
-    summarise(lambda = calculateLambda(statsq, df = 1))
-}
-
-if (plot_by_mac) {
-  lambda_by_mac <- assoc %>%
-    group_by(mac_bin) %>%
-    summarise(lambda = calculateLambda(statsq, df = 1))
-}
 
 # Check if we should also generate truncated plots.
 truncate = any(assoc$pval < truncate_pval_threshold)
@@ -179,7 +160,17 @@ if (truncate) {
 rm(dat)
 
 
-if (!is.na(config["qq_mac_bins"])) {
+if (plot_by_mac) {
+
+  qq_mac_bins <- stringr::str_split(config["qq_mac_bins"], pattern = "\\s+")[[1]] %>%
+    as.numeric()
+  labels <- sprintf("%s <= MAC < %s", qq_mac_bins, c(qq_mac_bins[-1], Inf))
+  assoc <- assoc %>%
+    mutate(mac_bin = cut(MAC, breaks = c(qq_mac_bins, Inf), right=F, labels = labels))
+
+  lambda_by_mac <- assoc %>%
+    group_by(mac_bin) %>%
+    summarise(lambda = calculateLambda(statsq, df = 1))
 
   # Recalculate obs/exp by mac bin.
   dat_by_mac <- assoc %>%
@@ -224,6 +215,11 @@ if (!is.na(config["qq_mac_bins"])) {
 }
 
 if (plot_by_chrom) {
+  # Calculate lambda values by chromosome.
+  lambda_by_chr <- assoc %>%
+    group_by(chr) %>%
+    summarise(lambda = calculateLambda(statsq, df = 1))
+
   ## Calculate QQ values separately for each chromosome.
   dat_by_chr <- assoc %>%
     select(
