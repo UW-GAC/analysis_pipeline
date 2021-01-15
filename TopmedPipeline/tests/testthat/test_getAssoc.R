@@ -33,6 +33,7 @@ library(GenomicRanges)
     stat = rnorm(n),
     pval = runif(n),
     MAC = sample(1:1000, n),
+    freq = runif(n),
     stringsAsFactors = FALSE
   ) %>%
   mutate(chr = ifelse(chr == 23, "X", chr)) %>%
@@ -64,6 +65,10 @@ test_that("single related", {
     expect_equal(assoc$end, assoc$pos)
     expect_equal(assoc$stat, a$Score.Stat)
     expect_equal(assoc$pval, a$Score.pval)
+    expect_true("MAF" %in% names(assoc))
+    idx <- a$freq < 0.5
+    expect_equal(assoc$MAF[idx], a$freq[idx])
+    expect_equal(assoc$MAF[!idx], 1 - a$freq[!idx])
 
     seqClose(seqData)
     unlink(files)

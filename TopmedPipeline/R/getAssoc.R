@@ -87,7 +87,7 @@ combineAssoc <- function(files, assoc_type, ordered=FALSE) {
 #' If a single aggregate unit contains variants from multiple chromosomes, the result will be returned only once on the chromosome with the most variants.
 #'
 #' @inheritParams combineAssoc
-#' @return data.frame including standard columns ("id", "chr", "pos", "start", "end", "stat", "pval", "MAC")
+#' @return data.frame including standard columns ("id", "chr", "pos", "start", "end", "stat", "pval", "MAC"). Also includes "MAF" for single variant tests.
 #'
 #' @importFrom dplyr "%>%" bind_rows ends_with filter group_by left_join mutate n rename select summarise .data arrange desc
 #' @export
@@ -134,12 +134,18 @@ getAssoc <- function(files, assoc_type) {
     } else if ("pval_SMMAT" %in% names(assoc)) {
         ## SMMAT
         assoc <- select(assoc, .data$id, .data$chr, .data$pos, .data$start, .data$end, pval=.data$pval_SMMAT, suppressWarnings(one_of("MAC")))
+    } else if (assoc_type == "single") {
+      assoc <- assoc %>%
+        mutate(MAF = pmin(1 - freq, freq)) %>%
+        select(.data$id, .data$chr, .data$pos, .data$start, .data$end, ends_with("Stat"), ends_with("pval"), .data$MAC, .data$MAF)
+      names(assoc)[6:7] <- c("stat", "pval")
     } else {
-        ## burden or single
+        ## burden
         assoc <- select(assoc, .data$id, .data$chr, .data$pos, .data$start, .data$end, ends_with("Stat"), ends_with("pval"),
                          suppressWarnings(one_of("MAC")))
         names(assoc)[6:7] <- c("stat", "pval")
     }
+
     assoc <- filter(assoc, !is.na(.data$pval)) %>%
         mutate(chr=ordered(.data$chr, levels=c(1:22, "X")))
     assoc
