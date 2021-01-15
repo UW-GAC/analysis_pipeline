@@ -79,7 +79,8 @@ sequentialVariantIds <- function(gds.list, id.list) {
 #'
 #' @param stat Vector of test statistics
 #' @param df Degrees of freedom
-#' @return lambda
+#' @param quantiles Quantile(s) at which to calculate lambda value
+#' @return lambda calculated at the specified quantiles
 #'
 #' @importFrom stats median qchisq
 #' @export
