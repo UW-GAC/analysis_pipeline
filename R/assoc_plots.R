@@ -1,6 +1,7 @@
 library(argparser)
 library(TopmedPipeline)
 library(dplyr)
+library(readr)
 library(ggplot2)
 library(RColorBrewer)
 sessionInfo()
@@ -18,6 +19,7 @@ optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
               "known_hits_file"=NA,
               "out_file_manh"="manhattan.png",
               "out_file_qq"="qq.png",
+              "out_file_lambdas"="lambda.txt",
               "plot_mac_threshold"=NA,
               "thin"=TRUE,
               "thin_npoints"=10000,
@@ -27,7 +29,8 @@ optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
               "plot_variant_include_file" = NA,
               "signif_type" = NA,
               signif_line_fixed = 5e-9,
-              qq_mac_bins = NA
+              qq_mac_bins = NA,
+              lambda_quantiles = NA
             )
 
 config <- setConfigDefaults(config, required, optional)
@@ -77,28 +80,47 @@ if (plot_by_mac) {
     mutate(mac_bin = cut(MAC, breaks = c(qq_mac_bins, Inf), right=F, labels = labels))
 }
 
-if ("stat" %in% names(assoc)) {
-    ## burden or single
-    lambda <- calculateLambda((assoc$stat)^2, df=1)
-    lambda_by_chr <- assoc %>%
-      group_by(chr) %>%
-      summarise(lambda = calculateLambda(stat^2, df=1))
-    if (plot_by_mac) {
-      lambda_by_mac <- assoc %>%
-        group_by(mac_bin) %>%
-        summarise(lambda = calculateLambda(stat^2, df=1))
-      }
+# Compute stat from p-values if necessary.
+if (!("stat" %in% names(assoc))) {
+  assoc$statsq <- qchisq(assoc$pval, df = 1, lower.tail = FALSE)
 } else {
-    ## SKAT
-    lambda <- calculateLambda(qchisq(assoc$pval, df=1, lower=FALSE), df=1)
-    lambda_by_chr <- assoc %>%
-      group_by(chr) %>%
-      summarise(lambda = calculateLambda(qchisq(pval, df = 1, lower=FALSE), df = 1))
-    if (plot_by_mac) {
-      lambda_by_mac <- assoc %>%
-        group_by(mac_bin) %>%
-        summarise(lambda = calculateLambda(qchisq(pval, df = 1, lower=FALSE), df = 1))
-    }
+  assoc$statsq <- assoc$stat^2
+}
+
+# Calculate lambdas at 50% quantile.
+lambda <- calculateLambda(assoc$statsq, df = 1)
+# Also calculate lambda at different quantiles?
+if (!is.na(config["lambda_quantiles"])) {
+  lambda_quantiles <- stringr::str_split(config["lambda_quantiles"], pattern = "\\s+")[[1]] %>%
+    as.numeric()
+  # Remove anything outside of 0 and 1
+  if (any(lambda_quantiles <= 0)) {
+    warning("Removing lambda_quantiles <= 0")
+    lambda_quantiles <- lambda_quantiles[lambda_quantiles > 0]
+  }
+  if (any(lambda_quantiles >= 1)) {
+    warning("Removing lambda_quantiles >= 1")
+    lambda_quantiles <- lambda_quantiles[lambda_quantiles < 1]
+  }
+
+  tmp <- data.frame(
+    quantile = lambda_quantiles,
+    lambda = calculateLambda(assoc$statsq, df = 1, quantiles = lambda_quantiles),
+    stringsAsFactors = FALSE
+  )
+  readr::write_tsv(tmp, path = config["out_file_lambdas"])
+}
+
+if (plot_by_chrom) {
+  lambda_by_chr <- assoc %>%
+    group_by(chr) %>%
+    summarise(lambda = calculateLambda(statsq, df = 1))
+}
+
+if (plot_by_mac) {
+  lambda_by_mac <- assoc %>%
+    group_by(mac_bin) %>%
+    summarise(lambda = calculateLambda(statsq, df = 1))
 }
 
 # Check if we should also generate truncated plots.
