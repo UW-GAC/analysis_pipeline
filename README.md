@@ -283,6 +283,9 @@ config parameter | default value | description
 `signif_type` | See description | `fixed`, `bonferroni`, or `none`; character string for how to calculate the significance threshold. Default is `fixed` for single variant analysis and `bonferroni` for other analysis types.
 `signif_line_fixed` | `5e-9` | P-value for the significance line. Only used if `signif_type = fixed`.
 `qq_mac_bins` | NA | Space separated string of integers (e.g., `"5 20 50"`). If set, generate a QQ plot with binned by the specified MAC thresholds.
+`lambda_quantiles` | NA | Space separated string of quantiles at which to calculate lambda. If set, create a text file with lambda calculated at the specified quantiles stored in `out_file_lambdas`.
+`out_file_lambdas` | `lambda.txt` | File to store lambda calculated at different quantiles.
+
 
 ### Single-variant
 
@@ -302,6 +305,7 @@ config parameter | default value | description
 related (mixed model), options are `score` if `family` is `gaussian` or `poisson`, `score` and `score.spa` if `family` is `binomial`.
 `conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` (or `chr`) and `variant.id`. If provided, these variants will be omitted from the association test output.
 `known_hits_file` | `NA` | RData file with data.frame containing columns `chr` and `pos`. If provided, 1 Mb regions surrounding each variant listed will be omitted from the QQ and manhattan plots.
+`plot_maf_threshold` | NA | Minimum minor allele frequency for variants to include in plots. Ignored if `plot_mac_threshold` is specified.
 
 
 ### Parameters common to aggregate and sliding window tests

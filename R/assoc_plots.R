@@ -21,6 +21,7 @@ optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
               "out_file_qq"="qq.png",
               "out_file_lambdas"="lambda.txt",
               "plot_mac_threshold"=NA,
+              "plot_maf_threshold"=NA,
               "thin"=TRUE,
               "thin_npoints"=10000,
               "thin_nbins"=10,
@@ -64,6 +65,14 @@ if ("stat" %in% names(assoc)) {
 if (!is.na(config["plot_mac_threshold"])) {
     mac.thresh <- as.integer(config["plot_mac_threshold"])
     assoc <- filter(assoc, MAC >= mac.thresh)
+} else if (!is.na(config["plot_maf_threshold"])) {
+   if (config["assoc_type"] == "single") {
+     # filter by MAF for single variant tests if requested.
+     assoc <- assoc %>%
+      filter(MAF >= config["plot_maf_threshold"])
+   } else {
+     warning("plot_maf_threshold ignored for ", config["assoc_type"])
+   }
 }
 
 ## omit known hits?
