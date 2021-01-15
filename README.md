@@ -282,6 +282,7 @@ config parameter | default value | description
 `plot_variant_include_file` | `NA` | RData file with vector of ids to include. See `TopmedPipeline::assocFilterByFile` for format requirements.
 `signif_type` | See description | `fixed`, `bonferroni`, or `none`; character string for how to calculate the significance threshold. Default is `fixed` for single variant analysis and `bonferroni` for other analysis types.
 `signif_line_fixed` | `5e-9` | P-value for the significance line. Only used if `signif_type = fixed`.
+`qq_mac_bins` | NA | Space separated string of integers (e.g., `"5 20 50"`). If set, generate a QQ plot with binned by the specified MAC thresholds.
 
 ### Single-variant
 

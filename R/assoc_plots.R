@@ -26,7 +26,8 @@ optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
               "plot_qq_by_chrom" = FALSE,
               "plot_variant_include_file" = NA,
               "signif_type" = NA,
-              signif_line_fixed = 5e-9
+              signif_line_fixed = 5e-9,
+              qq_mac_bins = NA
             )
 
 config <- setConfigDefaults(config, required, optional)
@@ -39,6 +40,8 @@ chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 files <- sapply(chr, function(c) insertChromString(config["assoc_file"], c, "assoc_file"))
 
 truncate_pval_threshold = as.numeric(config["truncate_pval_threshold"])
+
+plot_by_mac = !is.na(config["qq_mac_bins"])
 
 assoc <- getAssoc(files, config["assoc_type"])
 
@@ -66,18 +69,36 @@ if (!is.na(config["known_hits_file"]) & config["assoc_type"] == "single") {
     assoc <- omitKnownHits(assoc, hits, flank=500)
 }
 
+if (plot_by_mac) {
+  qq_mac_bins <- stringr::str_split(config["qq_mac_bins"], pattern = "\\s+")[[1]] %>%
+    as.numeric()
+  labels <- sprintf("%s <= MAC < %s", qq_mac_bins, c(qq_mac_bins[-1], Inf))
+  assoc <- assoc %>%
+    mutate(mac_bin = cut(MAC, breaks = c(qq_mac_bins, Inf), right=F, labels = labels))
+}
+
 if ("stat" %in% names(assoc)) {
     ## burden or single
     lambda <- calculateLambda((assoc$stat)^2, df=1)
     lambda_by_chr <- assoc %>%
       group_by(chr) %>%
       summarise(lambda = calculateLambda(stat^2, df=1))
+    if (plot_by_mac) {
+      lambda_by_mac <- assoc %>%
+        group_by(mac_bin) %>%
+        summarise(lambda = calculateLambda(stat^2, df=1))
+      }
 } else {
     ## SKAT
     lambda <- calculateLambda(qchisq(assoc$pval, df=1, lower=FALSE), df=1)
     lambda_by_chr <- assoc %>%
       group_by(chr) %>%
       summarise(lambda = calculateLambda(qchisq(pval, df = 1, lower=FALSE), df = 1))
+    if (plot_by_mac) {
+      lambda_by_mac <- assoc %>%
+        group_by(mac_bin) %>%
+        summarise(lambda = calculateLambda(qchisq(pval, df = 1, lower=FALSE), df = 1))
+    }
 }
 
 # Check if we should also generate truncated plots.
@@ -135,6 +156,50 @@ if (truncate) {
 
 rm(dat)
 
+
+if (!is.na(config["qq_mac_bins"])) {
+
+  # Recalculate obs/exp by mac bin.
+  dat_by_mac <- assoc %>%
+    select(
+      mac_bin,
+      obs = pval
+    ) %>%
+    group_by(mac_bin) %>%
+    arrange(obs) %>%
+    mutate(
+      x = row_number(),
+      exp = x / n(),
+      upper = qbeta(0.025, x, rev(x)),
+      lower = qbeta(0.975, x, rev(x))
+    ) %>%
+    select(-x) %>%
+    ungroup()
+
+  # Calculate lambda by MAC bin.
+  if (as.logical(config["thin"])) {
+      dat_by_mac <- dat_by_mac %>%
+        mutate(logp = -log10(obs)) %>%
+        group_by(mac_bin) %>%
+        thinPoints("logp", n=thin.n, nbins=thin.bins) %>%
+        ungroup()
+  }
+
+  n_bins <- length(unique(dat_by_mac$mac_bin))
+  # QQ plots by chromosome.
+  p_by_mac <- ggplot(dat_by_mac, aes(-log10(exp), -log10(obs))) +
+      gg_qq +
+      ggtitle(paste("lambda =", format(lambda, digits=4, nsmall=3))) +
+      theme(plot.title = element_text(size = 22)) +
+      geom_point(size = 0.5) +
+      facet_wrap(~ mac_bin, ncol = ceiling(sqrt(n_bins))) +
+      # Add lambda by mac bin.
+      geom_text(data = lambda_by_mac, aes(label = sprintf("lambda == %4.3f", lambda)),
+                x = -Inf, y = Inf, hjust = -0.2, vjust = 1.2, parse=T, size = 6)
+  outfile <- gsub(".", "_bymac.", config["out_file_qq"], fixed=TRUE)
+  ggsave(outfile, plot = p_by_mac, width = 10, height = 9)
+
+}
 
 if (plot_by_chrom) {
   ## Calculate QQ values separately for each chromosome.
