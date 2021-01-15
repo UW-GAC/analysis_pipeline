@@ -83,10 +83,10 @@ sequentialVariantIds <- function(gds.list, id.list) {
 #'
 #' @importFrom stats median qchisq
 #' @export
-calculateLambda <- function(stat, df) {
+calculateLambda <- function(stat, df, quantiles = 0.5) {
     if (any(sum(stat < 0, na.rm=TRUE)))
         stop("no negative values allowed in stat (does beta/se need to be squared?)")
-    median(stat, na.rm=TRUE) / qchisq(0.5, df=df)
+    unname(quantile(stat, probs = quantiles, na.rm=TRUE) / qchisq(quantiles, df = df))
 }
 
 
