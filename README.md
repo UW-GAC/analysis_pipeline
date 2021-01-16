@@ -306,6 +306,7 @@ related (mixed model), options are `score` if `family` is `gaussian` or `poisson
 `conditional_variant_file` | `NA` | RData file with data frame of of conditional variants. Columns should include `chromosome` (or `chr`) and `variant.id`. If provided, these variants will be omitted from the association test output.
 `known_hits_file` | `NA` | RData file with data.frame containing columns `chr` and `pos`. If provided, 1 Mb regions surrounding each variant listed will be omitted from the QQ and manhattan plots.
 `plot_maf_threshold` | NA | Minimum minor allele frequency for variants to include in plots. Ignored if `plot_mac_threshold` is specified.
+`qq_maf_bins` | NA | Space separated string of minor allele frequencies (e.g., `"0.01 0.05 0.1"`). If set, generate a QQ plot with binned by the specified minor allele frequencies.
 
 
 ### Parameters common to aggregate and sliding window tests

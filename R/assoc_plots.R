@@ -31,6 +31,7 @@ optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
               "signif_type" = NA,
               signif_line_fixed = 5e-9,
               qq_mac_bins = NA,
+              qq_maf_bins = NA,
               lambda_quantiles = NA
             )
 
@@ -40,6 +41,7 @@ writeConfig(config, paste0(basename(argv$config), ".assoc_plots.params"))
 
 plot_by_chrom <- config["plot_qq_by_chrom"]
 plot_by_mac = !is.na(config["qq_mac_bins"])
+plot_by_maf = (config["assoc_type"] == "single") & (!is.na(config["qq_maf_bins"]))
 
 chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 files <- sapply(chr, function(c) insertChromString(config["assoc_file"], c, "assoc_file"))
@@ -223,6 +225,60 @@ if (plot_by_mac) {
 
 }
 
+if (plot_by_maf) {
+
+  qq_maf_bins <- stringr::str_split(config["qq_maf_bins"], pattern = "\\s+")[[1]] %>%
+    as.numeric()
+  labels <- sprintf("%s <= MAF < %s", qq_maf_bins, c(qq_maf_bins[-1], Inf))
+  assoc <- assoc %>%
+    mutate(maf_bin = cut(MAF, breaks = c(qq_maf_bins, Inf), right=F, labels = labels))
+
+  lambda_by_maf <- assoc %>%
+    group_by(maf_bin) %>%
+    summarise(lambda = calculateLambda(statsq, df = 1))
+
+  # Recalculate obs/exp by mac bin.
+  dat_by_maf <- assoc %>%
+    select(
+      maf_bin,
+      obs = pval
+    ) %>%
+    group_by(maf_bin) %>%
+    arrange(obs) %>%
+    mutate(
+      x = row_number(),
+      exp = x / n(),
+      upper = qbeta(0.025, x, rev(x)),
+      lower = qbeta(0.975, x, rev(x))
+    ) %>%
+    select(-x) %>%
+    ungroup()
+
+  # Calculate lambda by MAC bin.
+  if (as.logical(config["thin"])) {
+      dat_by_maf <- dat_by_maf %>%
+        mutate(logp = -log10(obs)) %>%
+        group_by(maf_bin) %>%
+        thinPoints("logp", n=thin.n, nbins=thin.bins) %>%
+        ungroup()
+  }
+
+  n_bins <- length(unique(dat_by_maf$maf_bin))
+  # QQ plots by chromosome.
+  p_by_maf <- ggplot(dat_by_maf, aes(-log10(exp), -log10(obs))) +
+      gg_qq +
+      ggtitle(paste("lambda =", format(lambda, digits=4, nsmall=3))) +
+      theme(plot.title = element_text(size = 22)) +
+      geom_point(size = 0.5) +
+      facet_wrap(~ maf_bin, ncol = ceiling(sqrt(n_bins))) +
+      # Add lambda by mac bin.
+      geom_text(data = lambda_by_maf, aes(label = sprintf("lambda == %4.3f", lambda)),
+                x = -Inf, y = Inf, hjust = -0.2, vjust = 1.2, parse=T, size = 6)
+  outfile <- gsub(".", "_bymaf.", config["out_file_qq"], fixed=TRUE)
+  ggsave(outfile, plot = p_by_maf, width = 10, height = 9)
+
+}
+
 if (plot_by_chrom) {
   # Calculate lambda values by chromosome.
   lambda_by_chr <- assoc %>%
@@ -283,7 +339,6 @@ if (plot_by_chrom) {
 
   rm(dat_by_chr)
 }
-
 
 ## manhattan plot
 chr <- levels(assoc$chr)
