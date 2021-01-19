@@ -285,7 +285,7 @@ config parameter | default value | description
 `qq_mac_bins` | NA | Space separated string of integers (e.g., `"5 20 50"`). If set, generate a QQ plot with binned by the specified MAC thresholds.
 `lambda_quantiles` | NA | Space separated string of quantiles at which to calculate lambda. If set, create a text file with lambda calculated at the specified quantiles stored in `out_file_lambdas`.
 `out_file_lambdas` | `lambda.txt` | File to store lambda calculated at different quantiles.
-
+`plot_max_p` | 1 | Maximum p-value to plot in QQ and Manhattan plots. Expected QQ values are still calculated using the full set of p-values.
 
 ### Single-variant
 

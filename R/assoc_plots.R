@@ -32,7 +32,8 @@ optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
               signif_line_fixed = 5e-9,
               qq_mac_bins = NA,
               qq_maf_bins = NA,
-              lambda_quantiles = NA
+              lambda_quantiles = NA,
+              plot_max_p = 1
             )
 
 config <- setConfigDefaults(config, required, optional)
@@ -50,6 +51,8 @@ if (!is.na(config["qq_maf_bins"])) {
     warning(sprintf("qq_maf_bins ignored for analysis type `%s`", config["assoc_type"]))
   }
 }
+
+plot_max_p <- as.numeric(config["plot_max_p"])
 
 chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 files <- sapply(chr, function(c) insertChromString(config["assoc_file"], c, "assoc_file"))
@@ -138,7 +141,8 @@ dat <- assoc %>%
     upper = qbeta(0.025, x, rev(x)),
     lower = qbeta(0.975, x, rev(x))
   ) %>%
-  select(-x)
+  select(-x) %>%
+  filter(obs <= plot_max_p)
 
 gg_qq <- list(
   geom_abline(intercept=0, slope=1, color="red"),
@@ -206,7 +210,8 @@ if (plot_by_mac) {
       lower = qbeta(0.975, x, rev(x))
     ) %>%
     select(-x) %>%
-    ungroup()
+    ungroup() %>%
+    filter(obs <= plot_max_p)
 
   # Calculate lambda by MAC bin.
   if (as.logical(config["thin"])) {
@@ -260,7 +265,8 @@ if (plot_by_maf) {
       lower = qbeta(0.975, x, rev(x))
     ) %>%
     select(-x) %>%
-    ungroup()
+    ungroup() %>%
+    filter(obs <= plot_max_p)
 
   # Calculate lambda by MAC bin.
   if (as.logical(config["thin"])) {
@@ -348,6 +354,7 @@ if (plot_by_chrom) {
   rm(dat_by_chr)
 }
 
+
 ## manhattan plot
 chr <- levels(assoc$chr)
 cmap <- setNames(rep_len(brewer.pal(8, "Dark2"), length(chr)), chr)
@@ -397,7 +404,7 @@ if (as.logical(config["thin"])) {
         thinPoints("logp", n=thin.n, nbins=thin.bins, groupBy="chr")
 }
 
-p <- ggplot(assoc, aes(chr, -log10(pval), group=interaction(chr, pos), color=chr)) +
+p <- ggplot(assoc %>% filter(pval <= plot_max_p), aes(chr, -log10(pval), group=interaction(chr, pos), color=chr)) +
     geom_point(position=position_dodge(0.8)) +
     scale_color_manual(values=cmap, breaks=names(cmap)) +
     geom_hline(yintercept=-log10(signif), linetype='dashed') +
