@@ -29,11 +29,11 @@ optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
               "plot_qq_by_chrom" = FALSE,
               "plot_variant_include_file" = NA,
               "signif_type" = NA,
-              signif_line_fixed = 5e-9,
-              qq_mac_bins = NA,
-              qq_maf_bins = NA,
-              lambda_quantiles = NA,
-              plot_max_p = 1
+              "signif_line_fixed" = 5e-9,
+              "qq_mac_bins" = NA,
+              "qq_maf_bins" = NA,
+              "lambda_quantiles" = NA,
+              "plot_max_p" = 1
             )
 
 config <- setConfigDefaults(config, required, optional)
