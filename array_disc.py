@@ -75,11 +75,11 @@ jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, v
 
 
 # post analysis
-job = "post_analysis"
-jobpy = job + ".py"
-pcmd=os.path.join(pipeline, jobpy)
-argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
+bname = "post_analysis"
+job = "array_disc" + "_" + bname
+jobpy = bname + ".py"
+pcmd=os.path.join(submitPath, jobpy)
+argList = ["-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
-pdriver=os.path.join(pipeline, "run_python.sh")
-cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
-                  holdid=[jobid], print_only=print_only)
+cluster.submitJob(binary=True, job_name=job, cmd=pcmd, args=argList,
+                  holdid=[submitID], print_only=print_only)
