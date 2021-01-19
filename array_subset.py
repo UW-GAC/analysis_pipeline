@@ -91,4 +91,4 @@ pcmd=os.path.join(submitPath, jobpy)
 argList = ["-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
 cluster.submitJob(binary=True, job_name=job, cmd=pcmd, args=argList,
-                  holdid=[submitID], print_only=print_only)
+                  holdid=[tmpid], print_only=print_only)
