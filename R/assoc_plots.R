@@ -41,7 +41,15 @@ writeConfig(config, paste0(basename(argv$config), ".assoc_plots.params"))
 
 plot_by_chrom <- config["plot_qq_by_chrom"]
 plot_by_mac = !is.na(config["qq_mac_bins"])
-plot_by_maf = (config["assoc_type"] == "single") & (!is.na(config["qq_maf_bins"]))
+
+plot_by_maf <- FALSE
+if (!is.na(config["qq_maf_bins"])) {
+  if (config["assoc_type"] == "single") {
+    plot_by_maf <- TRUE
+  } else {
+    warning(sprintf("qq_maf_bins ignored for analysis type `%s`", config["assoc_type"]))
+  }
+}
 
 chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 files <- sapply(chr, function(c) insertChromString(config["assoc_file"], c, "assoc_file"))
@@ -73,7 +81,7 @@ if (!is.na(config["plot_mac_threshold"])) {
      assoc <- assoc %>%
       filter(MAF >= config["plot_maf_threshold"])
    } else {
-     warning("plot_maf_threshold ignored for ", config["assoc_type"])
+     warning(sprintf("plot_maf_threshold ignored for analysis type `%s`", config["assoc_type"]))
    }
 }
 
