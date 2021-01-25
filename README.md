@@ -166,8 +166,8 @@ The first step in evalulating relatedness and population structure is to select 
 	`thin` | `TRUE` | Logical for whether to thin points in the PC-variant correlation plots.
 	`phenotype_file` | `NA` | RData file with AnnotatedDataFrame of phenotypes. Used for color-coding PCA plots by group.
 	`group` | `NA` | Name of column in `phenotype_file` containing group variable.
-  `corr_maf_threshold` | 0.01 | MAF threshold for selecting variants when calculating PCA correlations.
-  `corr_missing_threshold` | 0.05 | Missingness threshold for selecting variants when calculating PCA correlations.
+	`corr_maf_threshold` | 0.01 | MAF threshold for selecting variants when calculating PCA correlations.
+	`corr_missing_threshold` | 0.05 | Missingness threshold for selecting variants when calculating PCA correlations.
 
 5. [PC-Relate](http://www.ncbi.nlm.nih.gov/pubmed/26748516) to estimate kinship coefficients adjusted for population structure and admixture using PCs
 
