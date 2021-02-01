@@ -16,7 +16,6 @@ required <- c("gds_file",
               "segment_file",
               "pca_file")
 optional <- c("n_corr_vars"=10e6,
-              "sample_include_file"=NA,
               "out_file"="pca_corr_variants.RData",
               "variant_include_file"=NA,
               "corr_maf_threshold" = 0.01,
