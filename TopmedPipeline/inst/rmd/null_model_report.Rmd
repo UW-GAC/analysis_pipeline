@@ -74,18 +74,14 @@ for (covar in covars) {
 }
 
 dat <- nullmod$fit
+# Rename for clearer plotting.
 names(dat)[names(dat) == "outcome"] <- "model_outcome"
+dat$outcome_numeric <- dat$model_outcome
+if (is_binary) {
+  # Convert to factor for plotting binary outcomes.
+  dat$model_outcome <- as.factor(dat$model_outcome)
+}
 
-# dat <- data.frame(sample.id = nullmod$sample.id,
-#                   # Need as.vector here because sometimes it's a matrix (but not always)
-#                   workingY = as.vector(nullmod$workingY),
-#                   # Need as.vector here because sometimes it's a matrix (but not always)
-#                   model_outcome = as.vector(nullmod$outcome),
-#                   fitted.values = nullmod$fitted.values,
-#                   resid.marginal = nullmod$resid.marginal,
-#                   PY = as.vector(nullmod$resid),
-#                   Ytilde = as.vector(nullmod$Ytilde),
-#                   stringsAsFactors = FALSE)
 # TODO: Add group_var check.
 g <- length(nullmod$group.idx)
 group <- rep(NA, length(nullmod$fit$sample.id))
@@ -95,11 +91,6 @@ for(i in seq_len(g)){
 dat$group <- group
 dat <- left_join(dat, annot, by = "sample.id")
 
-dat$outcome_numeric <- dat[[outcome]]
-if (is_binary) {
-  dat[[outcome]] <- as.factor(dat[[outcome]])
-  dat$model_outcome <- as.factor(dat$model_outcome)
-}
 ```
 
 ## Config
