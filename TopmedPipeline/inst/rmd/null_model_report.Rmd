@@ -73,6 +73,9 @@ for (covar in covars) {
   }
 }
 
+# Set phenotype file outcome to NULL to ensure we use the null model object.
+annot[[outcome]] <- NULL
+
 dat <- nullmod$fit
 # Rename for clearer plotting.
 names(dat)[names(dat) == "outcome"] <- "model_outcome"
@@ -382,7 +385,7 @@ if (!is.null(group_var)) {
   print(p)
 } else {
   if (is_binary) {
-    p <- p + geom_histogram(aes_string(fill = outcome))
+    p <- p + geom_histogram(aes_string(fill = "model_outcome"))
   } else {
     p <- p + geom_histogram()
   }
