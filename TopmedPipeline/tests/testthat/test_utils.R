@@ -66,6 +66,15 @@ test_that("calculateLambda", {
 
   # Works with multiple quantiles
   expect_equal(calculateLambda(null_stat, df = 1, quantiles = c(0.25, 0.5, 0.75)), c(1, 1, 1))
+  expect_equal(calculateLambda(null_stat * 0.9, df = 1, quantiles = c(0.25, 0.5, 0.75)), c(0.9, 0.9, 0.9))
+  expect_equal(calculateLambda(null_stat * 1.1, df = 1, quantiles = c(0.25, 0.5, 0.75)), c(1.1, 1.1, 1.1))
+  # Check a test statistic that has different lambdas at different quantiles.
+  idx_low <- 1:round(0.4 * length(null_stat))
+  idx_high <- round(0.6 * length(null_stat)):length(null_stat)
+  tmp_stat <- null_stat
+  tmp_stat[idx_low] <- null_stat[idx_low] * 0.9
+  tmp_stat[idx_high] <- null_stat[idx_high] * 1.1
+  expect_equal(calculateLambda(tmp_stat, df = 1, quantiles = c(0.25, 0.5, 0.75)), c(0.9, 1, 1.1))
 
   # Largest stats are inflated.
   null_stat[800:999] <- null_stat[800:999]*2
