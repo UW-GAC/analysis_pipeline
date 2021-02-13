@@ -279,7 +279,7 @@ config parameter | default value | description
 `thin_npoints` | `10000` | Number of points in each bin after thinning.
 `truncate_pval_threshold` | `1e-12` | Minimum p-value to display in truncated QQ and manhattan plots.
 `plot_qq_by_chrom` | FALSE |  Logical indicator for whether to generate QQ plots faceted by chromosome.
-`plot_variant_include_file` | `NA` | RData file with vector of ids to include. See `TopmedPipeline::assocFilterByFile` for format requirements.
+`plot_include_file` | `NA` | RData file with vector of ids to include. See `TopmedPipeline::assocFilterByFile` for format requirements.
 `signif_type` | See description | `fixed`, `bonferroni`, or `none`; character string for how to calculate the significance threshold. Default is `fixed` for single variant analysis and `bonferroni` for other analysis types.
 `signif_line_fixed` | `5e-9` | P-value for the significance line. Only used if `signif_type = fixed`.
 `qq_mac_bins` | NA | Space separated string of integers (e.g., `"5 20 50"`). If set, generate a QQ plot with binned by the specified MAC thresholds.
