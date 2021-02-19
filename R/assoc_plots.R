@@ -301,6 +301,10 @@ if (plot_by_maf) {
   outfile <- gsub(".", "_bymaf.", config["out_file_qq"], fixed=TRUE)
   ggsave(outfile, plot = p_by_maf, width = 10, height = 9)
 
+  # Clean up to save memory.
+  rm(dat_by_maf)
+  rm(p_by_maf)
+
 }
 
 if (plot_by_chrom) {
@@ -361,7 +365,9 @@ if (plot_by_chrom) {
     ggsave(outfile, plot = p_by_chr, width = 6, height = 6)
   }
 
+  # Clean up to save memory.
   rm(dat_by_chr)
+  rm(p_by_chr)
 }
 
 
