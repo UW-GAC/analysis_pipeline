@@ -185,11 +185,13 @@ rm(dat)
 
 if (plot_by_mac) {
 
+
   qq_mac_bins <- stringr::str_split(config["qq_mac_bins"], pattern = "\\s+")[[1]] %>%
     as.numeric()
-  labels <- sprintf("%s <= MAC < %s", qq_mac_bins, c(qq_mac_bins[-1], Inf))
+  qq_mac_bins <- unique(sort(c(0, qq_mac_bins, Inf)))
+  labels <- sprintf("%s <= MAC < %s", qq_mac_bins[-length(qq_mac_bins)], c(qq_mac_bins[-1]))
   assoc <- assoc %>%
-    mutate(mac_bin = cut(MAC, breaks = c(qq_mac_bins, Inf), right=F, labels = labels))
+    mutate(mac_bin = cut(MAC, breaks = qq_mac_bins, right=F, labels = labels))
 
   lambda_by_mac <- assoc %>%
     group_by(mac_bin) %>%
@@ -197,6 +199,7 @@ if (plot_by_mac) {
 
   # Recalculate obs/exp by mac bin.
   dat_by_mac <- assoc %>%
+    filter(!is.na(mac_bin)) %>%
     select(
       mac_bin,
       obs = pval
@@ -236,15 +239,21 @@ if (plot_by_mac) {
   outfile <- gsub(".", "_bymac.", config["out_file_qq"], fixed=TRUE)
   ggsave(outfile, plot = p_by_mac, width = 10, height = 9)
 
+  # Clean up to save memory.
+  rm(dat_by_mac)
+  rm(p_by_mac)
+
 }
 
 if (plot_by_maf) {
 
   qq_maf_bins <- stringr::str_split(config["qq_maf_bins"], pattern = "\\s+")[[1]] %>%
     as.numeric()
-  labels <- sprintf("%s <= MAF < %s", qq_maf_bins, c(qq_maf_bins[-1], Inf))
+  # Add 0 bin.
+  qq_maf_bins <- unique(sort(c(0, qq_maf_bins, Inf)))
+  labels <- sprintf("%s <= MAF < %s", qq_maf_bins[-length(qq_maf_bins)], c(qq_maf_bins[-1]))
   assoc <- assoc %>%
-    mutate(maf_bin = cut(MAF, breaks = c(qq_maf_bins, Inf), right=F, labels = labels))
+    mutate(maf_bin = cut(MAF, breaks = c(qq_maf_bins), right=F, labels = labels))
 
   lambda_by_maf <- assoc %>%
     group_by(maf_bin) %>%
@@ -252,6 +261,7 @@ if (plot_by_maf) {
 
   # Recalculate obs/exp by mac bin.
   dat_by_maf <- assoc %>%
+    filter(!is.na(maf_bin)) %>%
     select(
       maf_bin,
       obs = pval
