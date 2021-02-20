@@ -239,6 +239,18 @@ if (plot_by_mac) {
   outfile <- gsub(".", "_bymac.", config["out_file_qq"], fixed=TRUE)
   ggsave(outfile, plot = p_by_mac, width = 10, height = 9)
 
+  if (truncate) {
+    p_trunc <- p_by_mac +
+      scale_y_continuous(
+        oob = scales::squish,
+        limits = c(0, -log10(truncate_pval_threshold)),
+        expand = c(0,0)
+      ) +
+      ylab(expression(paste(-log[10], "(observed P)") ~ " (truncated)"))
+    outfile <- gsub("_bymac", "_bymac_truncated", outfile, fixed=TRUE)
+    ggsave(outfile, plot=p_trunc, width=10, height=9)
+  }
+
   # Clean up to save memory.
   rm(dat_by_mac)
   rm(p_by_mac)
@@ -301,6 +313,19 @@ if (plot_by_maf) {
   outfile <- gsub(".", "_bymaf.", config["out_file_qq"], fixed=TRUE)
   ggsave(outfile, plot = p_by_maf, width = 10, height = 9)
 
+
+  if (truncate) {
+    p_trunc <- p_by_maf +
+      scale_y_continuous(
+        oob = scales::squish,
+        limits = c(0, -log10(truncate_pval_threshold)),
+        expand = c(0,0)
+      ) +
+      ylab(expression(paste(-log[10], "(observed P)") ~ " (truncated)"))
+    outfile <- gsub("_bymaf", "_bymaf_truncated", outfile, fixed=TRUE)
+    ggsave(outfile, plot=p_trunc, width=10, height=9)
+  }
+
   # Clean up to save memory.
   rm(dat_by_maf)
   rm(p_by_maf)
@@ -362,7 +387,7 @@ if (plot_by_chrom) {
       ) +
       ylab(expression(paste(-log[10], "(observed P)") ~ " (truncated)"))
     outfile <- gsub(".", "_truncated_bychr.", config["out_file_qq"], fixed=TRUE)
-    ggsave(outfile, plot = p_by_chr, width = 6, height = 6)
+    ggsave(outfile, plot = p_by_chr, width = 10, height = 9)
   }
 
   # Clean up to save memory.
