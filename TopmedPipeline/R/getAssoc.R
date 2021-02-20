@@ -238,6 +238,7 @@ assocFilterByFile <- function(assoc, varfile) {
       if (file.exists(varfile_chr)) {
         tmp <- getobj(varfile_chr)
       } else {
+        warning(sprintf("missing varfile for chromosome %s; no variants included from this chromosome", x))
         tmp <- NULL
       }
       # Create an empty vector for cases when there are no variants specified in this file.

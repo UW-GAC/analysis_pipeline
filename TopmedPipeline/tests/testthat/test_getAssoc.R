@@ -580,10 +580,10 @@ test_that("assocFilterByFile with multiple varfiles", {
 
   # Only chr1 varfile exists.
   unlink(insertChromString(file_pattern, 2))
-  out <- assocFilterByFile(assoc, file_pattern)
+  expect_warning(out <- assocFilterByFile(assoc, file_pattern), "missing varfile")
   expect_equal(out$id, assoc %>% filter(chr == 1) %>% dplyr::slice(1:2) %>% pull(id))
   expect_equal(names(out), names(assoc))
-  fail("Should there be a warning if a varfile is missing?")
+  #fail("Should there be a warning if a varfile is missing?")
 
   # No records in varfiles
   lapply(1:2, function(x) {
