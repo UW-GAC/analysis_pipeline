@@ -6,7 +6,6 @@ sessionInfo()
 
 argp <- arg_parser("Pedigree check")
 argp <- add_argument(argp, "config", help="path to config file")
-argp <- add_argument(argp, "pedigree_file", help="path to pedigree file")
 argv <- parse_args(argp)
 config <- readConfig(argv$config)
 
