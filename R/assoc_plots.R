@@ -195,7 +195,10 @@ if (plot_by_mac) {
 
   lambda_by_mac <- assoc %>%
     group_by(mac_bin) %>%
-    summarise(lambda = calculateLambda(statsq, df = 1))
+    summarise(
+      lambda = calculateLambda(statsq, df = 1),
+      n_variants = n()
+    )
 
   # Recalculate obs/exp by mac bin.
   dat_by_mac <- assoc %>%
@@ -235,7 +238,10 @@ if (plot_by_mac) {
       facet_wrap(~ mac_bin, ncol = ceiling(sqrt(n_bins))) +
       # Add lambda by mac bin.
       geom_text(data = lambda_by_mac, aes(label = sprintf("lambda == %4.3f", lambda)),
-                x = -Inf, y = Inf, hjust = -0.2, vjust = 1.2, parse=T, size = 6)
+                x = -Inf, y = Inf, hjust = -0.2, vjust = 1.2, parse=T, size = 6)+
+      # Add number of variants
+      geom_text(data = lambda_by_mac, aes(label = sprintf("N = %s", prettyNum(n_variants, big.mark=","))),
+                x = -Inf, y = Inf, hjust = -0.15, vjust = 2.6, parse=F, size = 6)
   outfile <- gsub(".", "_bymac.", config["out_file_qq"], fixed=TRUE)
   ggsave(outfile, plot = p_by_mac, width = 10, height = 9)
 
@@ -269,7 +275,10 @@ if (plot_by_maf) {
 
   lambda_by_maf <- assoc %>%
     group_by(maf_bin) %>%
-    summarise(lambda = calculateLambda(statsq, df = 1))
+    summarise(
+      lambda = calculateLambda(statsq, df = 1),
+      n_variants = n()
+    )
 
   # Recalculate obs/exp by mac bin.
   dat_by_maf <- assoc %>%
@@ -309,7 +318,11 @@ if (plot_by_maf) {
       facet_wrap(~ maf_bin, ncol = ceiling(sqrt(n_bins))) +
       # Add lambda by mac bin.
       geom_text(data = lambda_by_maf, aes(label = sprintf("lambda == %4.3f", lambda)),
-                x = -Inf, y = Inf, hjust = -0.2, vjust = 1.2, parse=T, size = 6)
+                x = -Inf, y = Inf, hjust = -0.2, vjust = 1.2, parse=T, size = 6) +
+      # Add number of variants
+      geom_text(data = lambda_by_maf, aes(label = sprintf("N = %s", prettyNum(n_variants, big.mark=","))),
+                x = -Inf, y = Inf, hjust = -0.15, vjust = 2.6, parse=F, size = 6)
+
   outfile <- gsub(".", "_bymaf.", config["out_file_qq"], fixed=TRUE)
   ggsave(outfile, plot = p_by_maf, width = 10, height = 9)
 
