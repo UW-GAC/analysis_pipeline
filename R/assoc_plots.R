@@ -399,7 +399,7 @@ if (plot_by_chrom) {
         expand = c(0,0)
       ) +
       ylab(expression(paste(-log[10], "(observed P)") ~ " (truncated)"))
-    outfile <- gsub(".", "_truncated_bychr.", config["out_file_qq"], fixed=TRUE)
+    outfile <- gsub(".", "_bychr_truncated.", config["out_file_qq"], fixed=TRUE)
     ggsave(outfile, plot = p_by_chr, width = 10, height = 9)
   }
 
