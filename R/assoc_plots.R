@@ -1,6 +1,7 @@
 library(argparser)
 library(TopmedPipeline)
 library(dplyr)
+library(readr)
 library(ggplot2)
 library(RColorBrewer)
 sessionInfo()
@@ -18,22 +19,54 @@ optional <- c("chromosomes"="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 
               "known_hits_file"=NA,
               "out_file_manh"="manhattan.png",
               "out_file_qq"="qq.png",
+              "out_file_lambdas"="lambda.txt",
               "plot_mac_threshold"=NA,
+              "plot_maf_threshold"=NA,
               "thin"=TRUE,
               "thin_npoints"=10000,
               "thin_nbins"=10,
-              "truncate_pval_threshold" = 1e-12)
+              "truncate_pval_threshold" = 1e-12,
+              "plot_qq_by_chrom" = FALSE,
+              "plot_include_file" = NA,
+              "signif_type" = NA,
+              "signif_line_fixed" = 5e-9,
+              "qq_mac_bins" = NA,
+              "qq_maf_bins" = NA,
+              "lambda_quantiles" = NA,
+              "plot_max_p" = 1
+            )
 
 config <- setConfigDefaults(config, required, optional)
 print(config)
 writeConfig(config, paste0(basename(argv$config), ".assoc_plots.params"))
+
+plot_by_chrom <- config["plot_qq_by_chrom"]
+plot_by_mac = !is.na(config["qq_mac_bins"])
+
+plot_by_maf <- FALSE
+if (!is.na(config["qq_maf_bins"])) {
+  if (config["assoc_type"] == "single") {
+    plot_by_maf <- TRUE
+  } else {
+    warning(sprintf("qq_maf_bins ignored for analysis type `%s`", config["assoc_type"]))
+  }
+}
+
+plot_max_p <- as.numeric(config["plot_max_p"])
 
 chr <- strsplit(config["chromosomes"], " ", fixed=TRUE)[[1]]
 files <- sapply(chr, function(c) insertChromString(config["assoc_file"], c, "assoc_file"))
 
 truncate_pval_threshold = as.numeric(config["truncate_pval_threshold"])
 
+
 assoc <- getAssoc(files, config["assoc_type"])
+
+# Handle excluding specific ids.
+var_include_file <- config["plot_include_file"]
+if (!is.na(var_include_file)) {
+  assoc <- assocFilterByFile(assoc, var_include_file)
+}
 
 ## change p-value from 0 to very small number for extreme test statistics
 if ("stat" %in% names(assoc)) {
@@ -45,6 +78,14 @@ if ("stat" %in% names(assoc)) {
 if (!is.na(config["plot_mac_threshold"])) {
     mac.thresh <- as.integer(config["plot_mac_threshold"])
     assoc <- filter(assoc, MAC >= mac.thresh)
+} else if (!is.na(config["plot_maf_threshold"])) {
+   if (config["assoc_type"] == "single") {
+     # filter by MAF for single variant tests if requested.
+     assoc <- assoc %>%
+      filter(MAF >= config["plot_maf_threshold"])
+   } else {
+     warning(sprintf("plot_maf_threshold ignored for analysis type `%s`", config["assoc_type"]))
+   }
 }
 
 ## omit known hits?
@@ -53,19 +94,37 @@ if (!is.na(config["known_hits_file"]) & config["assoc_type"] == "single") {
     assoc <- omitKnownHits(assoc, hits, flank=500)
 }
 
-if ("stat" %in% names(assoc)) {
-    ## burden or single
-    lambda <- calculateLambda((assoc$stat)^2, df=1)
-    lambda_by_chr <- assoc %>%
-      group_by(chr) %>%
-      summarise(lambda = calculateLambda(stat^2, df=1))
+# Compute stat from p-values if necessary.
+if (!("stat" %in% names(assoc))) {
+  assoc$statsq <- qchisq(assoc$pval, df = 1, lower.tail = FALSE)
 } else {
-    ## SKAT
-    lambda <- calculateLambda(qchisq(assoc$pval, df=1, lower=FALSE), df=1)
-    lambda_by_chr <- assoc %>%
-      group_by(chr) %>%
-      summarise(lambda = calculateLambda(qchisq(pval, df = 1, lower=FALSE), df = 1))
+  assoc$statsq <- assoc$stat^2
 }
+
+# Calculate lambdas at 50% quantile.
+lambda <- calculateLambda(assoc$statsq, df = 1)
+# Also calculate lambda at different quantiles?
+if (!is.na(config["lambda_quantiles"])) {
+  lambda_quantiles <- stringr::str_split(config["lambda_quantiles"], pattern = "\\s+")[[1]] %>%
+    as.numeric()
+  # Remove anything outside of 0 and 1
+  if (any(lambda_quantiles <= 0)) {
+    warning("Removing lambda_quantiles <= 0")
+    lambda_quantiles <- lambda_quantiles[lambda_quantiles > 0]
+  }
+  if (any(lambda_quantiles >= 1)) {
+    warning("Removing lambda_quantiles >= 1")
+    lambda_quantiles <- lambda_quantiles[lambda_quantiles < 1]
+  }
+
+  tmp <- data.frame(
+    quantile = lambda_quantiles,
+    lambda = calculateLambda(assoc$statsq, df = 1, quantiles = lambda_quantiles),
+    stringsAsFactors = FALSE
+  )
+  readr::write_tsv(tmp, path = config["out_file_lambdas"])
+}
+
 
 # Check if we should also generate truncated plots.
 truncate = any(assoc$pval < truncate_pval_threshold)
@@ -82,38 +141,8 @@ dat <- assoc %>%
     upper = qbeta(0.025, x, rev(x)),
     lower = qbeta(0.975, x, rev(x))
   ) %>%
-  select(-x)
-
-## Calculate QQ values separately for each chromosome.
-dat_by_chr <- assoc %>%
-  select(
-    chr = chr,
-    obs = pval
-  ) %>%
-  group_by(chr) %>%
-  arrange(obs) %>%
-  mutate(
-    x = row_number(),
-    exp = x / n(),
-    upper = qbeta(0.025, x, rev(x)),
-    lower = qbeta(0.975, x, rev(x))
-  ) %>%
   select(-x) %>%
-  ungroup()
-
-
-thin.n <- as.integer(config["thin_npoints"])
-thin.bins <- as.integer(config["thin_nbins"])
-if (as.logical(config["thin"])) {
-    dat <- mutate(dat, logp=-log10(obs)) %>%
-        thinPoints("logp", n=thin.n, nbins=thin.bins)
-
-    dat_by_chr <- dat_by_chr %>%
-      mutate(logp = -log10(obs)) %>%
-      group_by(chr) %>%
-      thinPoints("logp", n=thin.n, nbins=thin.bins) %>%
-      ungroup()
-}
+  filter(obs <= plot_max_p)
 
 gg_qq <- list(
   geom_abline(intercept=0, slope=1, color="red"),
@@ -124,25 +153,19 @@ gg_qq <- list(
   theme_bw()
 )
 
+thin.n <- as.integer(config["thin_npoints"])
+thin.bins <- as.integer(config["thin_nbins"])
+if (as.logical(config["thin"])) {
+    dat <- mutate(dat, logp=-log10(obs)) %>%
+        thinPoints("logp", n=thin.n, nbins=thin.bins)
+}
+
 p <- ggplot(dat, aes(-log10(exp), -log10(obs))) +
     ggtitle(paste("lambda =", format(lambda, digits=4, nsmall=3))) +
     gg_qq +
     theme(plot.title = element_text(size = 22)) +
     geom_point()
 ggsave(config["out_file_qq"], plot=p, width=6, height=6)
-
-# QQ plots by chromosome.
-p_by_chr <- ggplot(dat_by_chr, aes(-log10(exp), -log10(obs))) +
-    gg_qq +
-    ggtitle(paste("lambda =", format(lambda, digits=4, nsmall=3))) +
-    theme(plot.title = element_text(size = 22)) +
-    geom_point(size = 0.5) +
-    facet_wrap(~ chr) +
-    # Add lambda by chromosome.
-    geom_text(data = lambda_by_chr, aes(label = sprintf("lambda == %4.3f", lambda)),
-              x = -Inf, y = Inf, hjust = -0.2, vjust = 1.2, parse=T)
-outfile <- gsub(".", "_bychr.", config["out_file_qq"], fixed=TRUE)
-ggsave(outfile, plot = p_by_chr, width = 10, height = 9)
 
 if (truncate) {
   p <- p +
@@ -155,40 +178,287 @@ if (truncate) {
   outfile <- gsub(".", "_truncated.", config["out_file_qq"], fixed=TRUE)
   ggsave(outfile, plot=p, width=6, height=6)
 
-  # QQ plots by chromosome, truncated.
-  p_by_chr <- p_by_chr +
-    scale_y_continuous(
-      oob = scales::squish,
-      limits = c(0, -log10(truncate_pval_threshold)),
-      expand = c(0,0)
-    ) +
-    ylab(expression(paste(-log[10], "(observed P)") ~ " (truncated)"))
-  outfile <- gsub(".", "_truncated_bychr.", config["out_file_qq"], fixed=TRUE)
-  ggsave(outfile, plot = p_by_chr, width = 6, height = 6)
 }
 
 rm(dat)
+
+
+if (plot_by_mac) {
+
+
+  qq_mac_bins <- stringr::str_split(config["qq_mac_bins"], pattern = "\\s+")[[1]] %>%
+    as.numeric()
+  qq_mac_bins <- unique(sort(c(0, qq_mac_bins, Inf)))
+  labels <- sprintf("%s <= MAC < %s", qq_mac_bins[-length(qq_mac_bins)], c(qq_mac_bins[-1]))
+  assoc <- assoc %>%
+    mutate(mac_bin = cut(MAC, breaks = qq_mac_bins, right=F, labels = labels))
+
+  lambda_by_mac <- assoc %>%
+    group_by(mac_bin) %>%
+    summarise(
+      lambda = calculateLambda(statsq, df = 1),
+      n_variants = n()
+    )
+
+  # Recalculate obs/exp by mac bin.
+  dat_by_mac <- assoc %>%
+    filter(!is.na(mac_bin)) %>%
+    select(
+      mac_bin,
+      obs = pval
+    ) %>%
+    group_by(mac_bin) %>%
+    arrange(obs) %>%
+    mutate(
+      x = row_number(),
+      exp = x / n(),
+      upper = qbeta(0.025, x, rev(x)),
+      lower = qbeta(0.975, x, rev(x))
+    ) %>%
+    select(-x) %>%
+    ungroup() %>%
+    filter(obs <= plot_max_p)
+
+  # Calculate lambda by MAC bin.
+  if (as.logical(config["thin"])) {
+      dat_by_mac <- dat_by_mac %>%
+        mutate(logp = -log10(obs)) %>%
+        group_by(mac_bin) %>%
+        thinPoints("logp", n=thin.n, nbins=thin.bins) %>%
+        ungroup()
+  }
+
+  n_bins <- length(unique(dat_by_mac$mac_bin))
+  # QQ plots by chromosome.
+  p_by_mac <- ggplot(dat_by_mac, aes(-log10(exp), -log10(obs))) +
+      gg_qq +
+      ggtitle(paste("lambda =", format(lambda, digits=4, nsmall=3))) +
+      theme(plot.title = element_text(size = 22)) +
+      geom_point(size = 0.5) +
+      facet_wrap(~ mac_bin, ncol = ceiling(sqrt(n_bins))) +
+      # Add lambda by mac bin.
+      geom_text(data = lambda_by_mac, aes(label = sprintf("lambda == %4.3f", lambda)),
+                x = -Inf, y = Inf, hjust = -0.2, vjust = 1.2, parse=T, size = 6)+
+      # Add number of variants
+      geom_text(data = lambda_by_mac, aes(label = sprintf("N = %s", prettyNum(n_variants, big.mark=","))),
+                x = -Inf, y = Inf, hjust = -0.15, vjust = 2.6, parse=F, size = 6)
+  outfile <- gsub(".", "_bymac.", config["out_file_qq"], fixed=TRUE)
+  ggsave(outfile, plot = p_by_mac, width = 10, height = 9)
+
+  if (truncate) {
+    p_trunc <- p_by_mac +
+      scale_y_continuous(
+        oob = scales::squish,
+        limits = c(0, -log10(truncate_pval_threshold)),
+        expand = c(0,0)
+      ) +
+      ylab(expression(paste(-log[10], "(observed P)") ~ " (truncated)"))
+    outfile <- gsub("_bymac", "_bymac_truncated", outfile, fixed=TRUE)
+    ggsave(outfile, plot=p_trunc, width=10, height=9)
+  }
+
+  # Clean up to save memory.
+  rm(dat_by_mac)
+  rm(p_by_mac)
+
+}
+
+if (plot_by_maf) {
+
+  qq_maf_bins <- stringr::str_split(config["qq_maf_bins"], pattern = "\\s+")[[1]] %>%
+    as.numeric()
+  # Add 0 bin.
+  qq_maf_bins <- unique(sort(c(0, qq_maf_bins, Inf)))
+  labels <- sprintf("%s <= MAF < %s", qq_maf_bins[-length(qq_maf_bins)], c(qq_maf_bins[-1]))
+  assoc <- assoc %>%
+    mutate(maf_bin = cut(MAF, breaks = c(qq_maf_bins), right=F, labels = labels))
+
+  lambda_by_maf <- assoc %>%
+    group_by(maf_bin) %>%
+    summarise(
+      lambda = calculateLambda(statsq, df = 1),
+      n_variants = n()
+    )
+
+  # Recalculate obs/exp by mac bin.
+  dat_by_maf <- assoc %>%
+    filter(!is.na(maf_bin)) %>%
+    select(
+      maf_bin,
+      obs = pval
+    ) %>%
+    group_by(maf_bin) %>%
+    arrange(obs) %>%
+    mutate(
+      x = row_number(),
+      exp = x / n(),
+      upper = qbeta(0.025, x, rev(x)),
+      lower = qbeta(0.975, x, rev(x))
+    ) %>%
+    select(-x) %>%
+    ungroup() %>%
+    filter(obs <= plot_max_p)
+
+  # Calculate lambda by MAC bin.
+  if (as.logical(config["thin"])) {
+      dat_by_maf <- dat_by_maf %>%
+        mutate(logp = -log10(obs)) %>%
+        group_by(maf_bin) %>%
+        thinPoints("logp", n=thin.n, nbins=thin.bins) %>%
+        ungroup()
+  }
+
+  n_bins <- length(unique(dat_by_maf$maf_bin))
+  # QQ plots by chromosome.
+  p_by_maf <- ggplot(dat_by_maf, aes(-log10(exp), -log10(obs))) +
+      gg_qq +
+      ggtitle(paste("lambda =", format(lambda, digits=4, nsmall=3))) +
+      theme(plot.title = element_text(size = 22)) +
+      geom_point(size = 0.5) +
+      facet_wrap(~ maf_bin, ncol = ceiling(sqrt(n_bins))) +
+      # Add lambda by mac bin.
+      geom_text(data = lambda_by_maf, aes(label = sprintf("lambda == %4.3f", lambda)),
+                x = -Inf, y = Inf, hjust = -0.2, vjust = 1.2, parse=T, size = 6) +
+      # Add number of variants
+      geom_text(data = lambda_by_maf, aes(label = sprintf("N = %s", prettyNum(n_variants, big.mark=","))),
+                x = -Inf, y = Inf, hjust = -0.15, vjust = 2.6, parse=F, size = 6)
+
+  outfile <- gsub(".", "_bymaf.", config["out_file_qq"], fixed=TRUE)
+  ggsave(outfile, plot = p_by_maf, width = 10, height = 9)
+
+
+  if (truncate) {
+    p_trunc <- p_by_maf +
+      scale_y_continuous(
+        oob = scales::squish,
+        limits = c(0, -log10(truncate_pval_threshold)),
+        expand = c(0,0)
+      ) +
+      ylab(expression(paste(-log[10], "(observed P)") ~ " (truncated)"))
+    outfile <- gsub("_bymaf", "_bymaf_truncated", outfile, fixed=TRUE)
+    ggsave(outfile, plot=p_trunc, width=10, height=9)
+  }
+
+  # Clean up to save memory.
+  rm(dat_by_maf)
+  rm(p_by_maf)
+
+}
+
+if (plot_by_chrom) {
+  # Calculate lambda values by chromosome.
+  lambda_by_chr <- assoc %>%
+    group_by(chr) %>%
+    summarise(lambda = calculateLambda(statsq, df = 1))
+
+  ## Calculate QQ values separately for each chromosome.
+  dat_by_chr <- assoc %>%
+    select(
+      chr = chr,
+      obs = pval
+    ) %>%
+    group_by(chr) %>%
+    arrange(obs) %>%
+    mutate(
+      x = row_number(),
+      exp = x / n(),
+      upper = qbeta(0.025, x, rev(x)),
+      lower = qbeta(0.975, x, rev(x))
+    ) %>%
+    select(-x) %>%
+    ungroup()
+
+
+  if (as.logical(config["thin"])) {
+      dat_by_chr <- dat_by_chr %>%
+        mutate(logp = -log10(obs)) %>%
+        group_by(chr) %>%
+        thinPoints("logp", n=thin.n, nbins=thin.bins) %>%
+        ungroup()
+  }
+
+  # QQ plots by chromosome.
+  p_by_chr <- ggplot(dat_by_chr, aes(-log10(exp), -log10(obs))) +
+      gg_qq +
+      ggtitle(paste("lambda =", format(lambda, digits=4, nsmall=3))) +
+      theme(plot.title = element_text(size = 22)) +
+      geom_point(size = 0.5) +
+      facet_wrap(~ chr) +
+      # Add lambda by chromosome.
+      geom_text(data = lambda_by_chr, aes(label = sprintf("lambda == %4.3f", lambda)),
+                x = -Inf, y = Inf, hjust = -0.2, vjust = 1.2, parse=T)
+  outfile <- gsub(".", "_bychr.", config["out_file_qq"], fixed=TRUE)
+  ggsave(outfile, plot = p_by_chr, width = 10, height = 9)
+
+  if (truncate) {
+    # QQ plots by chromosome, truncated.
+    p_by_chr <- p_by_chr +
+      scale_y_continuous(
+        oob = scales::squish,
+        limits = c(0, -log10(truncate_pval_threshold)),
+        expand = c(0,0)
+      ) +
+      ylab(expression(paste(-log[10], "(observed P)") ~ " (truncated)"))
+    outfile <- gsub(".", "_bychr_truncated.", config["out_file_qq"], fixed=TRUE)
+    ggsave(outfile, plot = p_by_chr, width = 10, height = 9)
+  }
+
+  # Clean up to save memory.
+  rm(dat_by_chr)
+  rm(p_by_chr)
+}
 
 
 ## manhattan plot
 chr <- levels(assoc$chr)
 cmap <- setNames(rep_len(brewer.pal(8, "Dark2"), length(chr)), chr)
 
-# significance level
-if (config["assoc_type"] == "single") {
-    ## genome-wide significance
-    signif <- c(5e-8, 5e-9, 1e-9)
-} else {
-    ## bonferroni
-    signif <- 0.05/nrow(assoc)
+# Use the user-specified significance type if it's not missing.
+# Otherwise, set it based on the analysis type.
+signif_type <- config["signif_type"]
+# Print a warning if it's not one of the allowed types and set based on the
+# default for this analysis type.
+if (!(signif_type %in% c("fixed", "bonferroni", "none", NA))) {
+  warning("signif_type must be `fixed`, `bonferroni`, or `none`; using default for this analysis type.")
+  signif_type <- NA
 }
+
+# If not user-specified or missing, set the significance type based on
+# the analysis type.
+if (is.na(signif_type)) {
+  signif_type <- switch(
+    config["assoc_type"],
+    "single" = "fixed",
+    "bonferroni")
+}
+
+# Caclulate the significance line.
+signif <- switch(
+  signif_type,
+  none = NA,
+  fixed = as.numeric(config["signif_line_fixed"]),
+  bonferroni = 0.05 / nrow(assoc),
+  NA
+)
+print(config["assoc_type"])
+print(signif_type)
+print(signif)
+
+# # significance level
+# if (config["assoc_type"] == "single") {
+#     ## genome-wide significance
+#     signif <- c(5e-8, 5e-9, 1e-9)
+# } else {
+#     ## bonferroni
+#     signif <- 0.05/nrow(assoc)
+# }
 
 if (as.logical(config["thin"])) {
     assoc <- mutate(assoc, logp=-log10(pval)) %>%
         thinPoints("logp", n=thin.n, nbins=thin.bins, groupBy="chr")
 }
 
-p <- ggplot(assoc, aes(chr, -log10(pval), group=interaction(chr, pos), color=chr)) +
+p <- ggplot(assoc %>% filter(pval <= plot_max_p), aes(chr, -log10(pval), group=interaction(chr, pos), color=chr)) +
     geom_point(position=position_dodge(0.8)) +
     scale_color_manual(values=cmap, breaks=names(cmap)) +
     geom_hline(yintercept=-log10(signif), linetype='dashed') +

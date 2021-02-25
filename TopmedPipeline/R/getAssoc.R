@@ -15,12 +15,12 @@
 
 
 #' Combine association test results
-#' 
+#'
 #' Combine association test results from multiple files into a single object.
-#' 
+#'
 #' Useful for combining per-segment results into a single file per chromosome.
 #' Assumes files are already ordered by segment.
-#' 
+#'
 #' @param files Vector of file names with association test results
 #' @param assoc_type Type of association test ("single", "aggregate", "window")
 #' @param ordered Logical for whether to order the output by chromosome and position
@@ -77,12 +77,19 @@ combineAssoc <- function(files, assoc_type, ordered=FALSE) {
 #' Read association test results in multiple files and combine all into a single
 #' data frame with standard column names.
 #'
-#' If a single aggregate unit contains variants from multiple chromosomes, each chromosome will have its own row in the output.
-#' 
-#' @inheritParams combineAssoc
-#' @return data.frame including standard columns ("chr", "pos", "start", "end", "stat", "pval", "MAC")
+#' The \code{id} values in this file should be either:
+#' \itemize{
+#'   \item{single-variant tests: }{\code{variant.id}}
+#'   \item{aggregate tests: }{the name of the aggregation unit from the variant grouping file}
+#'   \item{window tests: }{\code{<chr>_<pos>} of the first variant, e.g., 2_20001 for a window on chr2 starting at position 200001}
+#' }
 #'
-#' @importFrom dplyr "%>%" bind_rows ends_with filter_ group_by_ left_join mutate_ n rename_ select_ summarise_
+#' If a single aggregate unit contains variants from multiple chromosomes, the result will be returned only once on the chromosome with the most variants.
+#'
+#' @inheritParams combineAssoc
+#' @return data.frame including standard columns ("id", "chr", "pos", "start", "end", "stat", "pval", "MAC"). Also includes "MAF" for single variant tests.
+#'
+#' @importFrom dplyr "%>%" bind_rows ends_with filter group_by left_join mutate n rename select summarise .data arrange desc
 #' @export
 getAssoc <- function(files, assoc_type) {
     stopifnot(assoc_type %in% c("single", "aggregate", "window"))
@@ -90,50 +97,57 @@ getAssoc <- function(files, assoc_type) {
         x <- getobj(f)
         if (assoc_type == "aggregate") {
             tmp <- x$results %>%
-                mutate_(group_id=~(1:n())) %>%
-                filter_(~(n.site > 0))
-            group.info <- bind_rows(lapply(tmp$group_id, function(g) {
-                x$variantInfo[[g]] %>%
-                    group_by_("chr") %>%
-                    summarise_(start=~min(pos),
-                               end=~max(pos),
-                               pos=~(floor((min(pos) + max(pos))/2))) %>%
-                    mutate_(group_id=g) %>%
-                    as.data.frame()
-            }))
-            x <- left_join(tmp, group.info, by="group_id")
+                mutate(group_id=names(x$variantInfo)) %>%
+                filter(.data$n.site > 0)
+            group.info <- x$variantInfo %>%
+              bind_rows(.id="group_id") %>%
+              group_by(.data$group_id, .data$chr) %>%
+              summarise(n_chr = n(),
+                        start=min(.data$pos),
+                        end=max(.data$pos),
+                        pos=(floor((min(.data$pos) + max(.data$pos))/2))) %>%
+              ungroup() %>%
+              group_by(.data$group_id) %>%
+              # Choose the chromosome with the most variants as the one to return.
+              arrange(desc(.data$n_chr)) %>%
+              dplyr::slice(1) %>%
+              ungroup()
+            x <- left_join(tmp, group.info, by="group_id") %>%
+              mutate(id=.data$group_id)
         } else if (assoc_type == "window") {
-            x <- filter_(x$results, ~(n.site > 0)) %>%
-                mutate_(pos=~(floor((start + end)/2)))
+            x <- filter(x$results, (.data$n.site > 0)) %>%
+                mutate(pos=(floor((.data$start + .data$end)/2))) %>%
+                mutate(id = sprintf("chr%s_%d", .data$chr, .data$start))
         } else {
-            x <- mutate_(x, start="pos", end="pos")
+            x <- mutate(x, start=.data$pos, end=.data$pos) %>%
+              dplyr::rename(id = .data$variant.id)
         }
         x
     }))
-    
+
     if ("pval" %in% names(assoc)) {
         ## SKAT or fastSKAT
-        pval.col <- "pval"
-        assoc <- select_(assoc, "chr", "pos", "start", "end", pval.col, ~suppressWarnings(one_of("MAC"))) %>%
-            rename_(pval=pval.col)
+        assoc <- select(assoc, .data$id, .data$chr, .data$pos, .data$start, .data$end, .data$pval, suppressWarnings(one_of("MAC")))
     } else if ("pval_SKATO" %in% names(assoc)) {
         ## SKATO
-        pval.col <- "pval_SKATO"
-        assoc <- select_(assoc, "chr", "pos", "start", "end", pval.col, ~suppressWarnings(one_of("MAC"))) %>%
-            rename_(pval=pval.col)
+        assoc <- select(assoc, .data$id, .data$chr, .data$pos, .data$start, .data$end, pval=.data$pval_SKATO, suppressWarnings(one_of("MAC")))
     } else if ("pval_SMMAT" %in% names(assoc)) {
         ## SMMAT
-        pval.col <- "pval_SMMAT"
-        assoc <- select_(assoc, "chr", "pos", "start", "end", pval.col, ~suppressWarnings(one_of("MAC"))) %>%
-            rename_(pval=pval.col)
+        assoc <- select(assoc, .data$id, .data$chr, .data$pos, .data$start, .data$end, pval=.data$pval_SMMAT, suppressWarnings(one_of("MAC")))
+    } else if (assoc_type == "single") {
+      assoc <- assoc %>%
+        mutate(MAF = pmin(1 - freq, freq)) %>%
+        select(.data$id, .data$chr, .data$pos, .data$start, .data$end, ends_with("Stat"), ends_with("pval"), .data$MAC, .data$MAF)
+      names(assoc)[6:7] <- c("stat", "pval")
     } else {
-        ## burden or single
-        assoc <- select_(assoc, "chr", "pos", "start", "end", ~ends_with("Stat"), ~ends_with("pval"),
-                         ~suppressWarnings(one_of("MAC")))
-        names(assoc)[5:6] <- c("stat", "pval")
+        ## burden
+        assoc <- select(assoc, .data$id, .data$chr, .data$pos, .data$start, .data$end, ends_with("Stat"), ends_with("pval"),
+                         suppressWarnings(one_of("MAC")))
+        names(assoc)[6:7] <- c("stat", "pval")
     }
-    assoc <- filter_(assoc, ~(!is.na(pval))) %>%
-        mutate_(chr=~factor(chr, levels=c(1:22, "X")))
+
+    assoc <- filter(assoc, !is.na(.data$pval)) %>%
+        mutate(chr=ordered(.data$chr, levels=c(1:22, "X")))
     assoc
 }
 
@@ -199,4 +213,49 @@ removeConditional <- function(assoc, varfile) {
     dat <- select_(dat, "variant.id", "chr")
     dat$chr <- as.character(dat$chr)
     anti_join(assoc, dat, by=c("variant.id", "chr"))
+}
+
+#' Filter association test results to just the ids specified in a file.
+#' @param assoc results from \code{\link{getAssoc}}
+#' @param varfile RData file containing vector of \code{id} values from \code{assoc} to keep. See details.
+#'
+#' @return \code{assoc} with only the specified identifiers
+#'
+#' @details
+#' If \code{varfile} contains a space, `chromosome` will be inserted and the variant ids included will be assumed to be from that chromosome.
+#' Ids should match the \code{id} column returned by \code{\link{getAssoc}}.
+#'
+#' @importFrom dplyr inner_join mutate filter
+#'
+#' @export
+#'
+assocFilterByFile <- function(assoc, varfile) {
+  # Is the variant include file by chromosome?
+  if (grepl(" ", varfile)) {
+    chrs <- as.character(unique(assoc$chr))
+    keep <- lapply(chrs, function(x) {
+      varfile_chr <- insertChromString(varfile, x)
+      if (file.exists(varfile_chr)) {
+        tmp <- getobj(varfile_chr)
+      } else {
+        warning(sprintf("missing varfile for chromosome %s; no variants included from this chromosome", x))
+        tmp <- NULL
+      }
+      # Create an empty vector for cases when there are no variants specified in this file.
+      if (is.null(tmp)) tmp <- get(class(assoc$id))()
+      data.frame(id = tmp, chr = rep(x, length(tmp)), stringsAsFactors = FALSE)
+    }) %>%
+      bind_rows()
+    keep <- keep %>%
+      # Convert to factor ordering for the chromosome.
+      mutate(chr = ordered(chr, levels = levels(assoc$chr)))
+    assoc <- assoc %>%
+      inner_join(keep, by = c("id", "chr"))
+  } else {
+    var_include <- getobj(varfile)
+    assoc <- assoc %>%
+      filter(id %in% var_include)
+  }
+
+  assoc
 }

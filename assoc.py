@@ -167,6 +167,7 @@ config["assoc_type"] = assoc_type
 config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
 config["out_file_manh"] = configdict["plots_prefix"] + "_manh.png"
 config["out_file_qq"] = configdict["plots_prefix"] + "_qq.png"
+config["out_file_lambdas"] = configdict["plots_prefix"] + "_lambdas.txt"
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
