@@ -69,7 +69,7 @@ if (!is.na(config["variant_weight_file"])) {
 nullModel <- getobj(config["null_model_file"])
 
 # get samples included in null model
-sample.id <- nullModel$sample.id
+sample.id <- nullModel$fit$sample.id
 
 size <- as.numeric(config["window_size"])*1000
 step <- as.numeric(config["window_step"])*1000

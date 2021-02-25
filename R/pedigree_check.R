@@ -30,7 +30,7 @@ if (is(annot, "AnnotatedDataFrame")) {
     annot <- pData(annot)
 }
 annot <- annot %>%
-    select(sample.id, Individ=!!config["subjectID"])
+    select(sample.id, Individ=!!unname(config["subjectID"]))
 
 if (!is.na(config["sample_include_file"])) {
     ids <- getobj(config["sample_include_file"])
