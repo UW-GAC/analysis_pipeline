@@ -11,7 +11,8 @@ argv <- parse_args(argp)
 config <- readConfig(argv$config)
 
 required <- c("pedigree_file")
-optional <- c("out_file"="exp_rel.RData",
+optional <- c("concat_family_individ"=FALSE,
+              "out_file"="exp_rel.RData",
               "err_file"="ped_errs.RData")
 config <- setConfigDefaults(config, required, optional)
 print(config)
@@ -75,7 +76,7 @@ if (is.numeric(ped$sex)) {
 head(ped)
 
 # make sure individ is unique
-if (any(duplicated(ped$individ))) {
+if (as.logical(config["concat_family_individ"])) {
     ped <- ped %>%
         mutate(individ=paste(family, individ, sep="_"),
                father=ifelse(father == 0, 0, paste(family, father, sep="_")),
