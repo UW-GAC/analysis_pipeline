@@ -16,9 +16,6 @@ optional <- c("out_file"="exp_rel.RData",
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
-config <- c(pedigree_file=argv$pedigree_file,
-            out_file="out.RData", err_file="err.RData")
-
 pedfile <- config["pedigree_file"]
 
 sep <- switch(tools::file_ext(pedfile),
