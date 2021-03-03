@@ -88,6 +88,7 @@ combineAssoc <- function(files, assoc_type, ordered=FALSE) {
 #'
 #' @inheritParams combineAssoc
 #' @return data.frame including standard columns ("id", "chr", "pos", "start", "end", "stat", "pval", "MAC"). Also includes "MAF" for single variant tests.
+#' For BinomiRare tests, the `pval` column in the returned data frame is the `mid.pval`.
 #'
 #' @importFrom dplyr "%>%" bind_rows ends_with filter group_by left_join mutate n rename select summarise .data arrange desc
 #' @export
