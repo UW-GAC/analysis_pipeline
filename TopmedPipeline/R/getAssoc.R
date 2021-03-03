@@ -125,7 +125,16 @@ getAssoc <- function(files, assoc_type) {
         x
     }))
 
-    if ("pval" %in% names(assoc)) {
+    # This could probably be cleaned up to look at assoc_type first and then select specific p-value.
+    if (assoc_type == "single" && "mid.pval" %in% names(assoc)) {
+      ## BinomiRare
+      # Select the mid.pval as recommended by Tamar.
+      # No test stat.
+      assoc <- assoc %>%
+        mutate(MAF = pmin(1 - freq, freq)) %>%
+        select(.data$id, .data$chr, .data$pos, .data$start, .data$end, .data$mid.pval, .data$MAC, .data$MAF)
+      names(assoc)[6] <- c("pval")
+    } else if ("pval" %in% names(assoc)) {
         ## SKAT or fastSKAT
         assoc <- select(assoc, .data$id, .data$chr, .data$pos, .data$start, .data$end, .data$pval, suppressWarnings(one_of("MAC")))
     } else if ("pval_SKATO" %in% names(assoc)) {

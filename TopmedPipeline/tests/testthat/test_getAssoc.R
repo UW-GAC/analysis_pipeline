@@ -177,6 +177,46 @@ test_that("aggregate, multiple chromosomes in one aggregation unit", {
   seqClose(seqData)
 })
 
+test_that("single, binomirare", {
+  seqData <- SeqVarBlockIterator(.testData(), verbose=FALSE)
+  data(grm)
+  nullmod <- fitNullModel(
+    sampleData(seqData),
+    outcome="status",
+    covars="sex",
+    cov.mat=grm,
+    family="binomial",
+    verbose=FALSE
+  )
+
+  seqSetFilterChrom(seqData, include=1, verbose=FALSE)
+  a1 <- assocTestSingle(seqData, nullmod, verbose=FALSE, test="BinomiRare")
+  seqSetFilterChrom(seqData, include=2, verbose=FALSE)
+  a2 <- assocTestSingle(seqData, nullmod, verbose=FALSE, test="BinomiRare")
+  files <- c(tempfile(), tempfile())
+  save(a1, file=files[1])
+  save(a2, file=files[2])
+  a <- rbind(a1, a2)
+
+  assoc <- getAssoc(files, "single")
+  expect_equal(nrow(assoc), nrow(a))
+  expect_equal(assoc$id, a$variant.id)
+  expect_equal(as.character(assoc$chr), a$chr)
+  expect_equal(assoc$pos, a$pos)
+  expect_equal(assoc$start, assoc$pos)
+  expect_equal(assoc$end, assoc$pos)
+  expect_false("stat" %in% names(assoc))
+  #expect_equal(assoc$stat, a$Score.Stat) # BinomiRare does not have a test stat.
+  expect_equal(assoc$pval, a$mid.pval)
+  expect_true("MAF" %in% names(assoc))
+  idx <- a$freq < 0.5
+  expect_equal(assoc$MAF[idx], a$freq[idx])
+  expect_equal(assoc$MAF[!idx], 1 - a$freq[!idx])
+
+  seqClose(seqData)
+  unlink(files)
+})
+
 test_that("window, smmat", {
     seqData <- .testData()
     nullmod <- .testNullModel(seqData)
