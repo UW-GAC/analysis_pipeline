@@ -82,7 +82,8 @@ if (!is.na(wgtfile)) {
 nullModel <- getobj(config["null_model_file"])
 
 # get samples included in null model
-sample.id <- nullModel$sample.id
+nullModel <- GENESIS:::.updateNullModelFormat(nullModel)
+sample.id <- nullModel$fit$sample.id
 
 # keep units that start in the requested segment
 if (!is.na(segment)) {

@@ -55,12 +55,8 @@ seqData <- SeqVarData(gds, sampleData=annot)
 nullModel <- getobj(config["null_model_file"])
 
 # get samples included in null model
-if(!is.null(nullModel$fit)){
-  sample.id <- nullModel$fit$sample.id
-}else{
-  sample.id <- nullModel$sample.id
-}
-
+nullModel <- GENESIS:::.updateNullModelFormat(nullModel)
+sample.id <- nullModel$fit$sample.id
 
 if (!is.na(segment)) {
     filterBySegment(seqData, segment, config["segment_file"])
