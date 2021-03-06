@@ -58,7 +58,12 @@ nullModel <- GENESIS:::.updateNullModelFormat(nullModel)
 sample.id <- nullModel$fit$sample.id
 
 # check if null model is for fast.score.SE
-fast.score.SE <- ifelse(!is.null(nullModel$se.correction), TRUE, FALSE)
+if(!is.null(nullModel$se.correction)){
+  fast.score.SE <- TRUE
+  message("Using fast score standard error approximation")
+}else{
+  fast.score.SE <- FALSE
+}
 
 if (!is.na(segment)) {
     filterBySegment(seqData, segment, config["segment_file"])
