@@ -26,7 +26,6 @@ optional <- c("genome_build"="hg38",
               "pass_only"=TRUE,
               "segment_file"=NA,
               "test_type"="score",
-              "fast_scoreSE"=FALSE,
               "variant_include_file"=NA,
               "variant_block_size"=1024)
 config <- setConfigDefaults(config, required, optional)
@@ -57,6 +56,9 @@ nullModel <- getobj(config["null_model_file"])
 # get samples included in null model
 nullModel <- GENESIS:::.updateNullModelFormat(nullModel)
 sample.id <- nullModel$fit$sample.id
+
+# check if null model is for fast.score.SE
+fast.score.SE <- ifelse(!is.null(nullModel$se.correction), TRUE, FALSE)
 
 if (!is.na(segment)) {
     filterBySegment(seqData, segment, config["segment_file"])
@@ -97,7 +99,7 @@ test <- switch(tolower(config["test_type"]),
 
 assoc <- assocTestSingle(iterator, nullModel, 
                          test=test, 
-                         fast.score.SE=as.logical(config["fast_scoreSE"]), 
+                         fast.score.SE=fast.score.SE, 
                          genome.build=build)
 
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
