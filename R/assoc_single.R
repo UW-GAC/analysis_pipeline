@@ -60,7 +60,7 @@ sample.id <- nullModel$fit$sample.id
 # check if null model is for fast.score.SE
 if(!is.null(nullModel$se.correction)){
   fast.score.SE <- TRUE
-  message("Using fast score standard error approximation")
+  message("Using fast approximation to score standard error")
 }else{
   fast.score.SE <- FALSE
 }
