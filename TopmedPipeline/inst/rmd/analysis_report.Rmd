@@ -72,7 +72,7 @@ if (unit == "aggregate") {
 } else {
     extra <- NULL
 }
-extra["fast.score.SE"] <- !is.null(nullmod$se.correction)
+extra["fast.score.SE"] <- isNullModelFastScore(nullmod)
 configTable(c(unit=unit, extra, config[disp]))
 ```
 

@@ -58,7 +58,7 @@ nullModel <- GENESIS:::.updateNullModelFormat(nullModel)
 sample.id <- nullModel$fit$sample.id
 
 # check if null model is for fast.score.SE
-if(!is.null(nullModel$se.correction)){
+if(isNullModelFastScore(null.model)){
   fast.score.SE <- TRUE
   message("Using fast approximation to score standard error")
 }else{
