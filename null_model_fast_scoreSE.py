@@ -85,7 +85,7 @@ config["chromosomes"] = TopmedPipeline.parseChromosomes(chromosomes)
 configfile = configdict["config_prefix"] + "_" + job + ".config"
 TopmedPipeline.writeConfig(config, configfile)
 
-submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=submitID, email=email, print_only=print_only)
+submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, version], holdid=[submitID], email=email, print_only=print_only)
 
 # fast score approx report
 # job = "null_model_fast_score_SE_report"
