@@ -62,7 +62,7 @@ disp <- c("window_size", "window_step",
           "null_model_file")
 if (unit == "single") {
     if (!is.na(config["mac_threshold"])) disp <- c(disp, "mac_threshold") else disp <- c(disp, "maf_threshold")
-    disp <- c(disp, "test_type", "fast_scoreSE")
+    disp <- c(disp, "test_type")
 } else {
     disp <- c(disp, "weight_beta", "test")
     if (config["test"] == "burden") disp <- c(disp, "test_type") else disp <- c(disp, "pval_skat", "rho")
@@ -72,6 +72,7 @@ if (unit == "aggregate") {
 } else {
     extra <- NULL
 }
+extra["fast.score.SE"] <- !is.null(nullmod$se.correction)
 configTable(c(unit=unit, extra, config[disp]))
 ```
 
