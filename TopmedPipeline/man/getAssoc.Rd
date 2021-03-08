@@ -13,6 +13,7 @@ getAssoc(files, assoc_type)
 }
 \value{
 data.frame including standard columns ("id", "chr", "pos", "start", "end", "stat", "pval", "MAC"). Also includes "MAF" for single variant tests.
+For BinomiRare tests, the `pval` column in the returned data frame is the `mid.pval`.
 }
 \description{
 Return association test results in a standard format
