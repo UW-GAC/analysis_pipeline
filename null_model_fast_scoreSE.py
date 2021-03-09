@@ -101,7 +101,7 @@ submitID = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile
 
 # post analysis
 bname = "post_analysis"
-job = "null_model_fast_score_SE" + "_" + bname
+job = "null_model_fast_scoreSE" + "_" + bname
 jobpy = bname + ".py"
 pcmd=os.path.join(submitPath, jobpy)
 argList = ["-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
