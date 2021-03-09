@@ -13,6 +13,7 @@ author: "TOPMed Pipeline v`r params$pipeline_version`"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = "hide")
 library(TopmedPipeline)
+library(GENESIS)
 library(Biobase)
 library(dplyr)
 library(ggplot2)
@@ -84,7 +85,6 @@ configTable(c(unit=unit, extra, config[disp]))
 # Session information
 
 ```{r sessionInfo(), results = 'markup'}
-library(GENESIS)
 library(ggplot2)
 print(sessionInfo())
 ```
