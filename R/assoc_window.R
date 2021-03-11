@@ -69,6 +69,7 @@ if (!is.na(config["variant_weight_file"])) {
 nullModel <- getobj(config["null_model_file"])
 
 # get samples included in null model
+nullModel <- GENESIS:::.updateNullModelFormat(nullModel)
 sample.id <- nullModel$fit$sample.id
 
 size <- as.numeric(config["window_size"])*1000

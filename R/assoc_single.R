@@ -54,7 +54,16 @@ seqData <- SeqVarData(gds, sampleData=annot)
 nullModel <- getobj(config["null_model_file"])
 
 # get samples included in null model
+nullModel <- GENESIS:::.updateNullModelFormat(nullModel)
 sample.id <- nullModel$fit$sample.id
+
+# check if null model is for fast.score.SE
+if(isNullModelFastScore(nullModel)){
+  fast.score.SE <- TRUE
+  message("Using fast approximation to score standard error")
+}else{
+  fast.score.SE <- FALSE
+}
 
 if (!is.na(segment)) {
     filterBySegment(seqData, segment, config["segment_file"])
@@ -94,7 +103,10 @@ test <- switch(tolower(config["test_type"]),
                score.spa="Score.SPA",
                binomirare="BinomiRare")
 
-assoc <- assocTestSingle(iterator, nullModel, test=test, genome.build=build)
+assoc <- assocTestSingle(iterator, nullModel, 
+                         test=test, 
+                         fast.score.SE=fast.score.SE, 
+                         genome.build=build)
 
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 
