@@ -13,10 +13,13 @@ config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)
 
 required <- c("gds_file",
-              "segment_file")
+              "segment_file",
+              "pca_file")
 optional <- c("n_corr_vars"=10e6,
               "out_file"="pca_corr_variants.RData",
-              "variant_include_file"=NA)
+              "variant_include_file"=NA,
+              "corr_maf_threshold" = 0.01,
+              "corr_missing_threshold" = 0.05)
 config <- setConfigDefaults(config, required, optional)
 print(config)
 
@@ -36,6 +39,16 @@ gds <- seqOpen(gdsfile)
 
 filterByPass(gds)
 filterBySNV(gds)
+
+# Use only the samples included in PCA.
+pca <- getobj(config["pca_file"])
+sample_include <- c(pca$rels, pca$unrels)
+seqSetFilter(gds, sample.id = sample_include)
+
+# Filter by MAF and missing rate
+seqSetFilterCond(gds,
+                 maf=as.numeric(config["corr_maf_threshold"]),
+                 missing.rate=as.numeric(config["corr_missing_threshold"]))
 
 vars <- seqGetData(gds, "variant.id")
 

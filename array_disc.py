@@ -42,7 +42,8 @@ version = "--version " + TopmedPipeline.__version__
 cluster = TopmedPipeline.ClusterFactory.createCluster(cluster_type, cluster_file, verbose)
 
 pipeline = cluster.getPipelinePath()
-driver = os.path.join(pipeline, "runRscript.sh")
+submitPath = cluster.getSubmitPath()
+driver = os.path.join(submitPath, "runRscript.sh")
 
 configdict = TopmedPipeline.readConfig(configfile)
 configdict = TopmedPipeline.directorySetup(configdict, subdirs=["config", "data", "log"])
@@ -75,11 +76,11 @@ jobid = cluster.submitJob(job_name=job, cmd=driver, args=[rscript, configfile, v
 
 
 # post analysis
-job = "post_analysis"
-jobpy = job + ".py"
-pcmd=os.path.join(pipeline, jobpy)
-argList = [pcmd, "-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
+bname = "post_analysis"
+job = "array_disc" + "_" + bname
+jobpy = bname + ".py"
+pcmd=os.path.join(submitPath, jobpy)
+argList = ["-a", cluster.getAnalysisName(), "-l", cluster.getAnalysisLog(),
            "-s", cluster.getAnalysisStartSec()]
-pdriver=os.path.join(pipeline, "run_python.sh")
-cluster.submitJob(job_name=job, cmd=pdriver, args=argList,
+cluster.submitJob(binary=True, job_name=job, cmd=pcmd, args=argList,
                   holdid=[jobid], print_only=print_only)
