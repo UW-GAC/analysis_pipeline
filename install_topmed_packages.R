@@ -10,6 +10,3 @@ remotes::install_git("git://github.com/smgogarten/SeqVarTools.git", dependencies
 remotes::install_git("git://github.com/UW-GAC/GENESIS.git", dependencies=FALSE)
 
 remotes::install_local("TopmedPipeline", dependencies=FALSE)
-
-## temporary - install readr in devel
-BiocManager::install("readr", update=FALSE, ask=FALSE)
