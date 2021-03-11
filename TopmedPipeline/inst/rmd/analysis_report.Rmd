@@ -13,6 +13,7 @@ author: "TOPMed Pipeline v`r params$pipeline_version`"
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, results = "hide")
 library(TopmedPipeline)
+library(GENESIS)
 library(Biobase)
 library(dplyr)
 library(ggplot2)
@@ -41,12 +42,17 @@ types <- c("single", "window", "aggregate")
 unit <- intersect(sub("assoc_", "", names(param_files)), types)
 config <- param_files[[paste0("assoc_", unit)]]
 nullmod_file <- gsub("\\.RData", "_reportonly.RData", config["null_model_file"])
+# If the "reportonly" version fo the null model file doesn't exist, use the full file.
+# This is mainly to handle null models for the fast score approximation, which are already small.
+if (!file.exists(nullmod_file)) {
+  nullmod_file <- config["null_model_file"]
+}
 nullmod <- getobj(nullmod_file)
 ```
 
-Number of samples: `r length(nullmod$sample.id)`
+Number of samples: `r nrow(nullmod$fit)`
 
-Model: `r nullmod$model.string`
+Model: `r nullmod$model$formula`
 
 
 ## Association test
@@ -67,6 +73,7 @@ if (unit == "aggregate") {
 } else {
     extra <- NULL
 }
+extra["fast.score.SE"] <- isNullModelFastScore(nullmod)
 configTable(c(unit=unit, extra, config[disp]))
 ```
 
@@ -78,7 +85,6 @@ configTable(c(unit=unit, extra, config[disp]))
 # Session information
 
 ```{r sessionInfo(), results = 'markup'}
-library(GENESIS)
 library(ggplot2)
 print(sessionInfo())
 ```

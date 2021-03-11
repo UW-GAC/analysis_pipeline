@@ -156,6 +156,7 @@ config = deepcopy(configdict)
 build = configdict.setdefault("genome_build", "hg38")
 config["segment_file"] = os.path.join(pipeline, "segments_" + build + ".txt")
 config["gds_file"] = configdict["full_gds_file"]
+config["pca_file"] = configdict["data_prefix"] + "_pcair.RData"
 if ld:
     config["variant_include_file"] = configdict["data_prefix"] + "_pruned_variants.RData"
 config["out_file"] = configdict["data_prefix"] + "_pcair_corr_variants_chr .RData"

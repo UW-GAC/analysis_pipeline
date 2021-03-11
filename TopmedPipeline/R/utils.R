@@ -5,7 +5,7 @@
 #' Loads an R object and stores it under a new name without creating a duplicate copy.
 #' If multiple objects are stored in the same file, only the first one will be returned.
 #' Supports files saved with \code{\link{saveRDS}}, provided the file extension ".rds" is used.
-#' 
+#'
 #' @param Rdata path to an Rdata file containing a single R object to load
 #' @return The R object stored in \code{Rdata}
 #' @examples
@@ -52,7 +52,7 @@ insertChromString <- function(x, chr, err=NULL) {
 #'
 #' For a set of GDS files each with ids numbered 1:n, convert to sequential ids
 #' with 1:N over the combined set of files.
-#' 
+#'
 #' @param gds.list List of \code{\link[SeqArray]{SeqVarGDSClass}} objects
 #' @param id.list List of vectors of variant ids corresponding to \code{gds.list}
 #' @return Vector of sequential variant ids
@@ -63,7 +63,7 @@ sequentialVariantIds <- function(gds.list, id.list) {
     stopifnot(length(gds.list) == length(id.list))
     n <- 0
     new.id <- list()
-    for (i in seq_along(gds.list)) { 
+    for (i in seq_along(gds.list)) {
         new.id[[i]] <- id.list[[i]] + n
         ni <- seqSummary(gds.list[[i]], "variant.id")
         n <- n + ni
@@ -79,14 +79,15 @@ sequentialVariantIds <- function(gds.list, id.list) {
 #'
 #' @param stat Vector of test statistics
 #' @param df Degrees of freedom
-#' @return lambda
+#' @param quantiles Quantile(s) at which to calculate lambda value
+#' @return lambda calculated at the specified quantiles
 #'
 #' @importFrom stats median qchisq
 #' @export
-calculateLambda <- function(stat, df) {
+calculateLambda <- function(stat, df, quantiles = 0.5) {
     if (any(sum(stat < 0, na.rm=TRUE)))
         stop("no negative values allowed in stat (does beta/se need to be squared?)")
-    median(stat, na.rm=TRUE) / qchisq(0.5, df=df)
+    unname(quantile(stat, probs = quantiles, na.rm=TRUE) / qchisq(quantiles, df = df))
 }
 
 
@@ -123,9 +124,9 @@ constructFilename <- function(prefix, chromosome=NA, segment=NA) {
 #'
 #' @param x a list
 #' @param file character string with filename of GDS file to create
-#' 
+#'
 #' @importFrom gdsfmt createfn.gds add.gdsn closefn.gds
-#' 
+#'
 #' @export
 list2gds <- function(x, file) {
     gds <- createfn.gds(file)
@@ -143,9 +144,9 @@ list2gds <- function(x, file) {
 #' @param file filename of GDS file
 #' @param sample.id vector of sample.id
 #' @return Object of type "snpgdsIBDClass"
-#' 
+#'
 #' @importFrom gdsfmt openfn.gds closefn.gds index.gdsn read.gdsn readex.gdsn
-#' 
+#'
 #' @export
 gds2ibdobj <- function(file, sample.id=NULL) {
     f <- openfn.gds(file)
@@ -168,12 +169,12 @@ gds2ibdobj <- function(file, sample.id=NULL) {
 
 
 #' Return a kinship object for use in pcairPartition
-#' 
+#'
 #' @param file filename with kinship object (.gds or .RData)
 #' @return If file is a GDS file, a GDS object providing a file connection. Otherwise, the R object stored in file.
-#' 
+#'
 #' @importFrom gdsfmt openfn.gds
-#' 
+#'
 #' @export
 kinobj <- function(file) {
     if (tools::file_ext(file) == "gds") {
@@ -189,7 +190,7 @@ kinobj <- function(file) {
 #'
 #' @param mat A kinship matrix
 #' @return The median kinship value
-#' 
+#'
 #' @export
 medianKinship <- function(mat) {
     median(mat[lower.tri(mat)])

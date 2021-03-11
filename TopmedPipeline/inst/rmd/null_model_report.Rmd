@@ -22,6 +22,7 @@ library(Biobase)
 library(dplyr)
 library(ggplot2)
 library(grid)
+library(stringr)
 theme_set(theme_bw())
 
 configTable <- function(x) {
@@ -60,9 +61,8 @@ is_binary <- config["family"] == "binomial"
 
 is_invnorm <- !is_binary & params$invnorm & as.logical(config["inverse_normal"])
 
-model_string <- modelString(outcome, covars, random, group_var,
-                            inverse_normal = is_invnorm)
-outcome_string <- modelOutcomeString(outcome, inverse_normal = is_invnorm)
+model_string <- nullmod$model$formula
+outcome_string <- str_trim(str_split(model_string, "~")[[1]][1])
 ```
 
 ```{r prepare-data}
@@ -73,30 +73,27 @@ for (covar in covars) {
   }
 }
 
-dat <- data.frame(sample.id = nullmod$sample.id,
-                  # Need as.vector here because sometimes it's a matrix (but not always)
-                  workingY = as.vector(nullmod$workingY),
-                  # Need as.vector here because sometimes it's a matrix (but not always)
-                  model_outcome = as.vector(nullmod$outcome),
-                  fitted.values = nullmod$fitted.values,
-                  resid.marginal = nullmod$resid.marginal,
-                  PY = as.vector(nullmod$resid),
-                  Ytilde = as.vector(nullmod$Ytilde),
-                  stringsAsFactors = FALSE)
+# Set phenotype file outcome to NULL to ensure we use the null model object.
+annot[[outcome]] <- NULL
+
+dat <- nullmod$fit
+# Rename for clearer plotting.
+names(dat)[names(dat) == "outcome"] <- "model_outcome"
+dat$outcome_numeric <- dat$model_outcome
+if (is_binary) {
+  # Convert to factor for plotting binary outcomes.
+  dat$model_outcome <- as.factor(dat$model_outcome)
+}
+
 # TODO: Add group_var check.
 g <- length(nullmod$group.idx)
-group <- rep(NA, length(nullmod$sample.id))
-for(i in 1:g){
+group <- rep(NA, length(nullmod$fit$sample.id))
+for(i in seq_len(g)){
     group[nullmod$group.idx[[i]]] <- names(nullmod$group.idx)[i]
 }
 dat$group <- group
 dat <- left_join(dat, annot, by = "sample.id")
 
-dat$outcome_numeric <- dat[[outcome]]
-if (is_binary) {
-  dat[[outcome]] <- as.factor(dat[[outcome]])
-  dat$model_outcome <- as.factor(dat$model_outcome)
-}
 ```
 
 ## Config
@@ -328,23 +325,82 @@ if (show_varcomp) {
 }
 ```
 
-```{r variance-adjustment-header, results = 'asis'}
-if (!is.null(group_var)) {
-  cat("## Variance adjustment")
-  cat('\n\n')
-  text <- paste(
-    "Boxplots of the original phenotype values (`workingY`) and the adjusted phenotype
-    values (`Ytilde`) by heterogeneous residual variance group. The `Ytilde` values
-    are adjusted for fixed effect covariates, random effects, and heterogeneous
-    residual variances. The variation of `Ytilde` within each group should be
-    similar."
-  )
-  cat(text)
+## Adjusted phenotype
+
+The Cholesky residuals (`resid.cholesky`) are adjusted for fixed effect covariates,
+random effects, and heterogeneous residual variances (if applicable).
+```{r results = 'asis'}
+if (is_binary) {
+  cat("Linear regression of the Cholesky residual vector on an equivalently
+       transformed genotype vector provides the same estimates as fitting the
+       full GLS model using `workingY` as the outcome variable (by the
+        Frisch-Waugh-Lovell theorem). The Cholesky residuals can be viewed as
+        the adjusted phenotype values.")
+} else {
+  cat("Linear regression of the Cholesky residual vector on an equivalently
+       transformed genotype vector provides the same estimates as fitting the
+       full GLS model (by the Frisch-Waugh-Lovell theorem). The Cholesky
+       residuals can be viewed as the adjusted phenotype values.")
 }
 ```
 
-```{r variance-adjustment-plots}
+The Cholesky residuals are a transformation of the marginal residuals using the
+estimated model covariance structure such that they should be uncorrelated.
+```{r, results = 'asis'}
+extra_text <- ""
+if (is_binary) {
+  extra_text <- "A histogram color-coded by outcome status is shown below."
+} else {
+  extra_text <- "For linear outcomes, they follow a standard multivariate
+                 Normal distribution with mean 0 and identity covariance matrix
+                asymptotically."
+  if (!is.null(group_var)) {
+    extra_text <- paste(extra_text, "The density curve for each group is shown; the heavy black
+                   line is the density curve pooled across all groups.")
+  } else {
+    extra_text <- paste(extra_text, "A histogram of `resid.cholesky` values is shown below.")
+  }
+  if(!is_invnorm) {
+    extra_text <- paste(
+      extra_text,
+      "\n\nIt may be problematic for association testing if this distribution is far
+      from Gaussian. This problem can be alleviated by rank normalizing `resid.marginal` and
+      re-fitting the null model with the rank-normalized values as the outcome
+      (i.e. a two stage procedure)."
+    )
+  }
+}
+cat(extra_text)
+```
+
+```{r, fig.height=8}
+p <- ggplot(dat, aes(x = resid.cholesky))
 if (!is.null(group_var)) {
+  p <- p +
+    stat_density(aes(color = group), geom = "line", position = "identity") +
+    #geom_density(aes(color = group)) +
+    geom_density(size = 2) +
+    theme(legend.position = "top", legend.justification = c(0.5, 1)) +
+    guides(color = guide_legend(title.position="top", title.hjust = 0.5))
+  print(p)
+} else {
+  if (is_binary) {
+    p <- p + geom_histogram(aes_string(fill = "model_outcome"))
+  } else {
+    p <- p + geom_histogram()
+  }
+  print(p)
+}
+```
+
+```{r variance-adjustment-header, results = 'asis'}
+if (!is.null(group_var)) {
+  cat(
+    "Boxplots of the original phenotype values (`workingY`) and the Cholestky
+    residuals (`resid.cholesky`) by heterogeneous residual variance group. The
+    variation of `resid.cholesky` within each group should be similar."
+  )
+
   p <- ggplot(dat, aes(x = group, y = workingY)) +
     geom_boxplot(varwidth = TRUE) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
@@ -354,7 +410,7 @@ if (!is.null(group_var)) {
     theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust = 1))
   print(p)
 
-  p <- ggplot(dat, aes(x = group, y = Ytilde))
+  p <- ggplot(dat, aes(x = group, y = resid.cholesky))
   p <- p +
     geom_boxplot(varwidth = TRUE) +
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
@@ -367,19 +423,13 @@ if (!is.null(group_var)) {
 }
 ```
 
-## Adjusted phenotype
 
-The adjusted phenotype values (`Ytilde`) are adjusted for fixed effect covariates,
-random effects, and heterogeneous residual variances (if applicable); they
-should be approximately distributed as N(0,1). The square of these values should
-have a trend line near the y = 1 line, indicating homoskedasticity after
-adjustment. Deviation from this trend could indicate that the variance model is
-inadequate.
-
+The square of these values should have a trend line near the y = 1 line, indicating homoskedasticity after adjustment.
+Deviation from this trend could indicate that the variance model is inadequate.
 
 ```{r adjusted-phenotype-plots}
 
-p <- ggplot(dat, aes(x = fitted.values, y = Ytilde^2)) +
+p <- ggplot(dat, aes(x = fitted.values, y = resid.cholesky^2)) +
   geom_point(alpha = 0.1) +
   geom_hline(yintercept = 1, color = COLOR_ZERO_LINE) +
   geom_smooth(method = 'lm', color = 'red', fill = 'red') +
@@ -388,66 +438,8 @@ print(p)
 
 p <- p +
   coord_cartesian(ylim = c(0, 5)) +
-  ylab("Ytilde^2 zoomed in")
+  ylab("resid.cholesky^2 zoomed in")
 print(p)
-```
-
-The projected phenotype values (`PY`) are the phenotype values after adjusting
-for the fixed effect covariates, random effects, and heterogenous residual
-variances (if applicable); these are the values that are correlated with
-genotype to test for association.
-```{r, results = 'asis'}
-extra_text <- ""
-if (is_binary) {
-  extra_text <- "A histogram color-coded by outcome status is shown below."
-} else {
-  if (!is.null(group_var)) {
-    extra_text <- "The density curve for each group is shown; the heavy black
-                   line is the density curve pooled across all groups."
-  } else {
-    extra_text <- "A histogram of `PY` values is shown below."
-  }
-  if(!is_invnorm) {
-    extra_text <- paste(
-      extra_text,
-      "\n\nIt may be problematic for association testing if this distribution is far
-      from Gaussian. This problem can be alleviated by rank normalizing `PY` and
-      re-fitting the null model with the rank-normalized values as the outcome
-      (i.e. a two stage procedure)."
-    )
-  }
-}
-cat(extra_text)
-```
-
-```{r}
-p <- ggplot(dat, aes(x = PY))
-if (!is.null(group_var)) {
-  p <- p +
-    stat_density(aes(color = group), geom = "line", position = "identity") +
-    #geom_density(aes(color = group)) +
-    geom_density(size = 2) +
-    theme(legend.position = "top", legend.justification = c(0.5, 1)) +
-    guides(color = guide_legend(title.position="top", title.hjust = 0.5))
-  print(p + theme(legend.position = "none"))
-
-  # Put the legend in a separate plot in case there is a large number of groups.
-  g_legend <- function(my_ggplot) {
-    tmp <- ggplot_gtable(ggplot_build(my_ggplot))
-    leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-    legend <- tmp$grobs[[leg]]
-    legend
-  }
-  grid.newpage()
-  grid.draw(g_legend(p))
-} else {
-  if (is_binary) {
-    p <- p + geom_histogram(aes_string(fill = outcome))
-  } else {
-    p <- p + geom_histogram()
-  }
-  print(p)
-}
 ```
 
 # Session information
