@@ -4,15 +4,17 @@
 \alias{calculateLambda}
 \title{Calculate lambda, the genomic inflation factor}
 \usage{
-calculateLambda(stat, df)
+calculateLambda(stat, df, quantiles = 0.5)
 }
 \arguments{
 \item{stat}{Vector of test statistics}
 
 \item{df}{Degrees of freedom}
+
+\item{quantiles}{Quantile(s) at which to calculate lambda value}
 }
 \value{
-lambda
+lambda calculated at the specified quantiles
 }
 \description{
 Calculate lambda, the genomic inflation factor
