@@ -11,4 +11,4 @@ fi
 in_file=$2${CHR}$3
 out_file=$4${CHR}$5
 
-bcftools view --min-ac 1 --samples-file $1 -O z -o $out_file $in_file
+bcftools view --samples-file $1 -O z -o $out_file $in_file
