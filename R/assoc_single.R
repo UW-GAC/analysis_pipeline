@@ -35,7 +35,8 @@ optional <- c("genome_build"="hg38",
               "segment_file"=NA,
               "test_type"="score",
               "variant_include_file"=NA,
-              "variant_block_size"=1024)
+              "variant_block_size"=1024,
+              "genotype_coding"="additive")
 config <- setConfigDefaults(config, required, optional)
 print(config)
 writeConfig(config, paste0(basename(argv$config), ".assoc_single.params"))
@@ -111,11 +112,14 @@ test <- switch(tolower(config["test_type"]),
                score.spa="Score.SPA",
                binomirare="BinomiRare")
 
-assoc <- assocTestSingle(iterator, nullModel, 
-                         test=test, 
-                         fast.score.SE=fast.score.SE, 
+geno.coding <- config["genotype_coding"]
+
+assoc <- assocTestSingle(iterator, nullModel,
+                         test=test,
+                         fast.score.SE=fast.score.SE,
                          genome.build=build,
-                         BPPARAM=BPPARAM)
+                         BPPARAM=BPPARAM,
+                         geno.coding=geno.coding)
 
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 
