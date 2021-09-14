@@ -6,6 +6,7 @@
 args <- commandArgs(trailingOnly=TRUE)
 if (length(args) > 0) .libPaths(args[1])
 
+BiocManager::install("BiocParallel")
 remotes::install_git("git://github.com/smgogarten/SeqVarTools.git", dependencies=FALSE)
 remotes::install_git("git://github.com/UW-GAC/GENESIS.git", dependencies=FALSE)
 
