@@ -9,12 +9,20 @@ argp <- arg_parser("Association test - single variant")
 argp <- add_argument(argp, "config", help="path to config file")
 argp <- add_argument(argp, "--chromosome", help="chromosome (1-24 or X,Y)", type="character")
 argp <- add_argument(argp, "--segment", help="segment number", type="integer")
+argp <- add_argument(argp, "--num_cores", help="number of cores", type="integer", default=1)
 argp <- add_argument(argp, "--version", help="pipeline version number")
 argv <- parse_args(argp)
 cat(">>> TopmedPipeline version ", argv$version, "\n")
 config <- readConfig(argv$config)
 chr <- intToChr(argv$chromosome)
 segment <- argv$segment
+
+# parallelization
+if (argv$num_cores > 1) {
+    BPPARAM <- BiocParallel::MulticoreParam(workers=argv$num_cores)
+} else {
+    BPPARAM <- BiocParallel::SerialParam()
+}
 
 required <- c("gds_file",
               "null_model_file",
@@ -27,7 +35,8 @@ optional <- c("genome_build"="hg38",
               "segment_file"=NA,
               "test_type"="score",
               "variant_include_file"=NA,
-              "variant_block_size"=1024)
+              "variant_block_size"=1024,
+              "genotype_coding"="additive")
 config <- setConfigDefaults(config, required, optional)
 print(config)
 writeConfig(config, paste0(basename(argv$config), ".assoc_single.params"))
@@ -103,10 +112,14 @@ test <- switch(tolower(config["test_type"]),
                score.spa="Score.SPA",
                binomirare="BinomiRare")
 
-assoc <- assocTestSingle(iterator, nullModel, 
-                         test=test, 
-                         fast.score.SE=fast.score.SE, 
-                         genome.build=build)
+geno.coding <- config["genotype_coding"]
+
+assoc <- assocTestSingle(iterator, nullModel,
+                         test=test,
+                         fast.score.SE=fast.score.SE,
+                         genome.build=build,
+                         BPPARAM=BPPARAM,
+                         geno.coding=geno.coding)
 
 save(assoc, file=constructFilename(config["out_prefix"], chr, segment))
 

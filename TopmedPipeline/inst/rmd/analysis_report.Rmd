@@ -63,7 +63,7 @@ disp <- c("window_size", "window_step",
           "null_model_file")
 if (unit == "single") {
     if (!is.na(config["mac_threshold"])) disp <- c(disp, "mac_threshold") else disp <- c(disp, "maf_threshold")
-    disp <- c(disp, "test_type")
+    disp <- c(disp, "test_type", "genotype_coding")
 } else {
     disp <- c(disp, "weight_beta", "test")
     if (config["test"] == "burden") disp <- c(disp, "test_type") else disp <- c(disp, "pval_skat", "rho")
