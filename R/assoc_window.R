@@ -128,7 +128,7 @@ assoc <- assocTestAggregate(iterator, nullModel,
                             test=test,
                             rho=rho,
                             genome.build=build,
-                            BPPARAM=BPPARAM))
+                            BPPARAM=BPPARAM)
 
 assoc <- addMAC(assoc, "window")
 
