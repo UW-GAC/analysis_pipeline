@@ -9,7 +9,7 @@ Run the `install_packages.R` script to install required R packages.
 Additional software
 - [bcftools](http://www.htslib.org/download/)
 - [PLINK](https://www.cog-genomics.org/plink2/)
-- [KING](http://people.virginia.edu/~wc9c/KING/Download.htm)
+- [KING 2.2.4](https://www.kingrelatedness.com/executables/Linux-king224.tar.gz)
 - [LocusZoom](https://github.com/UW-GAC/locuszoom-standalone)
 
 
