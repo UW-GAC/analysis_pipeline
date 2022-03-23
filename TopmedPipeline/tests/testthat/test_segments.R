@@ -6,6 +6,8 @@ library(Biobase)
 library(dplyr)
 library(GenomicRanges)
 
+BPPARAM <- BiocParallel::SerialParam()
+
 .testData <- function() {
     showfile.gds(closeall=TRUE, verbose=FALSE)
     gdsfile <- seqExampleFileName("gds")
@@ -47,7 +49,7 @@ test_that("defineSegments", {
     seg <- defineSegments(n=n, build="hg19")
     expect_true(length(seg) == 23)
     expect_equivalent(seg, chromosomes_hg19)
-    
+
     expect_error(defineSegments())
 })
 
@@ -71,7 +73,7 @@ test_that("single", {
         seqSetFilter(seqData, variant.sel=segments[i], verbose=FALSE)
         if (sum(seqGetFilter(seqData)$variant.sel) == 0) next
         iterator <- SeqVarBlockIterator(seqData, verbose=FALSE)
-        assoc <- assocTestSingle(iterator, nullmod, verbose=FALSE)
+        assoc <- assocTestSingle(iterator, nullmod, BPPARAM=BPPARAM, verbose=FALSE)
         files[i] <- tempfile()
         save(assoc, file=files[i])
     }
@@ -81,7 +83,7 @@ test_that("single", {
 
     seqSetFilterChrom(seqData, include=1, verbose=FALSE)
     iterator <- SeqVarBlockIterator(seqData, verbose=FALSE)
-    a <- assocTestSingle(iterator, nullmod, verbose=FALSE)
+    a <- assocTestSingle(iterator, nullmod, BPPARAM=BPPARAM, verbose=FALSE)
     expect_equivalent(a, assoc)
 
     seqClose(seqData)
@@ -95,7 +97,7 @@ test_that("aggregate - GRangesList", {
     data(segments)
     segfile <- .testSegFile(segments)
     segments <- segments[seqnames(segments) == 1]
-    
+
     id <- which(seqGetData(seqData, "chromosome") == 1)
     pos <- seqGetData(seqData, "position")[id]
     bins <- cut(id, breaks=10)
@@ -108,7 +110,7 @@ test_that("aggregate - GRangesList", {
         vl <- subsetBySegment(varList, i, segfile)
         if (length(vl) == 0) next
         iterator <- SeqVarListIterator(seqData, vl, verbose=FALSE)
-        assoc <- assocTestAggregate(iterator, nullmod, verbose=FALSE)
+        assoc <- assocTestAggregate(iterator, nullmod, BPPARAM=BPPARAM, verbose=FALSE)
         files[i] <- tempfile()
         save(assoc, file=files[i])
         seqResetFilter(seqData, verbose=FALSE)
@@ -119,7 +121,7 @@ test_that("aggregate - GRangesList", {
 
     seqResetFilter(seqData, verbose=FALSE)
     iterator <- SeqVarListIterator(seqData, varList, verbose=FALSE)
-    a <- assocTestAggregate(iterator, nullmod, verbose=FALSE)
+    a <- assocTestAggregate(iterator, nullmod, BPPARAM=BPPARAM, verbose=FALSE)
     expect_equal(a, assoc)
 
     seqClose(seqData)
@@ -133,7 +135,7 @@ test_that("aggregate - GRanges", {
     data(segments)
     segfile <- .testSegFile(segments)
     segments <- segments[seqnames(segments) == 1]
-    
+
     id <- which(seqGetData(seqData, "chromosome") == 1)
     pos <- seqGetData(seqData, "position")[id]
     bins <- cut(id, breaks=10)
@@ -146,7 +148,7 @@ test_that("aggregate - GRanges", {
         vl <- subsetBySegment(varList, i, segfile)
         if (length(vl) == 0) next
         iterator <- SeqVarRangeIterator(seqData, vl, verbose=FALSE)
-        assoc <- assocTestAggregate(iterator, nullmod, verbose=FALSE)
+        assoc <- assocTestAggregate(iterator, nullmod, BPPARAM=BPPARAM, verbose=FALSE)
         files[i] <- tempfile()
         save(assoc, file=files[i])
         seqResetFilter(seqData, verbose=FALSE)
@@ -157,7 +159,7 @@ test_that("aggregate - GRanges", {
 
     seqResetFilter(seqData, verbose=FALSE)
     iterator <- SeqVarRangeIterator(seqData, varList, verbose=FALSE)
-    a <- assocTestAggregate(iterator, nullmod, verbose=FALSE)
+    a <- assocTestAggregate(iterator, nullmod, BPPARAM=BPPARAM, verbose=FALSE)
     expect_equal(a, assoc)
 
     seqClose(seqData)
@@ -176,7 +178,7 @@ test_that("window", {
     shift <- 500
     segments <- GRanges(seqnames=22, ranges=IRanges(start=seq(1, max(pos), shift*1000), width=size*1.5*1000))
     segments <- subsetByOverlaps(segments, gr)
-    
+
     segfile <- .testSegFile(segments)
 
     files <- character(length(segments))
@@ -184,7 +186,7 @@ test_that("window", {
         filterBySegment(seqData, i, segfile, pad.right=size*1000, verbose=FALSE)
         if (sum(seqGetFilter(seqData)$variant.sel) == 0) next
         iterator <- SeqVarWindowIterator(seqData, windowSize=size, windowShift=shift, verbose=FALSE)
-        assoc <- assocTestAggregate(iterator, nullmod, verbose=FALSE)
+        assoc <- assocTestAggregate(iterator, nullmod, BPPARAM=BPPARAM, verbose=FALSE)
         files[i] <- tempfile()
         save(assoc, file=files[i])
     }
@@ -194,7 +196,7 @@ test_that("window", {
 
     seqSetFilterChrom(seqData, include=22, verbose=FALSE)
     iterator <- SeqVarWindowIterator(seqData, windowSize=size, windowShift=shift, verbose=FALSE)
-    a <- assocTestAggregate(iterator, nullmod, verbose=FALSE)
+    a <- assocTestAggregate(iterator, nullmod, BPPARAM=BPPARAM, verbose=FALSE)
     expect_equal(a, assoc)
 
     seqClose(seqData)
