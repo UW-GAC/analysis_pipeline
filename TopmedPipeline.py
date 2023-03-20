@@ -607,13 +607,13 @@ class SGE_Cluster(Cluster):
 
         return jobid
 
-class UW_Cluster(SGE_Cluster):
+class GAC_SGE_Cluster(SGE_Cluster):
 
     def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
         self.std_cluster_file = "./cluster_cfg.json"
         cfgVersion="3"
-        super(UW_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
+        super(GAC_SGE_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
 
 
 class AWS_Cluster(SGE_Cluster):

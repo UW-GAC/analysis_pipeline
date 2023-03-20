@@ -20,7 +20,7 @@ default_segment_length = "10000"
 
 parser = ArgumentParser(description=description)
 parser.add_argument("config_file", help="configuration file")
-parser.add_argument("--cluster_type", default="UW_Cluster",
+parser.add_argument("--cluster_type", default="GAC_SGE_Cluster",
                     help="type of compute cluster environment [default %(default)s]")
 parser.add_argument("--cluster_file", default=None,
                     help="json file containing cluster options")

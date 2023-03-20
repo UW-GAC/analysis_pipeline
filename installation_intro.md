@@ -12,7 +12,7 @@ The pipeline is designed to work with multiple job schedulers and clusters.
 Configuration for a specific job schedule is handled by two components:
 
 1. The `TopmedPipeline.py` source code contains a `Cluster` class that can be subclassed to work with a specific job scheduler and cluster. Some pre-defined subclasses are provided, but users can also add new subclasses if one of the existing subclasses does not fit their cluster.
-2. The user can provide a cluster configuration file containing job submission options, e.g., the queue to submit to, memory limits, etc. These are stored in JSON format in a file and passed to the python scripts with a keyword argument. An example for the `UW_Cluster` subclass can be found in `cluster_cfg.json`.
+2. The user can provide a cluster configuration file containing job submission options, e.g., the queue to submit to, memory limits, etc. These are stored in JSON format in a file and passed to the python scripts with a keyword argument. An example for the `GAC_SGE_Cluster` subclass can be found in `cluster_cfg.json`.
 
 ## Installation steps
 

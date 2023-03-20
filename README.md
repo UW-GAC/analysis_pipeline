@@ -33,7 +33,7 @@ Python script arguments are shown below. Note: not all arguments are available i
 argument  | default value | description
 --- | --- | ---
 `config_file` | | configuration file
-`--cluster_type` | `UW_Cluster` | type of compute cluster environment (`UW_Cluster`, `AWS_Cluster`, `AWS_Batch`)
+`--cluster_type` | `GAC_SGE_Cluster` | type of compute cluster environment (`GAC_SGE_Cluster`, `AWS_Cluster`, `AWS_Batch`)
 `--cluster_file` | `None` | JSON file containing cluster options
 `-c, --chromosomes` | `1-23` | range of chromosomes (23=X)
 `-n, --ncores` | `1-8` | number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4)
