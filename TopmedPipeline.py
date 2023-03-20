@@ -630,7 +630,7 @@ class AWS_Cluster(SGE_Cluster):
         jobid = super(AWS_Cluster, self).submitJob(**kwargs)
         return jobid
 
-class Slurm_Cluster(Docker_Cluster):
+class Docker_Slurm_Cluster(Docker_Cluster):
 
     def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
@@ -638,7 +638,7 @@ class Slurm_Cluster(Docker_Cluster):
         self.opt_cluster_file = opt_cluster_file
 
         cfgVersion = "2.2"
-        super(Slurm_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
+        super(Docker_Slurm_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
         # open slurm partitions cfg
         self.openPartitionCfg(self.pipelinePath + "/" + self.clusterCfg["partition_cfg"])
         # update pipelinePath
@@ -659,10 +659,10 @@ class Slurm_Cluster(Docker_Cluster):
 
     def analysisInit(self, print_only=False):
         # analysis log file and analysis info
-        super(Slurm_Cluster, self).analysisInit(print_only)
-        super(Slurm_Cluster, self).analysisLog("Slurm cluster: " +
+        super(Docker_Slurm_Cluster, self).analysisInit(print_only)
+        super(Docker_Slurm_Cluster, self).analysisLog("Slurm cluster: " +
                                                self.clusterCfg["cluster"], print_only)
-        super(Slurm_Cluster, self).analysisLog("Slurm submit script: " +
+        super(Docker_Slurm_Cluster, self).analysisLog("Slurm submit script: " +
                                                self.clusterCfg["submit_script"] + "\n", print_only)
 
     def getPartition(self, a_jobname, a_memsize, a_reqcores, a_tasksPerPartition):
@@ -743,7 +743,7 @@ class Slurm_Cluster(Docker_Cluster):
         key = "memory_limits"
         lmsg_mem = "not provided"
         if key in list(self.clusterCfg.keys()):
-            memlim = super(Slurm_Cluster, self).memoryLimit(kwargs["job_name"])
+            memlim = super(Docker_Slurm_Cluster, self).memoryLimit(kwargs["job_name"])
             if memlim == None:
                 memlim = 8000
             submitOpts["--mem"] = str(memlim) + "M"
@@ -846,25 +846,25 @@ class Slurm_Cluster(Docker_Cluster):
         if key in kwargs and kwargs[key] == True:
             po = True
 
-        super(Slurm_Cluster, self).analysisLog(lmsg, po)
+        super(Docker_Slurm_Cluster, self).analysisLog(lmsg, po)
         if po:
             print(sub_cmd + "\n")
             jobid = submitOpts["--job-name"]
         else:
             self.printVerbose("submitting job: " + sub_cmd)
-            super(Slurm_Cluster, self).analysisLog("> sbatch: " + sub_cmd)
+            super(Docker_Slurm_Cluster, self).analysisLog("> sbatch: " + sub_cmd)
             (sub_out, status) = port_popen.popen(sub_cmd)
             if status != 0:
-                print(">>> Error: Slurm_Cluster:submitJob executing popen\nStatus: " + \
+                print(">>> Error: Docker_Slurm_Cluster:submitJob executing popen\nStatus: " + \
                       str(status) + " Msg: " + str(sub_out))
                 sys.exit(status)
             jobid = sub_out.split(" ")[3].strip()
-            super(Slurm_Cluster, self).analysisLog("> jobid: " + str(jobid) + "\n")
+            super(Docker_Slurm_Cluster, self).analysisLog("> jobid: " + str(jobid) + "\n")
             print(sub_out + " cluster: " + cluster + " / job: " + submitOpts["--job-name"] +
                   " / job id: " + jobid)
         return jobid
 
-class GCP_Cluster(Slurm_Cluster):
+class GCP_Cluster(Docker_Slurm_Cluster):
 
     def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
