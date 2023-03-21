@@ -30,3 +30,38 @@ This installs packages in the `analysis_pipeline/R_library/` directory.
 
 
 ### Cluster configuration in `TopmedPipeline.py`
+
+If there is not an appropriate `Cluster` subclass that works with your current job scheduler, you will need to define a new one.
+
+You will need to create a subclass of the `Cluster` class in `TopmedPipeline.py`.
+Your subclass will typically need to override the `__init__`, `submitJob`, and `runCommand` methods.
+
+#### The `__init__` method
+
+The `__init__` method needs to set the `class_name` and `std_cluster_file` attributes.
+Other tasks can be performed here if necessary for general cluster setup.
+
+### The `runCommand` method
+
+XXX
+
+### The `submitJob` method
+
+This method is intended to handle converting the option specified in your cluster configuration file to specific arguments to your job scheduler.
+
+For example, in SGE, you submit a job and specify the name with the command `qsub -N <job_name> ...`.
+In Slurm, the same command is `sbatch --job-name=<job_name>`.
+The `submitJob` method is responsible for processing options specified in the python scripts (e.g., `null_model.py`) and converting them to the appropriate arguments for your job scheduler.
+
+The `submitJob` method should plan to handle the following **kwargs:
+
+- job_name
+- hold_array or holdid
+- array_range
+- request_cores
+- memory_limits
+- email
+- args
+- print_only
+- enable_resume
+- XXX others?

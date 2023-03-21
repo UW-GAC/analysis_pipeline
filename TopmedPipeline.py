@@ -146,9 +146,9 @@ def parseChromosomes(chromosomes):
     return chromString
 
 
-def dictToString(d):
+def dictToString(d, sep=' '):
     """Construct a string from a dictionary"""
-    s = ' '.join([k + ' ' + v for k, v in d.items() if v != None])
+    s = ' '.join([k + sep + v for k, v in d.items() if v != None])
     return s
 
 def stringToDict(s):
@@ -616,6 +616,154 @@ class GAC_SGE_Cluster(SGE_Cluster):
         super(GAC_SGE_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
 
 
+class Slurm_Cluster(Cluster):
+
+    def __init__(self, std_cluster_file, opt_cluster_file=None, cfg_version="3", verbose=True):
+        self.class_name = self.__class__.__name__
+        self.std_cluster_file = std_cluster_file
+        super().__init__(std_cluster_file, opt_cluster_file, cfg_version, verbose)
+
+    def runCmd(self, job_name, cmd, logfile=None):
+        # get and set the env
+        key = "--export"
+        if key in list(self.clusterCfg["submit_opts"].keys()):
+            vopt = self.clusterCfg["submit_opts"][key]
+            envVars = vopt.split(",")
+            for var in envVars:
+                varVal = var.split("=")
+                check = "$PATH"
+                if varVal[1].endswith(check):
+                    np = varVal[1][:-len(check)]
+                    cp = os.environ['PATH']
+                    os.environ[varVal[0]] = np + cp
+                else:
+                    os.environ[varVal[0]] = varVal[1]
+
+        (pmsg, status) = port_popen.popen_stdout(cmd, logfile, jobname=job_name, shell=False)
+        if status != 0:
+            print(">>> Error: Slurm_Cluster:runCmd executing popen\nStatus: " + str(status) + " Msg: " + str(pmsg))
+            sys.exit(status)
+
+    def submitJob(self, binary=False, hold_array=None, **kwargs):
+        subOpts = deepcopy(self.clusterCfg["submit_opts"])
+        # set the submit cmd (e.g., qsub)
+        submit_cmd = self.clusterCfg["submit_cmd"]
+        # job name
+        job_name = kwargs["job_name"]
+        subOpts["--job-name"] = job_name
+        lmsg = "Job: " + job_name
+        # set job name in slurm options to match qsub output files.
+        subOpts["-o"] = "%x.o%j"
+        # if not holding for job array (element wise), check for holding for jobs
+        if hold_array == None:
+            key = "holdid"
+            if key in kwargs and kwargs[key] != []:
+                if isinstance(kwargs[key], str):
+                    kwargs[key] = [kwargs[key]]
+                subOpts["--dependency"] =  "afterany:" + ":".join(kwargs[key])
+        else:
+            raise NotImplementedError("not implemented for slurm")
+            # subOpts["-hold_jid_ad"] = hold_array
+        # array job
+        key = "array_range"
+        array_job = False
+        lmsg_array = "no"
+        if key in kwargs:
+            subOpts["--array"] = kwargs[key]
+            lmsg_array = kwargs[key]
+            # Modify output name to have the array id in addition to job ID.
+            subOpts["-o"] = "%x.o%A.%a"
+            array_job = True
+        lmsg = lmsg + " /array: " + lmsg_array
+        # threads
+        key = "request_cores"
+        lmsg_cores = "1"
+        memcoreFactor = 1.
+        if key in kwargs and kwargs[key] != None and kwargs[key] != "1":
+            # adjust memcoreFactor if a specific no. of cores is passed (i.e., no "-")
+            raise NotImplementedError("not implemented for slurm")
+            reqCores = kwargs[key]
+            if not "-" in reqCores:
+                memcoreFactor = float(reqCores)
+            subOpts["--cpus-per-task"] = reqCores
+            lmsg_cores = reqCores
+        lmsg = lmsg + " /cores: " + lmsg_cores
+        # get memory limit option (adjust based on specifying a specific number of cores)
+        key = "memory_limits"
+        lmsg_mem = "not provided"
+        if key in list(self.clusterCfg.keys()):
+            memlim = super().memoryLimit(job_name)
+            if memlim != None:
+                # --mem assigns memory per node, so we don't have to calculate memory per core.
+                subOpts["--mem"] = str(memlim)+"M"
+                lmsg_mem = str(memlim)
+        lmsg = lmsg + " /memlim: " + lmsg_mem
+        # email
+        key = "email"
+        if key in kwargs and kwargs[key] != None:
+            subOpts["--mail-type"] = "END"
+            subOpts["--mail-user"] = kwargs[key]
+        # driver (cmd) args
+        key = "args"
+        if not key in kwargs:
+            kwargs[key] = []
+        argStr = " ".join(kwargs[key])
+        # check for eqw
+        if self.clusterCfg["enable_eqw"]:
+            raise NotImplementedError("not implemented for slurm")
+        # create a string for the submit options
+        optStr = dictToString(subOpts)
+        # Make the output parsable by a script.
+        optStr = optStr + " --parsable"
+        # create the entire submit command
+        # check for binary
+        # TODO: SLURM
+#        import pdb; pdb.set_trace()
+        cmd = " ".join([kwargs["cmd"], argStr])
+        if binary:
+            cmd = """--wrap=\"{}\"""".format(cmd)
+        sub_cmd = " ".join([submit_cmd, optStr, cmd])
+        # TODO: SLURM
+        # # check for resume
+        if self.clusterCfg["enable_resume"]:
+            raise NotImplementedError("not implemented for slurm")
+        #     rscript = self.clusterCfg["resume_script"]
+        #     spath = super().getSubmitPath()
+        #     rscript = spath + "/" + rscript + " sge " + job_name
+        #     # update submit opts -N
+        #     subOpts["-N"] = "resume_" + subOpts["-N"]
+        #     subOpts["-b"] = "y"
+        #     subOpts["-o"] = self.resumeDir
+        #     optStr = dictToString(subOpts)
+        #     # update sub_cmd
+        #     sub_cmd = " ".join([submit_cmd, optStr, rscript, kwargs["cmd"], argStr])
+
+        key = "print_only"
+        if key in kwargs and kwargs[key] == True:
+            print(sub_cmd)
+            return "000000"
+        self.printVerbose("submitting job: " + sub_cmd)
+        (jobid, status) = port_popen.popen(sub_cmd)
+
+        if status != 0:
+            print(">>> Error: Slurm_Cluster:submitJob executing popen\nStatus: " + str(status) + " Msg: " + str(jobid))
+            sys.exit(status)
+
+        print("Submitting job " + jobid + " (" + job_name + ")")
+        lmsg += " /jobid: " + str(jobid)
+        super().analysisLog(lmsg)
+
+        return jobid
+
+
+class GAC_Slurm_Cluster(Slurm_Cluster):
+
+    def __init__(self, opt_cluster_file=None, verbose=False):
+        self.class_name = self.__class__.__name__
+        self.std_cluster_file = "./slurm_cluster_cfg.json"
+        cfgVersion="3"
+        super().__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
+
 class AWS_Cluster(SGE_Cluster):
 
     def __init__(self, opt_cluster_file=None, verbose=False):
@@ -863,6 +1011,7 @@ class Docker_Slurm_Cluster(Docker_Cluster):
             print(sub_out + " cluster: " + cluster + " / job: " + submitOpts["--job-name"] +
                   " / job id: " + jobid)
         return jobid
+
 
 class GCP_Cluster(Docker_Slurm_Cluster):
 
