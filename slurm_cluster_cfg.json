@@ -1,0 +1,41 @@
+{
+    "name": "Slurm_Cluster_config",
+    "version": "3",
+    "debug": 0,
+    "configuration": {
+        "memory_limits": {
+    	    "aggregate_list":2000,
+    	    "assoc_aggregate":16000,
+    	    "assoc_combine":6000,
+    	    "assoc_plots":24000,
+    	    "assoc_report":2000,
+    	    "assoc_single":8000,
+    	    "assoc_window":20000,
+    	    "cleanup":1000,
+    	    "combine_variants":8000,
+    	    "find_unrelated":8000,
+    	    "grm":15000,
+    	    "grm_combine":4000,
+    	    "ibd_king":8000,
+    	    "kinship_plots":8000,
+    	    "ld_pruning":12000,
+	    "locuszoom":24000,
+    	    "null_model":32000,
+    	    "null_model_report":2000,
+    	    "pca_byrel":8000,
+    	    "pca_corr":8000,
+    	    "pca_corr_plots":32000,
+    	    "pca_plots":2000,
+    	    "pcrelate":8000,
+            "vcf2gds":8000
+        },
+        "submit_cmd": "sbatch",
+        "submit_opts": {
+            "--partition":"topmed-24c384g",
+            "--export": "R_LIBS=/projects/resources/gactools/R_packages/library-4.2.1,PATH=/projects/resources/software/apps_ubuntu/bin:/projects/resources/software/apps/bin:$PATH"
+        },
+        "resume_script": "resume_analysis.py",
+        "enable_resume": false,
+        "enable_eqw": false
+    }
+}
