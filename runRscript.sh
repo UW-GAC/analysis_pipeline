@@ -13,6 +13,7 @@ elif [[ ! -z "${SLURM_CLUSTER_NAME}" ]]
 then
   export CLUSTER_JOB_ID=$SLURM_JOB_ID
   export CLUSTER_TASK_ID=$SLURM_ARRAY_TASK_ID
+  export NSLOTS=$SLURM_JOB_CPUS_PER_NODE
 fi
 
 # set MKL_NUM_THREADS to match number of available cores

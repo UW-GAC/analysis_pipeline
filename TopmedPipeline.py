@@ -681,11 +681,13 @@ class Slurm_Cluster(Cluster):
         memcoreFactor = 1.
         if key in kwargs and kwargs[key] != None and kwargs[key] != "1":
             # adjust memcoreFactor if a specific no. of cores is passed (i.e., no "-")
-            raise NotImplementedError("not implemented for slurm")
+            #raise NotImplementedError("not implemented for slurm")
             reqCores = kwargs[key]
             if not "-" in reqCores:
                 memcoreFactor = float(reqCores)
             subOpts["--cpus-per-task"] = reqCores
+            # This allows other jobs to run on the same node if it has the resources.
+            subOpts["--oversubscribe"] = ""
             lmsg_cores = reqCores
         lmsg = lmsg + " /cores: " + lmsg_cores
         # get memory limit option (adjust based on specifying a specific number of cores)
