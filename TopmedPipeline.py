@@ -611,7 +611,7 @@ class GAC_SGE_Cluster(SGE_Cluster):
 
     def __init__(self, opt_cluster_file=None, verbose=False):
         self.class_name = self.__class__.__name__
-        self.std_cluster_file = "./cluster_cfg.json"
+        self.std_cluster_file = "./sge_cluster_cfg.json"
         cfgVersion="3"
         super(GAC_SGE_Cluster, self).__init__(self.std_cluster_file, opt_cluster_file, cfgVersion, verbose)
 
