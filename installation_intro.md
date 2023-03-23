@@ -16,6 +16,12 @@ Configuration for a specific job schedule is handled by two components:
 
 ## Installation steps
 
+### Python and R installation
+
+You will need a recent installation of R and an installation of python3.
+
+We recommend building R with [Intel MKL](https://software.intel.com/en-us/intel-mkl) for improved performance in PC-Relate and association tests.
+
 ### Initial steps
 
 1. Clone the source code: `git clone https://github.com/UW-GAC/analysis_pipeline.git`

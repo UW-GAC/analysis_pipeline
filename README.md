@@ -2,16 +2,7 @@
 
 ## Setup
 
-We recommend building R with [Intel MKL](https://software.intel.com/en-us/intel-mkl) for improved performance in PC-Relate and association tests.
-
-Run the `install_packages.R` script to install required R packages.
-
-Additional software
-- [bcftools](http://www.htslib.org/download/)
-- [PLINK](https://www.cog-genomics.org/plink2/)
-- [KING 2.2.4](https://www.kingrelatedness.com/executables/Linux-king224.tar.gz)
-- [LocusZoom](https://github.com/UW-GAC/locuszoom-standalone)
-
+See the `installation_intro.md` file for information about setting up the pipeline for use on your cluster.
 
 ## Basic outline
 
@@ -33,10 +24,10 @@ Python script arguments are shown below. Note: not all arguments are available i
 argument  | default value | description
 --- | --- | ---
 `config_file` | | configuration file
-`--cluster_type` | `GAC_SGE_Cluster` | type of compute cluster environment (`GAC_SGE_Cluster`, `AWS_Cluster`, `AWS_Batch`)
+`--cluster_type` | `GAC_SGE_Cluster` | type of compute cluster environment (`GAC_SGE_Cluster`, `GAC_Slurm_Cluster`, `AWS_Cluster`, `AWS_Batch`)
 `--cluster_file` | `None` | JSON file containing cluster options
 `-c, --chromosomes` | `1-23` | range of chromosomes (23=X)
-`-n, --ncores` | `1-8` | number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4)
+`-n, --ncores` | `1` | number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4, SGE only)
 `-e, --email` | `None` | email address to receive job completion report
 `--print_only` | `False` | print job submission commands without submitting them
 `--verbose` | `False` | verbose messages for debugging
