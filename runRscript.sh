@@ -5,16 +5,22 @@
 
 
 # Determine cluster type and set cluster-agnostic variables appropriate.
-if [[ ! -z "${SGE_ROOT}" ]]
-then
-  CLUSTER_JOB_ID=$JOB_ID
-  CLUSTER_TASK_ID=$SGE_TASK_ID
-elif [[ ! -z "${SLURM_CLUSTER_NAME}" ]]
-then
+which sbatch > /dev/null 2>&1
+if [[ $? -eq 0 ]]; then
   export CLUSTER_JOB_ID=$SLURM_JOB_ID
   export CLUSTER_TASK_ID=$SLURM_ARRAY_TASK_ID
   export NSLOTS=$SLURM_JOB_CPUS_PER_NODE
+else
+  which qstat > /dev/null 2>&1
+  if [[ $? -eq 0 ]]; then
+    CLUSTER_JOB_ID=$JOB_ID
+    CLUSTER_TASK_ID=$SGE_TASK_ID
+  else
+      echo "runRscript.sh only supported on SGE or slurm"
+      exit 1
+  fi
 fi
+
 
 # set MKL_NUM_THREADS to match number of available cores
 export MKL_NUM_THREADS=$CLUSTER_SLOTS
