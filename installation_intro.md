@@ -26,7 +26,7 @@ We recommend building R with [Intel MKL](https://software.intel.com/en-us/intel-
 
 1. Clone the source code: `git clone https://github.com/UW-GAC/analysis_pipeline.git`
 
-3. Install required packages packages: `R --args "<path_to_R_library>" < install_packages.R`.
+3. Install required packages: `R --args "<path_to_R_library>" < install_packages.R`.
 
 4. Install other dependencies as needed. See the "Install dependencies" section for more information.
 
@@ -42,7 +42,7 @@ Some of the scripts have dependencies on external programs. You may need to inst
 - [LocusZoom](https://github.com/UW-GAC/locuszoom-standalone) - used by `locuszoom.py`
 - [pandoc](https://pandoc.org/installing.html) - required for `null_model.py` and `assoc.py` reports
 
-These will need to be on your path if you want to use the python script that require them.
+These will need to be on your path if you want to use the python script that requires them.
 
 
 ### Cluster configuration in `TopmedPipeline.py`
