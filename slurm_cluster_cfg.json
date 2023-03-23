@@ -32,7 +32,7 @@
         "submit_cmd": "sbatch",
         "submit_opts": {
             "--partition":"topmed-24c384g",
-            "--export": "R_LIBS=/projects/resources/gactools/R_packages/library-4.2.1,PATH=/projects/resources/software/apps_ubuntu/bin:/projects/resources/software/apps/bin:$PATH"
+            "--export": "R_LIBS=/projects/topmed/working_code/analysis_pipeline_slurm/R_library/:/projects/resources/gactools/R_packages/library-4.2.1,PATH=/projects/resources/software/apps_ubuntu/bin:/projects/resources/software/apps/bin:$PATH"
         },
         "resume_script": "resume_analysis.py",
         "enable_resume": false,
