@@ -28,7 +28,7 @@ parser.add_argument("--cluster_file", default=None,
                     help="json file containing options to pass to the cluster")
 parser.add_argument("--verbose", action="store_true", default=False,
                     help="enable verbose output to help debug")
-parser.add_argument("-n", "--ncores", default="1-8",
+parser.add_argument("-n", "--ncores", default="1",
                     help="number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4) [default %(default)s]")
 parser.add_argument("-e", "--email", default=None,
                     help="email address for job reporting")
