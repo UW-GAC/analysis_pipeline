@@ -20,13 +20,24 @@ Configuration for a specific job schedule is handled by two components:
 
 1. Clone the source code: `git clone https://github.com/UW-GAC/analysis_pipeline.git`
 
-2. Change to the repo directory: `cd analysis_pipeline`
-
-3. Install packages: `R --args "R_library" < install_packages.R`
+3. Install required packages packages: `R --args "<path_to_R_library>" < install_packages.R`.
 
 This installs packages in the `analysis_pipeline/R_library/` directory.
 
-4. If necessary, define a `Cluster` subclass for your cluster. See the Cluster configuration section for more information.
+4. Install other dependencies as needed. See the "Install dependencies" section for more information.
+
+5. If necessary, define a `Cluster` subclass for your cluster. See the Cluster configuration section for more information.
+
+### Install external dependencies
+
+Some of the scripts have dependencies on external programs. You may need to install the following:
+
+- [bcftools](http://www.htslib.org/download/)
+- [PLINK](https://www.cog-genomics.org/plink2/)
+- [KING 2.2.4](https://www.kingrelatedness.com/executables/Linux-king224.tar.gz)
+- [LocusZoom](https://github.com/UW-GAC/locuszoom-standalone)
+
+These will need to be on your path if you want to use the python script that require them.
 
 
 ### Cluster configuration in `TopmedPipeline.py`
@@ -41,11 +52,11 @@ Your subclass will typically need to override the `__init__`, `submitJob`, and `
 The `__init__` method needs to set the `class_name` and `std_cluster_file` attributes.
 Other tasks can be performed here if necessary for general cluster setup.
 
-### The `runCommand` method
+#### The `runCommand` method
 
 XXX
 
-### The `submitJob` method
+#### The `submitJob` method
 
 This method is intended to handle converting the option specified in your cluster configuration file to specific arguments to your job scheduler.
 
@@ -65,3 +76,10 @@ The `submitJob` method should plan to handle the following **kwargs:
 - print_only
 - enable_resume
 - XXX others?
+
+### Cluster configuration JSON file
+
+## Some tips and troubleshooting
+
+- Make sure that you set your R library path to include the packages installed by `install_packages.py`.
+- Make sure taht your path (e.g., the `$PATH` environment variable) includes the programs you installed in the "Install external dependenceis" section.
