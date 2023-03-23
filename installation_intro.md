@@ -55,7 +55,8 @@ Other tasks can be performed here if necessary for general cluster setup.
 
 #### The `runCommand` method
 
-XXX
+This method handles running a command without submitting it to the cluster.
+It should set the environment variables (e.g., `R_LIBS`, `PATH`) properly.
 
 #### The `submitJob` method
 
