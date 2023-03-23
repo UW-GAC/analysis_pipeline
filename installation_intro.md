@@ -32,10 +32,10 @@ This installs packages in the `analysis_pipeline/R_library/` directory.
 
 Some of the scripts have dependencies on external programs. You may need to install the following:
 
-- [bcftools](http://www.htslib.org/download/)
-- [PLINK](https://www.cog-genomics.org/plink2/)
-- [KING 2.2.4](https://www.kingrelatedness.com/executables/Linux-king224.tar.gz)
-- [LocusZoom](https://github.com/UW-GAC/locuszoom-standalone)
+- [bcftools](http://www.htslib.org/download/) - used by `vcf2gds.py`
+- [PLINK](https://www.cog-genomics.org/plink2/) - used by `king.py`
+- [KING 2.2.4](https://www.kingrelatedness.com/executables/Linux-king224.tar.gz) - used by `king.py`
+- [LocusZoom](https://github.com/UW-GAC/locuszoom-standalone) - used by `locuszoom.py`
 
 These will need to be on your path if you want to use the python script that require them.
 
