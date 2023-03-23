@@ -28,8 +28,6 @@ We recommend building R with [Intel MKL](https://software.intel.com/en-us/intel-
 
 3. Install required packages packages: `R --args "<path_to_R_library>" < install_packages.R`.
 
-This installs packages in the `analysis_pipeline/R_library/` directory.
-
 4. Install other dependencies as needed. See the "Install dependencies" section for more information.
 
 5. If necessary, define a `Cluster` subclass for your cluster. See the Cluster configuration section for more information.
