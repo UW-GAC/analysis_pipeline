@@ -660,9 +660,9 @@ class Slurm_Cluster(Cluster):
             if key in kwargs and kwargs[key] != []:
                 if isinstance(kwargs[key], str):
                     kwargs[key] = [kwargs[key]]
-                subOpts["--dependency"] =  "afterany:" + ":".join(kwargs[key])
+                subOpts["--dependency"] =  "afterok:" + ":".join(kwargs[key])
         else:
-            raise NotImplementedError("not implemented for slurm")
+            subOpts["--dependency"] =  "afterany:" + hold_array
             # subOpts["-hold_jid_ad"] = hold_array
         # array job
         key = "array_range"
