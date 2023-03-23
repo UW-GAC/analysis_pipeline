@@ -22,7 +22,7 @@ parser.add_argument("--ld_pruning", action="store_true", default=False,
                     help="run LD pruning of variants prior to PCA")
 parser.add_argument("-c", "--chromosomes", default="1-22",
                     help="range of chromosomes [default %(default)s]")
-parser.add_argument("--cluster_type", default="GAC_SGE_Cluster",
+parser.add_argument("--cluster_type", default="GAC_Slurm_Cluster",
                     help="type of compute cluster environment [default %(default)s]")
 parser.add_argument("--cluster_file", default=None,
                     help="json file containing options to pass to the cluster")
