@@ -80,7 +80,15 @@ The `submitJob` method should plan to handle the following **kwargs:
 
 ### Cluster configuration JSON file
 
+You can modify the `slurm_cluster_cfg.json` or `cluster_cfg.json` files as needed for your cluster.
+
+Here is a brief description of the various keys:
+
+- `"memory_limits"`: specify the amount of memory that should be requested for each job.
+- `"submit_cmd"`: specify the command used to submit a job to the cluster (e.g., `sbatch` for Slurm or `qsub` for SGE).
+- `"submit_opts"`: specify any additional options that should be passed to the `submit_cmd`, e.g., specifying the partition or queue, email parameters, etc. Note that the python scripts and the `Cluster` subclass you are using also set parameters when submitting a command.
+
 ## Some tips and troubleshooting
 
 - Make sure that you set your R library path to include the packages installed by `install_packages.py`.
-- Make sure taht your path (e.g., the `$PATH` environment variable) includes the programs you installed in the "Install external dependenceis" section.
+- Make sure that your path (e.g., the `$PATH` environment variable) includes the programs you installed in the "Install external dependencies" section.
