@@ -36,6 +36,7 @@ Some of the scripts have dependencies on external programs. You may need to inst
 - [PLINK](https://www.cog-genomics.org/plink2/) - used by `king.py`
 - [KING 2.2.4](https://www.kingrelatedness.com/executables/Linux-king224.tar.gz) - used by `king.py`
 - [LocusZoom](https://github.com/UW-GAC/locuszoom-standalone) - used by `locuszoom.py`
+- [pandoc](https://pandoc.org/installing.html) - required for `null_model.py` and `assoc.py` reports
 
 These will need to be on your path if you want to use the python script that require them.
 
