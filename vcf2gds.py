@@ -19,7 +19,7 @@ parser = ArgumentParser(description=description)
 parser.add_argument("config_file", help="configuration file")
 parser.add_argument("--merge", action="store_true", default=False,
                     help="merge genotypes from per-chromosomes GDS files into a combined file")
-parser.add_argument("--cluster_type", default="UW_Cluster",
+parser.add_argument("--cluster_type", default="GAC_Slurm_Cluster",
                     help="type of compute cluster environment [default %(default)s]")
 parser.add_argument("--cluster_file", default=None,
                     help="json file containing options to pass to the cluster")
@@ -27,7 +27,7 @@ parser.add_argument("--verbose", action="store_true", default=False,
                     help="enable verbose output to help debug")
 parser.add_argument("-c", "--chromosomes", default="1-23",
                     help="range of chromosomes [default %(default)s]")
-parser.add_argument("-n", "--ncores", default="1-8",
+parser.add_argument("-n", "--ncores", default="1",
                     help="number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4) [default %(default)s]")
 parser.add_argument("-e", "--email", default=None,
                     help="email address for job reporting")

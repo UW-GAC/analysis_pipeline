@@ -1,5 +1,5 @@
 {
-    "name": "UW_Cluster_config",
+    "name": "GAC_SGE_Cluster_config",
     "version": "3",
     "debug": 0,
     "configuration": {

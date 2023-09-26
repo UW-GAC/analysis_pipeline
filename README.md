@@ -2,16 +2,7 @@
 
 ## Setup
 
-We recommend building R with [Intel MKL](https://software.intel.com/en-us/intel-mkl) for improved performance in PC-Relate and association tests.
-
-Run the `install_packages.R` script to install required R packages.
-
-Additional software
-- [bcftools](http://www.htslib.org/download/)
-- [PLINK](https://www.cog-genomics.org/plink2/)
-- [KING 2.2.4](https://www.kingrelatedness.com/executables/Linux-king224.tar.gz)
-- [LocusZoom](https://github.com/UW-GAC/locuszoom-standalone)
-
+See the `installation_intro.md` file for information about setting up the pipeline for use on your cluster.
 
 ## Basic outline
 
@@ -24,7 +15,7 @@ gds_file "1KG_phase3_subset_chr .gds"
 
 Nearly all scripts require a GDS file in SeqArray format. Phenotype files should be an AnnotatedDataFrame saved in an RData file. See `?AnnotatedDataFrame` or the SeqVarTools documentation for details. Example files are provided in `testdata`.
 
-Python scripts are provided to run multi-step analyses on a compute cluster or cloud environment. `TopmedPipeline.py` defines cluster environment classes, currently a Sun Grid Engine (SGE) cluster, Amazon's cfncluster Son of Grid Engine (also SGE), and AWS Batch. Additional classes may be added for other environments. Default cluster options are provided in the JSON file `cluster_cfg.json`. These options may be overridden at run time by specifying a JSON file with the `--cluster_file` option in the python scripts. Only options that should be changed from the default need to be included in the file. See `custom_cluster_cfg.json` for an example.
+Python scripts are provided to run multi-step analyses on a compute cluster or cloud environment. `TopmedPipeline.py` defines cluster environment classes, currently a Slurm cluster, a Sun Grid Engine (SGE) cluster, Amazon's cfncluster Son of Grid Engine (also SGE), and AWS Batch. Additional classes may be added for other environments. Default cluster options are provided in the JSON file `slurm_cluster_cfg.json`. These options may be overridden at run time by specifying a JSON file with the `--cluster_file` option in the python scripts. Only options that should be changed from the default need to be included in the file. See `custom_cluster_cfg.json` for an example.
 
 These python scripts require a config argument `out_prefix` in addition to the arguments for each R script called. Some input and output file name parameters are overridden by the scripts in order to link jobs together. Example config files are in `testdata`.
 
@@ -33,10 +24,10 @@ Python script arguments are shown below. Note: not all arguments are available i
 argument  | default value | description
 --- | --- | ---
 `config_file` | | configuration file
-`--cluster_type` | `UW_Cluster` | type of compute cluster environment (`UW_Cluster`, `AWS_Cluster`, `AWS_Batch`)
+`--cluster_type` | `GAC_SGE_Cluster` | type of compute cluster environment (`GAC_SGE_Cluster`, `GAC_Slurm_Cluster`, `AWS_Cluster`, `AWS_Batch`)
 `--cluster_file` | `None` | JSON file containing cluster options
 `-c, --chromosomes` | `1-23` | range of chromosomes (23=X)
-`-n, --ncores` | `1-8` | number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4)
+`-n, --ncores` | `1` | number of cores to use; either a number (e.g, 1) or a range of numbers (e.g., 1-4, SGE only)
 `-e, --email` | `None` | email address to receive job completion report
 `--print_only` | `False` | print job submission commands without submitting them
 `--verbose` | `False` | verbose messages for debugging
@@ -411,8 +402,8 @@ config parameter | default value | description
 `out_file` | | Name of output VCF file (should end in ".vcf.gz"). Include a space to insert chromosome number.
 `gds_file` | | Name of GDS file used to check genotypes. Include a space to insert chromosome number.
 
-## Submitting Jobs on SGE
-When running analysis pipeline on an SGE cluster, there is a json configuration file that can be editted for customizing how an SGE job is run.  The configuration file is named `cluster_cfg.json` and is located in the root directory of the code for the analysis pipeline (e.g., `/projects/topmed/working_code/analysis_pipeline`).  The json configuration file includes the following options (and many more):
+## Submitting Jobs on SGE or Slurm
+When running analysis pipeline on an SGE or Slurm cluster, there is a json configuration file that can be editted for customizing how a job is run.  The configuration file is named `sge_cluster_cfg.json` or `slurm_cluster_cfg.json` and is located in the root directory of the code for the analysis pipeline (e.g., `/projects/topmed/working_code/analysis_pipeline`).  The json configuration file includes the following options (and many more):
 1. Maximum memory of jobs
 2. R library path
 3. Name of the SGE queue
