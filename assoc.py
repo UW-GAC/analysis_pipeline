@@ -27,6 +27,8 @@ parser.add_argument("--segment_length", default=default_segment_length,
                     help="segment length in kb [default %(default)s]")
 parser.add_argument("--n_segments", default=None,
                     help="number of segments for the entire genome (overrides segment_length)")
+parser.add_argument("--segment_file", default=None,
+                    help="File defining segments (overrides segment_length and n_segments)")
 parser.add_argument("--cluster_type", default="GAC_Slurm_Cluster",
                     help="type of compute cluster environment [default %(default)s]")
 parser.add_argument("--cluster_file", default=None,
@@ -47,6 +49,7 @@ configfile = args.config_file
 chromosomes = args.chromosomes
 segment_length = args.segment_length
 n_segments = args.n_segments
+user_segment_file = args.segment_file
 cluster_file = args.cluster_file
 cluster_type = args.cluster_type
 email = args.email
@@ -92,7 +95,10 @@ if assoc_type == "aggregate":
 
 
 # define segments
-if segment_length == default_segment_length and n_segments is None:
+if user_segment_file:
+    segment_file = user_segment_file
+    print("Using user-specified segment file: " + user_segment_file)
+elif segment_length == default_segment_length and n_segments is None:
     build = configdict.setdefault("genome_build", "hg38")
     segment_file = os.path.join(submitPath, "segments_" + build + ".txt")
     print("Using default segment file for build " + build + " with segment_length " + default_segment_length + " kb")
